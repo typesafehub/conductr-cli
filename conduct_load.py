@@ -7,7 +7,7 @@ def load(args):
     url = conduct.url('bundles')
     files = [
         ('nr-of-cpus', str(args.nr_of_cpus)),
-        ('memory', str(args.memory)),
+        ('memory-space', str(args.memory)),
         ('disk-space', str(args.disk_space)),
         ('roles', ' '.join(args.roles)),
         ('bundle', open(args.bundle, 'rb')),
