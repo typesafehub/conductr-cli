@@ -1,10 +1,10 @@
-import conduct
+import conduct_util
 import requests
 
 
 # `conduct load` command
 def load(args):
-    url = conduct.url('bundles')
+    url = conduct_util.url('bundles')
     files = [
         ('nr-of-cpus', str(args.nr_of_cpus)),
         ('memory-space', str(args.memory)),
@@ -16,4 +16,4 @@ def load(args):
     if response.status_code == 200:
         print(response.text)
     else:
-        conduct.print_error('{} {}', response.status_code, response.reason)
+        conduct_util.print_error('{} {}', response.status_code, response.reason)
