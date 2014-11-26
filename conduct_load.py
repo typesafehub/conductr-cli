@@ -1,10 +1,11 @@
-import conduct_util
+import conduct_logging
+import conduct_url
 import requests
 
 
 # `conduct load` command
 def load(args):
-    url = conduct_util.url('bundles')
+    url = conduct_url.url('bundles', args)
     files = [
         ('nrOfCpus', str(args.nr_of_cpus)),
         ('memory', str(args.memory)),
@@ -12,10 +13,10 @@ def load(args):
         ('roles', ' '.join(args.roles)),
         ('bundle', open(args.bundle, 'rb'))
     ]
-    if vars(args).get('configuration'):
+    if args.configuration is not None:
         files.append(('configuration', open(args.configuration, 'rb')))
     response = requests.post(url, files=files)
     if response.status_code == 200:
         print(response.text)
     else:
-        conduct_util.print_error('{} {}', response.status_code, response.reason)
+        conduct_logging.error('{} {}', response.status_code, response.reason)
