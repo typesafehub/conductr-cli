@@ -5,7 +5,7 @@ import argcomplete
 import argparse
 import conduct_info
 import conduct_load
-import conduct_start
+import conduct_run
 import conduct_version
 import os
 
@@ -69,17 +69,17 @@ add_host_and_port(load_parser)
 load_parser.set_defaults(func=conduct_load.load)
 
 
-# Sub-parser for `start` sub-command
-start_parser = subparsers.add_parser('start',
-                                     help='start a bundle')
-start_parser.add_argument('--scale',
-                          type=int,
-                          default=1,
-                          help='The optional number of executions, defaults to 1')
-start_parser.add_argument('bundle',
-                          help='The ID of the bundle')
-add_host_and_port(start_parser)
-start_parser.set_defaults(func=conduct_start.start)
+# Sub-parser for `run` sub-command
+run_parser = subparsers.add_parser('run',
+                                   help='run a bundle')
+run_parser.add_argument('--scale',
+                        type=int,
+                        default=1,
+                        help='The optional number of executions, defaults to 1')
+run_parser.add_argument('bundle',
+                        help='The ID of the bundle')
+add_host_and_port(run_parser)
+run_parser.set_defaults(func=conduct_run.run)
 
 
 # Parse arguments

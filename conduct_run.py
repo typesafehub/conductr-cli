@@ -3,8 +3,8 @@ import conduct_url
 import requests
 
 
-# `conduct start` command
-def start(args):
+# `conduct run` command
+def run(args):
     path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
     url = conduct_url.url(path, args)
     response = requests.put(url)
