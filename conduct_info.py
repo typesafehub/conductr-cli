@@ -1,3 +1,4 @@
+import conduct_logging
 import conduct_url
 import requests
 
@@ -7,4 +8,4 @@ def info(args):
     url = conduct_url.url('bundles', args)
     response = requests.get(url)
     response.raise_for_status()
-    print(response.text)
+    conduct_logging.pretty_json(response.text)

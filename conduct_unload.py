@@ -3,11 +3,11 @@ import conduct_url
 import requests
 
 
-# `conduct run` command
-def run(args):
-    path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
+# `conduct unload` command
+def unload(args):
+    path = 'bundles/{}'.format(args.bundle)
     url = conduct_url.url(path, args)
-    response = requests.put(url)
+    response = requests.delete(url)
     if response.status_code == 200:
         conduct_logging.pretty_json(response.text)
     else:

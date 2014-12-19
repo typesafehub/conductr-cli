@@ -6,15 +6,17 @@ import argparse
 import conduct_info
 import conduct_load
 import conduct_run
+import conduct_stop
+import conduct_unload
 import conduct_version
 import os
 
 
 def add_host_and_port(sub_parser):
-    sub_parser.add_argument('--host',
+    sub_parser.add_argument('-H', '--host',
                             help='The optional Conductor host, defaults to $HOSTNAME or "127.0.0.1"',
                             default=os.getenv('HOSTNAME', '127.0.0.1'))
-    sub_parser.add_argument('--port',
+    sub_parser.add_argument('-p', '--port',
                             type=int,
                             help='The optional Conductor port, defaults to $CONDUCTOR_PORT or "9005"',
                             default=os.getenv('CONDUCTOR_PORT', '9005'))
@@ -56,11 +58,11 @@ load_parser.add_argument('--nr-of-cpus',
 load_parser.add_argument('--memory',
                          type=int,
                          required=True,
-                         help='The amount of memory required to run the bundle')
+                         help='The amount of memory in bytes required to run the bundle')
 load_parser.add_argument('--disk-space',
                          type=int,
                          required=True,
-                         help='The amount of disk space required to host an expanded bundle and configuration')
+                         help='The amount of disk space in bytes required to host an expanded bundle and configuration')
 load_parser.add_argument('--roles',
                          nargs='*',
                          default=[],
@@ -80,6 +82,24 @@ run_parser.add_argument('bundle',
                         help='The ID of the bundle')
 add_host_and_port(run_parser)
 run_parser.set_defaults(func=conduct_run.run)
+
+
+# Sub-parser for `stop` sub-command
+stop_parser = subparsers.add_parser('stop',
+                                    help='stop a abundle')
+stop_parser.add_argument('bundle',
+                         help='The ID of the bundle')
+add_host_and_port(stop_parser)
+stop_parser.set_defaults(func=conduct_stop.stop)
+
+
+# Sub-parser for `unload` sub-command
+unload_parser = subparsers.add_parser('unload',
+                                    help='unload a bundle')
+unload_parser.add_argument('bundle',
+                           help='The ID of the bundle')
+add_host_and_port(unload_parser)
+unload_parser.set_defaults(func=conduct_unload.unload)
 
 
 # Parse arguments
