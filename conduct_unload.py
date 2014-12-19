@@ -9,6 +9,10 @@ def unload(args):
     url = conduct_url.url(path, args)
     response = requests.delete(url)
     if response.status_code == 200:
-        conduct_logging.pretty_json(response.text)
+        if (args.verbose):
+            conduct_logging.pretty_json(response.text)
+
+        print("Bundle unload request sent.")
+        print("Print conductor info with: cli/conduct info")
     else:
         conduct_logging.error('{} {}', response.status_code, response.reason)

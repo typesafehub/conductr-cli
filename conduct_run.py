@@ -1,5 +1,6 @@
 import conduct_logging
 import conduct_url
+import json
 import requests
 
 
@@ -9,6 +10,14 @@ def run(args):
     url = conduct_url.url(path, args)
     response = requests.put(url)
     if response.status_code == 200:
-        conduct_logging.pretty_json(response.text)
+        if (args.verbose):
+            conduct_logging.pretty_json(response.text)
+
+        response_json = json.loads(response.text)
+        bundleId = response_json['bundleId']
+
+        print("Bundle run request sent.")
+        print("Stop bundle with: cli/conduct stop {}".format(bundleId))
+        print("Print conductor info with: cli/conduct info")
     else:
         conduct_logging.error('{} {}', response.status_code, response.reason)
