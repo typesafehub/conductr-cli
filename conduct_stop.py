@@ -18,6 +18,6 @@ def stop(args):
 
         print("Bundle stop request sent.")
         print("Unload bundle with: cli/conduct unload {}".format(bundleId))
-        print("Print conductor info with: cli/conduct info")
+        print("Print ConductR info with: cli/conduct info")
     else:
         conduct_logging.error('{} {}', response.status_code, response.reason)

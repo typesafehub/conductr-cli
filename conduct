@@ -14,12 +14,12 @@ import os
 
 def add_host_and_port(sub_parser):
     sub_parser.add_argument('-H', '--host',
-                            help='The optional Conductor host, defaults to $HOSTNAME or "127.0.0.1"',
+                            help='The optional ConductR host, defaults to $HOSTNAME or "127.0.0.1"',
                             default=os.getenv('HOSTNAME', '127.0.0.1'))
     sub_parser.add_argument('-p', '--port',
                             type=int,
-                            help='The optional Conductor port, defaults to $CONDUCTOR_PORT or "9005"',
-                            default=os.getenv('CONDUCTOR_PORT', '9005'))
+                            help='The optional ConductR port, defaults to $CONDUCTR_PORT or "9005"',
+                            default=os.getenv('CONDUCTR_PORT', '9005'))
 
 
 def add_verbose(sub_parser):

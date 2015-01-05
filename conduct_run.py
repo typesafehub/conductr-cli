@@ -18,6 +18,6 @@ def run(args):
 
         print("Bundle run request sent.")
         print("Stop bundle with: cli/conduct stop {}".format(bundleId))
-        print("Print conductor info with: cli/conduct info")
+        print("Print ConductR info with: cli/conduct info")
     else:
         conduct_logging.error('{} {}', response.status_code, response.reason)
