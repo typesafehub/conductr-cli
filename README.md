@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/typesafehub/typesafe-conductr-cli.png)](https://travis-ci.org/typesafehub/typesafe-conductr-cli)
+
 ## Command Line Interface (CLI) for Typesafe ConductR
 
 ### Installation
