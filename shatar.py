@@ -38,14 +38,25 @@ def digestFile(filename):
             d.update(buf)
     return d.hexdigest()
 
-parser = argparse.ArgumentParser(description="Package a directory that has a structure of a bundle or bundle's configuration file.")
-parser.add_argument('--output-dir',
-                    default='.',
-                    help="The optional output directory, defaults to '.'")
-parser.add_argument('source',
-                    help="Path to a directory that has a structure of a bundle or a bundle's configuration file.")
-parser.set_defaults(func=shatar)
 
-argcomplete.autocomplete(parser)
-args = parser.parse_args()
-args.func(args)
+def buildParser():
+    parser = argparse.ArgumentParser(description="Package a directory that has a structure of a bundle or bundle's configuration file.")
+    parser.add_argument('--output-dir',
+                        default='.',
+                        help="The optional output directory, defaults to '.'")
+    parser.add_argument('source',
+                        help="Path to a directory that has a structure of a bundle or a bundle's configuration file.")
+    parser.set_defaults(func=shatar)
+
+    return parser
+
+
+def run():
+    parser = buildParser()
+    argcomplete.autocomplete(parser)
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == '__main__':
+    run()
