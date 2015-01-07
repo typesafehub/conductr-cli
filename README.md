@@ -8,22 +8,16 @@ You have to install the following software:
 
 #### Install using pip
 
-Create a source distribution:
-
-  ``` bash
-  python3 setup.py sdist
-  ```
-
 Install to the current user (make sure to have `~/.local/bin` in your PATH):
 
   ``` bash
-  pip3 install --user dist/typesafe-conductr-cli-0.1.tar.gz
+  pip3 install --user .
   ```
 
 Or install to all users:
 
   ``` bash
-  pip3 install dist/typesafe-conductr-cli-0.1.tar.gz
+  pip3 install .
   ```
 
 #### Install as a deb package
