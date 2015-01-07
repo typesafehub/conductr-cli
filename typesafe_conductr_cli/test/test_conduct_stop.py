@@ -6,12 +6,12 @@ from typesafe_conductr_cli import conduct_stop
 
 class TestConductStopCommand(TestCase):
 
-    defaultResponse = strip_margin("""|{
+    default_response = strip_margin("""|{
                                       |  "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
                                       |}
                                       |""")
 
-    defaultArgs = {
+    default_args = {
         "host": "127.0.0.1",
         "port": 9005,
         "verbose": False,
@@ -19,53 +19,53 @@ class TestConductStopCommand(TestCase):
         "bundle": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
     }
 
-    defaultUrl = "http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=0"
+    default_url = "http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=0"
 
-    outputTemplate = """|Bundle stop request sent.
+    output_template = """|Bundle stop request sent.
                         |Unload bundle with: conduct unload{} 45e0c477d3e5ea92aa8d85c0d8f3e25c
                         |Print ConductR info with: conduct info{}
                         |"""
 
-    defaultOutput = strip_margin(outputTemplate.format(*[""]*2))
+    default_output = strip_margin(output_template.format(*[""]*2))
 
     def test_success(self):
-        http_method = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.default_response)
         stdout = MagicMock()
 
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
-            conduct_stop.stop(MagicMock(**self.defaultArgs))
+            conduct_stop.stop(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
 
-        self.assertEqual(self.defaultOutput, output(stdout))
+        self.assertEqual(self.default_output, output(stdout))
 
     def test_success_verbose(self):
-        http_method = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.default_response)
         stdout = MagicMock()
 
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
-            args = self.defaultArgs.copy()
+            args = self.default_args.copy()
             args.update({"verbose": True})
             conduct_stop.stop(MagicMock(**args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
 
-        self.assertEqual(self.defaultResponse + self.defaultOutput, output(stdout))
+        self.assertEqual(self.default_response + self.default_output, output(stdout))
 
     def test_success_with_configuration(self):
-        http_method = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.default_response)
         stdout = MagicMock()
 
         cli_parameters = " --host 127.0.1.1 --port 9006"
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
-            args = self.defaultArgs.copy()
+            args = self.default_args.copy()
             args.update({"cli_parameters": cli_parameters})
             conduct_stop.stop(MagicMock(**args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            strip_margin(self.outputTemplate.format(*[cli_parameters]*2)),
+            strip_margin(self.output_template.format(*[cli_parameters]*2)),
             output(stdout))
 
     def test_failure(self):
@@ -73,9 +73,9 @@ class TestConductStopCommand(TestCase):
         stderr = MagicMock()
 
         with patch('requests.put', http_method), patch('sys.stderr', stderr):
-            conduct_stop.stop(MagicMock(**self.defaultArgs))
+            conduct_stop.stop(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
             strip_margin("""|ERROR:404 Not Found

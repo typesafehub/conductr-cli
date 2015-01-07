@@ -25,13 +25,13 @@ def shatar(args):
     temp.close()
 
     shatar_name = os.path.basename(source)
-    shatar_digest = digestFile(temp_name)
+    shatar_digest = digest_file(temp_name)
     shatar_filename = "%s-%s.tgz" % (shatar_name, shatar_digest)
 
     shutil.move(temp_name, os.path.join(args.output_dir, shatar_filename))
 
 
-def digestFile(filename):
+def digest_file(filename):
     with open(filename, mode='rb') as f:
         d = hashlib.sha256()
         for buf in iter(partial(f.read, 128), b''):
@@ -39,7 +39,7 @@ def digestFile(filename):
     return d.hexdigest()
 
 
-def buildParser():
+def build_parser():
     parser = argparse.ArgumentParser(description="Package a directory that has a structure of a bundle or bundle's configuration file.")
     parser.add_argument('--output-dir',
                         default='.',
@@ -52,7 +52,7 @@ def buildParser():
 
 
 def run():
-    parser = buildParser()
+    parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     args.func(args)
