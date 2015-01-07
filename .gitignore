@@ -1,3 +1,5 @@
 dist
 typesafe_conductr_cli.egg-info
 __pycache__
+deb_dist/*
+!deb_dist/Dockerfile

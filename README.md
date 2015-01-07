@@ -6,8 +6,51 @@ You have to install the following software:
 
 - Python 3, e.g. via `brew install python3`
 
-If you are using specific versions of the above for other projects, you might want to use
-[virtualenv](http://virtualenv.readthedocs.org/en/latest/).
+#### Install as a pip package
+
+1. Build a pip package.
+
+  ``` bash
+  python3 setup.py sdist
+  ```
+
+2. Install built package to the current user (make sure to have `~/.local/bin` in your PATH):
+
+  ``` bash
+  pip3 install --user dist/typesafe-conductr-cli-0.1.tar.gz
+  ```
+
+  Or install built package to all users:
+
+  ``` bash
+  pip3 install dist/typesafe-conductr-cli-0.1.tar.gz
+  ```
+
+#### Install as a deb package
+
+1. Build a docker image for building a deb package:
+
+  ``` bash
+  docker build -t debian-distribution deb_dist/
+  ```
+
+2. Run built docker container:
+
+  ``` bash
+  docker run -v $(pwd):/source debian-distribution
+  ```
+
+3. Install built deb package:
+
+  ``` bash
+  dpkg -i deb_dist/python3-typesafe-conductr-cli_0.1-1_all.deb
+  ```
+
+4. Install required dependencies:
+
+  ``` bash
+  apt-get install -f
+  ```
 
 #### Autocomplete support
 

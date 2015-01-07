@@ -19,10 +19,10 @@ setup(
         ],
     },
 
-    install_requires=['requests>=2.5.1', 'argcomplete>=0.8.4'],
+    install_requires=['requests>=2.3.0', 'argcomplete>=0.8.1'],
 
     license='Apache 2',
     description='A CLI client for Typesafe ConductR',
     long_description=README,
-    url='https://github.com/typesafehub/conduct',
+    url='https://github.com/typesafehub/typesafe-conductr-cli',
 )
