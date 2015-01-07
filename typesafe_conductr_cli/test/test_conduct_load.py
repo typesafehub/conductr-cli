@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
-from test_utils import respond_with, output, strip_margin
+from typesafe_conductr_cli.test.utils import respond_with, output, strip_margin
+from typesafe_conductr_cli import conduct_load
 
 
 class TestConductLoadCommand(TestCase):
@@ -39,42 +40,39 @@ class TestConductLoadCommand(TestCase):
                                     |""")
 
     def test_success(self):
-        requests = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.defaultResponse)
         stdout = MagicMock()
         openMock = MagicMock(return_value=1)
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout), patch('builtins.open', openMock):
-            import conduct_load
+        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.defaultArgs))
 
         openMock.assert_called_with("bundle.tgz", "rb")
-        requests.post.assert_called_with(self.defaultUrl, files=self.defaultFiles)
+        http_method.assert_called_with(self.defaultUrl, files=self.defaultFiles)
 
         self.assertEqual(self.defaultOutput, output(stdout))
 
     def test_success_verbose(self):
-        requests = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.defaultResponse)
         stdout = MagicMock()
         openMock = MagicMock(return_value=1)
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout), patch('builtins.open', openMock):
-            import conduct_load
+        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             args = self.defaultArgs.copy()
             args.update({"verbose": True})
             conduct_load.load(MagicMock(**args))
 
         openMock.assert_called_with("bundle.tgz", "rb")
-        requests.post.assert_called_with(self.defaultUrl, files=self.defaultFiles)
+        http_method.assert_called_with(self.defaultUrl, files=self.defaultFiles)
 
         self.assertEqual(self.defaultResponse + self.defaultOutput, output(stdout))
 
     def test_success_with_configuration(self):
-        requests = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.defaultResponse)
         stdout = MagicMock()
         openMock = MagicMock(return_value=1)
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout), patch('builtins.open', openMock):
-            import conduct_load
+        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             args = self.defaultArgs.copy()
             args.update({"configuration": "configuration.tgz"})
             conduct_load.load(MagicMock(**args))
@@ -84,21 +82,20 @@ class TestConductLoadCommand(TestCase):
             [call("bundle.tgz", "rb"), call("configuration.tgz", "rb")]
         )
 
-        requests.post.assert_called_with(self.defaultUrl, files=self.defaultFiles + [('configuration', 1)])
+        http_method.assert_called_with(self.defaultUrl, files=self.defaultFiles + [('configuration', 1)])
 
         self.assertEqual(self.defaultOutput, output(stdout))
 
     def test_failure(self):
-        requests = respond_with(404)
+        http_method = respond_with(404)
         stderr = MagicMock()
         openMock = MagicMock(return_value=1)
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stderr', stderr), patch('builtins.open', openMock):
-            import conduct_load
+        with patch('requests.post', http_method), patch('sys.stderr', stderr), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.defaultArgs))
 
         openMock.assert_called_with("bundle.tgz", "rb")
-        requests.post.assert_called_with(self.defaultUrl, files=self.defaultFiles)
+        http_method.assert_called_with(self.defaultUrl, files=self.defaultFiles)
 
         self.assertEqual(
             strip_margin("""|ERROR:404 Not Found

@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from test_utils import respond_with, output, strip_margin
+from typesafe_conductr_cli.test.utils import respond_with, output, strip_margin
+from typesafe_conductr_cli import conduct_unload
 
 
 class TestConductUnloadCommand(TestCase):
@@ -24,40 +25,37 @@ class TestConductUnloadCommand(TestCase):
                                     |""")
 
     def test_success(self):
-        requests = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.defaultResponse)
         stdout = MagicMock()
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout):
-            import conduct_unload
+        with patch('requests.delete', http_method), patch('sys.stdout', stdout):
             conduct_unload.unload(MagicMock(**self.defaultArgs))
 
-        requests.delete.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.defaultUrl)
 
         self.assertEqual(self.defaultOutput, output(stdout))
 
     def test_success_verbose(self):
-        requests = respond_with(200, self.defaultResponse)
+        http_method = respond_with(200, self.defaultResponse)
         stdout = MagicMock()
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout):
-            import conduct_unload
+        with patch('requests.delete', http_method), patch('sys.stdout', stdout):
             args = self.defaultArgs.copy()
             args.update({"verbose": True})
             conduct_unload.unload(MagicMock(**args))
 
-        requests.delete.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.defaultUrl)
 
         self.assertEqual(self.defaultResponse + self.defaultOutput, output(stdout))
 
     def test_failure(self):
-        requests = respond_with(404)
+        http_method = respond_with(404)
         stderr = MagicMock()
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stderr', stderr):
-            import conduct_unload
+        with patch('requests.delete', http_method), patch('sys.stderr', stderr):
             conduct_unload.unload(MagicMock(**self.defaultArgs))
 
-        requests.delete.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.defaultUrl)
 
         self.assertEqual(
             strip_margin("""|ERROR:404 Not Found

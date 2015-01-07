@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 import tempfile
 from os import remove
-from shatar import digestFile, buildParser
+from typesafe_conductr_cli.shatar import digestFile, buildParser
 
 class TestShatar(TestCase):
 

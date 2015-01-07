@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from conduct import buildParser
+from typesafe_conductr_cli.conduct import buildParser
 
 class TestConduct(TestCase):
 

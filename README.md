@@ -1,6 +1,4 @@
-## Command Line Interface (CLI)
-
-The CLI can be found in the `cli/` directory.
+## Command Line Interface (CLI) for Typesafe ConductR
 
 ### Installation
 
@@ -10,6 +8,8 @@ You have to install the following software:
 
 If you are using specific versions of the above for other projects, you might want to use
 [virtualenv](http://virtualenv.readthedocs.org/en/latest/).
+
+#### Autocomplete support
 
 If you have installed argcomplete and want to activate Bash completion for the CLI,
 you have to execute the following, either transiently in your terminal session or more permanently in your
@@ -23,6 +23,14 @@ Alternatively, if you have a Bash version 4.2 or later, you can activate global 
 
 ``` bash
 activate-global-python-argcomplete --dest=/path/to/bash_completion.d
+```
+
+### Running tests
+
+Execute the following command to run all defined tests:
+
+``` bash
+python3 -m unittest discover
 ```
 
 ### CLI Usage

@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from test_utils import respond_with, output, strip_margin
+from typesafe_conductr_cli.test.utils import respond_with, output, strip_margin
+from typesafe_conductr_cli import conduct_info
 
 
 class TestConductInfoCommand(TestCase):
@@ -14,21 +15,20 @@ class TestConductInfoCommand(TestCase):
     defaultUrl = "http://127.0.0.1:9005/bundles"
 
     def test_no_bundles(self):
-        requests = respond_with(text="[]")
+        http_method = respond_with(text="[]")
         stdout = MagicMock()
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout):
-            import conduct_info
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.defaultArgs))
 
-        requests.get.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.defaultUrl)
         self.assertEqual(
             strip_margin("""|ID  #RUN
                             |"""),
             output(stdout))
 
     def test_stopped_bundle(self):
-        requests = respond_with(text="""[
+        http_method = respond_with(text="""[
             {
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": []
@@ -36,11 +36,10 @@ class TestConductInfoCommand(TestCase):
         ]""")
         stdout = MagicMock()
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout):
-            import conduct_info
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.defaultArgs))
 
-        requests.get.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.defaultUrl)
         self.assertEqual(
             strip_margin("""|ID                                #RUN
                             |45e0c477d3e5ea92aa8d85c0d8f3e25c  0
@@ -48,7 +47,7 @@ class TestConductInfoCommand(TestCase):
             output(stdout))
 
     def test_one_running_one_stopped(self):
-        requests = respond_with(text="""[
+        http_method = respond_with(text="""[
             {
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [1,2,3]
@@ -60,11 +59,10 @@ class TestConductInfoCommand(TestCase):
         ]""")
         stdout = MagicMock()
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout):
-            import conduct_info
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.defaultArgs))
 
-        requests.get.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.defaultUrl)
         self.assertEqual(
             strip_margin("""|ID                                #RUN
                             |45e0c477d3e5ea92aa8d85c0d8f3e25c  3
@@ -73,7 +71,7 @@ class TestConductInfoCommand(TestCase):
             output(stdout))
 
     def test_one_running_one_stopped_verbose(self):
-        requests = respond_with(text="""[
+        http_method = respond_with(text="""[
             {
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [1,2,3]
@@ -85,13 +83,12 @@ class TestConductInfoCommand(TestCase):
         ]""")
         stdout = MagicMock()
 
-        with patch.dict('sys.modules', requests=requests), patch('sys.stdout', stdout):
-            import conduct_info
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
             args = self.defaultArgs.copy()
             args.update({"verbose": True})
             conduct_info.info(MagicMock(**args))
 
-        requests.get.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.defaultUrl)
         self.assertEqual(
             strip_margin("""|[
                             |  {
