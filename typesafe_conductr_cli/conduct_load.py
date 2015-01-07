@@ -24,8 +24,8 @@ def load(args):
         bundleId = response_json['bundleId']
 
         print("Bundle loaded.")
-        print("Start bundle with: cli/conduct run {}".format(bundleId))
-        print("Unload bundle with: cli/conduct unload {}".format(bundleId))
-        print("Print ConductR info with: cli/conduct info")
+        print("Start bundle with: conduct run{} {}".format(args.cli_parameters, bundleId))
+        print("Unload bundle with: conduct unload{} {}".format(args.cli_parameters, bundleId))
+        print("Print ConductR info with: conduct info{}".format(args.cli_parameters))
     else:
         conduct_logging.error('{} {}', response.status_code, response.reason)

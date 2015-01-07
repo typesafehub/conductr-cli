@@ -7,14 +7,18 @@ from typesafe_conductr_cli import conduct_info, conduct_load, conduct_run, condu
 import os
 
 
+defaultHost = os.getenv('HOSTNAME', '127.0.0.1')
+defaultPort = os.getenv('CONDUCTR_PORT', '9005')
+
+
 def add_host_and_port(sub_parser):
     sub_parser.add_argument('-H', '--host',
                             help='The optional ConductR host, defaults to $HOSTNAME or "127.0.0.1"',
-                            default=os.getenv('HOSTNAME', '127.0.0.1'))
+                            default=defaultHost)
     sub_parser.add_argument('-p', '--port',
                             type=int,
                             help='The optional ConductR port, defaults to $CONDUCTR_PORT or "9005"',
-                            default=os.getenv('CONDUCTR_PORT', '9005'))
+                            default=defaultPort)
 
 
 def add_verbose(sub_parser):
@@ -107,6 +111,15 @@ def buildParser():
     return parser
 
 
+def get_cli_parameters(args):
+    parameters = [""]
+    if args.host != defaultHost:
+        parameters.append("--host {}".format(args.host))
+    if args.port != defaultPort:
+        parameters.append("--port {}".format(args.port))
+    return " ".join(parameters)
+
+
 def run():
     # Parse arguments
     parser = buildParser()
@@ -115,6 +128,7 @@ def run():
     if vars(args).get("func") is None:
         parser.print_help()
     else:
+        args.cli_parameters = get_cli_parameters(args)
         args.func(args)
 
 

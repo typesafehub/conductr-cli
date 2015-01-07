@@ -16,7 +16,7 @@ def run(args):
         bundleId = response_json['bundleId']
 
         print("Bundle run request sent.")
-        print("Stop bundle with: cli/conduct stop {}".format(bundleId))
-        print("Print ConductR info with: cli/conduct info")
+        print("Stop bundle with: conduct stop{} {}".format(args.cli_parameters, bundleId))
+        print("Print ConductR info with: conduct info{}".format(args.cli_parameters))
     else:
         conduct_logging.error('{} {}', response.status_code, response.reason)

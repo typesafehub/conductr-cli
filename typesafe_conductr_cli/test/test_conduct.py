@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from typesafe_conductr_cli.conduct import buildParser
+from typesafe_conductr_cli.conduct import buildParser, get_cli_parameters
+from argparse import Namespace
 
 class TestConduct(TestCase):
 
@@ -64,3 +65,16 @@ class TestConduct(TestCase):
         self.assertEqual(args.port, 9999)
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.bundle, "path-to-bundle")
+
+    def test_get_cli_parameters(self):
+        args = Namespace(host="127.0.0.1", port="9005")
+        self.assertEqual(get_cli_parameters(args), "")
+
+        args = Namespace(host="127.0.1.1", port="9005")
+        self.assertEqual(get_cli_parameters(args), " --host 127.0.1.1")
+
+        args = Namespace(host="127.0.0.1", port="9006")
+        self.assertEqual(get_cli_parameters(args), " --port 9006")
+
+        args = Namespace(host="127.0.1.1", port="9006")
+        self.assertEqual(get_cli_parameters(args), " --host 127.0.1.1 --port 9006")

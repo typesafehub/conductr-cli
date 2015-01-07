@@ -15,6 +15,7 @@ class TestConductLoadCommand(TestCase):
         "host": "127.0.0.1",
         "port": 9005,
         "verbose": False,
+        "cli_parameters": "",
         "nr_of_cpus": 1,
         "memory": 200,
         "disk_space": False,
@@ -33,11 +34,13 @@ class TestConductLoadCommand(TestCase):
         ('bundle', 1)
     ]
 
-    defaultOutput = strip_margin("""|Bundle loaded.
-                                    |Start bundle with: cli/conduct run 45e0c477d3e5ea92aa8d85c0d8f3e25c
-                                    |Unload bundle with: cli/conduct unload 45e0c477d3e5ea92aa8d85c0d8f3e25c
-                                    |Print ConductR info with: cli/conduct info
-                                    |""")
+    outputTemplate = """|Bundle loaded.
+                        |Start bundle with: conduct run{} 45e0c477d3e5ea92aa8d85c0d8f3e25c
+                        |Unload bundle with: conduct unload{} 45e0c477d3e5ea92aa8d85c0d8f3e25c
+                        |Print ConductR info with: conduct info{}
+                        |"""
+
+    defaultOutput = strip_margin(outputTemplate.format(*[""]*3))
 
     def test_success(self):
         http_method = respond_with(200, self.defaultResponse)
@@ -66,6 +69,24 @@ class TestConductLoadCommand(TestCase):
         http_method.assert_called_with(self.defaultUrl, files=self.defaultFiles)
 
         self.assertEqual(self.defaultResponse + self.defaultOutput, output(stdout))
+
+    def test_success_custom_ip_port(self):
+        http_method = respond_with(200, self.defaultResponse)
+        stdout = MagicMock()
+        openMock = MagicMock(return_value=1)
+
+        cli_parameters = " --host 127.0.1.1 --port 9006"
+        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+            args = self.defaultArgs.copy()
+            args.update({"cli_parameters": cli_parameters})
+            conduct_load.load(MagicMock(**args))
+
+        openMock.assert_called_with("bundle.tgz", "rb")
+        http_method.assert_called_with(self.defaultUrl, files=self.defaultFiles)
+
+        self.assertEqual(
+            strip_margin(self.outputTemplate.format(*[cli_parameters]*3)),
+            output(stdout))
 
     def test_success_with_configuration(self):
         http_method = respond_with(200, self.defaultResponse)
