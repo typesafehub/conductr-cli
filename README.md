@@ -34,7 +34,7 @@ You have to install the following software:
   docker build -t debian-distribution deb_dist/
   ```
 
-2. Run built docker container:
+2. Run built docker image:
 
   ``` bash
   docker run -v $(pwd):/source debian-distribution
@@ -83,19 +83,23 @@ python3 -m unittest discover
 Execute `conduct` with any of the supported sub-commands or options, e.g.
 
 ``` bash
-$ cli/conduct -h
-usage: conduct [-h] {version,info,load,start} ...
+$ conduct -h
+usage: conduct [-h] {version,info,load,run,stop,unload} ...
 
-positional arguments:
-{version,info,load,start}
+optional arguments:
+-h, --help            show this help message and exit
+
+subcommands:
+valid subcommands
+
+{version,info,load,run,stop,unload}
 help for subcommands
 version             print version information
 info                get information about one or all bundles
 load                load a bundle
 run                 run a bundle
-
-optional arguments:
--h, --help            show this help message and exit
+stop                stop a abundle
+unload              unload a bundle
 ```
 
 Most sub-commands connect to a ConductR instance and therefore you have to specify its host and port;
@@ -106,7 +110,7 @@ variable.
 Here's an example for loading a bundle:
 
 ``` bash
-cli/conduct load \
+conduct load \
 --nr-of-cpus 2 \
 --memory 104857600 \
 --disk-space 104857600 \
@@ -121,7 +125,7 @@ In other cases, e.g. if there are no roles given or if the bundle doesn't come d
 this is not needed, like in the following example where an additional configuration is loaded:
 
 ``` bash
-cli/conduct load \
+conduct load \
 --nr-of-cpus 2 \
 --memory 104857600 \
 --disk-space 104857600 \
@@ -133,7 +137,7 @@ If you want to use an external ConductR host, you can use the `--host` and `--po
 to `$HOSTNAME` or "127.0.0.1" and "9005" respectively, e.g.:
 
 ``` bash
-cli/conduct load \
+conduct load \
 --host $DOCKER_HOST_IP
 ...
 ```
@@ -148,4 +152,4 @@ The `shatar` command can be used:
 In both cases source files are tarred and gzipped and SHA256 digest of the archive
 is appended to the bundle archive file name.
 
-For pointers on command usage run `cli/shatar -h`.
+For pointers on command usage run `shatar -h`.
