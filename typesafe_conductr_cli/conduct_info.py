@@ -1,5 +1,4 @@
-import conduct_logging
-import conduct_url
+from typesafe_conductr_cli import conduct_logging, conduct_url
 import json
 import requests
 
