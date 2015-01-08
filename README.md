@@ -4,22 +4,20 @@
 
 ### Installation
 
-You have to install the following software:
-
-- Python 3, e.g. via `brew install python3`
+Python 3 is required. For OS X users use `brew install python3`.
 
 #### Install using pip
 
-Install to the current user (make sure to have `~/.local/bin` in your PATH):
+You may either install to all users:
+
+  ``` bash
+  sudo pip3 install .
+  ```
+
+...or, and if you're not using brew (there's a problem with user installs as of the time writing this), install to the current user (make sure to have `~/.local/bin` in your PATH):
 
   ``` bash
   pip3 install --user .
-  ```
-
-Or install to all users:
-
-  ``` bash
-  pip3 install .
   ```
 
 #### Install as a deb package
