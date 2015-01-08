@@ -12,6 +12,6 @@ def unload(args):
             conduct_logging.pretty_json(response.text)
 
         print("Bundle unload request sent.")
-        print("Print ConductR info with: cli/conduct info")
+        print("Print ConductR info with: conduct info{}".format(args.cli_parameters))
     else:
         conduct_logging.error('{} {}', response.status_code, response.reason)

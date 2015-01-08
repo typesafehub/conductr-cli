@@ -6,22 +6,22 @@ from typesafe_conductr_cli import conduct_info
 
 class TestConductInfoCommand(TestCase):
 
-    defaultArgs = {
+    default_args = {
         "host": "127.0.0.1",
         "port": 9005,
         "verbose": False
     }
 
-    defaultUrl = "http://127.0.0.1:9005/bundles"
+    default_url = "http://127.0.0.1:9005/bundles"
 
     def test_no_bundles(self):
         http_method = respond_with(text="[]")
         stdout = MagicMock()
 
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
-            conduct_info.info(MagicMock(**self.defaultArgs))
+            conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
         self.assertEqual(
             strip_margin("""|ID  #RUN
                             |"""),
@@ -37,9 +37,9 @@ class TestConductInfoCommand(TestCase):
         stdout = MagicMock()
 
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
-            conduct_info.info(MagicMock(**self.defaultArgs))
+            conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
         self.assertEqual(
             strip_margin("""|ID                                #RUN
                             |45e0c477d3e5ea92aa8d85c0d8f3e25c  0
@@ -60,9 +60,9 @@ class TestConductInfoCommand(TestCase):
         stdout = MagicMock()
 
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
-            conduct_info.info(MagicMock(**self.defaultArgs))
+            conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
         self.assertEqual(
             strip_margin("""|ID                                #RUN
                             |45e0c477d3e5ea92aa8d85c0d8f3e25c  3
@@ -84,11 +84,11 @@ class TestConductInfoCommand(TestCase):
         stdout = MagicMock()
 
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
-            args = self.defaultArgs.copy()
+            args = self.default_args.copy()
             args.update({"verbose": True})
             conduct_info.info(MagicMock(**args))
 
-        http_method.assert_called_with(self.defaultUrl)
+        http_method.assert_called_with(self.default_url)
         self.assertEqual(
             strip_margin("""|[
                             |  {
