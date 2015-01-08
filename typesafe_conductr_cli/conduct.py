@@ -115,7 +115,7 @@ def get_cli_parameters(args):
     parameters = [""]
     if args.host != default_host:
         parameters.append("--host {}".format(args.host))
-    if args.port != default_port:
+    if args.port != int(default_port):
         parameters.append("--port {}".format(args.port))
     return " ".join(parameters)
 

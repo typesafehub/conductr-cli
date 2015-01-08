@@ -63,14 +63,14 @@ class TestConduct(TestCase):
         self.assertEqual(args.bundle, "path-to-bundle")
 
     def test_get_cli_parameters(self):
-        args = Namespace(host="127.0.0.1", port="9005")
+        args = Namespace(host="127.0.0.1", port=9005)
         self.assertEqual(get_cli_parameters(args), "")
 
-        args = Namespace(host="127.0.1.1", port="9005")
+        args = Namespace(host="127.0.1.1", port=9005)
         self.assertEqual(get_cli_parameters(args), " --host 127.0.1.1")
 
-        args = Namespace(host="127.0.0.1", port="9006")
+        args = Namespace(host="127.0.0.1", port=9006)
         self.assertEqual(get_cli_parameters(args), " --port 9006")
 
-        args = Namespace(host="127.0.1.1", port="9006")
+        args = Namespace(host="127.0.1.1", port=9006)
         self.assertEqual(get_cli_parameters(args), " --host 127.0.1.1 --port 9006")
