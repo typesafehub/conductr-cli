@@ -1,10 +1,13 @@
-from typesafe_conductr_cli import conduct_logging, conduct_url
+from typesafe_conductr_cli import conduct_url, conduct_logging
 import json
 import requests
 
 
-# `conduct info` command
+@conduct_logging.handle_connection_error
+@conduct_logging.handle_http_error
 def info(args):
+    """`conduct info` command"""
+
     url = conduct_url.url('bundles', args)
     response = requests.get(url)
     response.raise_for_status()
