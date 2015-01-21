@@ -136,14 +136,14 @@ conduct load \
 ...
 ```
 
-#### shatar
+#### shazar
 
-The `shatar` command can be used:
+The `shazar` command can be used:
 
 * for packaging a directory that has a structure of a bundle to a bundle archive;
 * for packaging a bundle's configuration to a bundle archive;
 
-In both cases source files are tarred and gzipped and SHA256 digest of the archive
+In both cases the source files are zipped and a SHA256 digest of the archive
 is appended to the bundle archive file name.
 
-For pointers on command usage run `shatar -h`.
+For pointers on command usage run `shazar -h`.

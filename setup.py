@@ -15,7 +15,7 @@ setup(
     entry_points={
         'console_scripts': [
             'conduct = typesafe_conductr_cli.conduct:run',
-            'shatar = typesafe_conductr_cli.shatar:run',
+            'shazar = typesafe_conductr_cli.shazar:run',
         ],
     },
 
