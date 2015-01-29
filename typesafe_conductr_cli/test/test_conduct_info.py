@@ -1,3 +1,4 @@
+import unittest
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from typesafe_conductr_cli.test.cli_test_case import CliTestCase
@@ -23,7 +24,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID  #RUN
+            self.strip_margin("""|ID  #REP  #STR  #RUN
                                  |"""),
             self.output(stdout))
 
@@ -31,7 +32,8 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         http_method = self.respond_with(text="""[
             {
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
-                "bundleExecutions": []
+                "bundleExecutions": [],
+                "bundleInstallations": [1]
             }
         ]""")
         stdout = MagicMock()
@@ -41,20 +43,27 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID                                #RUN
-                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  0
+            self.strip_margin("""|ID                                #REP  #STR  #RUN
+                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  1     0     0
                                  |"""),
             self.output(stdout))
 
-    def test_one_running_one_stopped(self):
+    def test_one_running_one_starting_one_stopped(self):
         http_method = self.respond_with(text="""[
             {
-                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
-                "bundleExecutions": [1,2,3]
+                "bundleId": "running",
+                "bundleExecutions": [{"isStarted": true}],
+                "bundleInstallations": [1]
             },
             {
-                "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54",
-                "bundleExecutions": []
+                "bundleId": "starting",
+                "bundleExecutions": [{"isStarted": false}],
+                "bundleInstallations": [1]
+            },
+            {
+                "bundleId": "stopped",
+                "bundleExecutions": [],
+                "bundleInstallations": [1]
             }
         ]""")
         stdout = MagicMock()
@@ -64,9 +73,10 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID                                #RUN
-                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  3
-                                 |c52e3f8d0c58d8aa29ae5e3d774c0e54  0
+            self.strip_margin("""|ID        #REP  #STR  #RUN
+                                 |running   1     0     1
+                                 |starting  1     1     0
+                                 |stopped   1     0     0
                                  |"""),
             self.output(stdout))
 
@@ -74,11 +84,13 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         http_method = self.respond_with(text="""[
             {
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
-                "bundleExecutions": [1,2,3]
+                "bundleExecutions": [{"isStarted": true},{"isStarted": true},{"isStarted": true}],
+                "bundleInstallations": [1,2,3]
             },
             {
                 "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54",
-                "bundleExecutions": []
+                "bundleExecutions": [],
+                "bundleInstallations": [1,2,3]
             }
         ]""")
         stdout = MagicMock()
@@ -93,20 +105,36 @@ class TestConductInfoCommand(TestCase, CliTestCase):
             self.strip_margin("""|[
                                  |  {
                                  |    "bundleExecutions": [
+                                 |      {
+                                 |        "isStarted": true
+                                 |      },
+                                 |      {
+                                 |        "isStarted": true
+                                 |      },
+                                 |      {
+                                 |        "isStarted": true
+                                 |      }
+                                 |    ],
+                                 |    "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                                 |    "bundleInstallations": [
                                  |      1,
                                  |      2,
                                  |      3
-                                 |    ],
-                                 |    "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
+                                 |    ]
                                  |  },
                                  |  {
                                  |    "bundleExecutions": [],
-                                 |    "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54"
+                                 |    "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54",
+                                 |    "bundleInstallations": [
+                                 |      1,
+                                 |      2,
+                                 |      3
+                                 |    ]
                                  |  }
                                  |]
-                                 |ID                                #RUN
-                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  3
-                                 |c52e3f8d0c58d8aa29ae5e3d774c0e54  0
+                                 |ID                                #REP  #STR  #RUN
+                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  3     0     3
+                                 |c52e3f8d0c58d8aa29ae5e3d774c0e54  3     0     0
                                  |"""),
             self.output(stdout))
 
