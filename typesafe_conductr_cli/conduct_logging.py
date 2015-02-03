@@ -34,6 +34,8 @@ def handle_http_error(func):
             return func(*args, **kwargs)
         except HTTPError as err:
             error("{} {}", err.response.status_code, err.response.reason)
+            if err.response.text != "":
+                error(err.response.text)
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.

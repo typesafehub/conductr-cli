@@ -18,12 +18,13 @@ def info(args):
     data = [
         {
             'id': bundle['bundleId'],
+            'name': bundle['attributes']['bundleName'],
             'replications': len(bundle['bundleInstallations']),
             'starting': sum([not execution['isStarted'] for execution in bundle['bundleExecutions']]),
             'executions': sum([execution['isStarted'] for execution in bundle['bundleExecutions']])
         } for bundle in json.loads(response.text)
     ]
-    data.insert(0, {'id': 'ID', 'replications': '#REP', 'starting': "#STR", 'executions': '#RUN'})
+    data.insert(0, {'id': 'ID', 'name': 'NAME', 'replications': '#REP', 'starting': "#STR", 'executions': '#RUN'})
 
     padding = 2
     column_widths = {}
@@ -35,4 +36,4 @@ def info(args):
                 column_widths[width_key] = column_len
 
     for row in data:
-        print("{id: <{id_width}}{replications: <{replications_width}}{starting: <{starting_width}}{executions: <{executions_width}}".format(**dict(row, **column_widths)))
+        print("{id: <{id_width}}{name: <{name_width}}{replications: <{replications_width}}{starting: <{starting_width}}{executions: <{executions_width}}".format(**dict(row, **column_widths)))

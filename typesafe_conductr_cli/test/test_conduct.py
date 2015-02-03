@@ -1,7 +1,7 @@
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
 from typesafe_conductr_cli.conduct import build_parser, get_cli_parameters
 from argparse import Namespace
+
 
 class TestConduct(TestCase):
 
@@ -21,7 +21,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.verbose, False)
 
     def test_parser_load(self):
-        args = self.parser.parse_args("load --host 127.0.1.1 --port 9999 -v --nr-of-cpus 2 --memory 100 --disk-space 200 --roles role1 role2 -- path-to-bundle path-to-conf".split())
+        args = self.parser.parse_args("load --host 127.0.1.1 --port 9999 -v --nr-of-cpus 2 --memory 100 --disk-space 200 --name test-bundle --roles role1 role2 -- path-to-bundle path-to-conf".split())
 
         self.assertEqual(args.func.__name__, "load")
         self.assertEqual(args.host, "127.0.1.1")
@@ -31,6 +31,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.memory, 100)
         self.assertEqual(args.disk_space, 200)
         self.assertEqual(args.roles, ["role1", "role2"])
+        self.assertEqual(args.bundle_name, "test-bundle")
         self.assertEqual(args.bundle, "path-to-bundle")
         self.assertEqual(args.configuration, "path-to-conf")
 

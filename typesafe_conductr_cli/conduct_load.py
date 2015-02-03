@@ -1,5 +1,6 @@
 from typesafe_conductr_cli import conduct_url, conduct_logging
 import json
+import os
 import requests
 
 
@@ -8,12 +9,16 @@ import requests
 def load(args):
     """`conduct load` command"""
 
+    if args.bundle_name is None:
+        args.bundle_name = "-".join(os.path.basename(args.bundle).split("-")[:-1])
+
     url = conduct_url.url('bundles', args)
     files = [
         ('nrOfCpus', str(args.nr_of_cpus)),
         ('memory', str(args.memory)),
         ('diskSpace', str(args.disk_space)),
         ('roles', ' '.join(args.roles)),
+        ('bundleName', args.bundle_name),
         ('bundle', open(args.bundle, 'rb'))
     ]
     if args.configuration is not None:

@@ -39,4 +39,4 @@ class CliTestCase():
         return "".join([args[0].rstrip(" ") for name, args, kwargs in logger.method_calls])
 
     def strip_margin(self, string, marginChar='|'):
-        return "\n".join([line[line.index(marginChar)+1:] for line in string.split("\n")])
+        return "\n".join([line[line.index(marginChar) + 1:] for line in string.split("\n")])

@@ -97,6 +97,3 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
         self.assertEqual(
             self.default_connection_error.format(self.default_args["host"], self.default_args["port"]),
             self.output(stderr))
-
-if __name__ == '__main__':
-    unittest.main()

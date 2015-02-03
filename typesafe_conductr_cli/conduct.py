@@ -77,6 +77,10 @@ def build_parser():
                              nargs='*',
                              default=[],
                              help='The optional roles of cluster nodes that this bundle can be deployed to, defaults to all roles')
+    load_parser.add_argument('--name',
+                             default=None,
+                             dest='bundle_name',
+                             help='The optional name of the bundle. Defaults to the first part of the filename until the digest.')
     add_default_arguments(load_parser)
     load_parser.set_defaults(func=conduct_load.load)
 
@@ -102,7 +106,7 @@ def build_parser():
 
     # Sub-parser for `unload` sub-command
     unload_parser = subparsers.add_parser('unload',
-                                        help='unload a bundle')
+                                          help='unload a bundle')
     unload_parser.add_argument('bundle',
                                help='The ID of the bundle')
     add_default_arguments(unload_parser)

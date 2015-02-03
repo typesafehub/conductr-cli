@@ -31,7 +31,7 @@ class TestConductRunCommand(TestCase, CliTestCase):
 
     @property
     def default_output(self):
-        return self.strip_margin(self.output_template.format(*[""]*2))
+        return self.strip_margin(self.output_template.format(*[""] * 2))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -70,7 +70,7 @@ class TestConductRunCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            self.strip_margin(self.output_template.format(*[cli_parameters]*2)),
+            self.strip_margin(self.output_template.format(*[cli_parameters] * 2)),
             self.output(stdout))
 
     def test_failure(self):
@@ -99,6 +99,3 @@ class TestConductRunCommand(TestCase, CliTestCase):
         self.assertEqual(
             self.default_connection_error.format(self.default_args["host"], self.default_args["port"]),
             self.output(stderr))
-
-if __name__ == '__main__':
-    unittest.main()
