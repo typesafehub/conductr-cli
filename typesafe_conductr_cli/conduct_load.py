@@ -1,6 +1,7 @@
 from typesafe_conductr_cli import conduct_url, conduct_logging
 import json
 import os
+import re
 import requests
 
 
@@ -10,7 +11,7 @@ def load(args):
     """`conduct load` command"""
 
     if args.bundle_name is None:
-        args.bundle_name = '-'.join(os.path.basename(args.bundle).split('-')[:-1])
+        args.bundle_name = path_to_bundle_name(args.bundle)
 
     url = conduct_url.url('bundles', args)
     files = [
@@ -37,3 +38,8 @@ def load(args):
     print('Start bundle with: conduct run{} {}'.format(args.cli_parameters, bundleId))
     print('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundleId))
     print('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+
+
+def path_to_bundle_name(filename):
+    match = re.match(r'(.*?)(-[a-fA-F0-9]{0,64})?\.zip', os.path.basename(filename))
+    return match.group(1)

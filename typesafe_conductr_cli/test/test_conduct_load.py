@@ -13,6 +13,8 @@ class TestConductLoadCommand(TestCase, CliTestCase):
                                     |}
                                     |""")
 
+    bundle_file = 'bundle-abc123.zip'
+
     default_args = {
         'host': '127.0.0.1',
         'port': 9005,
@@ -23,7 +25,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         'disk_space': False,
         'roles': ['role1, role2'],
         'bundle_name': None,
-        'bundle': 'bundle-abc123.tgz',
+        'bundle': bundle_file,
         'configuration': None
     }
 
@@ -56,7 +58,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with('bundle-abc123.tgz', 'rb')
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(self.default_output, self.output(stdout))
@@ -71,7 +73,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             args.update({'verbose': True})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with('bundle-abc123.tgz', 'rb')
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(self.default_response + self.default_output, self.output(stdout))
@@ -87,7 +89,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             args.update({'cli_parameters': cli_parameters})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with('bundle-abc123.tgz', 'rb')
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
@@ -106,7 +108,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
         self.assertEqual(
             openMock.call_args_list,
-            [call('bundle-abc123.tgz', 'rb'), call('configuration.tgz', 'rb')]
+            [call(self.bundle_file, 'rb'), call('configuration.tgz', 'rb')]
         )
 
         http_method.assert_called_with(self.default_url, files=self.default_files + [('configuration', 1)])
@@ -123,7 +125,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             args.update({'bundle_name': 'test-name'})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with('bundle-abc123.tgz', 'rb')
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=[(file, value if file != 'bundleName' else 'test-name') for file, value in self.default_files])
 
         self.assertEqual(self.default_output, self.output(stdout))
@@ -136,7 +138,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         with patch('requests.post', http_method), patch('sys.stderr', stderr), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with('bundle-abc123.tgz', 'rb')
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
@@ -152,9 +154,14 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         with patch('requests.post', http_method), patch('sys.stderr', stderr), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with('bundle-abc123.tgz', 'rb')
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
             self.default_connection_error.format(self.default_args['host'], self.default_args['port']),
             self.output(stderr))
+
+    def test_path_to_bundle_name(self):
+        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-5ca1ab1e.zip'), 'bundle')
+        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle.zip'), 'bundle')
+        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-1.0.0-M2.zip'), 'bundle-1.0.0-M2')
