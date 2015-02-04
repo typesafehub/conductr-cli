@@ -19,6 +19,6 @@ def stop(args):
     response_json = json.loads(response.text)
     bundleId = response_json['bundleId']
 
-    print("Bundle stop request sent.")
-    print("Unload bundle with: conduct unload{} {}".format(args.cli_parameters, bundleId))
-    print("Print ConductR info with: conduct info{}".format(args.cli_parameters))
+    print('Bundle stop request sent.')
+    print('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundleId))
+    print('Print ConductR info with: conduct info{}'.format(args.cli_parameters))

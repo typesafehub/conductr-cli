@@ -14,8 +14,8 @@ class CliTestCase():
 
     def respond_with(self, status_code=200, text=""):
         reasons = {
-            200: "OK",
-            404: "Not Found"
+            200: 'OK',
+            404: 'Not Found'
         }
 
         response_mock = MagicMock(
@@ -36,7 +36,7 @@ class CliTestCase():
         return MagicMock(side_effect=ConnectionError(reason))
 
     def output(self, logger):
-        return "".join([args[0].rstrip(" ") for name, args, kwargs in logger.method_calls])
+        return ''.join([args[0].rstrip(' ') for name, args, kwargs in logger.method_calls])
 
     def strip_margin(self, string, marginChar='|'):
-        return "\n".join([line[line.index(marginChar) + 1:] for line in string.split("\n")])
+        return '\n'.join([line[line.index(marginChar) + 1:] for line in string.split('\n')])

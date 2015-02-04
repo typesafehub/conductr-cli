@@ -20,19 +20,19 @@ def run():
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        description="Package a bundle directory or bundle configuration file"
+        description='Package a bundle directory or bundle configuration file'
     )
     parser.add_argument('--output-dir',
                         default='.',
                         help="The optional output directory, defaults to '.'")
     parser.add_argument('source',
-                        help="Path to a bundle directory or bundle configuration file")
+                        help='Path to a bundle directory or bundle configuration file')
     parser.set_defaults(func=shazar)
     return parser
 
 
 def shazar(args):
-    source_base_name = os.path.basename(args.source.rstrip("\\/"))
+    source_base_name = os.path.basename(args.source.rstrip('\\/'))
     temp_file = tempfile.NamedTemporaryFile(suffix='.zip', delete=False).name
 
     with zipfile.ZipFile(temp_file, 'w') as zip_file:
@@ -47,7 +47,7 @@ def shazar(args):
 
     dest = shutil.move(
         temp_file,
-        os.path.join(args.output_dir, "{}-{}.zip".format(source_base_name, create_digest(temp_file)))
+        os.path.join(args.output_dir, '{}-{}.zip'.format(source_base_name, create_digest(temp_file)))
     )
     print('Created digested ZIP archive at {}'.format(dest))
 

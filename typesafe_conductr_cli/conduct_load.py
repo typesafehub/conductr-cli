@@ -10,7 +10,7 @@ def load(args):
     """`conduct load` command"""
 
     if args.bundle_name is None:
-        args.bundle_name = "-".join(os.path.basename(args.bundle).split("-")[:-1])
+        args.bundle_name = '-'.join(os.path.basename(args.bundle).split('-')[:-1])
 
     url = conduct_url.url('bundles', args)
     files = [
@@ -33,7 +33,7 @@ def load(args):
     response_json = json.loads(response.text)
     bundleId = response_json['bundleId']
 
-    print("Bundle loaded.")
-    print("Start bundle with: conduct run{} {}".format(args.cli_parameters, bundleId))
-    print("Unload bundle with: conduct unload{} {}".format(args.cli_parameters, bundleId))
-    print("Print ConductR info with: conduct info{}".format(args.cli_parameters))
+    print('Bundle loaded.')
+    print('Start bundle with: conduct run{} {}'.format(args.cli_parameters, bundleId))
+    print('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundleId))
+    print('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
