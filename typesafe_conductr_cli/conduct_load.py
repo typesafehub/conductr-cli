@@ -13,6 +13,9 @@ def load(args):
     if args.bundle_name is None:
         args.bundle_name = path_to_bundle_name(args.bundle)
 
+    if args.system is None:
+        args.system = path_to_bundle_name(args.bundle)
+
     url = conduct_url.url('bundles', args)
     files = [
         ('nrOfCpus', str(args.nr_of_cpus)),
@@ -20,6 +23,7 @@ def load(args):
         ('diskSpace', str(args.disk_space)),
         ('roles', ' '.join(args.roles)),
         ('bundleName', args.bundle_name),
+        ('system', args.system),
         ('bundle', open(args.bundle, 'rb'))
     ]
     if args.configuration is not None:
