@@ -26,7 +26,8 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         'roles': ['role1, role2'],
         'bundle_name': None,
         'bundle': bundle_file,
-        'configuration': None
+        'configuration': None,
+        'system': None
     }
 
     default_url = 'http://127.0.0.1:9005/bundles'
@@ -37,6 +38,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         ('diskSpace', 'False'),
         ('roles', 'role1, role2'),
         ('bundleName', 'bundle'),
+        ('system', 'bundle'),
         ('bundle', 1)
     ]
 
@@ -127,6 +129,21 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
         openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=[(file, value if file != 'bundleName' else 'test-name') for file, value in self.default_files])
+
+        self.assertEqual(self.default_output, self.output(stdout))
+
+    def test_success_with_system(self):
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        openMock = MagicMock(return_value=1)
+
+        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+            args = self.default_args.copy()
+            args.update({'system': 'test-system'})
+            conduct_load.load(MagicMock(**args))
+
+        openMock.assert_called_with(self.bundle_file, 'rb')
+        http_method.assert_called_with(self.default_url, files=[(file, value if file != 'system' else 'test-system') for file, value in self.default_files])
 
         self.assertEqual(self.default_output, self.output(stdout))
 

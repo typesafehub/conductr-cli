@@ -81,6 +81,10 @@ def build_parser():
                              default=None,
                              dest='bundle_name',
                              help='The optional name of the bundle. Defaults to the first part of the filename until the digest.')
+    load_parser.add_argument('--system',
+                             default=None,
+                             dest='system',
+                             help='The optional system for the bundle. Defaults to the first part of the filename until the digest.')
     add_default_arguments(load_parser)
     load_parser.set_defaults(func=conduct_load.load)
 
