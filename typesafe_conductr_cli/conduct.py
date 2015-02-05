@@ -23,7 +23,7 @@ def add_host_and_port(sub_parser):
 
 def add_verbose(sub_parser):
     sub_parser.add_argument('-v', '--verbose',
-                            help="Print JSON response to the command",
+                            help='Print JSON response to the command',
                             default=False,
                             dest='verbose',
                             action='store_true')
@@ -77,6 +77,10 @@ def build_parser():
                              nargs='*',
                              default=[],
                              help='The optional roles of cluster nodes that this bundle can be deployed to, defaults to all roles')
+    load_parser.add_argument('--name',
+                             default=None,
+                             dest='bundle_name',
+                             help='The optional name of the bundle. Defaults to the first part of the filename until the digest.')
     add_default_arguments(load_parser)
     load_parser.set_defaults(func=conduct_load.load)
 
@@ -102,7 +106,7 @@ def build_parser():
 
     # Sub-parser for `unload` sub-command
     unload_parser = subparsers.add_parser('unload',
-                                        help='unload a bundle')
+                                          help='unload a bundle')
     unload_parser.add_argument('bundle',
                                help='The ID of the bundle')
     add_default_arguments(unload_parser)
@@ -112,12 +116,12 @@ def build_parser():
 
 
 def get_cli_parameters(args):
-    parameters = [""]
+    parameters = ['']
     if args.host != default_host:
-        parameters.append("--host {}".format(args.host))
+        parameters.append('--host {}'.format(args.host))
     if args.port != int(default_port):
-        parameters.append("--port {}".format(args.port))
-    return " ".join(parameters)
+        parameters.append('--port {}'.format(args.port))
+    return ' '.join(parameters)
 
 
 def run():
@@ -125,7 +129,7 @@ def run():
     parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    if vars(args).get("func") is None:
+    if vars(args).get('func') is None:
         parser.print_help()
     else:
         args.cli_parameters = get_cli_parameters(args)

@@ -14,14 +14,14 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
                                     |""")
 
     default_args = {
-        "host": "127.0.0.1",
-        "port": 9005,
-        "verbose": False,
-        "cli_parameters": "",
-        "bundle": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
+        'host': '127.0.0.1',
+        'port': 9005,
+        'verbose': False,
+        'cli_parameters': '',
+        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c'
     }
 
-    default_url = "http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c"
+    default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c'
 
     output_template = """|Bundle unload request sent.
                          |Print ConductR info with: conduct info{}
@@ -29,7 +29,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
 
     @property
     def default_output(self):
-        return self.strip_margin(self.output_template.format(""))
+        return self.strip_margin(self.output_template.format(''))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -48,7 +48,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
 
         with patch('requests.delete', http_method), patch('sys.stdout', stdout):
             args = self.default_args.copy()
-            args.update({"verbose": True})
+            args.update({'verbose': True})
             conduct_unload.unload(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
@@ -59,10 +59,10 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        cli_parameters = " --host 127.0.1.1 --port 9006"
+        cli_parameters = ' --host 127.0.1.1 --port 9006'
         with patch('requests.delete', http_method), patch('sys.stdout', stdout):
             args = self.default_args.copy()
-            args.update({"cli_parameters": cli_parameters})
+            args.update({'cli_parameters': cli_parameters})
             conduct_unload.unload(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
@@ -86,7 +86,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
             self.output(stderr))
 
     def test_failure_invalid_address(self):
-        http_method = self.raise_connection_error("test reason")
+        http_method = self.raise_connection_error('test reason')
         stderr = MagicMock()
 
         with patch('requests.delete', http_method), patch('sys.stderr', stderr):
@@ -95,8 +95,5 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            self.default_connection_error.format(self.default_args["host"], self.default_args["port"]),
+            self.default_connection_error.format(self.default_args['host'], self.default_args['port']),
             self.output(stderr))
-
-if __name__ == '__main__':
-    unittest.main()

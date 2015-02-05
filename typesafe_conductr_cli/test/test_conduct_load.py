@@ -13,26 +13,30 @@ class TestConductLoadCommand(TestCase, CliTestCase):
                                     |}
                                     |""")
 
+    bundle_file = 'bundle-abc123.zip'
+
     default_args = {
-        "host": "127.0.0.1",
-        "port": 9005,
-        "verbose": False,
-        "cli_parameters": "",
-        "nr_of_cpus": 1,
-        "memory": 200,
-        "disk_space": False,
-        "roles": ["role1, role2"],
-        "bundle": "bundle.tgz",
-        "configuration": None
+        'host': '127.0.0.1',
+        'port': 9005,
+        'verbose': False,
+        'cli_parameters': '',
+        'nr_of_cpus': 1,
+        'memory': 200,
+        'disk_space': False,
+        'roles': ['role1, role2'],
+        'bundle_name': None,
+        'bundle': bundle_file,
+        'configuration': None
     }
 
-    default_url = "http://127.0.0.1:9005/bundles"
+    default_url = 'http://127.0.0.1:9005/bundles'
 
     default_files = [
         ('nrOfCpus', '1'),
         ('memory', '200'),
         ('diskSpace', 'False'),
         ('roles', 'role1, role2'),
+        ('bundleName', 'bundle'),
         ('bundle', 1)
     ]
 
@@ -44,7 +48,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
     @property
     def default_output(self):
-        return self.strip_margin(self.output_template.format(*[""]*3))
+        return self.strip_margin(self.output_template.format(*[''] * 3))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -54,7 +58,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with("bundle.tgz", "rb")
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(self.default_output, self.output(stdout))
@@ -66,10 +70,10 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
         with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             args = self.default_args.copy()
-            args.update({"verbose": True})
+            args.update({'verbose': True})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with("bundle.tgz", "rb")
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(self.default_response + self.default_output, self.output(stdout))
@@ -79,17 +83,17 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         stdout = MagicMock()
         openMock = MagicMock(return_value=1)
 
-        cli_parameters = " --host 127.0.1.1 --port 9006"
+        cli_parameters = ' --host 127.0.1.1 --port 9006'
         with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             args = self.default_args.copy()
-            args.update({"cli_parameters": cli_parameters})
+            args.update({'cli_parameters': cli_parameters})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with("bundle.tgz", "rb")
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
-            self.strip_margin(self.output_template.format(*[cli_parameters]*3)),
+            self.strip_margin(self.output_template.format(*[cli_parameters] * 3)),
             self.output(stdout))
 
     def test_success_with_configuration(self):
@@ -99,15 +103,30 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
         with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             args = self.default_args.copy()
-            args.update({"configuration": "configuration.tgz"})
+            args.update({'configuration': 'configuration.tgz'})
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
             openMock.call_args_list,
-            [call("bundle.tgz", "rb"), call("configuration.tgz", "rb")]
+            [call(self.bundle_file, 'rb'), call('configuration.tgz', 'rb')]
         )
 
         http_method.assert_called_with(self.default_url, files=self.default_files + [('configuration', 1)])
+
+        self.assertEqual(self.default_output, self.output(stdout))
+
+    def test_success_with_bundle_name(self):
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        openMock = MagicMock(return_value=1)
+
+        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+            args = self.default_args.copy()
+            args.update({'bundle_name': 'test-name'})
+            conduct_load.load(MagicMock(**args))
+
+        openMock.assert_called_with(self.bundle_file, 'rb')
+        http_method.assert_called_with(self.default_url, files=[(file, value if file != 'bundleName' else 'test-name') for file, value in self.default_files])
 
         self.assertEqual(self.default_output, self.output(stdout))
 
@@ -119,7 +138,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         with patch('requests.post', http_method), patch('sys.stderr', stderr), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with("bundle.tgz", "rb")
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
@@ -128,19 +147,21 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             self.output(stderr))
 
     def test_failure_invalid_address(self):
-        http_method = self.raise_connection_error("test reason")
+        http_method = self.raise_connection_error('test reason')
         stderr = MagicMock()
         openMock = MagicMock(return_value=1)
 
         with patch('requests.post', http_method), patch('sys.stderr', stderr), patch('builtins.open', openMock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with("bundle.tgz", "rb")
+        openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
-            self.default_connection_error.format(self.default_args["host"], self.default_args["port"]),
+            self.default_connection_error.format(self.default_args['host'], self.default_args['port']),
             self.output(stderr))
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_path_to_bundle_name(self):
+        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-5ca1ab1e.zip'), 'bundle')
+        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle.zip'), 'bundle')
+        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-1.0.0-M2.zip'), 'bundle-1.0.0-M2')
