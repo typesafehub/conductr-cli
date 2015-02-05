@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock
 from requests.exceptions import ConnectionError, HTTPError
 
@@ -12,7 +13,7 @@ class CliTestCase():
                                     |ERROR: Make sure it can be accessed at {}:{}.
                                     |""")
 
-    def respond_with(self, status_code=200, text=""):
+    def respond_with(self, status_code=200, text=''):
         reasons = {
             200: 'OK',
             404: 'Not Found'
@@ -31,6 +32,10 @@ class CliTestCase():
         http_method = MagicMock(return_value=response_mock)
 
         return http_method
+
+    def respond_with_file_contents(self, filepath):
+        with open(os.path.join(os.path.dirname(__file__), filepath), 'r') as content_file:
+            return self.respond_with(text=content_file.read())
 
     def raise_connection_error(self, reason):
         return MagicMock(side_effect=ConnectionError(reason))

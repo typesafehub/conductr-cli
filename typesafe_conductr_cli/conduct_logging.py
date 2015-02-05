@@ -8,6 +8,10 @@ def error(message, *objs):
     print('ERROR: {}'.format(message.format(*objs)), file=sys.stderr)
 
 
+def warning(message, *objs):
+    print('WARNING: {}'.format(message.format(*objs)), file=sys.stdout)
+
+
 def connection_error(err, args):
     error('Unable to contact Typesafe ConductR.')
     error('Reason: {}'.format(err.args[0]))

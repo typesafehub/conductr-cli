@@ -26,6 +26,12 @@ def info(args):
     ]
     data.insert(0, {'id': 'ID', 'name': 'NAME', 'replications': '#REP', 'starting': '#STR', 'executions': '#RUN'})
 
+    column_widths = calc_column_widths(data)
+    for row in data:
+        print('{id: <{id_width}}{name: <{name_width}}{replications: <{replications_width}}{starting: <{starting_width}}{executions: <{executions_width}}'.format(**dict(row, **column_widths)))
+
+
+def calc_column_widths(data):
     padding = 2
     column_widths = {}
     for row in data:
@@ -34,6 +40,4 @@ def info(args):
             width_key = column + '_width'
             if (column_len > column_widths.get(width_key, 0)):
                 column_widths[width_key] = column_len
-
-    for row in data:
-        print('{id: <{id_width}}{name: <{name_width}}{replications: <{replications_width}}{starting: <{starting_width}}{executions: <{executions_width}}'.format(**dict(row, **column_widths)))
+    return column_widths
