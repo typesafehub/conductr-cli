@@ -3,7 +3,7 @@
 
 import argcomplete
 import argparse
-from typesafe_conductr_cli import conduct_info, conduct_load, conduct_run, conduct_stop, conduct_unload, conduct_version
+from typesafe_conductr_cli import conduct_info, conduct_load, conduct_run, conduct_services, conduct_stop, conduct_unload, conduct_version
 import os
 
 
@@ -43,14 +43,20 @@ def build_parser():
 
     # Sub-parser for `version` sub-command
     version_parser = subparsers.add_parser('version',
-                                           help='print version information')
+                                           help='print version')
     version_parser.set_defaults(func=conduct_version.version)
 
     # Sub-parser for `info` sub-command
     info_parser = subparsers.add_parser('info',
-                                        help='get information about one or all bundles')
+                                        help='print bundle information')
     add_default_arguments(info_parser)
     info_parser.set_defaults(func=conduct_info.info)
+
+    # Sub-parser for `services` sub-command
+    services_parser = subparsers.add_parser('services',
+                                            help='print service information')
+    add_default_arguments(services_parser)
+    services_parser.set_defaults(func=conduct_services.services)
 
     # Sub-parser for `load` sub-command
     load_parser = subparsers.add_parser('load',

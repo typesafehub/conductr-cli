@@ -20,6 +20,14 @@ class TestConduct(TestCase):
         self.assertEqual(args.port, 9999)
         self.assertEqual(args.verbose, False)
 
+    def test_parser_servies(self):
+        args = self.parser.parse_args('services --host 127.0.1.1 --port 9999'.split())
+
+        self.assertEqual(args.func.__name__, 'services')
+        self.assertEqual(args.host, '127.0.1.1')
+        self.assertEqual(args.port, 9999)
+        self.assertEqual(args.verbose, False)
+
     def test_parser_load(self):
         args = self.parser.parse_args('load --host 127.0.1.1 --port 9999 -v --nr-of-cpus 2 --memory 100 --disk-space 200 --name test-bundle --roles role1 role2 -- path-to-bundle path-to-conf'.split())
 
