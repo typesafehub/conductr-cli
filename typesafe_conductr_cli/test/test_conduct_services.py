@@ -7,7 +7,7 @@ from typesafe_conductr_cli import conduct_services
 class TestConductInfoCommand(TestCase, CliTestCase):
 
     default_args = {
-        'host': '127.0.0.1',
+        'ip': '127.0.0.1',
         'port': 9005,
         'verbose': False
     }
