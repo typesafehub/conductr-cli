@@ -7,14 +7,14 @@ from typesafe_conductr_cli import conduct_info, conduct_load, conduct_run, condu
 import os
 
 
-default_host = os.getenv('HOSTNAME', '127.0.0.1')
+default_ip = os.getenv('CONDUCTR_IP', '127.0.0.1')
 default_port = os.getenv('CONDUCTR_PORT', '9005')
 
 
-def add_host_and_port(sub_parser):
-    sub_parser.add_argument('-H', '--host',
-                            help='The optional ConductR host, defaults to $HOSTNAME or "127.0.0.1"',
-                            default=default_host)
+def add_ip_and_port(sub_parser):
+    sub_parser.add_argument('-i', '--ip',
+                            help='The optional ConductR IP, defaults to $CONDUCTR_IP or "127.0.0.1"',
+                            default=default_ip)
     sub_parser.add_argument('-p', '--port',
                             type=int,
                             help='The optional ConductR port, defaults to $CONDUCTR_PORT or "9005"',
@@ -30,7 +30,7 @@ def add_verbose(sub_parser):
 
 
 def add_default_arguments(sub_parser):
-    add_host_and_port(sub_parser)
+    add_ip_and_port(sub_parser)
     add_verbose(sub_parser)
 
 
@@ -78,7 +78,7 @@ def build_parser():
     load_parser.add_argument('--disk-space',
                              type=int,
                              required=True,
-                             help='The amount of disk space in bytes required to host an expanded bundle and configuration')
+                             help='The amount of disk space in bytes required to ip an expanded bundle and configuration')
     load_parser.add_argument('--roles',
                              nargs='*',
                              default=[],
@@ -127,8 +127,8 @@ def build_parser():
 
 def get_cli_parameters(args):
     parameters = ['']
-    if args.host != default_host:
-        parameters.append('--host {}'.format(args.host))
+    if args.ip != default_ip:
+        parameters.append('--ip {}'.format(args.ip))
     if args.port != int(default_port):
         parameters.append('--port {}'.format(args.port))
     return ' '.join(parameters)

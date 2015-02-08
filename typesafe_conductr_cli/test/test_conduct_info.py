@@ -7,7 +7,7 @@ from typesafe_conductr_cli import conduct_info
 class TestConductInfoCommand(TestCase, CliTestCase):
 
     default_args = {
-        'host': '127.0.0.1',
+        'ip': '127.0.0.1',
         'port': 9005,
         'verbose': False
     }
@@ -158,5 +158,5 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.default_connection_error.format(self.default_args['host'], self.default_args['port']),
+            self.default_connection_error.format(self.default_args['ip'], self.default_args['port']),
             self.output(stderr))

@@ -14,7 +14,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
                                     |""")
 
     default_args = {
-        'host': '127.0.0.1',
+        'ip': '127.0.0.1',
         'port': 9005,
         'verbose': False,
         'cli_parameters': '',
@@ -60,7 +60,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        cli_parameters = ' --host 127.0.1.1 --port 9006'
+        cli_parameters = ' --ip 127.0.1.1 --port 9006'
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
@@ -96,5 +96,5 @@ class TestConductStopCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            self.default_connection_error.format(self.default_args['host'], self.default_args['port']),
+            self.default_connection_error.format(self.default_args['ip'], self.default_args['port']),
             self.output(stderr))

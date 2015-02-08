@@ -96,9 +96,9 @@ stop                stop a abundle
 unload              unload a bundle
 ```
 
-Most sub-commands connect to a ConductR instance and therefore you have to specify its host and port;
-if not given, $HOSTNAME or "127.0.0.1" will be used for the host and 9005 for the port. You can specify
-the host via the `--host` option and the port via the `--port` option or use the `CONDUCTR_PORT` environment
+Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port;
+if not given, $CONDUCTR_IP or "127.0.0.1" will be used for the IP and 9005 for the port. You can specify
+the IP via the `--ip` option and the port via the `--port` option or use the `CONDUCTR_PORT` environment
 variable.
 
 Here's an example for loading a bundle:
@@ -127,12 +127,12 @@ test-lib/src/main/resources/sbt-typesafe-conductr-tester-1.0.0-e172570d3c0fb11f4
 test-lib/src/main/resources/configuration-d928496f2c561332621efd3663b9e13ca7608948983f44c9b9cf273b2036e155.tgz
 ```
 
-If you want to use an external ConductR host, you can use the `--host` and `--port` properties which default
-to `$HOSTNAME` or "127.0.0.1" and "9005" respectively, e.g.:
+If you want to use an external ConductR ip, you can use the `--ip` and `--port` properties which default
+to `$CONDUCTR_IP` or "127.0.0.1" and `$CONDUCTR_PORT` or "9005" respectively, e.g.:
 
 ``` bash
 conduct load \
---host $DOCKER_HOST_IP
+--ip $DOCKER_HOST_IP
 ...
 ```
 
