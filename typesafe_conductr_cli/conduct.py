@@ -108,7 +108,7 @@ def build_parser():
 
     # Sub-parser for `stop` sub-command
     stop_parser = subparsers.add_parser('stop',
-                                        help='stop a abundle')
+                                        help='stop a bundle')
     stop_parser.add_argument('bundle',
                              help='The ID of the bundle')
     add_default_arguments(stop_parser)

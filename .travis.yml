@@ -3,4 +3,4 @@ python:
   - "3.4"
 install:
   - "pip install ."
-script: python -m unittest discover
+script: python3 setup.py test
