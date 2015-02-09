@@ -62,6 +62,12 @@ Alternatively, if you have a Bash version 4.2 or later, you can activate global 
 activate-global-python-argcomplete --dest=/path/to/bash_completion.d
 ```
 
+If you are running zsh, execute the following command to enable autocomplete:
+
+```bash
+autoload bashcompinit && autoload compinit && bashcompinit && compinit && eval "$(register-python-argcomplete conduct)"
+```
+
 ### Running tests
 
 Execute the following command to run all defined tests:
