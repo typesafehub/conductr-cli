@@ -80,26 +80,6 @@ Execute the following command to run all defined tests:
 
     python3 setup.py test
 
-Releasing
-~~~~~~~~~
-
-Create a ``.pypirc`` file in your home directory with the following contents:
-
-.. code::
-
-    [pypi]
-    repository = https://pypi.python.org/pypi
-    username = <your-pypi-username>
-    password = <your-pypi-password>
-
-Set next project version in the ``setup.py`` file and PR the changes to GitHub.
-
-Ask `@2m`_ for a ``Maintainer`` role for ``typesafe-conductr-cli`` package in the PyPi repo. When granted build and upload source distribution to PyPi repository:
-
-.. code:: bash
-
-    python3 setup.py sdist upload -r pypi
-
 CLI Usage
 ~~~~~~~~~
 
