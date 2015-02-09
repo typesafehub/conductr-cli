@@ -9,7 +9,8 @@ class TestConductInfoCommand(TestCase, CliTestCase):
     default_args = {
         'ip': '127.0.0.1',
         'port': 9005,
-        'verbose': False
+        'verbose': False,
+        'long_ids': False
     }
 
     default_url = 'http://127.0.0.1:9005/bundles'
@@ -43,8 +44,8 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID                                NAME         #REP  #STR  #RUN
-                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle  1     0     0
+            self.strip_margin("""|ID       NAME         #REP  #STR  #RUN
+                                 |45e0c47  test-bundle  1     0     0
                                  |"""),
             self.output(stdout))
 
@@ -52,19 +53,19 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle-1" },
-                "bundleId": "running",
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [{"isStarted": true}],
                 "bundleInstallations": [1]
             },
             {
                 "attributes": { "bundleName": "test-bundle-2" },
-                "bundleId": "starting",
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c-c52e3f8d0c58d8aa29ae5e3d774c0e54",
                 "bundleExecutions": [{"isStarted": false}],
                 "bundleInstallations": [1]
             },
             {
                 "attributes": { "bundleName": "test-bundle-3" },
-                "bundleId": "stopped",
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
@@ -76,10 +77,10 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID        NAME           #REP  #STR  #RUN
-                                 |running   test-bundle-1  1     0     1
-                                 |starting  test-bundle-2  1     1     0
-                                 |stopped   test-bundle-3  1     0     0
+            self.strip_margin("""|ID               NAME           #REP  #STR  #RUN
+                                 |45e0c47          test-bundle-1  1     0     1
+                                 |45e0c47-c52e3f8  test-bundle-2  1     1     0
+                                 |45e0c47          test-bundle-3  1     0     0
                                  |"""),
             self.output(stdout))
 
@@ -143,9 +144,32 @@ class TestConductInfoCommand(TestCase, CliTestCase):
                                  |    ]
                                  |  }
                                  |]
-                                 |ID                                NAME           #REP  #STR  #RUN
-                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle-1  3     0     3
-                                 |c52e3f8d0c58d8aa29ae5e3d774c0e54  test-bundle-2  3     0     0
+                                 |ID       NAME           #REP  #STR  #RUN
+                                 |45e0c47  test-bundle-1  3     0     3
+                                 |c52e3f8  test-bundle-2  3     0     0
+                                 |"""),
+            self.output(stdout))
+
+    def test_long_ids(self):
+        http_method = self.respond_with(text="""[
+            {
+                "attributes": { "bundleName": "test-bundle" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                "bundleExecutions": [],
+                "bundleInstallations": [1]
+            }
+        ]""")
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+            args = self.default_args.copy()
+            args.update({'long_ids': True})
+            conduct_info.info(MagicMock(**args))
+
+        http_method.assert_called_with(self.default_url)
+        self.assertEqual(
+            self.strip_margin("""|ID                                NAME         #REP  #STR  #RUN
+                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle  1     0     0
                                  |"""),
             self.output(stdout))
 

@@ -29,9 +29,18 @@ def add_verbose(sub_parser):
                             action='store_true')
 
 
+def add_long_ids(sub_parser):
+    sub_parser.add_argument('--long-ids',
+                            help='Print long Bundle IDs',
+                            default=False,
+                            dest='long_ids',
+                            action='store_true')
+
+
 def add_default_arguments(sub_parser):
     add_ip_and_port(sub_parser)
     add_verbose(sub_parser)
+    add_long_ids(sub_parser)
 
 
 def build_parser():

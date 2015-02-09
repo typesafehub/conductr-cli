@@ -19,6 +19,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         'ip': '127.0.0.1',
         'port': 9005,
         'verbose': False,
+        'long_ids': False,
         'cli_parameters': '',
         'nr_of_cpus': 1,
         'memory': 200,
@@ -43,14 +44,13 @@ class TestConductLoadCommand(TestCase, CliTestCase):
     ]
 
     output_template = """|Bundle loaded.
-                         |Start bundle with: conduct run{} 45e0c477d3e5ea92aa8d85c0d8f3e25c
-                         |Unload bundle with: conduct unload{} 45e0c477d3e5ea92aa8d85c0d8f3e25c
-                         |Print ConductR info with: conduct info{}
+                         |Start bundle with: conduct run{params} {bundle_id}
+                         |Unload bundle with: conduct unload{params} {bundle_id}
+                         |Print ConductR info with: conduct info{params}
                          |"""
 
-    @property
-    def default_output(self):
-        return self.strip_margin(self.output_template.format(*[''] * 3))
+    def default_output(self, params='', bundle_id='45e0c47'):
+        return self.strip_margin(self.output_template.format(**{'params': params, 'bundle_id': bundle_id}))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -63,7 +63,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
-        self.assertEqual(self.default_output, self.output(stdout))
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def test_success_verbose(self):
         http_method = self.respond_with(200, self.default_response)
@@ -78,7 +78,22 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
-        self.assertEqual(self.default_response + self.default_output, self.output(stdout))
+        self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
+
+    def test_success_long_ids(self):
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        openMock = MagicMock(return_value=1)
+
+        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+            args = self.default_args.copy()
+            args.update({'long_ids': True})
+            conduct_load.load(MagicMock(**args))
+
+        openMock.assert_called_with(self.bundle_file, 'rb')
+        http_method.assert_called_with(self.default_url, files=self.default_files)
+
+        self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
     def test_success_custom_ip_port(self):
         http_method = self.respond_with(200, self.default_response)
@@ -95,7 +110,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
-            self.strip_margin(self.output_template.format(*[cli_parameters] * 3)),
+            self.default_output(params=cli_parameters),
             self.output(stdout))
 
     def test_success_with_configuration(self):
@@ -115,7 +130,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url, files=self.default_files + [('configuration', 1)])
 
-        self.assertEqual(self.default_output, self.output(stdout))
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def test_success_with_bundle_name(self):
         http_method = self.respond_with(200, self.default_response)
@@ -130,7 +145,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=[(file, value if file != 'bundleName' else 'test-name') for file, value in self.default_files])
 
-        self.assertEqual(self.default_output, self.output(stdout))
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def test_success_with_system(self):
         http_method = self.respond_with(200, self.default_response)
@@ -145,7 +160,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         openMock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=[(file, value if file != 'system' else 'test-system') for file, value in self.default_files])
 
-        self.assertEqual(self.default_output, self.output(stdout))
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def test_failure(self):
         http_method = self.respond_with(404)

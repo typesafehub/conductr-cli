@@ -17,6 +17,7 @@ class TestConductRunCommand(TestCase, CliTestCase):
         'ip': '127.0.0.1',
         'port': 9005,
         'verbose': False,
+        'long_ids': False,
         'cli_parameters': '',
         'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
         'scale': 3
@@ -25,13 +26,12 @@ class TestConductRunCommand(TestCase, CliTestCase):
     default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=3'
 
     output_template = """|Bundle run request sent.
-                         |Stop bundle with: conduct stop{} 45e0c477d3e5ea92aa8d85c0d8f3e25c
-                         |Print ConductR info with: conduct info{}
+                         |Stop bundle with: conduct stop{params} {bundle_id}
+                         |Print ConductR info with: conduct info{params}
                          |"""
 
-    @property
-    def default_output(self):
-        return self.strip_margin(self.output_template.format(*[''] * 2))
+    def default_output(self, params='', bundle_id='45e0c47'):
+        return self.strip_margin(self.output_template.format(**{'params': params, 'bundle_id': bundle_id}))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -42,7 +42,7 @@ class TestConductRunCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
 
-        self.assertEqual(self.default_output, self.output(stdout))
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def test_success_verbose(self):
         http_method = self.respond_with(200, self.default_response)
@@ -55,7 +55,20 @@ class TestConductRunCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
 
-        self.assertEqual(self.default_response + self.default_output, self.output(stdout))
+        self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
+
+    def test_success_long_ids(self):
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+
+        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+            args = self.default_args.copy()
+            args.update({'long_ids': True})
+            conduct_run.run(MagicMock(**args))
+
+        http_method.assert_called_with(self.default_url)
+
+        self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
     def test_success_with_configuration(self):
         http_method = self.respond_with(200, self.default_response)
@@ -70,7 +83,7 @@ class TestConductRunCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            self.strip_margin(self.output_template.format(*[cli_parameters] * 2)),
+            self.default_output(params=cli_parameters),
             self.output(stdout))
 
     def test_failure(self):

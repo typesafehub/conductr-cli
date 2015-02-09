@@ -24,12 +24,11 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
     default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c'
 
     output_template = """|Bundle unload request sent.
-                         |Print ConductR info with: conduct info{}
+                         |Print ConductR info with: conduct info{params}
                          |"""
 
-    @property
-    def default_output(self):
-        return self.strip_margin(self.output_template.format(''))
+    def default_output(self, params=''):
+        return self.strip_margin(self.output_template.format(**{'params': params}))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -40,7 +39,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
 
-        self.assertEqual(self.default_output, self.output(stdout))
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def test_success_verbose(self):
         http_method = self.respond_with(200, self.default_response)
@@ -53,7 +52,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
 
-        self.assertEqual(self.default_response + self.default_output, self.output(stdout))
+        self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
 
     def test_success_with_configuration(self):
         http_method = self.respond_with(200, self.default_response)
@@ -68,7 +67,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            self.strip_margin(self.output_template.format(cli_parameters)),
+            self.default_output(params=cli_parameters),
             self.output(stdout))
 
     def test_failure(self):
