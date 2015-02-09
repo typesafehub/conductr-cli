@@ -1,4 +1,4 @@
-|Build Status|
+|Build Status| |Latest Version|
 
 Command Line Interface (CLI) for Typesafe ConductR
 --------------------------------------------------
@@ -15,13 +15,13 @@ You may either install to all users:
 
 .. code:: bash
 
-    sudo pip3 install .
+    sudo pip3 install typesafe-conductr-cli
 
 ... or, and if you’re not using brew (there’s a problem with user installs as of the time writing this), install to the current user (make sure to have ``~/.local/bin`` in your PATH):
 
 .. code:: bash
 
-    pip3 install --user .
+    pip3 install --user typesafe-conductr-cli
 
 Install as a deb package
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -78,7 +78,27 @@ Execute the following command to run all defined tests:
 
 .. code:: bash
 
-    python3 -m unittest discover
+    python3 setup.py test
+
+Releasing
+~~~~~~~~~
+
+Create a ``.pypirc`` file in your home directory with the following contents:
+
+.. code::
+
+    [pypi]
+    repository = https://pypi.python.org/pypi
+    username = <your-pypi-username>
+    password = <your-pypi-password>
+
+Set next project version in the ``setup.py`` file and PR the changes to GitHub.
+
+Ask `@2m`_ for a ``Maintainer`` role for ``typesafe-conductr-cli`` package in the PyPi repo. When granted build and upload source distribution to PyPi repository:
+
+.. code:: bash
+
+    python3 setup.py sdist upload -r pypi
 
 CLI Usage
 ~~~~~~~~~
@@ -149,4 +169,9 @@ In both cases the source files are zipped and a SHA256 digest of the archive is 
 For pointers on command usage run ``shazar -h``.
 
 .. |Build Status| image:: https://travis-ci.org/typesafehub/typesafe-conductr-cli.png
-   :target: https://travis-ci.org/typesafehub/typesafe-conductr-cli
+    :target: https://travis-ci.org/typesafehub/typesafe-conductr-cli
+    :alt: Build Status
+.. |Latest Version| image:: https://pypip.in/version/typesafe-conductr-cli/badge.svg?style=flat
+    :target: https://pypi.python.org/pypi/typesafe-conductr-cli/
+    :alt: Latest Version
+.. _@2m: https://github.com/2m
