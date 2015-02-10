@@ -1,4 +1,4 @@
-from typesafe_conductr_cli import conduct_info, conduct_url, conduct_logging
+from typesafe_conductr_cli import bundle_id, conduct_info, conduct_url, conduct_logging
 import json
 import requests
 
@@ -20,7 +20,7 @@ def services(args):
             {
                 'protocol': endpoint['protocol'],
                 'service': str(endpoint['servicePort']) + endpoint['serviceName'],
-                'bundle_id': bundle['bundleId'],
+                'bundle_id': bundle['bundleId'] if args.long_ids else bundle_id.shorten(bundle['bundleId']),
                 'bundle_name': bundle['attributes']['bundleName'],
                 'status': 'Running' if execution['isStarted'] else 'Starting'
             },

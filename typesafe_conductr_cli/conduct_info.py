@@ -1,4 +1,4 @@
-from typesafe_conductr_cli import conduct_url, conduct_logging
+from typesafe_conductr_cli import bundle_id, conduct_url, conduct_logging
 import json
 import requests
 
@@ -17,7 +17,7 @@ def info(args):
 
     data = [
         {
-            'id': bundle['bundleId'],
+            'id': bundle['bundleId'] if args.long_ids else bundle_id.shorten(bundle['bundleId']),
             'name': bundle['attributes']['bundleName'],
             'replications': len(bundle['bundleInstallations']),
             'starting': sum([not execution['isStarted'] for execution in bundle['bundleExecutions']]),
