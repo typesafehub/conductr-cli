@@ -7,6 +7,35 @@
       "nrOfCpus": 1.0,
       "roles": []
     },
+    "bundleConfig": {
+      "endpoints": {
+        "comp1": {
+          "comp1-endp1": {
+            "protocol": "http",
+            "serviceName": "/comp1-endp1",
+            "servicePort": 8010
+          },
+          "comp1-endp2": {
+            "protocol": "http",
+            "serviceName": "/comp1-endp2",
+            "servicePort": 8011
+          }
+        },
+        "comp2": {
+          "comp2-endp1": {
+            "protocol": "http",
+            "serviceName": "/comp2-endp1",
+            "servicePort": 9010
+          },
+          "comp2-endp2": {
+            "protocol": "http",
+            "serviceName": "/comp2-endp2",
+            "servicePort": 9011
+          }
+        },
+        "status": {}
+      }
+    },
     "bundleDigest": "f804d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db",
     "bundleExecutions": [
       {
@@ -14,33 +43,21 @@
           "comp1": {
             "comp1-endp1": {
               "bindPort": 8000,
-              "hostPort": 8000,
-              "protocol": "http",
-              "serviceName": "/comp1-endp1",
-              "servicePort": 8010
+              "hostPort": 8000
             },
             "comp1-endp2": {
               "bindPort": 8001,
-              "hostPort": 8001,
-              "protocol": "http",
-              "serviceName": "/comp1-endp2",
-              "servicePort": 8011
+              "hostPort": 8001
             }
           },
           "comp2": {
             "comp2-endp1": {
               "bindPort": 9000,
-              "hostPort": 9000,
-              "protocol": "http",
-              "serviceName": "/comp2-endp1",
-              "servicePort": 9010
+              "hostPort": 9000
             },
             "comp2-endp2": {
               "bindPort": 9001,
-              "hostPort": 9001,
-              "protocol": "http",
-              "serviceName": "/comp2-endp2",
-              "servicePort": 9011
+              "hostPort": 9001
             }
           },
           "status": {}
@@ -75,6 +92,35 @@
       "nrOfCpus": 1.0,
       "roles": []
     },
+    "bundleConfig": {
+      "endpoints": {
+        "comp2": {
+          "comp2-endp1": {
+            "protocol": "http",
+            "serviceName": "/comp2-endp1",
+            "servicePort": 9010
+          },
+          "comp2-endp2": {
+            "protocol": "http",
+            "serviceName": "/comp2-endp2",
+            "servicePort": 6011
+          }
+        },
+        "comp3": {
+          "comp3-endp1": {
+            "protocol": "http",
+            "serviceName": "/comp3-endp1",
+            "servicePort": 7010
+          },
+          "comp3-endp2": {
+            "protocol": "http",
+            "serviceName": "/comp3-endp2",
+            "servicePort": 7011
+          }
+        },
+        "status": {}
+      }
+    },
     "bundleDigest": "6e4560ef252cd57322f595627c881c48b2f8bf98c3b6d08073c0b9b5db1e5068",
     "bundleExecutions": [
       {
@@ -82,33 +128,21 @@
           "comp2": {
             "comp2-endp1": {
               "bindPort": 6000,
-              "hostPort": 6000,
-              "protocol": "http",
-              "serviceName": "/comp2-endp1",
-              "servicePort": 6010
+              "hostPort": 6000
             },
             "comp2-endp2": {
               "bindPort": 6001,
-              "hostPort": 6001,
-              "protocol": "http",
-              "serviceName": "/comp2-endp2",
-              "servicePort": 6011
+              "hostPort": 6001
             }
           },
           "comp3": {
             "comp3-endp1": {
               "bindPort": 7000,
-              "hostPort": 7000,
-              "protocol": "http",
-              "serviceName": "/comp3-endp1",
-              "servicePort": 7010
+              "hostPort": 7000
             },
             "comp3-endp2": {
               "bindPort": 7001,
-              "hostPort": 7001,
-              "protocol": "http",
-              "serviceName": "/comp3-endp2",
-              "servicePort": 7011
+              "hostPort": 7001
             }
           },
           "status": {}

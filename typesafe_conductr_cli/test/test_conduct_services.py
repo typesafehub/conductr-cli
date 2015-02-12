@@ -28,13 +28,13 @@ class TestConductInfoCommand(TestCase, CliTestCase):
                                  |http   8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
                                  |http   8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
                                  |http   9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
-                                 |http   6010/comp2-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                                 |http   9010/comp2-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
                                  |http   9011/comp2-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
                                  |http   6011/comp2-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
                                  |http   7010/comp3-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
                                  |http   7011/comp3-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
                                  |
-                                 |WARNING: Multiple endpoints found for the following services: /comp2-endp1, /comp2-endp2
+                                 |WARNING: Multiple endpoints found for the following services: /comp2-endp2
                                  |WARNING: Service resolution for these services is undefined.
                                  |"""),
             self.output(stdout))
