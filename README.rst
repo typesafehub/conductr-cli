@@ -80,6 +80,16 @@ Execute the following command to run all defined tests:
 
     python3 setup.py test
 
+Releasing
+~~~~~~~~~
+
+CLI releases can be performed completely from the GitHub project page. Follow these steps to cut a release:
+
+1. Edit `setup.py` to contain the version to be released.
+2. Create a new release in GitHub `releases page`_.
+
+After CI build is finished for the tagged commit, new version will automatically be deployed to PyPi repository.
+
 CLI Usage
 ~~~~~~~~~
 
@@ -154,4 +164,4 @@ For pointers on command usage run ``shazar -h``.
 .. |Latest Version| image:: https://pypip.in/version/typesafe-conductr-cli/badge.svg?style=flat
     :target: https://pypi.python.org/pypi/typesafe-conductr-cli/
     :alt: Latest Version
-.. _@2m: https://github.com/2m
+.. _releases page: https://github.com/typesafehub/typesafe-conductr-cli/releases/new
