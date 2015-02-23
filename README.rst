@@ -85,7 +85,7 @@ Releasing
 
 CLI releases can be performed completely from the GitHub project page. Follow these steps to cut a release:
 
-1. Edit `setup.py` to contain the version to be released.
+1. Edit `typesafe_conductr_cli/__init__.py`_ file to contain the version to be released.
 2. Create a new release in GitHub `releases page`_.
 
 After CI build is finished for the tagged commit, new version will automatically be deployed to PyPi repository.
@@ -165,3 +165,4 @@ For pointers on command usage run ``shazar -h``.
     :target: https://pypi.python.org/pypi/typesafe-conductr-cli/
     :alt: Latest Version
 .. _releases page: https://github.com/typesafehub/typesafe-conductr-cli/releases/new
+.. _typesafe_conductr_cli/__init__.py: typesafe_conductr_cli/__init__.py

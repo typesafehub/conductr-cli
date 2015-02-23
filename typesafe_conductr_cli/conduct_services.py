@@ -10,7 +10,7 @@ def services(args):
 
     url = conduct_url.url('bundles', args)
     response = requests.get(url)
-    response.raise_for_status()
+    conduct_logging.raise_for_status_inc_3xx(response)
 
     if (args.verbose):
         conduct_logging.pretty_json(response.text)
@@ -34,7 +34,7 @@ def services(args):
         for component_name, endpoints in bundle['bundleConfig']['endpoints'].items()
         for endpoint_name, endpoint in endpoints.items()
     ]
-    data, services = [list(tuple) for tuple in zip(*sorted(data_and_services, key=lambda line: line[1]['name']))]
+    data, services = [list(tuple) for tuple in zip(*sorted(data_and_services, key=lambda line: line[1]['name']))] if len(data_and_services) > 0 else ([], [])
     data.insert(0, {'protocol': 'PROTO', 'service': 'SERVICE', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})
 
     def duplicates(service):

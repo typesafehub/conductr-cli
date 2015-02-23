@@ -1,5 +1,6 @@
 import json
 import sys
+from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError
 
 
@@ -16,6 +17,11 @@ def connection_error(err, args):
     error('Unable to contact Typesafe ConductR.')
     error('Reason: {}'.format(err.args[0]))
     error('Make sure it can be accessed at {}:{}.'.format(args[0].ip, args[0].port))
+
+
+def pretty_json(s):
+    s_json = json.loads(s)
+    print(json.dumps(s_json, sort_keys=True, indent=2))
 
 
 def handle_connection_error(func):
@@ -48,6 +54,11 @@ def handle_http_error(func):
     return handler
 
 
-def pretty_json(s):
-    s_json = json.loads(s)
-    print(json.dumps(s_json, sort_keys=True, indent=2))
+def raise_for_status_inc_3xx(response):
+    """
+    raise status when status code is 3xx
+    """
+
+    response.raise_for_status()
+    if response.status_code >= 300:
+        raise HTTPError(status_codes._codes[response.status_code], response=response)

@@ -136,9 +136,9 @@ def build_parser():
 
 def get_cli_parameters(args):
     parameters = ['']
-    if args.ip != default_ip:
+    if getattr(args, 'ip', default_ip) != default_ip:
         parameters.append('--ip {}'.format(args.ip))
-    if args.port != int(default_port):
+    if getattr(args, 'port', int(default_port)) != int(default_port):
         parameters.append('--port {}'.format(args.port))
     return ' '.join(parameters)
 
