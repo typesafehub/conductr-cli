@@ -165,4 +165,4 @@ For pointers on command usage run ``shazar -h``.
     :target: https://pypi.python.org/pypi/typesafe-conductr-cli/
     :alt: Latest Version
 .. _releases page: https://github.com/typesafehub/typesafe-conductr-cli/releases/new
-.. _typesafe_conductr_cli/__init__.py: typesafe_conductr_cli/__init__.py
+.. _typesafe_conductr_cli/__init__.py: https://github.com/typesafehub/typesafe-conductr-cli/blob/master/typesafe_conductr_cli/__init__.py
