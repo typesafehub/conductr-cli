@@ -1,3 +1,6 @@
+from typesafe_conductr_cli import __version__
+
+
 # `conduct version` command
 def version(args):
-    print('0.1.0')
+    print(__version__)

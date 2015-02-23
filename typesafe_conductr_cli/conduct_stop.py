@@ -11,7 +11,7 @@ def stop(args):
     path = 'bundles/{}?scale=0'.format(args.bundle)
     url = conduct_url.url(path, args)
     response = requests.put(url)
-    response.raise_for_status()
+    conduct_logging.raise_for_status_inc_3xx(response)
 
     if (args.verbose):
         conduct_logging.pretty_json(response.text)

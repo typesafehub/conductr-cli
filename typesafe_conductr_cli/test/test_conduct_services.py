@@ -15,6 +15,19 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
     default_url = 'http://127.0.0.1:9005/bundles'
 
+    def test_no_bundles(self):
+        http_method = self.respond_with(200, '[]')
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+            conduct_services.services(MagicMock(**self.default_args))
+
+        http_method.assert_called_with(self.default_url)
+        self.assertEqual(
+            self.strip_margin("""|PROTO  SERVICE  BUNDLE ID  BUNDLE NAME  STATUS
+                                 |"""),
+            self.output(stdout))
+
     def test_two_bundles_mult_components_endpoints(self):
         http_method = self.respond_with_file_contents('data/two_bundles.json')
         stdout = MagicMock()

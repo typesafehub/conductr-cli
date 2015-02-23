@@ -30,7 +30,7 @@ def load(args):
         files.append(('configuration', open(args.configuration, 'rb')))
 
     response = requests.post(url, files=files)
-    response.raise_for_status()
+    conduct_logging.raise_for_status_inc_3xx(response)
 
     if (args.verbose):
         conduct_logging.pretty_json(response.text)

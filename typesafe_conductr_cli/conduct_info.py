@@ -10,7 +10,7 @@ def info(args):
 
     url = conduct_url.url('bundles', args)
     response = requests.get(url)
-    response.raise_for_status()
+    conduct_logging.raise_for_status_inc_3xx(response)
 
     if (args.verbose):
         conduct_logging.pretty_json(response.text)

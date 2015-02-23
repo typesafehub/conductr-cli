@@ -10,7 +10,7 @@ def unload(args):
     path = 'bundles/{}'.format(args.bundle)
     url = conduct_url.url(path, args)
     response = requests.delete(url)
-    response.raise_for_status()
+    conduct_logging.raise_for_status_inc_3xx(response)
 
     if (args.verbose):
         conduct_logging.pretty_json(response.text)
