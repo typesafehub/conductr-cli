@@ -31,8 +31,7 @@ def services(args):
         )
         for bundle in json.loads(response.text)
         for execution in bundle['bundleExecutions']
-        for component_name, endpoints in bundle['bundleConfig']['endpoints'].items()
-        for endpoint_name, endpoint in endpoints.items()
+        for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items()
     ]
     data, services = [list(tuple) for tuple in zip(*sorted(data_and_services, key=lambda line: line[1]['name']))] if len(data_and_services) > 0 else ([], [])
     data.insert(0, {'protocol': 'PROTO', 'service': 'SERVICE', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})

@@ -9,58 +9,48 @@
     },
     "bundleConfig": {
       "endpoints": {
-        "comp1": {
-          "comp1-endp1": {
-            "protocol": "http",
-            "serviceName": "/comp1-endp1",
-            "servicePort": 8010
-          },
-          "comp1-endp2": {
-            "protocol": "http",
-            "serviceName": "/comp1-endp2",
-            "servicePort": 8011
-          }
+        "comp1-endp1": {
+          "protocol": "http",
+          "serviceName": "/comp1-endp1",
+          "servicePort": 8010
         },
-        "comp2": {
-          "comp2-endp1": {
-            "protocol": "http",
-            "serviceName": "/comp2-endp1",
-            "servicePort": 9010
-          },
-          "comp2-endp2": {
-            "protocol": "http",
-            "serviceName": "/comp2-endp2",
-            "servicePort": 9011
-          }
+        "comp1-endp2": {
+          "protocol": "http",
+          "serviceName": "/comp1-endp2",
+          "servicePort": 8011
         },
-        "status": {}
+        "comp2-endp1": {
+          "protocol": "http",
+          "serviceName": "/comp2-endp1",
+          "servicePort": 9010
+        },
+        "comp2-endp2": {
+          "protocol": "http",
+          "serviceName": "/comp2-endp2",
+          "servicePort": 9011
+        }
       }
     },
     "bundleDigest": "f804d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db",
     "bundleExecutions": [
       {
         "endpoints": {
-          "comp1": {
-            "comp1-endp1": {
-              "bindPort": 8000,
-              "hostPort": 8000
-            },
-            "comp1-endp2": {
-              "bindPort": 8001,
-              "hostPort": 8001
-            }
+          "comp1-endp1": {
+            "bindPort": 8000,
+            "hostPort": 8000
           },
-          "comp2": {
-            "comp2-endp1": {
-              "bindPort": 9000,
-              "hostPort": 9000
-            },
-            "comp2-endp2": {
-              "bindPort": 9001,
-              "hostPort": 9001
-            }
+          "comp1-endp2": {
+            "bindPort": 8001,
+            "hostPort": 8001
           },
-          "status": {}
+          "comp2-endp1": {
+            "bindPort": 9000,
+            "hostPort": 9000
+          },
+          "comp2-endp2": {
+            "bindPort": 9001,
+            "hostPort": 9001
+          }
         },
         "host": "172.17.0.4",
         "isStarted": false
