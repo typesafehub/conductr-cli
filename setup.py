@@ -17,7 +17,14 @@ setup(
         ],
     },
 
-    install_requires=['requests>=2.3.0', 'argcomplete>=0.8.1'],
+    install_requires=[
+        'requests>=2.3.0',
+        'argcomplete>=0.8.1',
+        'pyhocon3==0.2.0'
+    ],
+    dependency_links=[
+        'http://github.com/2m/pyhocon/tarball/wip-pyhocon3#egg=pyhocon3-0.2.0'
+    ],
     test_suite='typesafe_conductr_cli.test',
 
     license='Apache 2',

@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase
+from typesafe_conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from typesafe_conductr_cli import conduct_services
 
 
@@ -24,8 +24,8 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|PROTO  SERVICE  BUNDLE ID  BUNDLE NAME  STATUS
-                                 |"""),
+            strip_margin("""|PROTO  SERVICE  BUNDLE ID  BUNDLE NAME  STATUS
+                            |"""),
             self.output(stdout))
 
     def test_two_bundles_mult_components_endpoints(self):
@@ -37,19 +37,19 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|PROTO  SERVICE           BUNDLE ID  BUNDLE NAME                   STATUS
-                                 |http   8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
-                                 |http   8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
-                                 |http   9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
-                                 |http   9010/comp2-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                                 |http   9011/comp2-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
-                                 |http   6011/comp2-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                                 |http   7010/comp3-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                                 |http   7011/comp3-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                                 |
-                                 |WARNING: Multiple endpoints found for the following services: /comp2-endp2
-                                 |WARNING: Service resolution for these services is undefined.
-                                 |"""),
+            strip_margin("""|PROTO  SERVICE           BUNDLE ID  BUNDLE NAME                   STATUS
+                            |http   8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |http   8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |http   9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |http   9010/comp2-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |http   9011/comp2-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |http   6011/comp2-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |http   7010/comp3-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |http   7011/comp3-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |
+                            |WARNING: Multiple endpoints found for the following services: /comp2-endp2
+                            |WARNING: Service resolution for these services is undefined.
+                            |"""),
             self.output(stdout))
 
     def test_one_bundle_starting(self):
@@ -61,12 +61,12 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|PROTO  SERVICE           BUNDLE ID  BUNDLE NAME                  STATUS
-                                 |http   8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0  Starting
-                                 |http   8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0  Starting
-                                 |http   9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0  Starting
-                                 |http   9011/comp2-endp2  f804d64    multi-comp-multi-endp-1.0.0  Starting
-                                 |"""),
+            strip_margin("""|PROTO  SERVICE           BUNDLE ID  BUNDLE NAME                  STATUS
+                            |http   8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0  Starting
+                            |http   8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0  Starting
+                            |http   9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0  Starting
+                            |http   9011/comp2-endp2  f804d64    multi-comp-multi-endp-1.0.0  Starting
+                            |"""),
             self.output(stdout))
 
     def test_one_bundle_starting_long_ids(self):
@@ -80,10 +80,10 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|PROTO  SERVICE           BUNDLE ID                         BUNDLE NAME                  STATUS
-                                 |http   8010/comp1-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                                 |http   8011/comp1-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                                 |http   9010/comp2-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                                 |http   9011/comp2-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                                 |"""),
+            strip_margin("""|PROTO  SERVICE           BUNDLE ID                         BUNDLE NAME                  STATUS
+                            |http   8010/comp1-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                            |http   8011/comp1-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                            |http   9010/comp2-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                            |http   9011/comp2-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                            |"""),
             self.output(stdout))

@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase
+from typesafe_conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from typesafe_conductr_cli import conduct_unload
 
 
@@ -8,10 +8,10 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
 
     @property
     def default_response(self):
-        return self.strip_margin("""|{
-                                    |  "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
-                                    |}
-                                    |""")
+        return strip_margin("""|{
+                               |  "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
+                               |}
+                               |""")
 
     default_args = {
         'ip': '127.0.0.1',
@@ -28,7 +28,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
                          |"""
 
     def default_output(self, params=''):
-        return self.strip_margin(self.output_template.format(**{'params': params}))
+        return strip_margin(self.output_template.format(**{'params': params}))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -80,8 +80,8 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            self.strip_margin("""|ERROR: 404 Not Found
-                                 |"""),
+            strip_margin("""|ERROR: 404 Not Found
+                            |"""),
             self.output(stderr))
 
     def test_failure_invalid_address(self):

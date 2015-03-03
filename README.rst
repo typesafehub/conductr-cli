@@ -126,25 +126,7 @@ Here’s an example for loading a bundle:
 
 .. code:: bash
 
-    conduct load \
-      --nr-of-cpus 2 \
-      --memory 104857600 \
-      --disk-space 104857600 \
-      --roles web-server \
-      -- test-lib/src/main/resources/sbt-typesafe-conductr-tester-1.0.0-e172570d3c0fb11f4f9dbb8de519df58dcb490799f525bab43757f291e1d104d.tgz
-
-Notice that in this example it’s necessary to separate the bundle from the values of the ``--roles`` option with ``--``, else the bundle would be treated as another role and hence the bundle itself would be missing.
-
-In other cases, e.g. if there are no roles given or if the bundle doesn’t come directly after the roles, this is not needed, like in the following example where an additional configuration is loaded:
-
-.. code:: bash
-
-    conduct load \
-      --nr-of-cpus 2 \
-      --memory 104857600 \
-      --disk-space 104857600 \
-      test-lib/src/main/resources/sbt-typesafe-conductr-tester-1.0.0-e172570d3c0fb11f4f9dbb8de519df58dcb490799f525bab43757f291e1d104d.tgz \
-      test-lib/src/main/resources/configuration-d928496f2c561332621efd3663b9e13ca7608948983f44c9b9cf273b2036e155.tgz
+    conduct load sbt-typesafe-conductr-tester-1.0.0-e172570d3c0fb11f4f9dbb8de519df58dcb490799f525bab43757f291e1d104d.zip
 
 shazar
 ^^^^^^

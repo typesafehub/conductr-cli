@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase
+from typesafe_conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from typesafe_conductr_cli import conduct_info
 
 
@@ -24,8 +24,8 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID  NAME  #REP  #STR  #RUN
-                                 |"""),
+            strip_margin("""|ID  NAME  #REP  #STR  #RUN
+                            |"""),
             self.output(stdout))
 
     def test_stopped_bundle(self):
@@ -44,9 +44,9 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID       NAME         #REP  #STR  #RUN
-                                 |45e0c47  test-bundle  1     0     0
-                                 |"""),
+            strip_margin("""|ID       NAME         #REP  #STR  #RUN
+                            |45e0c47  test-bundle  1     0     0
+                            |"""),
             self.output(stdout))
 
     def test_one_running_one_starting_one_stopped(self):
@@ -77,11 +77,11 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID               NAME           #REP  #STR  #RUN
-                                 |45e0c47          test-bundle-1  1     0     1
-                                 |45e0c47-c52e3f8  test-bundle-2  1     1     0
-                                 |45e0c47          test-bundle-3  1     0     0
-                                 |"""),
+            strip_margin("""|ID               NAME           #REP  #STR  #RUN
+                            |45e0c47          test-bundle-1  1     0     1
+                            |45e0c47-c52e3f8  test-bundle-2  1     1     0
+                            |45e0c47          test-bundle-3  1     0     0
+                            |"""),
             self.output(stdout))
 
     def test_one_running_one_stopped_verbose(self):
@@ -108,46 +108,46 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|[
-                                 |  {
-                                 |    "attributes": {
-                                 |      "bundleName": "test-bundle-1"
-                                 |    },
-                                 |    "bundleExecutions": [
-                                 |      {
-                                 |        "isStarted": true
-                                 |      },
-                                 |      {
-                                 |        "isStarted": true
-                                 |      },
-                                 |      {
-                                 |        "isStarted": true
-                                 |      }
-                                 |    ],
-                                 |    "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
-                                 |    "bundleInstallations": [
-                                 |      1,
-                                 |      2,
-                                 |      3
-                                 |    ]
-                                 |  },
-                                 |  {
-                                 |    "attributes": {
-                                 |      "bundleName": "test-bundle-2"
-                                 |    },
-                                 |    "bundleExecutions": [],
-                                 |    "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54",
-                                 |    "bundleInstallations": [
-                                 |      1,
-                                 |      2,
-                                 |      3
-                                 |    ]
-                                 |  }
-                                 |]
-                                 |ID       NAME           #REP  #STR  #RUN
-                                 |45e0c47  test-bundle-1  3     0     3
-                                 |c52e3f8  test-bundle-2  3     0     0
-                                 |"""),
+            strip_margin("""|[
+                            |  {
+                            |    "attributes": {
+                            |      "bundleName": "test-bundle-1"
+                            |    },
+                            |    "bundleExecutions": [
+                            |      {
+                            |        "isStarted": true
+                            |      },
+                            |      {
+                            |        "isStarted": true
+                            |      },
+                            |      {
+                            |        "isStarted": true
+                            |      }
+                            |    ],
+                            |    "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                            |    "bundleInstallations": [
+                            |      1,
+                            |      2,
+                            |      3
+                            |    ]
+                            |  },
+                            |  {
+                            |    "attributes": {
+                            |      "bundleName": "test-bundle-2"
+                            |    },
+                            |    "bundleExecutions": [],
+                            |    "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54",
+                            |    "bundleInstallations": [
+                            |      1,
+                            |      2,
+                            |      3
+                            |    ]
+                            |  }
+                            |]
+                            |ID       NAME           #REP  #STR  #RUN
+                            |45e0c47  test-bundle-1  3     0     3
+                            |c52e3f8  test-bundle-2  3     0     0
+                            |"""),
             self.output(stdout))
 
     def test_long_ids(self):
@@ -168,9 +168,9 @@ class TestConductInfoCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            self.strip_margin("""|ID                                NAME         #REP  #STR  #RUN
-                                 |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle  1     0     0
-                                 |"""),
+            strip_margin("""|ID                                NAME         #REP  #STR  #RUN
+                            |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle  1     0     0
+                            |"""),
             self.output(stdout))
 
     def test_failure_invalid_address(self):
