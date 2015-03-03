@@ -1,4 +1,4 @@
-from typesafe_conductr_cli import bundle_id, conduct_url, conduct_logging
+from typesafe_conductr_cli import bundle_utils, conduct_url, conduct_logging
 import json
 import os
 import re
@@ -36,7 +36,7 @@ def load(args):
         conduct_logging.pretty_json(response.text)
 
     response_json = json.loads(response.text)
-    bundleId = response_json['bundleId'] if args.long_ids else bundle_id.shorten(response_json['bundleId'])
+    bundleId = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     print('Bundle loaded.')
     print('Start bundle with: conduct run{} {}'.format(args.cli_parameters, bundleId))
