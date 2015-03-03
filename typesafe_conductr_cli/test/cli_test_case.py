@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 from unittest.mock import MagicMock
 from requests.exceptions import ConnectionError, HTTPError
 
@@ -8,10 +10,10 @@ class CliTestCase():
 
     @property
     def default_connection_error(self):
-        return self.strip_margin("""|ERROR: Unable to contact Typesafe ConductR.
-                                    |ERROR: Reason: test reason
-                                    |ERROR: Make sure it can be accessed at {}:{}.
-                                    |""")
+        return strip_margin("""|ERROR: Unable to contact Typesafe ConductR.
+                               |ERROR: Reason: test reason
+                               |ERROR: Make sure it can be accessed at {}:{}.
+                               |""")
 
     def respond_with(self, status_code=200, text=''):
         reasons = {
@@ -43,5 +45,22 @@ class CliTestCase():
     def output(self, logger):
         return ''.join([args[0].rstrip(' ') for name, args, kwargs in logger.method_calls])
 
-    def strip_margin(self, string, marginChar='|'):
-        return '\n'.join([line[line.index(marginChar) + 1:] for line in string.split('\n')])
+
+def strip_margin(string, marginChar='|'):
+    return '\n'.join([line[line.index(marginChar) + 1:] for line in string.split('\n')])
+
+
+def create_temp_bundle(bundle_conf):
+    tmpdir = tempfile.mkdtemp()
+
+    unpacked = os.path.join(tmpdir, 'unpacked')
+    os.makedirs(unpacked)
+    basedir = os.path.join(unpacked, 'bundle-1.0.0')
+    os.makedirs(basedir)
+
+    with open(os.path.join(basedir, 'bundle.conf'), 'w') as file:
+        file.write(bundle_conf)
+    with open(os.path.join(basedir, 'password.txt'), 'w') as file:
+        file.write('monkey')
+
+    return (tmpdir, shutil.make_archive(os.path.join(tmpdir, 'bundle'), 'zip', unpacked, 'bundle-1.0.0'))

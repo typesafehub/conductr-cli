@@ -1,5 +1,6 @@
 import json
 import sys
+from pyhocon.exceptions import ConfigException
 from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError
 
@@ -46,6 +47,21 @@ def handle_http_error(func):
             error('{} {}', err.response.status_code, err.response.reason)
             if err.response.text != '':
                 error(err.response.text)
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_invalid_config(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ConfigException as err:
+            error('Unable to parse bundle.conf.')
+            error('{}.', err.args[0])
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.

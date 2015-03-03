@@ -76,22 +76,6 @@ def build_parser():
                              nargs='?',
                              default=None,
                              help='The optional configuration for the bundle')
-    load_parser.add_argument('--nr-of-cpus',
-                             type=int,
-                             required=True,
-                             help='The number of cpus required to run the bundle')
-    load_parser.add_argument('--memory',
-                             type=int,
-                             required=True,
-                             help='The amount of memory in bytes required to run the bundle')
-    load_parser.add_argument('--disk-space',
-                             type=int,
-                             required=True,
-                             help='The amount of disk space in bytes required to ip an expanded bundle and configuration')
-    load_parser.add_argument('--roles',
-                             nargs='*',
-                             default=[],
-                             help='The optional roles of cluster nodes that this bundle can be deployed to, defaults to all roles')
     load_parser.add_argument('--name',
                              default=None,
                              dest='bundle_name',

@@ -1,19 +1,30 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase
+from typesafe_conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, strip_margin
 from typesafe_conductr_cli import conduct_load
+import shutil
 
 
 class TestConductLoadCommand(TestCase, CliTestCase):
 
     @property
     def default_response(self):
-        return self.strip_margin("""|{
-                                    |  "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
-                                    |}
-                                    |""")
+        return strip_margin("""|{
+                               |  "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
+                               |}
+                               |""")
 
-    bundle_file = 'bundle-abc123.zip'
+    nr_of_cpus = 1.0
+    memory = 200
+    disk_space = 100
+    roles = ['web-server']
+
+    tmpdir, bundle_file = create_temp_bundle(
+        strip_margin("""|nrOfCpus   = {}
+                        |memory     = {}
+                        |diskSpace  = {}
+                        |roles      = [{}]
+                        |""").format(nr_of_cpus, memory, disk_space, ', '.join(roles)))
 
     default_args = {
         'ip': '127.0.0.1',
@@ -21,10 +32,6 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         'verbose': False,
         'long_ids': False,
         'cli_parameters': '',
-        'nr_of_cpus': 1,
-        'memory': 200,
-        'disk_space': False,
-        'roles': ['role1, role2'],
         'bundle_name': None,
         'bundle': bundle_file,
         'configuration': None,
@@ -34,10 +41,10 @@ class TestConductLoadCommand(TestCase, CliTestCase):
     default_url = 'http://127.0.0.1:9005/bundles'
 
     default_files = [
-        ('nrOfCpus', '1'),
-        ('memory', '200'),
-        ('diskSpace', 'False'),
-        ('roles', 'role1, role2'),
+        ('nrOfCpus', str(nr_of_cpus)),
+        ('memory', str(memory)),
+        ('diskSpace', str(disk_space)),
+        ('roles', ' '.join(roles)),
         ('bundleName', 'bundle'),
         ('system', 'bundle'),
         ('bundle', 1)
@@ -49,8 +56,12 @@ class TestConductLoadCommand(TestCase, CliTestCase):
                          |Print ConductR info with: conduct info{params}
                          |"""
 
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmpdir)
+
     def default_output(self, params='', bundle_id='45e0c47'):
-        return self.strip_margin(self.output_template.format(**{'params': params, 'bundle_id': bundle_id}))
+        return strip_margin(self.output_template.format(**{'params': params, 'bundle_id': bundle_id}))
 
     def test_success(self):
         http_method = self.respond_with(200, self.default_response)
@@ -174,8 +185,8 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
-            self.strip_margin("""|ERROR: 404 Not Found
-                                 |"""),
+            strip_margin("""|ERROR: 404 Not Found
+                            |"""),
             self.output(stderr))
 
     def test_failure_invalid_address(self):
@@ -192,6 +203,117 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         self.assertEqual(
             self.default_connection_error.format(self.default_args['ip'], self.default_args['port']),
             self.output(stderr))
+
+    def test_failure_no_nr_of_cpus(self):
+        stderr = MagicMock()
+
+        tmpdir, bundle_file = create_temp_bundle(
+            strip_margin("""|memory     = {}
+                            |diskSpace  = {}
+                            |roles      = [{}]
+                            |""").format(self.memory, self.disk_space, ', '.join(self.roles)))
+
+        with patch('sys.stderr', stderr):
+            args = self.default_args.copy()
+            args.update({'bundle': bundle_file})
+            conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            strip_margin("""|ERROR: Unable to parse bundle.conf.
+                            |ERROR: No configuration setting found for key nrOfCpus.
+                            |"""),
+            self.output(stderr))
+
+        shutil.rmtree(tmpdir)
+
+    def test_failure_no_memory(self):
+        stderr = MagicMock()
+
+        tmpdir, bundle_file = create_temp_bundle(
+            strip_margin("""|nrOfCpus   = {}
+                            |diskSpace  = {}
+                            |roles      = [{}]
+                            |""").format(self.nr_of_cpus, self.disk_space, ', '.join(self.roles)))
+
+        with patch('sys.stderr', stderr):
+            args = self.default_args.copy()
+            args.update({'bundle': bundle_file})
+            conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            strip_margin("""|ERROR: Unable to parse bundle.conf.
+                            |ERROR: No configuration setting found for key memory.
+                            |"""),
+            self.output(stderr))
+
+        shutil.rmtree(tmpdir)
+
+    def test_failure_no_disk_space(self):
+        stderr = MagicMock()
+
+        tmpdir, bundle_file = create_temp_bundle(
+            strip_margin("""|nrOfCpus   = {}
+                            |memory     = {}
+                            |roles      = [{}]
+                            |""").format(self.nr_of_cpus, self.memory, ', '.join(self.roles)))
+
+        with patch('sys.stderr', stderr):
+            args = self.default_args.copy()
+            args.update({'bundle': bundle_file})
+            conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            strip_margin("""|ERROR: Unable to parse bundle.conf.
+                            |ERROR: No configuration setting found for key diskSpace.
+                            |"""),
+            self.output(stderr))
+
+        shutil.rmtree(tmpdir)
+
+    def test_failure_no_roles(self):
+        stderr = MagicMock()
+
+        tmpdir, bundle_file = create_temp_bundle(
+            strip_margin("""|nrOfCpus   = {}
+                            |memory     = {}
+                            |diskSpace  = {}
+                            |""").format(self.nr_of_cpus, self.memory, self.disk_space))
+
+        with patch('sys.stderr', stderr):
+            args = self.default_args.copy()
+            args.update({'bundle': bundle_file})
+            conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            strip_margin("""|ERROR: Unable to parse bundle.conf.
+                            |ERROR: No configuration setting found for key roles.
+                            |"""),
+            self.output(stderr))
+
+        shutil.rmtree(tmpdir)
+
+    def test_failure_roles_not_a_list(self):
+        stderr = MagicMock()
+
+        tmpdir, bundle_file = create_temp_bundle(
+            strip_margin("""|nrOfCpus   = {}
+                            |memory     = {}
+                            |diskSpace  = {}
+                            |roles      = {}
+                            |""").format(self.nr_of_cpus, self.memory, self.disk_space, '-'.join(self.roles)))
+
+        with patch('sys.stderr', stderr):
+            args = self.default_args.copy()
+            args.update({'bundle': bundle_file})
+            conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            strip_margin("""|ERROR: Unable to parse bundle.conf.
+                            |ERROR: roles has type 'str' rather than 'list'.
+                            |"""),
+            self.output(stderr))
+
+        shutil.rmtree(tmpdir)
 
     def test_path_to_bundle_name(self):
         self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-5ca1ab1e.zip'), 'bundle')

@@ -1,3 +1,4 @@
+from pyhocon import ConfigFactory
 from typesafe_conductr_cli import bundle_utils, conduct_url, conduct_logging
 import json
 import os
@@ -7,6 +8,7 @@ import requests
 
 @conduct_logging.handle_connection_error
 @conduct_logging.handle_http_error
+@conduct_logging.handle_invalid_config
 def load(args):
     """`conduct load` command"""
 
@@ -16,12 +18,14 @@ def load(args):
     if args.system is None:
         args.system = path_to_bundle_name(args.bundle)
 
+    bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(args.bundle))
+
     url = conduct_url.url('bundles', args)
     files = [
-        ('nrOfCpus', str(args.nr_of_cpus)),
-        ('memory', str(args.memory)),
-        ('diskSpace', str(args.disk_space)),
-        ('roles', ' '.join(args.roles)),
+        ('nrOfCpus', bundle_conf.get_string('nrOfCpus')),
+        ('memory', bundle_conf.get_string('memory')),
+        ('diskSpace', bundle_conf.get_string('diskSpace')),
+        ('roles', ' '.join(bundle_conf.get_list('roles'))),
         ('bundleName', args.bundle_name),
         ('system', args.system),
         ('bundle', open(args.bundle, 'rb'))
