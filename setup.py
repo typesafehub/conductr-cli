@@ -20,7 +20,7 @@ setup(
     install_requires=[
         'requests>=2.3.0',
         'argcomplete>=0.8.1',
-        'pyhocon3==0.2.1'
+        'pyhocon==0.2.1'
     ],
     test_suite='typesafe_conductr_cli.test',
 
