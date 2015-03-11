@@ -50,7 +50,7 @@ def strip_margin(string, marginChar='|'):
     return '\n'.join([line[line.index(marginChar) + 1:] for line in string.split('\n')])
 
 
-def create_temp_bundle(bundle_conf):
+def create_temp_bundle_with_contents(contents):
     tmpdir = tempfile.mkdtemp()
 
     unpacked = os.path.join(tmpdir, 'unpacked')
@@ -58,9 +58,12 @@ def create_temp_bundle(bundle_conf):
     basedir = os.path.join(unpacked, 'bundle-1.0.0')
     os.makedirs(basedir)
 
-    with open(os.path.join(basedir, 'bundle.conf'), 'w') as file:
-        file.write(bundle_conf)
-    with open(os.path.join(basedir, 'password.txt'), 'w') as file:
-        file.write('monkey')
+    for name, content in contents.items():
+        with open(os.path.join(basedir, name), 'w') as file:
+            file.write(content)
 
     return (tmpdir, shutil.make_archive(os.path.join(tmpdir, 'bundle'), 'zip', unpacked, 'bundle-1.0.0'))
+
+
+def create_temp_bundle(bundle_conf):
+    return create_temp_bundle_with_contents({'bundle.conf': bundle_conf, 'password.txt': 'monkey'})

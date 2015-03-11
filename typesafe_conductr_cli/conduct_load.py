@@ -9,8 +9,15 @@ import requests
 @conduct_logging.handle_connection_error
 @conduct_logging.handle_http_error
 @conduct_logging.handle_invalid_config
+@conduct_logging.handle_no_file
 def load(args):
     """`conduct load` command"""
+
+    if not os.path.isfile(args.bundle):
+        raise FileNotFoundError(args.bundle)
+
+    if args.configuration is not None and not os.path.isfile(args.configuration):
+        raise FileNotFoundError(args.configuration)
 
     if args.bundle_name is None:
         args.bundle_name = path_to_bundle_name(args.bundle)

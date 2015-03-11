@@ -70,6 +70,20 @@ def handle_invalid_config(func):
     return handler
 
 
+def handle_no_file(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except FileNotFoundError as err:
+            error('File not found: {}', err.args[0])
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
 def raise_for_status_inc_3xx(response):
     """
     raise status when status code is 3xx

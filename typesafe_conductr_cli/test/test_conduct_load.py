@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, strip_margin
+from typesafe_conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, create_temp_bundle_with_contents, strip_margin
 from typesafe_conductr_cli import conduct_load
 import shutil
 
@@ -129,14 +129,18 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         stdout = MagicMock()
         openMock = MagicMock(return_value=1)
 
+        tmpdir, config_file = create_temp_bundle_with_contents({
+            'config.sh': 'echo configuring'
+        })
+
         with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
             args = self.default_args.copy()
-            args.update({'configuration': 'configuration.tgz'})
+            args.update({'configuration': config_file})
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
             openMock.call_args_list,
-            [call(self.bundle_file, 'rb'), call('configuration.tgz', 'rb')]
+            [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
         http_method.assert_called_with(self.default_url, files=self.default_files + [('configuration', 1)])
@@ -314,6 +318,32 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             self.output(stderr))
 
         shutil.rmtree(tmpdir)
+
+    def test_failure_no_bundle(self):
+        stderr = MagicMock()
+
+        with patch('sys.stderr', stderr):
+            args = self.default_args.copy()
+            args.update({'bundle': 'no_such.bundle'})
+            conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            strip_margin("""|ERROR: File not found: no_such.bundle
+                            |"""),
+            self.output(stderr))
+
+    def test_failure_no_configuration(self):
+        stderr = MagicMock()
+
+        with patch('sys.stderr', stderr):
+            args = self.default_args.copy()
+            args.update({'configuration': 'no_such.conf'})
+            conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            strip_margin("""|ERROR: File not found: no_such.conf
+                            |"""),
+            self.output(stderr))
 
     def test_path_to_bundle_name(self):
         self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-5ca1ab1e.zip'), 'bundle')
