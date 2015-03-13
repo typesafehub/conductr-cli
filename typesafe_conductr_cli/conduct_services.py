@@ -41,9 +41,10 @@ def services(args):
 
     duplicate_services = sorted(set([service['name'] for service in services if len(duplicates(service)) > 0]))
 
-    column_widths = conduct_info.calc_column_widths(data)
+    padding = 2
+    column_widths = dict(conduct_info.calc_column_widths(data), **{'padding': ' ' * padding})
     for row in data:
-        print('{protocol: <{protocol_width}}{service: <{service_width}}{bundle_id: <{bundle_id_width}}{bundle_name: <{bundle_name_width}}{status: <{status_width}}'.format(**dict(row, **column_widths)))
+        print('{protocol: <{protocol_width}}{padding}{service: <{service_width}}{padding}{bundle_id: <{bundle_id_width}}{padding}{bundle_name: <{bundle_name_width}}{padding}{status: <{status_width}}'.format(**dict(row, **column_widths)))
 
     if len(duplicate_services) > 0:
         print()

@@ -45,7 +45,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
             strip_margin("""|ID       NAME         #REP  #STR  #RUN
-                            |45e0c47  test-bundle  1     0     0
+                            |45e0c47  test-bundle     1     0     0
                             |"""),
             self.output(stdout))
 
@@ -78,9 +78,9 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
             strip_margin("""|ID               NAME           #REP  #STR  #RUN
-                            |45e0c47          test-bundle-1  1     0     1
-                            |45e0c47-c52e3f8  test-bundle-2  1     1     0
-                            |45e0c47          test-bundle-3  1     0     0
+                            |45e0c47          test-bundle-1     1     0     1
+                            |45e0c47-c52e3f8  test-bundle-2     1     1     0
+                            |45e0c47          test-bundle-3     1     0     0
                             |"""),
             self.output(stdout))
 
@@ -145,8 +145,8 @@ class TestConductInfoCommand(TestCase, CliTestCase):
                             |  }
                             |]
                             |ID       NAME           #REP  #STR  #RUN
-                            |45e0c47  test-bundle-1  3     0     3
-                            |c52e3f8  test-bundle-2  3     0     0
+                            |45e0c47  test-bundle-1     3     0     3
+                            |c52e3f8  test-bundle-2     3     0     0
                             |"""),
             self.output(stdout))
 
@@ -169,7 +169,28 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
             strip_margin("""|ID                                NAME         #REP  #STR  #RUN
-                            |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle  1     0     0
+                            |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle     1     0     0
+                            |"""),
+            self.output(stdout))
+
+    def test_double_digits(self):
+        http_method = self.respond_with(text="""[
+            {
+                "attributes": { "bundleName": "test-bundle" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                "bundleExecutions": [],
+                "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            }
+        ]""")
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+            conduct_info.info(MagicMock(**self.default_args))
+
+        http_method.assert_called_with(self.default_url)
+        self.assertEqual(
+            strip_margin("""|ID       NAME         #REP  #STR  #RUN
+                            |45e0c47  test-bundle    10     0     0
                             |"""),
             self.output(stdout))
 

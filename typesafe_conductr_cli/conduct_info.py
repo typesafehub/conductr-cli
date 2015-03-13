@@ -26,17 +26,17 @@ def info(args):
     ]
     data.insert(0, {'id': 'ID', 'name': 'NAME', 'replications': '#REP', 'starting': '#STR', 'executions': '#RUN'})
 
-    column_widths = calc_column_widths(data)
+    padding = 2
+    column_widths = dict(calc_column_widths(data), **{'padding': ' ' * padding})
     for row in data:
-        print('{id: <{id_width}}{name: <{name_width}}{replications: <{replications_width}}{starting: <{starting_width}}{executions: <{executions_width}}'.format(**dict(row, **column_widths)))
+        print('{id: <{id_width}}{padding}{name: <{name_width}}{padding}{replications: >{replications_width}}{padding}{starting: >{starting_width}}{padding}{executions: >{executions_width}}'.format(**dict(row, **column_widths)))
 
 
 def calc_column_widths(data):
-    padding = 2
     column_widths = {}
     for row in data:
         for column, value in row.items():
-            column_len = len(str(value)) + padding
+            column_len = len(str(value))
             width_key = column + '_width'
             if (column_len > column_widths.get(width_key, 0)):
                 column_widths[width_key] = column_len
