@@ -4,7 +4,7 @@ from typesafe_conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from typesafe_conductr_cli import conduct_services
 
 
-class TestConductInfoCommand(TestCase, CliTestCase):
+class TestConductServicesCommand(TestCase, CliTestCase):
 
     default_args = {
         'ip': '127.0.0.1',
