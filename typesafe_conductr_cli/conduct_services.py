@@ -1,6 +1,7 @@
 from typesafe_conductr_cli import bundle_utils, conduct_info, conduct_url, conduct_logging
 import json
 import requests
+from urllib.parse import urlparse
 
 
 @conduct_logging.handle_connection_error
@@ -15,38 +16,38 @@ def services(args):
     if (args.verbose):
         conduct_logging.pretty_json(response.text)
 
-    data_and_services = [
+    data = sorted([
         (
             {
-                'protocol': endpoint['protocol'],
-                'service': str(endpoint['servicePort']) + endpoint['serviceName'],
+                'service': service,
                 'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId']),
                 'bundle_name': bundle['attributes']['bundleName'],
                 'status': 'Running' if execution['isStarted'] else 'Starting'
-            },
-            {
-                'port': endpoint['servicePort'],
-                'name': endpoint['serviceName']
             }
         )
         for bundle in json.loads(response.text)
         for execution in bundle['bundleExecutions']
         for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items()
-    ]
-    data, services = [list(tuple) for tuple in zip(*sorted(data_and_services, key=lambda line: line[1]['name']))] if len(data_and_services) > 0 else ([], [])
-    data.insert(0, {'protocol': 'PROTO', 'service': 'SERVICE', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})
+        for service in endpoint['services']
+    ], key=lambda line: line['service'])
 
-    def duplicates(service):
-        return [other['name'] for other in services if service['name'] == other['name'] and service['port'] != other['port']]
+    service_endpoints = {}
+    for service in data:
+        url = urlparse(service['service'])
+        try:
+            service_endpoints[url.path] |= {service['service']}
+        except KeyError:
+            service_endpoints[url.path] = {service['service']}
+    duplicate_endpoints = [service for (service, endpoint) in service_endpoints.items() if len(endpoint) > 1] if len(service_endpoints) > 0 else []
 
-    duplicate_services = sorted(set([service['name'] for service in services if len(duplicates(service)) > 0]))
+    data.insert(0, {'service': 'SERVICE', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})
 
     padding = 2
     column_widths = dict(conduct_info.calc_column_widths(data), **{'padding': ' ' * padding})
     for row in data:
-        print('{protocol: <{protocol_width}}{padding}{service: <{service_width}}{padding}{bundle_id: <{bundle_id_width}}{padding}{bundle_name: <{bundle_name_width}}{padding}{status: <{status_width}}'.format(**dict(row, **column_widths)))
+        print('{service: <{service_width}}{padding}{bundle_id: <{bundle_id_width}}{padding}{bundle_name: <{bundle_name_width}}{padding}{status: <{status_width}}'.format(**dict(row, **column_widths)))
 
-    if len(duplicate_services) > 0:
+    if len(duplicate_endpoints) > 0:
         print()
-        conduct_logging.warning('Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_services)))
+        conduct_logging.warning('Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_endpoints)))
         conduct_logging.warning('Service resolution for these services is undefined.')
