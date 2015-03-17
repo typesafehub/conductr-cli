@@ -11,23 +11,19 @@
       "endpoints": {
         "comp1-endp1": {
           "protocol": "http",
-          "serviceName": "/comp1-endp1",
-          "servicePort": 8010
+          "services": ["http://:8010/comp1-endp1"]
         },
         "comp1-endp2": {
           "protocol": "http",
-          "serviceName": "/comp1-endp2",
-          "servicePort": 8011
+          "services": ["http://:8011/comp1-endp2"]
         },
         "comp2-endp1": {
           "protocol": "http",
-          "serviceName": "/comp2-endp1",
-          "servicePort": 9010
+          "services": ["http://:9010/comp2-endp1"]
         },
         "comp2-endp2": {
           "protocol": "http",
-          "serviceName": "/comp2-endp2",
-          "servicePort": 9011
+          "services": ["http://:9011/comp2-endp2"]
         }
       }
     },
@@ -86,23 +82,19 @@
       "endpoints": {
         "comp2-endp1": {
           "protocol": "http",
-          "serviceName": "/comp2-endp1",
-          "servicePort": 9010
+          "services": ["http://:9010/comp2-endp1"]
         },
         "comp2-endp2": {
           "protocol": "http",
-          "serviceName": "/comp2-endp2",
-          "servicePort": 6011
+          "services": ["http://:6011/comp2-endp2"]
         },
         "comp3-endp1": {
           "protocol": "http",
-          "serviceName": "/comp3-endp1",
-          "servicePort": 7010
+          "services": ["http://:7010/comp3-endp1"]
         },
         "comp3-endp2": {
           "protocol": "http",
-          "serviceName": "/comp3-endp2",
-          "servicePort": 7011
+          "services": ["http://:7011/comp3-endp2"]
         }
       }
     },
