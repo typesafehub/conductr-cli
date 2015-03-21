@@ -18,13 +18,17 @@ class TestConductLoadCommand(TestCase, CliTestCase):
     memory = 200
     disk_space = 100
     roles = ['web-server']
-
+    bundleName = "bundle"
+    system = "bundle"
+    
     tmpdir, bundle_file = create_temp_bundle(
         strip_margin("""|nrOfCpus   = {}
                         |memory     = {}
                         |diskSpace  = {}
                         |roles      = [{}]
-                        |""").format(nr_of_cpus, memory, disk_space, ', '.join(roles)))
+                        |name       = {}
+                        |system     = {}
+                        |""").format(nr_of_cpus, memory, disk_space, ', '.join(roles), bundleName, system))
 
     default_args = {
         'ip': '127.0.0.1',
@@ -32,10 +36,8 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         'verbose': False,
         'long_ids': False,
         'cli_parameters': '',
-        'bundle_name': None,
         'bundle': bundle_file,
-        'configuration': None,
-        'system': None
+        'configuration': None
     }
 
     default_url = 'http://127.0.0.1:9005/bundles'
@@ -45,8 +47,8 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         ('memory', str(memory)),
         ('diskSpace', str(disk_space)),
         ('roles', ' '.join(roles)),
-        ('bundleName', 'bundle'),
-        ('system', 'bundle'),
+        ('bundleName', bundleName),
+        ('system', system),
         ('bundle', 1)
     ]
 
@@ -130,6 +132,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         openMock = MagicMock(return_value=1)
 
         tmpdir, config_file = create_temp_bundle_with_contents({
+            'bundle.conf': '{name="overlaid-name"}',
             'config.sh': 'echo configuring'
         })
 
@@ -143,37 +146,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
-        http_method.assert_called_with(self.default_url, files=self.default_files + [('configuration', 1)])
-
-        self.assertEqual(self.default_output(), self.output(stdout))
-
-    def test_success_with_bundle_name(self):
-        http_method = self.respond_with(200, self.default_response)
-        stdout = MagicMock()
-        openMock = MagicMock(return_value=1)
-
-        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
-            args = self.default_args.copy()
-            args.update({'bundle_name': 'test-name'})
-            conduct_load.load(MagicMock(**args))
-
-        openMock.assert_called_with(self.bundle_file, 'rb')
-        http_method.assert_called_with(self.default_url, files=[(file, value if file != 'bundleName' else 'test-name') for file, value in self.default_files])
-
-        self.assertEqual(self.default_output(), self.output(stdout))
-
-    def test_success_with_system(self):
-        http_method = self.respond_with(200, self.default_response)
-        stdout = MagicMock()
-        openMock = MagicMock(return_value=1)
-
-        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
-            args = self.default_args.copy()
-            args.update({'system': 'test-system'})
-            conduct_load.load(MagicMock(**args))
-
-        openMock.assert_called_with(self.bundle_file, 'rb')
-        http_method.assert_called_with(self.default_url, files=[(file, value if file != 'system' else 'test-system') for file, value in self.default_files])
+        expected_files = self.default_files + [('configuration', 1)]
+        expected_files[4] = ('bundleName', 'overlaid-name')
+        http_method.assert_called_with(self.default_url, files=expected_files)
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
@@ -345,7 +320,3 @@ class TestConductLoadCommand(TestCase, CliTestCase):
                             |"""),
             self.output(stderr))
 
-    def test_path_to_bundle_name(self):
-        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-5ca1ab1e.zip'), 'bundle')
-        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle.zip'), 'bundle')
-        self.assertEqual(conduct_load.path_to_bundle_name('path/to/bundle-1.0.0-M2.zip'), 'bundle-1.0.0-M2')
