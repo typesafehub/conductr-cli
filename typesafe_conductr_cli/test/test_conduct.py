@@ -40,14 +40,13 @@ class TestConduct(TestCase):
         self.assertEqual(args.long_ids, False)
 
     def test_parser_load(self):
-        args = self.parser.parse_args('load --name test-bundle path-to-bundle path-to-conf'.split())
+        args = self.parser.parse_args('load path-to-bundle path-to-conf'.split())
 
         self.assertEqual(args.func.__name__, 'load')
         self.assertEqual(args.ip, '127.0.0.1')
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
-        self.assertEqual(args.bundle_name, 'test-bundle')
         self.assertEqual(args.bundle, 'path-to-bundle')
         self.assertEqual(args.configuration, 'path-to-conf')
 
