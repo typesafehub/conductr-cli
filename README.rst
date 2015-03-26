@@ -11,17 +11,17 @@ Python 3 is required. For OS X users use ``brew install python3``.
 Install using pip
 ^^^^^^^^^^^^^^^^^
 
-You may either install to all users:
+You may either install or upgrade to all users:
 
 .. code:: bash
 
-    sudo pip3 install typesafe-conductr-cli
+    sudo pip3 install -U typesafe-conductr-cli
 
 ... or, and if you’re not using brew (there’s a problem with user installs as of the time writing this), install to the current user (make sure to have ``~/.local/bin`` in your PATH):
 
 .. code:: bash
 
-    pip3 install --user typesafe-conductr-cli
+    pip3 install -U --user typesafe-conductr-cli
 
 Install as a deb package
 ^^^^^^^^^^^^^^^^^^^^^^^^
