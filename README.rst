@@ -140,6 +140,21 @@ In both cases the source files are zipped and a SHA256 digest of the archive is 
 
 For pointers on command usage run ``shazar -h``.
 
+Information for developers
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to run ``conduct`` locally, i.e. without installation, ``cd`` into the project directory and execute:
+
+.. code:: bash
+
+    python3 -m typesafe_conductr_cli.conduct
+
+Make sure to install the necessary dependencies:
+
+.. code:: bash
+
+    pip install -e .
+
 .. |Build Status| image:: https://travis-ci.org/typesafehub/typesafe-conductr-cli.png
     :target: https://travis-ci.org/typesafehub/typesafe-conductr-cli
     :alt: Build Status
