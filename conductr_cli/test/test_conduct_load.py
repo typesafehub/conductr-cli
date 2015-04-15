@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, create_temp_bundle_with_contents, strip_margin
-from typesafe_conductr_cli import conduct_load
+from conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, create_temp_bundle_with_contents, strip_margin
+from conductr_cli import conduct_load
 import shutil
 
 

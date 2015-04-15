@@ -1,4 +1,4 @@
-from typesafe_conductr_cli import __version__
+from conductr_cli import __version__
 
 
 # `conduct version` command

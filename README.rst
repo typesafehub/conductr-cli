@@ -15,13 +15,13 @@ You may either install or upgrade to all users:
 
 .. code:: bash
 
-    sudo pip3 install -U typesafe-conductr-cli
+    sudo pip3 install -U conductr-cli
 
 ... or, and if you’re not using brew (there’s a problem with user installs as of the time writing this), install to the current user (make sure to have ``~/.local/bin`` in your PATH):
 
 .. code:: bash
 
-    pip3 install -U --user typesafe-conductr-cli
+    pip3 install -U --user conductr-cli
 
 Install as a deb package
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -42,7 +42,7 @@ Install built deb package:
 
 .. code:: bash
 
-    dpkg -i deb_dist/python3-typesafe-conductr-cli_0.1-1_all.deb
+    dpkg -i deb_dist/python3-conductr-cli_0.1-1_all.deb
 
 Install required dependencies:
 
@@ -85,7 +85,7 @@ Releasing
 
 CLI releases can be performed completely from the GitHub project page. Follow these steps to cut a release:
 
-1. Edit `typesafe_conductr_cli/__init__.py`_ file to contain the version to be released.
+1. Edit `conductr_cli/__init__.py`_ file to contain the version to be released.
 2. Create a new release in GitHub `releases page`_.
 
 After CI build is finished for the tagged commit, new version will automatically be deployed to PyPi repository.
@@ -126,7 +126,7 @@ Here’s an example for loading a bundle:
 
 .. code:: bash
 
-    conduct load sbt-typesafe-conductr-tester-1.0.0-e172570d3c0fb11f4f9dbb8de519df58dcb490799f525bab43757f291e1d104d.zip
+    conduct load sbt-conductr-tester-1.0.0-e172570d3c0fb11f4f9dbb8de519df58dcb490799f525bab43757f291e1d104d.zip
 
 shazar
 ^^^^^^
@@ -147,7 +147,7 @@ If you want to run ``conduct`` locally, i.e. without installation, ``cd`` into t
 
 .. code:: bash
 
-    python3 -m typesafe_conductr_cli.conduct
+    python3 -m conductr_cli.conduct
 
 Make sure to install the necessary dependencies:
 
@@ -155,11 +155,11 @@ Make sure to install the necessary dependencies:
 
     pip install -e .
 
-.. |Build Status| image:: https://travis-ci.org/typesafehub/typesafe-conductr-cli.png
-    :target: https://travis-ci.org/typesafehub/typesafe-conductr-cli
+.. |Build Status| image:: https://travis-ci.org/typesafehub/conductr-cli.png
+    :target: https://travis-ci.org/typesafehub/conductr-cli
     :alt: Build Status
-.. |Latest Version| image:: https://pypip.in/version/typesafe-conductr-cli/badge.svg?style=flat
-    :target: https://pypi.python.org/pypi/typesafe-conductr-cli/
+.. |Latest Version| image:: https://pypip.in/version/conductr-cli/badge.svg?style=flat
+    :target: https://pypi.python.org/pypi/conductr-cli/
     :alt: Latest Version
-.. _releases page: https://github.com/typesafehub/typesafe-conductr-cli/releases/new
-.. _typesafe_conductr_cli/__init__.py: https://github.com/typesafehub/typesafe-conductr-cli/blob/master/typesafe_conductr_cli/__init__.py
+.. _releases page: https://github.com/typesafehub/conductr-cli/releases/new
+.. _conductr_cli/__init__.py: https://github.com/typesafehub/conductr-cli/blob/master/conductr_cli/__init__.py

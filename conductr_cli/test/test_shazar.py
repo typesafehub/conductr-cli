@@ -1,7 +1,7 @@
 from unittest import TestCase
 import tempfile
 from os import remove
-from typesafe_conductr_cli.shazar import create_digest, build_parser
+from conductr_cli.shazar import create_digest, build_parser
 
 
 class TestShazar(TestCase):

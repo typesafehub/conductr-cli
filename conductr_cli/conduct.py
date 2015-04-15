@@ -3,7 +3,7 @@
 
 import argcomplete
 import argparse
-from typesafe_conductr_cli import conduct_info, conduct_load, conduct_run, conduct_services, conduct_stop, conduct_unload, conduct_version
+from conductr_cli import conduct_info, conduct_load, conduct_run, conduct_services, conduct_stop, conduct_unload, conduct_version
 import os
 
 

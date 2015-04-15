@@ -1,19 +1,19 @@
 import os
 from setuptools import setup, find_packages
-from typesafe_conductr_cli import __version__
+from conductr_cli import __version__
 
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
-    name='typesafe-conductr-cli',
+    name='conductr-cli',
     version=__version__,
     packages=find_packages(),
 
     entry_points={
         'console_scripts': [
-            'conduct = typesafe_conductr_cli.conduct:run',
-            'shazar = typesafe_conductr_cli.shazar:run',
+            'conduct = conductr_cli.conduct:run',
+            'shazar = conductr_cli.shazar:run',
         ],
     },
 
@@ -22,9 +22,9 @@ setup(
         'argcomplete>=0.8.1',
         'pyhocon==0.2.1'
     ],
-    test_suite='typesafe_conductr_cli.test',
+    test_suite='conductr_cli.test',
 
     license='Apache 2',
     description='A CLI client for Typesafe ConductR',
-    url='https://github.com/typesafehub/typesafe-conductr-cli',
+    url='https://github.com/typesafehub/conductr-cli',
 )
