@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from typesafe_conductr_cli import conduct_info
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli import conduct_info
 
 
 class TestConductInfoCommand(TestCase, CliTestCase):

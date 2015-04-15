@@ -1,6 +1,6 @@
 from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
-from typesafe_conductr_cli import bundle_utils, conduct_url, conduct_logging
+from conductr_cli import bundle_utils, conduct_url, conduct_logging
 from functools import partial
 import json
 import os

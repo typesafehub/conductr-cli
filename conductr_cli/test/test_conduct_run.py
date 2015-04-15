@@ -1,10 +1,10 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from typesafe_conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from typesafe_conductr_cli import conduct_stop
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli import conduct_run
 
 
-class TestConductStopCommand(TestCase, CliTestCase):
+class TestConductRunCommand(TestCase, CliTestCase):
 
     @property
     def default_response(self):
@@ -19,13 +19,14 @@ class TestConductStopCommand(TestCase, CliTestCase):
         'verbose': False,
         'long_ids': False,
         'cli_parameters': '',
-        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c'
+        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
+        'scale': 3
     }
 
-    default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=0'
+    default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=3'
 
-    output_template = """|Bundle stop request sent.
-                         |Unload bundle with: conduct unload{params} {bundle_id}
+    output_template = """|Bundle run request sent.
+                         |Stop bundle with: conduct stop{params} {bundle_id}
                          |Print ConductR info with: conduct info{params}
                          |"""
 
@@ -37,7 +38,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         stdout = MagicMock()
 
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
-            conduct_stop.stop(MagicMock(**self.default_args))
+            conduct_run.run(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url)
 
@@ -50,7 +51,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
             args = self.default_args.copy()
             args.update({'verbose': True})
-            conduct_stop.stop(MagicMock(**args))
+            conduct_run.run(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
 
@@ -63,7 +64,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
             args = self.default_args.copy()
             args.update({'long_ids': True})
-            conduct_stop.stop(MagicMock(**args))
+            conduct_run.run(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
 
@@ -77,7 +78,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
-            conduct_stop.stop(MagicMock(**args))
+            conduct_run.run(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
 
@@ -90,7 +91,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         stderr = MagicMock()
 
         with patch('requests.put', http_method), patch('sys.stderr', stderr):
-            conduct_stop.stop(MagicMock(**self.default_args))
+            conduct_run.run(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url)
 
@@ -104,7 +105,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         stderr = MagicMock()
 
         with patch('requests.put', http_method), patch('sys.stderr', stderr):
-            conduct_stop.stop(MagicMock(**self.default_args))
+            conduct_run.run(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url)
 

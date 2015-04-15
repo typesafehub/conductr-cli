@@ -1,6 +1,6 @@
 from unittest import TestCase
-from typesafe_conductr_cli import bundle_utils
-from typesafe_conductr_cli.test.cli_test_case import create_temp_bundle
+from conductr_cli import bundle_utils
+from conductr_cli.test.cli_test_case import create_temp_bundle
 import shutil
 
 

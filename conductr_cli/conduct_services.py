@@ -1,4 +1,4 @@
-from typesafe_conductr_cli import bundle_utils, conduct_info, conduct_url, conduct_logging
+from conductr_cli import bundle_utils, conduct_info, conduct_url, conduct_logging
 import json
 import requests
 from urllib.parse import urlparse

@@ -9,4 +9,4 @@ deploy:
     secure: E/UXwcU4VFxoz1P22DCtMiBMN7i8Y7UONoC/5gIyaYt5oKcM5Tdutd0TOywa1n9R7+jLSMQwn44vj/LnVV1e9HUFVvkMBX/oqSsR89bst6ihQr2CcxOm7LEBO0Yt7O8dZrsyXb+NzHq+RLh8yHx5csL62iT4vB5KQpEZOWVMDVw=
   on:
     tags: true
-    repo: typesafehub/typesafe-conductr-cli
+    repo: typesafehub/conductr-cli
