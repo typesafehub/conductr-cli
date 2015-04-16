@@ -52,6 +52,27 @@ class TestConductServicesCommand(TestCase, CliTestCase):
                             |"""),
             self.output(stdout))
 
+    def test_two_bundles_mult_components_endpoints_no_path(self):
+        http_method = self.respond_with_file_contents('data/two_bundles_no_path.json')
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+            conduct_services.services(MagicMock(**self.default_args))
+
+        http_method.assert_called_with(self.default_url)
+        self.assertEqual(
+            strip_margin("""|SERVICE                   BUNDLE ID  BUNDLE NAME                   STATUS
+                            |http://:6011              6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |http://:7010/comp3-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |http://:7011/comp3-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |http://:8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |http://:8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |http://:9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |http://:9010/comp2-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                            |http://:9011              f804d64    multi-comp-multi-endp-1.0.0   Running
+                            |"""),
+            self.output(stdout))
+
     def test_one_bundle_starting(self):
         http_method = self.respond_with_file_contents('data/one_bundle_starting.json')
         stdout = MagicMock()

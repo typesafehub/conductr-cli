@@ -34,10 +34,11 @@ def services(args):
     service_endpoints = {}
     for service in data:
         url = urlparse(service['service'])
-        try:
-            service_endpoints[url.path] |= {service['service']}
-        except KeyError:
-            service_endpoints[url.path] = {service['service']}
+        if not (url.path == '' or url.path == '/'):
+            try:
+                service_endpoints[url.path] |= {service['service']}
+            except KeyError:
+                service_endpoints[url.path] = {service['service']}
     duplicate_endpoints = [service for (service, endpoint) in service_endpoints.items() if len(endpoint) > 1] if len(service_endpoints) > 0 else []
 
     data.insert(0, {'service': 'SERVICE', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})
