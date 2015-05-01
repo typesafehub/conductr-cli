@@ -10,7 +10,7 @@ class CliTestCase():
 
     @property
     def default_connection_error(self):
-        return strip_margin("""|ERROR: Unable to contact Typesafe ConductR.
+        return strip_margin("""|ERROR: Unable to contact ConductR.
                                |ERROR: Reason: test reason
                                |ERROR: Make sure it can be accessed at {}:{}.
                                |""")

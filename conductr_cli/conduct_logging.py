@@ -15,7 +15,7 @@ def warning(message, *objs):
 
 
 def connection_error(err, args):
-    error('Unable to contact Typesafe ConductR.')
+    error('Unable to contact ConductR.')
     error('Reason: {}'.format(err.args[0]))
     error('Make sure it can be accessed at {}:{}.'.format(args[0].ip, args[0].port))
 

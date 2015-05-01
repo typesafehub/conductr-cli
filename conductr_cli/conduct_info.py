@@ -12,7 +12,7 @@ def info(args):
     response = requests.get(url)
     conduct_logging.raise_for_status_inc_3xx(response)
 
-    if (args.verbose):
+    if args.verbose:
         conduct_logging.pretty_json(response.text)
 
     data = [
@@ -38,6 +38,6 @@ def calc_column_widths(data):
         for column, value in row.items():
             column_len = len(str(value))
             width_key = column + '_width'
-            if (column_len > column_widths.get(width_key, 0)):
+            if column_len > column_widths.get(width_key, 0):
                 column_widths[width_key] = column_len
     return column_widths
