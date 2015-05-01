@@ -47,7 +47,7 @@ class CliTestCase():
 
 
 def strip_margin(string, marginChar='|'):
-    return '\n'.join([line[line.index(marginChar) + 1:] for line in string.split('\n')])
+    return '\n'.join([line[line.find(marginChar) + 1:] for line in string.split('\n')])
 
 
 def create_temp_bundle_with_contents(contents):

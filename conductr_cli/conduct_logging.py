@@ -1,9 +1,12 @@
 import json
 import sys
+import urllib
+
 from pyhocon.exceptions import ConfigException
 from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError
-
+from urllib.error import URLError
+from zipfile import BadZipFile
 
 # print to stderr
 def error(message, *objs):
@@ -74,8 +77,24 @@ def handle_no_file(func):
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except FileNotFoundError as err:
+        except urllib.error.HTTPError as err:
+            error('Resource not found: {}', err.url)
+        except URLError as err:
             error('File not found: {}', err.args[0])
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_bad_zip(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BadZipFile as err:
+            error('Problem with the bundle: {}', err.args[0])
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.

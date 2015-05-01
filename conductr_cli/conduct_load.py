@@ -2,27 +2,31 @@ from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
 from conductr_cli import bundle_utils, conduct_url, conduct_logging
 from functools import partial
-import json
-import os
-import requests
+from urllib.parse import ParseResult, urlparse, urlunparse
+from urllib.request import urlretrieve
+from pathlib import Path
 
+import json
+import requests
 
 @conduct_logging.handle_connection_error
 @conduct_logging.handle_http_error
 @conduct_logging.handle_invalid_config
 @conduct_logging.handle_no_file
+@conduct_logging.handle_bad_zip
 def load(args):
     """`conduct load` command"""
 
-    if not os.path.isfile(args.bundle):
-        raise FileNotFoundError(args.bundle)
+    print('Retrieving bundle...')
+    bundle_file, bundle_headers = urlretrieve(get_url(args.bundle))
+    if args.configuration is not None:
+        print('Retrieving configuration...')
+    configuration_file, configuration_headers = urlretrieve(get_url(args.configuration)) \
+        if args.configuration is not None else (None, None)
 
-    if args.configuration is not None and not os.path.isfile(args.configuration):
-        raise FileNotFoundError(args.configuration)
-
-    bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(args.bundle))
-    overlay_bundle_conf = None if args.configuration is None else \
-        ConfigFactory.parse_string(bundle_utils.conf(args.configuration))
+    bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
+    overlay_bundle_conf = None if configuration_file is None else \
+        ConfigFactory.parse_string(bundle_utils.conf(configuration_file))
 
     with_bundle_configurations = partial(apply_to_configurations, bundle_conf, overlay_bundle_conf)
 
@@ -34,11 +38,12 @@ def load(args):
         ('roles', ' '.join(with_bundle_configurations(ConfigTree.get_list, 'roles'))),
         ('bundleName', with_bundle_configurations(ConfigTree.get_string, 'name')),
         ('system', with_bundle_configurations(ConfigTree.get_string, 'system')),
-        ('bundle', open(args.bundle, 'rb'))
+        ('bundle', open(bundle_file, 'rb'))
     ]
-    if args.configuration is not None:
-        files.append(('configuration', open(args.configuration, 'rb')))
+    if configuration_file is not None:
+        files.append(('configuration', open(configuration_file, 'rb')))
 
+    print('Loading bundle to ConductR...')
     response = requests.post(url, files=files)
     conduct_logging.raise_for_status_inc_3xx(response)
 
@@ -62,3 +67,10 @@ def apply_to_configurations(base_conf, overlay_conf, method, key):
             return method(overlay_conf, key)
         except ConfigMissingException:
             return method(base_conf, key)
+
+
+def get_url(uri):
+    parsed = urlparse(uri, scheme='file')
+    op = Path(uri)
+    np = str(op.cwd() / op if parsed.scheme == 'file' and op.root == '' else parsed.path)
+    return urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
