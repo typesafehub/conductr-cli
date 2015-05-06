@@ -1,8 +1,12 @@
 import os
 import shutil
 import tempfile
-from unittest.mock import MagicMock
 from requests.exceptions import ConnectionError, HTTPError
+
+try:
+    from unittest.mock import MagicMock  # 3.3 and beyond
+except ImportError:
+    from mock import MagicMock
 
 
 class CliTestCase():

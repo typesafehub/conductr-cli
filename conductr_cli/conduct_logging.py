@@ -26,7 +26,7 @@ def connection_error(err, args):
 
 def pretty_json(s):
     s_json = json.loads(s)
-    print(json.dumps(s_json, sort_keys=True, indent=2))
+    print(json.dumps(s_json, sort_keys=True, indent=2, separators=(',', ': ')))
 
 
 def handle_connection_error(func):
