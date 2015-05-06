@@ -9,6 +9,7 @@ from pathlib import Path
 import json
 import requests
 
+
 @conduct_logging.handle_connection_error
 @conduct_logging.handle_http_error
 @conduct_logging.handle_invalid_config

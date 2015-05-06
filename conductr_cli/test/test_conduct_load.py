@@ -19,9 +19,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
     memory = 200
     disk_space = 100
     roles = ['web-server']
-    bundleName = "bundle"
-    system = "bundle"
-    
+    bundleName = 'bundle'
+    system = 'bundle'
+
     tmpdir, bundle_file = create_temp_bundle(
         strip_margin("""|nrOfCpus   = {}
                         |memory     = {}
@@ -62,7 +62,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
                          |"""
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls):  # noqa
         shutil.rmtree(cls.tmpdir)
 
     def default_output(self, params='', bundle_id='45e0c47', downloading_configuration='', verbose=''):
@@ -79,9 +79,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         open_mock = MagicMock(return_value=1)
 
         with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
-             patch('requests.post', http_method), \
-             patch('sys.stdout', stdout), \
-             patch('builtins.open', open_mock):
+                patch('requests.post', http_method), \
+                patch('sys.stdout', stdout), \
+                patch('builtins.open', open_mock):
             conduct_load.load(MagicMock(**self.default_args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
@@ -96,9 +96,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         open_mock = MagicMock(return_value=1)
 
         with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
-             patch('requests.post', http_method), \
-             patch('sys.stdout', stdout), \
-             patch('builtins.open', open_mock):
+                patch('requests.post', http_method), \
+                patch('sys.stdout', stdout), \
+                patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'verbose': True})
             conduct_load.load(MagicMock(**args))
@@ -115,9 +115,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         open_mock = MagicMock(return_value=1)
 
         with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
-             patch('requests.post', http_method), \
-             patch('sys.stdout', stdout), \
-             patch('builtins.open', open_mock):
+                patch('requests.post', http_method), \
+                patch('sys.stdout', stdout), \
+                patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'long_ids': True})
             conduct_load.load(MagicMock(**args))
@@ -135,9 +135,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
         cli_parameters = ' --ip 127.0.1.1 --port 9006'
         with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock),\
-             patch('requests.post', http_method), \
-             patch('sys.stdout', stdout), \
-             patch('builtins.open', open_mock):
+                patch('requests.post', http_method), \
+                patch('sys.stdout', stdout), \
+                patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
             conduct_load.load(MagicMock(**args))
@@ -161,9 +161,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         open_mock = MagicMock(return_value=1)
 
         with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
-             patch('requests.post', http_method), \
-             patch('sys.stdout', stdout), \
-             patch('builtins.open', open_mock):
+                patch('requests.post', http_method), \
+                patch('sys.stdout', stdout), \
+                patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'configuration': config_file})
             conduct_load.load(MagicMock(**args))
@@ -186,9 +186,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         open_mock = MagicMock(return_value=1)
 
         with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
-             patch('requests.post', http_method), \
-             patch('sys.stderr', stderr), \
-             patch('builtins.open', open_mock):
+                patch('requests.post', http_method), \
+                patch('sys.stderr', stderr), \
+                patch('builtins.open', open_mock):
             conduct_load.load(MagicMock(**self.default_args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
@@ -206,9 +206,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         open_mock = MagicMock(return_value=1)
 
         with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
-             patch('requests.post', http_method), \
-             patch('sys.stderr', stderr), \
-             patch('builtins.open', open_mock):
+                patch('requests.post', http_method), \
+                patch('sys.stderr', stderr), \
+                patch('builtins.open', open_mock):
             conduct_load.load(MagicMock(**self.default_args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
@@ -357,4 +357,3 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             strip_margin("""|ERROR: File not found: no_such.conf
                             |"""),
             self.output(stderr))
-
