@@ -13,7 +13,7 @@ def services(args):
     response = requests.get(url)
     conduct_logging.raise_for_status_inc_3xx(response)
 
-    if (args.verbose):
+    if args.verbose:
         conduct_logging.pretty_json(response.text)
 
     data = sorted([
@@ -39,7 +39,8 @@ def services(args):
                 service_endpoints[url.path] |= {service['service']}
             except KeyError:
                 service_endpoints[url.path] = {service['service']}
-    duplicate_endpoints = [service for (service, endpoint) in service_endpoints.items() if len(endpoint) > 1] if len(service_endpoints) > 0 else []
+    duplicate_endpoints = [service for (service, endpoint) in service_endpoints.items() if len(endpoint) > 1] \
+        if len(service_endpoints) > 0 else []
 
     data.insert(0, {'service': 'SERVICE', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})
 

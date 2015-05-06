@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
 from conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, create_temp_bundle_with_contents, strip_margin
 from conductr_cli import conduct_load
+from urllib.error import URLError
 import shutil
 
 
@@ -52,7 +53,9 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         ('bundle', 1)
     ]
 
-    output_template = """|Bundle loaded.
+    output_template = """|Retrieving bundle...
+                         |{downloading_configuration}Loading bundle to ConductR...
+                         |{verbose}Bundle loaded.
                          |Start bundle with: conduct run{params} {bundle_id}
                          |Unload bundle with: conduct unload{params} {bundle_id}
                          |Print ConductR info with: conduct info{params}
@@ -62,64 +65,84 @@ class TestConductLoadCommand(TestCase, CliTestCase):
     def tearDownClass(cls):
         shutil.rmtree(cls.tmpdir)
 
-    def default_output(self, params='', bundle_id='45e0c47'):
-        return strip_margin(self.output_template.format(**{'params': params, 'bundle_id': bundle_id}))
+    def default_output(self, params='', bundle_id='45e0c47', downloading_configuration='', verbose=''):
+        return strip_margin(self.output_template.format(**{
+            'params': params,
+            'bundle_id': bundle_id,
+            'downloading_configuration': downloading_configuration,
+            'verbose': verbose}))
 
     def test_success(self):
+        urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        openMock = MagicMock(return_value=1)
+        open_mock = MagicMock(return_value=1)
 
-        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+             patch('requests.post', http_method), \
+             patch('sys.stdout', stdout), \
+             patch('builtins.open', open_mock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with(self.bundle_file, 'rb')
+        open_mock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
     def test_success_verbose(self):
+        urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        openMock = MagicMock(return_value=1)
+        open_mock = MagicMock(return_value=1)
 
-        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+             patch('requests.post', http_method), \
+             patch('sys.stdout', stdout), \
+             patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'verbose': True})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with(self.bundle_file, 'rb')
+        open_mock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
-        self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
+        self.assertEqual(self.default_output(verbose=self.default_response), self.output(stdout))
 
     def test_success_long_ids(self):
+        urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        openMock = MagicMock(return_value=1)
+        open_mock = MagicMock(return_value=1)
 
-        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+             patch('requests.post', http_method), \
+             patch('sys.stdout', stdout), \
+             patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'long_ids': True})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with(self.bundle_file, 'rb')
+        open_mock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
     def test_success_custom_ip_port(self):
+        urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        openMock = MagicMock(return_value=1)
+        open_mock = MagicMock(return_value=1)
 
         cli_parameters = ' --ip 127.0.1.1 --port 9006'
-        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock),\
+             patch('requests.post', http_method), \
+             patch('sys.stdout', stdout), \
+             patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
             conduct_load.load(MagicMock(**args))
 
-        openMock.assert_called_with(self.bundle_file, 'rb')
+        open_mock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
@@ -127,22 +150,26 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             self.output(stdout))
 
     def test_success_with_configuration(self):
-        http_method = self.respond_with(200, self.default_response)
-        stdout = MagicMock()
-        openMock = MagicMock(return_value=1)
-
         tmpdir, config_file = create_temp_bundle_with_contents({
             'bundle.conf': '{name="overlaid-name"}',
             'config.sh': 'echo configuring'
         })
 
-        with patch('requests.post', http_method), patch('sys.stdout', stdout), patch('builtins.open', openMock):
+        urlretrieve_mock = MagicMock(side_effect=[(self.bundle_file, ()), (config_file, ())])
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        open_mock = MagicMock(return_value=1)
+
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+             patch('requests.post', http_method), \
+             patch('sys.stdout', stdout), \
+             patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'configuration': config_file})
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            openMock.call_args_list,
+            open_mock.call_args_list,
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
@@ -150,17 +177,21 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         expected_files[4] = ('bundleName', 'overlaid-name')
         http_method.assert_called_with(self.default_url, files=expected_files)
 
-        self.assertEqual(self.default_output(), self.output(stdout))
+        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'), self.output(stdout))
 
     def test_failure(self):
+        urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
         http_method = self.respond_with(404)
         stderr = MagicMock()
-        openMock = MagicMock(return_value=1)
+        open_mock = MagicMock(return_value=1)
 
-        with patch('requests.post', http_method), patch('sys.stderr', stderr), patch('builtins.open', openMock):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+             patch('requests.post', http_method), \
+             patch('sys.stderr', stderr), \
+             patch('builtins.open', open_mock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with(self.bundle_file, 'rb')
+        open_mock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
@@ -169,14 +200,18 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             self.output(stderr))
 
     def test_failure_invalid_address(self):
+        urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
         http_method = self.raise_connection_error('test reason')
         stderr = MagicMock()
-        openMock = MagicMock(return_value=1)
+        open_mock = MagicMock(return_value=1)
 
-        with patch('requests.post', http_method), patch('sys.stderr', stderr), patch('builtins.open', openMock):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+             patch('requests.post', http_method), \
+             patch('sys.stderr', stderr), \
+             patch('builtins.open', open_mock):
             conduct_load.load(MagicMock(**self.default_args))
 
-        openMock.assert_called_with(self.bundle_file, 'rb')
+        open_mock.assert_called_with(self.bundle_file, 'rb')
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
@@ -295,9 +330,10 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         shutil.rmtree(tmpdir)
 
     def test_failure_no_bundle(self):
+        urlretrieve_mock = MagicMock(side_effect=URLError('no_such.bundle'))
         stderr = MagicMock()
 
-        with patch('sys.stderr', stderr):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), patch('sys.stderr', stderr):
             args = self.default_args.copy()
             args.update({'bundle': 'no_such.bundle'})
             conduct_load.load(MagicMock(**args))
@@ -308,9 +344,11 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             self.output(stderr))
 
     def test_failure_no_configuration(self):
+        urlretrieve_mock = MagicMock(side_effect=[(self.bundle_file, ()), URLError('no_such.conf')])
+
         stderr = MagicMock()
 
-        with patch('sys.stderr', stderr):
+        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), patch('sys.stderr', stderr):
             args = self.default_args.copy()
             args.update({'configuration': 'no_such.conf'})
             conduct_load.load(MagicMock(**args))

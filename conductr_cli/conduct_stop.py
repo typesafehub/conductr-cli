@@ -13,12 +13,12 @@ def stop(args):
     response = requests.put(url)
     conduct_logging.raise_for_status_inc_3xx(response)
 
-    if (args.verbose):
+    if args.verbose:
         conduct_logging.pretty_json(response.text)
 
     response_json = json.loads(response.text)
-    bundleId = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
+    bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     print('Bundle stop request sent.')
-    print('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundleId))
+    print('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundle_id))
     print('Print ConductR info with: conduct info{}'.format(args.cli_parameters))

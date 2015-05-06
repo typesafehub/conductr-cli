@@ -10,7 +10,7 @@ class CliTestCase():
 
     @property
     def default_connection_error(self):
-        return strip_margin("""|ERROR: Unable to contact Typesafe ConductR.
+        return strip_margin("""|ERROR: Unable to contact ConductR.
                                |ERROR: Reason: test reason
                                |ERROR: Make sure it can be accessed at {}:{}.
                                |""")
@@ -47,7 +47,7 @@ class CliTestCase():
 
 
 def strip_margin(string, marginChar='|'):
-    return '\n'.join([line[line.index(marginChar) + 1:] for line in string.split('\n')])
+    return '\n'.join([line[line.find(marginChar) + 1:] for line in string.split('\n')])
 
 
 def create_temp_bundle_with_contents(contents):

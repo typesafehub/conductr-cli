@@ -12,7 +12,7 @@ def unload(args):
     response = requests.delete(url)
     conduct_logging.raise_for_status_inc_3xx(response)
 
-    if (args.verbose):
+    if args.verbose:
         conduct_logging.pretty_json(response.text)
 
     print('Bundle unload request sent.')

@@ -7,5 +7,5 @@ def short_id(bundle_id):
 
 def conf(bundle_path):
     bundle_zip = ZipFile(bundle_path)
-    bundleConf = [bundle_zip.read(name) for name in bundle_zip.namelist() if name.endswith('bundle.conf')]
-    return bundleConf[0].decode('utf-8') if len(bundleConf) == 1 else ''
+    bundle_configuration = [bundle_zip.read(name) for name in bundle_zip.namelist() if name.endswith('bundle.conf')]
+    return bundle_configuration[0].decode('utf-8') if len(bundle_configuration) == 1 else ''
