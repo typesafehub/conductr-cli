@@ -194,6 +194,29 @@ class TestConductInfoCommand(TestCase, CliTestCase):
                             |"""),
             self.output(stdout))
 
+    def test_has_error(self):
+        http_method = self.respond_with(text="""[
+            {
+                "attributes": { "bundleName": "test-bundle" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                "bundleExecutions": [],
+                "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "hasError": true
+            }
+        ]""")
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+            conduct_info.info(MagicMock(**self.default_args))
+
+        http_method.assert_called_with(self.default_url)
+        self.assertEqual(
+            strip_margin("""|ID         NAME         #REP  #STR  #RUN
+                            |! 45e0c47  test-bundle    10     0     0
+                            |There are errors: use `conduct events` or `conduct logs` for further information
+                            |"""),
+            self.output(stdout))
+
     def test_failure_invalid_address(self):
         http_method = self.raise_connection_error('test reason')
         stderr = MagicMock()
