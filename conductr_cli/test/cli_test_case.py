@@ -46,8 +46,8 @@ class CliTestCase():
         return ''.join([args[0].rstrip(' ') for name, args, kwargs in logger.method_calls])
 
 
-def strip_margin(string, marginChar='|'):
-    return '\n'.join([line[line.find(marginChar) + 1:] for line in string.split('\n')])
+def strip_margin(string, margin_char='|'):
+    return '\n'.join([line[line.find(margin_char) + 1:] for line in string.split('\n')])
 
 
 def create_temp_bundle_with_contents(contents):

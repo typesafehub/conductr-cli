@@ -8,8 +8,9 @@ from requests.exceptions import ConnectionError, HTTPError
 from urllib.error import URLError
 from zipfile import BadZipFile
 
-# print to stderr
+
 def error(message, *objs):
+    '''print to stderr'''
     print('ERROR: {}'.format(message.format(*objs)), file=sys.stderr)
 
 

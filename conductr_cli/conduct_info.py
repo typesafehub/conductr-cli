@@ -17,7 +17,7 @@ def info(args):
 
     data = [
         {
-            'id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId']),
+            'id': ('! ' if bundle.get('hasError', False) else '') + (bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId'])),
             'name': bundle['attributes']['bundleName'],
             'replications': len(bundle['bundleInstallations']),
             'starting': sum([not execution['isStarted'] for execution in bundle['bundleExecutions']]),
@@ -28,8 +28,18 @@ def info(args):
 
     padding = 2
     column_widths = dict(calc_column_widths(data), **{'padding': ' ' * padding})
+    has_error = False
     for row in data:
-        print('{id: <{id_width}}{padding}{name: <{name_width}}{padding}{replications: >{replications_width}}{padding}{starting: >{starting_width}}{padding}{executions: >{executions_width}}'.format(**dict(row, **column_widths)))
+        has_error |= '!' in row['id']
+        print('''\
+{id: <{id_width}}{padding}\
+{name: <{name_width}}{padding}\
+{replications: >{replications_width}}{padding}\
+{starting: >{starting_width}}{padding}\
+{executions: >{executions_width}}'''.format(**dict(row, **column_widths)))
+
+    if has_error:
+        print('There are errors: use `conduct events` or `conduct logs` for further information')
 
 
 def calc_column_widths(data):

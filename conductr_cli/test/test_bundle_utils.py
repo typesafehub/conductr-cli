@@ -18,12 +18,12 @@ class ShortId(TestCase):
 
 class Conf(TestCase):
 
-    def setUp(self):
+    def setUp(self):  # noqa
         self.tmpdir, self.bundle_path = create_temp_bundle('bundle conf contents')
 
     def test(self):
         conf_contents = bundle_utils.conf(self.bundle_path)
         self.assertEqual(conf_contents, 'bundle conf contents')
 
-    def tearDown(self):
+    def tearDown(self):  # noqa
         shutil.rmtree(self.tmpdir)
