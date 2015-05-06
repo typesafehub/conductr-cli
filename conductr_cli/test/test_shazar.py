@@ -1,7 +1,14 @@
 from unittest import TestCase
+import shutil
 import tempfile
 from os import remove
-from conductr_cli.shazar import create_digest, build_parser
+from conductr_cli.shazar import create_digest, build_parser, run
+from conductr_cli.test.cli_test_case import CliTestCase
+
+try:
+    from unittest.mock import patch, MagicMock  # 3.3 and beyond
+except ImportError:
+    from mock import patch, MagicMock
 
 
 class TestShazar(TestCase):
@@ -23,3 +30,25 @@ class TestShazar(TestCase):
 
         self.assertEqual(args.output_dir, 'output-dir')
         self.assertEqual(args.source, 'source')
+
+
+class TestIntegration(TestCase, CliTestCase):
+
+    def setUp(self):  # noqa
+        self.tmpdir = tempfile.mkdtemp()
+        self.tmpfile = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
+        self.tmpfile.write(b'test file data')
+
+    def test(self):
+        stdout = MagicMock()
+        with patch('sys.stdout', stdout):
+            run('--output-dir {} {}'.format(self.tmpdir, self.tmpfile.name).split())
+
+        self.assertRegex(
+            self.output(stdout),
+            'Created digested ZIP archive at /tmp/tmp[a-z0-9_]{6,8}/tmp[a-z0-9_]{6,8}-[a-f0-9]{64}\.zip'
+        )
+
+    def tearDown(self):  # noqa
+        shutil.rmtree(self.tmpdir)
+        remove(self.tmpfile.name)

@@ -1,7 +1,8 @@
 language: python
-python:
-- '3.4'
-script: python3 setup.py test
+install:
+  - pip3 install --user virtualenv
+script:
+  - python3 setup.py test
 deploy:
   provider: pypi
   user: typesafehub

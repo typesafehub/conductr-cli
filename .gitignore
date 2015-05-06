@@ -6,3 +6,4 @@ deb_dist/*
 .idea
 *.iml
 *.pyc
+.tox

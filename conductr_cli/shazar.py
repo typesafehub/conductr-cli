@@ -11,10 +11,10 @@ import tempfile
 import zipfile
 
 
-def run():
+def run(argv=None):
     parser = build_parser()
     argcomplete.autocomplete(parser)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     args.func(args)
 
 
@@ -45,10 +45,8 @@ def shazar(args):
         else:
             zip_file.write(args.source, source_base_name)
 
-    dest = shutil.move(
-        temp_file,
-        os.path.join(args.output_dir, '{}-{}.zip'.format(source_base_name, create_digest(temp_file)))
-    )
+    dest = os.path.join(args.output_dir, '{}-{}.zip'.format(source_base_name, create_digest(temp_file)))
+    shutil.move(temp_file, dest)
     print('Created digested ZIP archive at {}'.format(dest))
 
 

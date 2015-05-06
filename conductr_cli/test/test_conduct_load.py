@@ -1,9 +1,13 @@
 from unittest import TestCase
-from unittest.mock import call, patch, MagicMock
 from conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, create_temp_bundle_with_contents, strip_margin
 from conductr_cli import conduct_load
 from urllib.error import URLError
 import shutil
+
+try:
+    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
+except ImportError:
+    from mock import call, patch, MagicMock
 
 
 class TestConductLoadCommand(TestCase, CliTestCase):
