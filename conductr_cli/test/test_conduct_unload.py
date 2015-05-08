@@ -89,7 +89,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
             self.output(stderr))
 
     def test_failure_invalid_address(self):
-        http_method = self.raise_connection_error('test reason')
+        http_method = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
 
         with patch('requests.delete', http_method), patch('sys.stderr', stderr):
@@ -98,5 +98,5 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            self.default_connection_error.format(self.default_args['ip'], self.default_args['port']),
+            self.default_connection_error.format(self.default_url),
             self.output(stderr))

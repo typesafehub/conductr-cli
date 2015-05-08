@@ -16,7 +16,7 @@ class CliTestCase():
     def default_connection_error(self):
         return strip_margin("""|ERROR: Unable to contact ConductR.
                                |ERROR: Reason: test reason
-                               |ERROR: Make sure it can be accessed at {}:{}.
+                               |ERROR: Make sure it can be accessed at {}
                                |""")
 
     def respond_with(self, status_code=200, text=''):
@@ -43,8 +43,8 @@ class CliTestCase():
         with open(os.path.join(os.path.dirname(__file__), filepath), 'r') as content_file:
             return self.respond_with(text=content_file.read())
 
-    def raise_connection_error(self, reason):
-        return MagicMock(side_effect=ConnectionError(reason))
+    def raise_connection_error(self, reason, url):
+        return MagicMock(side_effect=ConnectionError(reason, request=MagicMock(url=url)))
 
     def output(self, logger):
         return ''.join([args[0].rstrip(' ') for name, args, kwargs in logger.method_calls])

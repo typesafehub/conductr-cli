@@ -38,6 +38,8 @@ class Tox(test):
         args = self.tox_args
         if args:
             args = shlex.split(self.tox_args)
+        else:
+            args = []
         errno = tox.cmdline(args=args)
         sys.exit(errno)
 

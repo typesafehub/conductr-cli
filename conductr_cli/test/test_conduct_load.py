@@ -205,7 +205,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
 
     def test_failure_invalid_address(self):
         urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
-        http_method = self.raise_connection_error('test reason')
+        http_method = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
         open_mock = MagicMock(return_value=1)
 
@@ -219,7 +219,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         http_method.assert_called_with(self.default_url, files=self.default_files)
 
         self.assertEqual(
-            self.default_connection_error.format(self.default_args['ip'], self.default_args['port']),
+            self.default_connection_error.format(self.default_url),
             self.output(stderr))
 
     def test_failure_no_nr_of_cpus(self):

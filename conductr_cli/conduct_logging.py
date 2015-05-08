@@ -18,10 +18,10 @@ def warning(message, *objs):
     print('WARNING: {}'.format(message.format(*objs)), file=sys.stdout)
 
 
-def connection_error(err, args):
+def connection_error(err):
     error('Unable to contact ConductR.')
     error('Reason: {}'.format(err.args[0]))
-    error('Make sure it can be accessed at {}:{}.'.format(args[0].ip, args[0].port))
+    error('Make sure it can be accessed at {}'.format(err.request.url))
 
 
 def pretty_json(s):
@@ -34,7 +34,7 @@ def handle_connection_error(func):
         try:
             return func(*args, **kwargs)
         except ConnectionError as err:
-            connection_error(err, args)
+            connection_error(err)
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
