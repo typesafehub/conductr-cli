@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
-
-
 import argcomplete
 import argparse
-from conductr_cli \
-    import conduct_info, conduct_load, conduct_run, conduct_services, conduct_stop, conduct_unload, conduct_version
+from conductr_cli import \
+    conduct_info, conduct_load, conduct_run, conduct_services,\
+    conduct_stop, conduct_unload, conduct_version
 import os
 
 
@@ -107,6 +105,28 @@ def build_parser():
                                help='The ID of the bundle')
     add_default_arguments(unload_parser)
     unload_parser.set_defaults(func=conduct_unload.unload)
+
+    # Sub-parser for `events` sub-command
+    events_parser = subparsers.add_parser('events',
+                                          help='show bundle events')
+    events_parser.add_argument('--service',
+                               default='http://{}:9210'.format(default_ip),
+                               help='Events service address')
+    events_parser.add_argument('bundle',
+                               help='The ID of the bundle')
+    # events_parser.set_defaults(func=conduct_events.events) FIXME
+    events_parser.set_defaults(func=lambda x: print('This command is not yet available. Consult ConductR logs.'))
+
+    # Sub-parser for `logs` sub-command
+    logs_parser = subparsers.add_parser('logs',
+                                        help='show bundle logs')
+    logs_parser.add_argument('--service',
+                             default='http://{}:9210'.format(default_ip),
+                             help='Logs service address')
+    logs_parser.add_argument('bundle',
+                             help='2The ID of the bundle')
+    # logs_parser.set_defaults(func=conduct_logs.logs) FIXME
+    logs_parser.set_defaults(func=lambda x: print('This command is not yet available. Consult your application logs.'))
 
     return parser
 

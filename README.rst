@@ -80,6 +80,12 @@ Execute the following command to run all defined tests:
 
     python3 setup.py test
 
+To run only a specific test case in a test suite:
+
+.. code:: bash
+
+    python3 setup.py test -a "-- -s conductr_cli.test.test_conduct_unload:TestConductUnloadCommand.test_failure_invalid_address"
+
 Releasing
 ~~~~~~~~~
 
@@ -102,7 +108,8 @@ e.g.
 .. code:: bash
 
     $ conduct -h
-    usage: conduct [-h] {version,info,services,load,run,stop,unload} ...
+    usage: conduct.py [-h]
+                  {version,info,services,load,run,stop,unload,events,logs} ...
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -110,7 +117,7 @@ e.g.
     subcommands:
       valid subcommands
 
-      {version,info,services,load,run,stop,unload}
+      {version,info,services,load,run,stop,unload,events,logs}
                             help for subcommands
         version             print version
         info                print bundle information
@@ -119,6 +126,8 @@ e.g.
         run                 run a bundle
         stop                stop a bundle
         unload              unload a bundle
+        events              show bundle events
+        logs                show bundle logs
 
 Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port; if not given, ``CONDUCTR_IP`` environment variable or ``127.0.0.1`` will be used for the IP and ``CONDUCTR_PORT`` or ``9005`` for the port. Alternatively you can specify the IP via the ``--ip`` option and the port via the ``--port`` option.
 
