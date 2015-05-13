@@ -2,6 +2,7 @@ from unittest import TestCase
 from conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, create_temp_bundle_with_contents, strip_margin
 from conductr_cli import conduct_load
 from urllib.error import URLError
+import os
 import shutil
 
 try:
@@ -54,7 +55,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
         ('roles', ' '.join(roles)),
         ('bundleName', bundleName),
         ('system', system),
-        ('bundle', 1)
+        ('bundle', ('bundle.zip', 1))
     ]
 
     output_template = """|Retrieving bundle...
@@ -177,7 +178,7 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
-        expected_files = self.default_files + [('configuration', 1)]
+        expected_files = self.default_files + [('configuration', ('bundle.zip', 1))]
         expected_files[4] = ('bundleName', 'overlaid-name')
         http_method.assert_called_with(self.default_url, files=expected_files)
 
@@ -361,3 +362,16 @@ class TestConductLoadCommand(TestCase, CliTestCase):
             strip_margin("""|ERROR: File not found: no_such.conf
                             |"""),
             self.output(stderr))
+
+
+class TestGetUrl(TestCase):
+
+    def test_url(self):
+        filename, url = conduct_load.get_url('https://site.com/bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip')
+        self.assertEqual('bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', filename)
+        self.assertEqual('https://site.com/bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', url)
+
+    def test_file(self):
+        filename, url = conduct_load.get_url('bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip')
+        self.assertEqual('bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', filename)
+        self.assertEqual('file://' + os.getcwd() + '/bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', url)
