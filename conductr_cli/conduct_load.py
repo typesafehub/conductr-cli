@@ -19,11 +19,14 @@ def load(args):
     """`conduct load` command"""
 
     print('Retrieving bundle...')
-    bundle_file, bundle_headers = urlretrieve(get_url(args.bundle))
+    bundle_name, bundle_url = get_url(args.bundle)
+    bundle_file, bundle_headers = urlretrieve(bundle_url)
+
+    configuration_file, configuration_headers, configuration_name = (None, None, None)
     if args.configuration is not None:
         print('Retrieving configuration...')
-    configuration_file, configuration_headers = urlretrieve(get_url(args.configuration)) \
-        if args.configuration is not None else (None, None)
+        configuration_name, configuration_url = get_url(args.configuration)
+        configuration_file, configuration_headers = urlretrieve(configuration_url)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -39,10 +42,10 @@ def load(args):
         ('roles', ' '.join(with_bundle_configurations(ConfigTree.get_list, 'roles'))),
         ('bundleName', with_bundle_configurations(ConfigTree.get_string, 'name')),
         ('system', with_bundle_configurations(ConfigTree.get_string, 'system')),
-        ('bundle', open(bundle_file, 'rb'))
+        ('bundle', (bundle_name, open(bundle_file, 'rb')))
     ]
     if configuration_file is not None:
-        files.append(('configuration', open(configuration_file, 'rb')))
+        files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
 
     print('Loading bundle to ConductR...')
     response = requests.post(url, files=files)
@@ -74,4 +77,5 @@ def get_url(uri):
     parsed = urlparse(uri, scheme='file')
     op = Path(uri)
     np = str(op.cwd() / op if parsed.scheme == 'file' and op.root == '' else parsed.path)
-    return urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
+    url = urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
+    return (url.split('/')[-1], url)
