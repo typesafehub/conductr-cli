@@ -1,4 +1,4 @@
-from conductr_cli import conduct_logging, conduct_info
+from conductr_cli import conduct_logging, conduct_info, conduct_url
 import json
 import requests
 
@@ -8,14 +8,15 @@ import requests
 def events(args):
     """`conduct events` command"""
 
-    response = requests.get('{}/events/{}'.format(args.service, args.bundle))
+    request_url = conduct_url.url('bundles/{}/events?count={}'.format(args.bundle, args.lines), args)
+    response = requests.get(request_url)
     conduct_logging.raise_for_status_inc_3xx(response)
 
     data = [
         {
-            'time': event['@cee']['body']['time'],
-            'event': event['@cee']['head']['contentType'],
-            'description': event['@cee']['body']['message']
+            'time': conduct_logging.format_timestamp(event['timestamp'], args),
+            'event': event['event'],
+            'description': event['description']
         } for event in json.loads(response.text)
     ]
     data.insert(0, {'time': 'TIME', 'event': 'EVENT', 'description': 'DESC'})

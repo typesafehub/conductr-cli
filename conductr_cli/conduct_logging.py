@@ -1,6 +1,7 @@
 import json
 import sys
 import urllib
+import arrow
 
 from pyhocon.exceptions import ConfigException
 from requests import status_codes
@@ -112,3 +113,16 @@ def raise_for_status_inc_3xx(response):
     response.raise_for_status()
     if response.status_code >= 300:
         raise HTTPError(status_codes._codes[response.status_code], response=response)
+
+
+def format_timestamp(timestamp, args):
+    date = arrow.get(timestamp)
+
+    if args.date and args.utc:
+        return date.to('UTC').strftime('%Y-%m-%dT%H:%M:%SZ')
+    elif args.date:
+        return date.to('local').strftime('%c')
+    elif args.utc:
+        return date.to('UTC').strftime('%H:%M:%SZ')
+    else:
+        return date.to('local').strftime('%X')

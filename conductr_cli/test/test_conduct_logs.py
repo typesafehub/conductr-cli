@@ -11,11 +11,15 @@ except ImportError:
 class TestConductLogsCommand(TestCase, CliTestCase):
 
     default_args = {
-        'service': 'http://127.0.0.1:9210',
-        'bundle': 'ab8f513'
+        'ip': '127.0.0.1',
+        'port': '9005',
+        'bundle': 'ab8f513',
+        'lines': 1,
+        'date': True,
+        'utc': True
     }
 
-    default_url = 'http://127.0.0.1:9210/logs/ab8f513'
+    default_url = 'http://127.0.0.1:9005/bundles/ab8f513/logs?count=1'
 
     def test_no_logs(self):
         http_method = self.respond_with(text='{}')
@@ -33,22 +37,14 @@ class TestConductLogsCommand(TestCase, CliTestCase):
     def test_multiple_events(self):
         http_method = self.respond_with(text="""[
             {
-                "@cee": {
-                    "body": {
-                        "time": "Today 12:54:36",
-                        "host": "10.0.1.232",
-                        "log": "[WARN] [04/21/2015 12:54:30.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-22] Association with remote system has failed."
-                    }
-                }
+                "timestamp":"2015-08-24T01:16:22.327Z",
+                "host":"10.0.1.232",
+                "message":"[WARN] [04/21/2015 12:54:30.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-22] Association with remote system has failed."
             },
             {
-                "@cee": {
-                    "body": {
-                        "time": "Today 12:54:30",
-                        "host": "10.0.1.232",
-                        "log": "[WARN] [04/21/2015 12:54:36.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-26] Association with remote system has failed."
-                    }
-                }
+                "timestamp":"2015-08-24T01:16:25.327Z",
+                "host":"10.0.1.232",
+                "message":"[WARN] [04/21/2015 12:54:36.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-26] Association with remote system has failed."
             }
         ]""")
         stdout = MagicMock()
@@ -58,9 +54,9 @@ class TestConductLogsCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            strip_margin("""|TIME            HOST        LOG
-                            |Today 12:54:36  10.0.1.232  [WARN] [04/21/2015 12:54:30.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-22] Association with remote system has failed.
-                            |Today 12:54:30  10.0.1.232  [WARN] [04/21/2015 12:54:36.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-26] Association with remote system has failed.
+            strip_margin("""|TIME                  HOST        LOG
+                            |2015-08-24T01:16:22Z  10.0.1.232  [WARN] [04/21/2015 12:54:30.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-22] Association with remote system has failed.
+                            |2015-08-24T01:16:25Z  10.0.1.232  [WARN] [04/21/2015 12:54:36.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-26] Association with remote system has failed.
                             |"""),
             self.output(stdout))
 

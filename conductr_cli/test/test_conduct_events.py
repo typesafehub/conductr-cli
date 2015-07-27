@@ -11,11 +11,15 @@ except ImportError:
 class TestConductEventsCommand(TestCase, CliTestCase):
 
     default_args = {
-        'service': 'http://127.0.0.1:9210',
-        'bundle': 'ab8f513'
+        'ip': '127.0.0.1',
+        'port': '9005',
+        'bundle': 'ab8f513',
+        'lines': 1,
+        'date': True,
+        'utc': True
     }
 
-    default_url = 'http://127.0.0.1:9210/events/ab8f513'
+    default_url = 'http://127.0.0.1:9005/bundles/ab8f513/events?count=1'
 
     def test_no_events(self):
         http_method = self.respond_with(text='{}')
@@ -33,32 +37,14 @@ class TestConductEventsCommand(TestCase, CliTestCase):
     def test_multiple_events(self):
         http_method = self.respond_with(text="""[
             {
-                "@cee": {
-                    "head": {
-                        "contentType": "conductr.loadScheduler.loadBundleRequested"
-                    },
-                    "body": {
-                        "time": "Today 12:54:30",
-                        "requestId": "req123",
-                        "bundleName": "bundle-name",
-                        "message": "Load bundle requested: requestId=req123, bundleName=bundle-name"
-                    },
-                    "tag": "conductr.loadScheduler.loadBundleRequested"
-                }
+                "timestamp":"2015-08-24T01:16:22.327Z",
+                "event":"conductr.loadScheduler.loadBundleRequested",
+                "description":"Load bundle requested: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer"
             },
             {
-                "@cee": {
-                    "head": {
-                        "contentType": "conductr.loadExecutor.bundleWritten"
-                    },
-                    "body": {
-                        "time": "Today 12:54:36",
-                        "requestId": "req123",
-                        "bundleName": "bundle-name",
-                        "message": "Bundle written: requestId=req123, bundleName=bundle-name"
-                    },
-                    "tag": "conductr.loadExecutor.bundleWritten"
-                }
+                "timestamp":"2015-08-24T01:16:25.327Z",
+                "event":"conductr.loadExecutor.bundleWritten",
+                "description":"Bundle written: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer"
             }
         ]""")
         stdout = MagicMock()
@@ -68,9 +54,9 @@ class TestConductEventsCommand(TestCase, CliTestCase):
 
         http_method.assert_called_with(self.default_url)
         self.assertEqual(
-            strip_margin("""|TIME            EVENT                                       DESC
-                            |Today 12:54:30  conductr.loadScheduler.loadBundleRequested  Load bundle requested: requestId=req123, bundleName=bundle-name
-                            |Today 12:54:36  conductr.loadExecutor.bundleWritten         Bundle written: requestId=req123, bundleName=bundle-name
+            strip_margin("""|TIME                  EVENT                                       DESC
+                            |2015-08-24T01:16:22Z  conductr.loadScheduler.loadBundleRequested  Load bundle requested: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer
+                            |2015-08-24T01:16:25Z  conductr.loadExecutor.bundleWritten         Bundle written: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer
                             |"""),
             self.output(stdout))
 
