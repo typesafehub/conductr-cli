@@ -2,7 +2,8 @@ import argcomplete
 import argparse
 from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_services,\
-    conduct_stop, conduct_unload, conduct_version
+    conduct_stop, conduct_unload, conduct_version, conduct_logs,\
+    conduct_events
 import os
 
 
@@ -109,24 +110,38 @@ def build_parser():
     # Sub-parser for `events` sub-command
     events_parser = subparsers.add_parser('events',
                                           help='show bundle events')
-    events_parser.add_argument('--service',
-                               default='http://{}:9210'.format(default_ip),
-                               help='Events service address')
+    add_ip_and_port(events_parser)
+    events_parser.add_argument('-n', '--lines',
+                               type=int,
+                               default=10,
+                               help='The number of events to fetch, defaults to 10')
+    events_parser.add_argument('--date',
+                               action='store_true',
+                               help='Display the date of the events')
+    events_parser.add_argument('--utc',
+                               action='store_true',
+                               help='Convert the date/time of the events to UTC')
     events_parser.add_argument('bundle',
-                               help='The ID of the bundle')
-    # events_parser.set_defaults(func=conduct_events.events) FIXME
-    events_parser.set_defaults(func=lambda x: print('This command is not yet available. Consult ConductR logs.'))
+                               help='The ID or name of the bundle')
+    events_parser.set_defaults(func=conduct_events.events)
 
     # Sub-parser for `logs` sub-command
     logs_parser = subparsers.add_parser('logs',
                                         help='show bundle logs')
-    logs_parser.add_argument('--service',
-                             default='http://{}:9210'.format(default_ip),
-                             help='Logs service address')
+    add_ip_and_port(logs_parser)
+    logs_parser.add_argument('-n', '--lines',
+                             type=int,
+                             default=10,
+                             help='The number of logs to fetch, defaults to 10')
+    logs_parser.add_argument('--date',
+                             action='store_true',
+                             help='Display the date of the log')
+    logs_parser.add_argument('--utc',
+                             action='store_true',
+                             help='Convert the date/time of the log to UTC')
     logs_parser.add_argument('bundle',
-                             help='2The ID of the bundle')
-    # logs_parser.set_defaults(func=conduct_logs.logs) FIXME
-    logs_parser.set_defaults(func=lambda x: print('This command is not yet available. Consult your application logs.'))
+                             help='The ID or name of the bundle')
+    logs_parser.set_defaults(func=conduct_logs.logs)
 
     return parser
 
