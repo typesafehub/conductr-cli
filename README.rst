@@ -137,6 +137,12 @@ Here’s an example for loading a bundle:
 
     conduct load sbt-conductr-tester-1.0.0-e172570d3c0fb11f4f9dbb8de519df58dcb490799f525bab43757f291e1d104d.zip
 
+Note that when specifying IPV6 addresses then you must surround them with square brackets e.g.:
+
+.. code:: bash
+
+    conduct info --ip [fe80:0000:0000:0000:0cb3:e2ff:fe74:902d] 
+    
 shazar
 ^^^^^^
 
