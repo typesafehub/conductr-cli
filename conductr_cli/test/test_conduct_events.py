@@ -13,6 +13,7 @@ class TestConductEventsCommand(TestCase, CliTestCase):
     default_args = {
         'ip': '127.0.0.1',
         'port': '9005',
+        'api_version': '1.0',
         'bundle': 'ab8f513',
         'lines': 1,
         'date': True,
