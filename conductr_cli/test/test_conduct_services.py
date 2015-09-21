@@ -13,6 +13,7 @@ class TestConductServicesCommand(TestCase, CliTestCase):
     default_args = {
         'ip': '127.0.0.1',
         'port': 9005,
+        'api_version': '1.0',
         'verbose': False,
         'long_ids': False
     }

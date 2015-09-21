@@ -19,5 +19,6 @@ class TestConductVersionCommand(TestCase, CliTestCase):
         from conductr_cli import __version__
         self.assertEqual(
             strip_margin("""|{}
-                            |""".format(__version__)),
+                            |Supported API version(s): {}
+                            |""".format(__version__, ', '.join(conduct_version.supported_api_versions()))),
             self.output(stdout))

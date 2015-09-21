@@ -131,6 +131,8 @@ e.g.
 
 Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port; if not given, ``CONDUCTR_IP`` environment variable or ``127.0.0.1`` will be used for the IP and ``CONDUCTR_PORT`` or ``9005`` for the port. Alternatively you can specify the IP via the ``--ip`` option and the port via the ``--port`` option.
 
+The commands provided via CLI uses version 1.0 of the ConductR API by default. When working with version 1.1 of ConductR, set the ``CONDUCTR_API_VERSION`` environment variable to ``1.1``. Alternatively you can specify the API version via the ``--api-version`` option.
+
 Here’s an example for loading a bundle:
 
 .. code:: bash
@@ -141,8 +143,8 @@ Note that when specifying IPV6 addresses then you must surround them with square
 
 .. code:: bash
 
-    conduct info --ip [fe80:0000:0000:0000:0cb3:e2ff:fe74:902d] 
-    
+    conduct info --ip [fe80:0000:0000:0000:0cb3:e2ff:fe74:902d]
+
 shazar
 ^^^^^^
 

@@ -20,6 +20,7 @@ class TestConductUnloadCommand(TestCase, CliTestCase):
     default_args = {
         'ip': '127.0.0.1',
         'port': 9005,
+        'api_version': '1.0',
         'verbose': False,
         'cli_parameters': '',
         'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c'

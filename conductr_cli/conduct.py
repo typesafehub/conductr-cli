@@ -9,6 +9,7 @@ import os
 
 default_ip = os.getenv('CONDUCTR_IP', '127.0.0.1')
 default_port = os.getenv('CONDUCTR_PORT', '9005')
+default_api_version = os.getenv('CONDUCTR_API_VERSION', '1.0')
 
 
 def add_ip_and_port(sub_parser):
@@ -37,10 +38,19 @@ def add_long_ids(sub_parser):
                             action='store_true')
 
 
+def add_api_version(sub_parser):
+    sub_parser.add_argument('--api-version',
+                            help='Sets which ConductR api version to be used',
+                            default=default_api_version,
+                            dest='api_version',
+                            choices=conduct_version.supported_api_versions())
+
+
 def add_default_arguments(sub_parser):
     add_ip_and_port(sub_parser)
     add_verbose(sub_parser)
     add_long_ids(sub_parser)
+    add_api_version(sub_parser)
 
 
 def build_parser():
@@ -152,6 +162,8 @@ def get_cli_parameters(args):
         parameters.append('--ip {}'.format(args.ip))
     if getattr(args, 'port', int(default_port)) != int(default_port):
         parameters.append('--port {}'.format(args.port))
+    if getattr(args, 'api_version', default_api_version) != default_api_version:
+        parameters.append('--api-version {}'.format(args.api_version))
     return ' '.join(parameters)
 
 

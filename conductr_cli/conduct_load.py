@@ -35,15 +35,7 @@ def load(args):
     with_bundle_configurations = partial(apply_to_configurations, bundle_conf, overlay_bundle_conf)
 
     url = conduct_url.url('bundles', args)
-    files = [
-        ('nrOfCpus', with_bundle_configurations(ConfigTree.get_string, 'nrOfCpus')),
-        ('memory', with_bundle_configurations(ConfigTree.get_string, 'memory')),
-        ('diskSpace', with_bundle_configurations(ConfigTree.get_string, 'diskSpace')),
-        ('roles', ' '.join(with_bundle_configurations(ConfigTree.get_list, 'roles'))),
-        ('bundleName', with_bundle_configurations(ConfigTree.get_string, 'name')),
-        ('system', with_bundle_configurations(ConfigTree.get_string, 'system')),
-        ('bundle', (bundle_name, open(bundle_file, 'rb')))
-    ]
+    files = get_payload(args.api_version, bundle_name, bundle_file, with_bundle_configurations)
     if configuration_file is not None:
         files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
 
@@ -79,3 +71,36 @@ def get_url(uri):
     np = str(op.cwd() / op if parsed.scheme == 'file' and op.root == '' else parsed.path)
     url = urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
     return (url.split('/')[-1], url)
+
+
+def get_payload(api_version, bundle_name, bundle_file, bundle_configuration):
+    if api_version == '1.0':
+        return get_v_1_0_payload(bundle_name, bundle_file, bundle_configuration)
+    else:
+        return get_v_1_1_payload(bundle_name, bundle_file, bundle_configuration)
+
+
+def get_v_1_0_payload(bundle_name, bundle_file, bundle_configuration):
+    return [
+        ('nrOfCpus', bundle_configuration(ConfigTree.get_string, 'nrOfCpus')),
+        ('memory', bundle_configuration(ConfigTree.get_string, 'memory')),
+        ('diskSpace', bundle_configuration(ConfigTree.get_string, 'diskSpace')),
+        ('roles', ' '.join(bundle_configuration(ConfigTree.get_list, 'roles'))),
+        ('bundleName', bundle_configuration(ConfigTree.get_string, 'name')),
+        ('system', bundle_configuration(ConfigTree.get_string, 'system')),
+        ('bundle', (bundle_name, open(bundle_file, 'rb')))
+    ]
+
+
+def get_v_1_1_payload(bundle_name, bundle_file, bundle_configuration):
+    return [
+        ('nrOfCpus', bundle_configuration(ConfigTree.get_string, 'nrOfCpus')),
+        ('memory', bundle_configuration(ConfigTree.get_string, 'memory')),
+        ('diskSpace', bundle_configuration(ConfigTree.get_string, 'diskSpace')),
+        ('roles', ' '.join(bundle_configuration(ConfigTree.get_list, 'roles'))),
+        ('bundleName', bundle_configuration(ConfigTree.get_string, 'name')),
+        ('system', bundle_configuration(ConfigTree.get_string, 'system')),
+        ('systemVersion', bundle_configuration(ConfigTree.get_string, 'systemVersion')),
+        ('compatibilityVersion', bundle_configuration(ConfigTree.get_string, 'compatibilityVersion')),
+        ('bundle', (bundle_name, open(bundle_file, 'rb')))
+    ]
