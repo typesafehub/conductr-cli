@@ -120,7 +120,7 @@ def build_parser():
     # Sub-parser for `events` sub-command
     events_parser = subparsers.add_parser('events',
                                           help='show bundle events')
-    add_ip_and_port(events_parser)
+    add_default_arguments(events_parser)
     events_parser.add_argument('-n', '--lines',
                                type=int,
                                default=10,
@@ -138,7 +138,7 @@ def build_parser():
     # Sub-parser for `logs` sub-command
     logs_parser = subparsers.add_parser('logs',
                                         help='show bundle logs')
-    add_ip_and_port(logs_parser)
+    add_default_arguments(logs_parser)
     logs_parser.add_argument('-n', '--lines',
                              type=int,
                              default=10,
