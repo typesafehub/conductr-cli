@@ -1,4 +1,3 @@
-from unittest import TestCase
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import conduct_run
 
@@ -8,7 +7,7 @@ except ImportError:
     from mock import patch, MagicMock
 
 
-class TestConductRunCommand(TestCase, CliTestCase):
+class ConductRunTestBase(CliTestCase):
 
     @property
     def default_response(self):
@@ -16,24 +15,6 @@ class TestConductRunCommand(TestCase, CliTestCase):
                                |  "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c"
                                |}
                                |""")
-
-    default_args = {
-        'ip': '127.0.0.1',
-        'port': 9005,
-        'api_version': '1.0',
-        'verbose': False,
-        'long_ids': False,
-        'cli_parameters': '',
-        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
-        'scale': 3
-    }
-
-    default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=3'
-
-    output_template = """|Bundle run request sent.
-                         |Stop bundle with: conduct stop{params} {bundle_id}
-                         |Print ConductR info with: conduct info{params}
-                         |"""
 
     def default_output(self, params='', bundle_id='45e0c47'):
         return strip_margin(self.output_template.format(**{'params': params, 'bundle_id': bundle_id}))

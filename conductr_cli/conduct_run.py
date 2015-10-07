@@ -1,6 +1,7 @@
 from conductr_cli import bundle_utils, conduct_url, conduct_logging
 import json
 import requests
+import sys
 
 
 @conduct_logging.handle_connection_error
@@ -8,7 +9,14 @@ import requests
 def run(args):
     """`conduct run` command"""
 
-    path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
+    if args.affinity is not None and args.api_version == '1.0':
+        print('ERROR: Affinity feature is only available for v1.1 onwards of ConductR', file=sys.stderr)
+        return
+    elif args.affinity is not None:
+        path = 'bundles/{}?scale={}&affinity={}'.format(args.bundle, args.scale, args.affinity)
+    else:
+        path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
+
     url = conduct_url.url(path, args)
     response = requests.put(url)
     conduct_logging.raise_for_status_inc_3xx(response)
