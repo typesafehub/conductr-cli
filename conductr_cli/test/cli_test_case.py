@@ -47,7 +47,7 @@ class CliTestCase():
         return MagicMock(side_effect=ConnectionError(reason, request=MagicMock(url=url)))
 
     def output(self, logger):
-        return ''.join([args[0].rstrip(' ') for name, args, kwargs in logger.method_calls])
+        return ''.join([args[0] for name, args, kwargs in logger.method_calls])
 
 
 def strip_margin(string, margin_char='|'):
