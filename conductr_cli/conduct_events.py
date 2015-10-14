@@ -28,4 +28,4 @@ def events(args):
         print('''\
 {time: <{time_width}}{padding}\
 {event: <{event_width}}{padding}\
-{description: <{description_width}}{padding}'''.format(**dict(row, **column_widths)))
+{description: <{description_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())

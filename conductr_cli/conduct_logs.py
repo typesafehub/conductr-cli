@@ -28,4 +28,4 @@ def logs(args):
         print('''\
 {time: <{time_width}}{padding}\
 {host: <{host_width}}{padding}\
-{log: <{log_width}}{padding}'''.format(**dict(row, **column_widths)))
+{log: <{log_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
