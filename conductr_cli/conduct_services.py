@@ -1,4 +1,4 @@
-from conductr_cli import bundle_utils, conduct_info, conduct_url, conduct_logging
+from conductr_cli import bundle_utils, conduct_url, conduct_logging, screen_utils
 import json
 import requests
 from urllib.parse import urlparse
@@ -45,7 +45,7 @@ def services(args):
     data.insert(0, {'service': 'SERVICE', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})
 
     padding = 2
-    column_widths = dict(conduct_info.calc_column_widths(data), **{'padding': ' ' * padding})
+    column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
     for row in data:
         print('{service: <{service_width}}{padding}{bundle_id: <{bundle_id_width}}{padding}{bundle_name: <{bundle_name_width}}{padding}{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
 

@@ -1,4 +1,4 @@
-from conductr_cli import conduct_logging, conduct_info, conduct_url
+from conductr_cli import conduct_logging, conduct_url, screen_utils
 import json
 import requests
 
@@ -22,7 +22,7 @@ def events(args):
     data.insert(0, {'time': 'TIME', 'event': 'EVENT', 'description': 'DESC'})
 
     padding = 2
-    column_widths = dict(conduct_info.calc_column_widths(data), **{'padding': ' ' * padding})
+    column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
 
     for row in data:
         print('''\
