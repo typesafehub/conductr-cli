@@ -47,7 +47,7 @@ def services(args):
     padding = 2
     column_widths = dict(conduct_info.calc_column_widths(data), **{'padding': ' ' * padding})
     for row in data:
-        print('{service: <{service_width}}{padding}{bundle_id: <{bundle_id_width}}{padding}{bundle_name: <{bundle_name_width}}{padding}{status: <{status_width}}'.format(**dict(row, **column_widths)))
+        print('{service: <{service_width}}{padding}{bundle_id: <{bundle_id_width}}{padding}{bundle_name: <{bundle_name_width}}{padding}{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
 
     if len(duplicate_endpoints) > 0:
         print()

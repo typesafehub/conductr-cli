@@ -36,7 +36,7 @@ def info(args):
 {name: <{name_width}}{padding}\
 {replications: >{replications_width}}{padding}\
 {starting: >{starting_width}}{padding}\
-{executions: >{executions_width}}'''.format(**dict(row, **column_widths)))
+{executions: >{executions_width}}'''.format(**dict(row, **column_widths)).rstrip())
 
     if has_error:
         print('There are errors: use `conduct events` or `conduct logs` for further information')
