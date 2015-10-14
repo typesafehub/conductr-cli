@@ -46,7 +46,7 @@ class TestIntegration(TestCase, CliTestCase):
 
         self.assertRegex(
             self.output(stdout),
-            'Created digested ZIP archive at /tmp/tmp[a-z0-9_]{6,8}/tmp[a-z0-9_]{6,8}-[a-f0-9]{64}\.zip'
+            'Created digested ZIP archive at {}/tmp[a-z0-9_]{{6,8}}-[a-f0-9]{{64}}\.zip'.format(self.tmpdir)
         )
 
     def tearDown(self):  # noqa
