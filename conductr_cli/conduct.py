@@ -96,6 +96,9 @@ def build_parser():
                             type=int,
                             default=1,
                             help='The optional number of executions, defaults to 1')
+    run_parser.add_argument('--affinity',
+                            default=None,
+                            help='The optional ID of the bundle to run alongside with (v1.1 onwards)')
     run_parser.add_argument('bundle',
                             help='The ID of the bundle')
     add_default_arguments(run_parser)
