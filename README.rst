@@ -74,6 +74,12 @@ If you are running zsh, execute the following command to enable autocomplete:
 Running tests
 ~~~~~~~~~~~~~
 
+Execute the following command to run unit tests for the current version of python3:
+
+.. code:: bash
+
+    python3 -m unittest
+
 Execute the following command to run all defined tests:
 
 .. code:: bash
