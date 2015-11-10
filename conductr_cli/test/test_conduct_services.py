@@ -1,6 +1,7 @@
-from unittest import TestCase
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import conduct_services
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+
 
 try:
     from unittest.mock import patch, MagicMock  # 3.3 and beyond
@@ -8,7 +9,7 @@ except ImportError:
     from mock import patch, MagicMock
 
 
-class TestConductServicesCommand(TestCase, CliTestCase):
+class TestConductServicesCommand(CliTestCase):
 
     default_args = {
         'ip': '127.0.0.1',
@@ -27,7 +28,7 @@ class TestConductServicesCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_services.services(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|SERVICE  BUNDLE ID  BUNDLE NAME  STATUS
                             |"""),
@@ -40,7 +41,7 @@ class TestConductServicesCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_services.services(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|SERVICE                   BUNDLE ID  BUNDLE NAME                   STATUS
                             |http://:6011/comp2-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
@@ -64,7 +65,7 @@ class TestConductServicesCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_services.services(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|SERVICE                   BUNDLE ID  BUNDLE NAME                   STATUS
                             |http://:6011              6e4560e    multi2-comp-multi-endp-1.0.0  Running
@@ -85,7 +86,7 @@ class TestConductServicesCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_services.services(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|SERVICE                   BUNDLE ID  BUNDLE NAME                  STATUS
                             |http://:8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0  Starting
@@ -105,13 +106,14 @@ class TestConductServicesCommand(TestCase, CliTestCase):
             args.update({'long_ids': True})
             conduct_services.services(MagicMock(**args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
-            strip_margin("""|SERVICE                   BUNDLE ID                         BUNDLE NAME                  STATUS
-                            |http://:8010/comp1-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                            |http://:8011/comp1-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                            |http://:9010/comp2-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                            |http://:9011/comp2-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                            |http://my.service         f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                            |"""),
+            strip_margin(
+                """|SERVICE                   BUNDLE ID                         BUNDLE NAME                  STATUS
+                   |http://:8010/comp1-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                   |http://:8011/comp1-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                   |http://:9010/comp2-endp1  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                   |http://:9011/comp2-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                   |http://my.service         f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                   |"""),
             self.output(stdout))

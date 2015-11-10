@@ -9,6 +9,13 @@ except ImportError:
 
 class ConductRunTestBase(CliTestCase):
 
+    def __init__(self, method_name):
+        super().__init__(method_name)
+
+        self.default_args = {}
+        self.default_url = None
+        self.output_template = None
+
     @property
     def default_response(self):
         return strip_margin("""|{
@@ -19,7 +26,7 @@ class ConductRunTestBase(CliTestCase):
     def default_output(self, params='', bundle_id='45e0c47'):
         return strip_margin(self.output_template.format(**{'params': params, 'bundle_id': bundle_id}))
 
-    def test_success(self):
+    def base_test_success(self):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
@@ -30,7 +37,7 @@ class ConductRunTestBase(CliTestCase):
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
-    def test_success_verbose(self):
+    def base_test_success_verbose(self):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
@@ -43,7 +50,7 @@ class ConductRunTestBase(CliTestCase):
 
         self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
 
-    def test_success_long_ids(self):
+    def base_test_success_long_ids(self):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
@@ -56,7 +63,7 @@ class ConductRunTestBase(CliTestCase):
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
-    def test_success_with_configuration(self):
+    def base_test_success_with_configuration(self):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
@@ -72,7 +79,7 @@ class ConductRunTestBase(CliTestCase):
             self.default_output(params=cli_parameters),
             self.output(stdout))
 
-    def test_failure(self):
+    def base_test_failure(self):
         http_method = self.respond_with(404)
         stderr = MagicMock()
 
@@ -86,7 +93,7 @@ class ConductRunTestBase(CliTestCase):
                             |"""),
             self.output(stderr))
 
-    def test_failure_invalid_address(self):
+    def base_test_failure_invalid_address(self):
         http_method = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
 

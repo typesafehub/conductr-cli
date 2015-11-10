@@ -32,11 +32,14 @@ class TestShazar(TestCase):
         self.assertEqual(args.source, 'source')
 
 
-class TestIntegration(TestCase, CliTestCase):
+class TestIntegration(CliTestCase):
+
+    def __init__(self, method_name):
+        super().__init__(method_name)
+        self.tmpfile = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
+        self.tmpdir = tempfile.mkdtemp()
 
     def setUp(self):  # noqa
-        self.tmpdir = tempfile.mkdtemp()
-        self.tmpfile = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
         self.tmpfile.write(b'test file data')
 
     def test(self):

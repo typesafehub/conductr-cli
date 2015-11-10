@@ -3,23 +3,24 @@ import argparse
 from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_services,\
     conduct_stop, conduct_unload, conduct_version, conduct_logs,\
-    conduct_events
+    conduct_events, host
 import os
 
-
-default_ip = os.getenv('CONDUCTR_IP', '127.0.0.1')
-default_port = os.getenv('CONDUCTR_PORT', '9005')
-default_api_version = os.getenv('CONDUCTR_API_VERSION', '1.0')
+DEFAULT_PORT = os.getenv('CONDUCTR_PORT', '9005')
+DEFAULT_API_VERSION = os.getenv('CONDUCTR_API_VERSION', '1.0')
 
 
 def add_ip_and_port(sub_parser):
     sub_parser.add_argument('-i', '--ip',
-                            help='The optional ConductR IP, defaults to $CONDUCTR_IP or "127.0.0.1"',
-                            default=default_ip)
+                            help='The optional ConductR IP, defaults to one of the value in this order:'
+                                 '$CONDUCTR_IP or'
+                                 'IP address of the docker VM or'
+                                 '`127.0.0.1`',
+                            default=None)  # Default is set in run() function
     sub_parser.add_argument('-p', '--port',
                             type=int,
-                            help='The optional ConductR port, defaults to $CONDUCTR_PORT or "9005"',
-                            default=default_port)
+                            help='The optional ConductR port, defaults to $CONDUCTR_PORT or `9005`',
+                            default=DEFAULT_PORT)
 
 
 def add_verbose(sub_parser):
@@ -41,9 +42,16 @@ def add_long_ids(sub_parser):
 def add_api_version(sub_parser):
     sub_parser.add_argument('--api-version',
                             help='Sets which ConductR api version to be used',
-                            default=default_api_version,
+                            default=DEFAULT_API_VERSION,
                             dest='api_version',
                             choices=conduct_version.supported_api_versions())
+
+
+def add_local_connection_flag(sub_parser):
+    sub_parser.add_argument('--local-connection',
+                            default=True,
+                            dest='local_connection',
+                            help=argparse.SUPPRESS)
 
 
 def add_default_arguments(sub_parser):
@@ -51,14 +59,14 @@ def add_default_arguments(sub_parser):
     add_verbose(sub_parser)
     add_long_ids(sub_parser)
     add_api_version(sub_parser)
+    add_local_connection_flag(sub_parser)
 
 
 def build_parser():
     # Main argument parser
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(title='subcommands',
-                                       description='valid subcommands',
-                                       help='help for subcommands')
+    parser = argparse.ArgumentParser('conduct')
+    subparsers = parser.add_subparsers(title='commands',
+                                       help='Use one of the following sub commands')
 
     # Sub-parser for `version` sub-command
     version_parser = subparsers.add_parser('version',
@@ -161,11 +169,12 @@ def build_parser():
 
 def get_cli_parameters(args):
     parameters = ['']
-    if getattr(args, 'ip', default_ip) != default_ip:
+    if getattr(args, 'ip'):
         parameters.append('--ip {}'.format(args.ip))
-    if getattr(args, 'port', int(default_port)) != int(default_port):
+    if getattr(args, 'port', int(DEFAULT_PORT)) != int(DEFAULT_PORT):
+        print('port: {}'.format(args.port))
         parameters.append('--port {}'.format(args.port))
-    if getattr(args, 'api_version', default_api_version) != default_api_version:
+    if getattr(args, 'api_version', DEFAULT_API_VERSION) != DEFAULT_API_VERSION:
         parameters.append('--api-version {}'.format(args.api_version))
     return ' '.join(parameters)
 
@@ -175,9 +184,17 @@ def run():
     parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    if vars(args).get('func') is None:
+    if not vars(args).get('func'):
         parser.print_help()
     else:
+        # Resolve default ip if the --ip argument hasn't been specified
+        if not args.ip:
+            # Returns None if an error has occurred
+            args.ip = host.resolve_default_ip()
+            if not args.ip:
+                return
+        else:
+            args.local_connection = False
         args.cli_parameters = get_cli_parameters(args)
         args.func(args)
 

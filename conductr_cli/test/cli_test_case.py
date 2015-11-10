@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from unittest import TestCase
 from requests.exceptions import ConnectionError, HTTPError
 
 try:
@@ -9,17 +10,18 @@ except ImportError:
     from mock import MagicMock
 
 
-class CliTestCase():
+class CliTestCase(TestCase):
     """Provides test case common functionality"""
 
     @property
     def default_connection_error(self):
         return strip_margin("""|ERROR: Unable to contact ConductR.
                                |ERROR: Reason: test reason
-                               |ERROR: Make sure it can be accessed at {}
+                               |ERROR: Start the ConductR sandbox with: sandbox run IMAGE_VERSION
                                |""")
 
-    def respond_with(self, status_code=200, text=''):
+    @staticmethod
+    def respond_with(status_code=200, text=''):
         reasons = {
             200: 'OK',
             404: 'Not Found'
@@ -43,10 +45,12 @@ class CliTestCase():
         with open(os.path.join(os.path.dirname(__file__), filepath), 'r') as content_file:
             return self.respond_with(text=content_file.read())
 
-    def raise_connection_error(self, reason, url):
+    @staticmethod
+    def raise_connection_error(reason, url):
         return MagicMock(side_effect=ConnectionError(reason, request=MagicMock(url=url)))
 
-    def output(self, logger):
+    @staticmethod
+    def output(logger):
         return ''.join([args[0] for name, args, kwargs in logger.method_calls])
 
 
@@ -66,7 +70,7 @@ def create_temp_bundle_with_contents(contents):
         with open(os.path.join(basedir, name), 'w') as file:
             file.write(content)
 
-    return (tmpdir, shutil.make_archive(os.path.join(tmpdir, 'bundle'), 'zip', unpacked, 'bundle-1.0.0'))
+    return tmpdir, shutil.make_archive(os.path.join(tmpdir, 'bundle'), 'zip', unpacked, 'bundle-1.0.0')
 
 
 def create_temp_bundle(bundle_conf):
