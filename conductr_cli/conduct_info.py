@@ -1,23 +1,25 @@
-from conductr_cli import bundle_utils, conduct_url, conduct_logging, screen_utils
+from conductr_cli import bundle_utils, conduct_url, validation, screen_utils
 import json
 import requests
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 
-@conduct_logging.handle_connection_error
-@conduct_logging.handle_http_error
+@validation.handle_connection_error
+@validation.handle_http_error
 def info(args):
     """`conduct info` command"""
 
     url = conduct_url.url('bundles', args)
-    response = requests.get(url)
-    conduct_logging.raise_for_status_inc_3xx(response)
+    response = requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT)
+    validation.raise_for_status_inc_3xx(response)
 
     if args.verbose:
-        conduct_logging.pretty_json(response.text)
+        validation.pretty_json(response.text)
 
     data = [
         {
-            'id': ('! ' if bundle.get('hasError', False) else '') + (bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId'])),
+            'id': ('! ' if bundle.get('hasError', False) else '') +
+                  (bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId'])),
             'name': bundle['attributes']['bundleName'],
             'replications': len(bundle['bundleInstallations']),
             'starting': sum([not execution['isStarted'] for execution in bundle['bundleExecutions']]),

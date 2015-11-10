@@ -71,39 +71,42 @@ If you are running zsh, execute the following command to enable autocomplete:
 
     autoload bashcompinit && autoload compinit && bashcompinit && compinit && eval "$(register-python-argcomplete conduct)"
 
-Running tests
-~~~~~~~~~~~~~
-
-Execute the following command to run unit tests for the current version of python3:
-
-.. code:: bash
-
-    python3 -m unittest
-
-Execute the following command to run all defined tests:
-
-.. code:: bash
-
-    python3 setup.py test
-
-To run only a specific test case in a test suite:
-
-.. code:: bash
-
-    python3 setup.py test -a "-- -s conductr_cli.test.test_conduct_unload:TestConductUnloadCommand.test_failure_invalid_address"
-
-Releasing
-~~~~~~~~~
-
-CLI releases can be performed completely from the GitHub project page. Follow these steps to cut a release:
-
-1. Edit `conductr_cli/__init__.py`_ file to contain the version to be released.
-2. Create a new release in GitHub `releases page`_.
-
-After CI build is finished for the tagged commit, new version will automatically be deployed to PyPi repository.
-
 CLI Usage
 ~~~~~~~~~
+
+sandbox
+^^^^^^^
+
+Execute ``sandbox`` with any of the supported sub-commands or options,
+e.g.
+
+.. code:: bash
+
+    $ sandbox -h
+    usage: sandbox [-h] {run,debug,stop} ...
+
+    optional arguments:
+      -h, --help            show this help message and exit
+
+    commands:
+      {run,debug,stop}      Use one of the following sub commands
+        run                 Run ConductR sandbox cluster
+        debug               Not supported. Use `sbt-conductr-sandbox` instead
+        stop                Stop ConductR sandbox cluster
+
+The sandbox is connecting to the running Docker VM to start the ConductR nodes inside Docker containers. The host IP address of the Docker VM is automatically resolved by using either `docker-machine` or `boot2docker`. If none of the Docker commands exist then the IP address is resolved with the command `hostname` or as the last fallback the IP address ``127.0.0.1`` is used. It is also possible to skip this automatic resolving of the Docker host IP by setting the environment variable ``CONDUCTR_IP`` which will be then used instead.
+
+To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature run:
+
+.. code:: bash
+
+    sandbox run 1.0.12 --nr-of-containers 3 --feature visualization
+
+To stop this cluster run:
+
+.. code:: bash
+
+    sandbox stop
 
 conduct
 ^^^^^^^
@@ -114,17 +117,15 @@ e.g.
 .. code:: bash
 
     $ conduct -h
-    usage: conduct.py [-h]
+    usage: conduct [-h]
                   {version,info,services,load,run,stop,unload,events,logs} ...
 
     optional arguments:
       -h, --help            show this help message and exit
 
-    subcommands:
-      valid subcommands
-
+    commands:
       {version,info,services,load,run,stop,unload,events,logs}
-                            help for subcommands
+                            Use one of the following sub commands
         version             print version
         info                print bundle information
         services            print service information
@@ -135,7 +136,7 @@ e.g.
         events              show bundle events
         logs                show bundle logs
 
-Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port; if not given, ``CONDUCTR_IP`` environment variable or ``127.0.0.1`` will be used for the IP and ``CONDUCTR_PORT`` or ``9005`` for the port. Alternatively you can specify the IP via the ``--ip`` option and the port via the ``--port`` option.
+Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--ip`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_IP`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. The IP address will be automatically resolved to the Docker host IP by using either `docker-machine` or `boot2docker`. If none of the Docker commands exist then the IP address is resolved with the command `hostname` or as the last fallback the IP address ``127.0.0.1`` is used.
 
 The commands provided via CLI uses version 1.0 of the ConductR API by default. When working with version 1.1 of ConductR, set the ``CONDUCTR_API_VERSION`` environment variable to ``1.1``. Alternatively you can specify the API version via the ``--api-version`` option.
 
@@ -163,26 +164,90 @@ In both cases the source files are zipped and a SHA256 digest of the archive is 
 
 For pointers on command usage run ``shazar -h``.
 
-Information for developers
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Developers
+~~~~~~~~~~
 
-If you want to run ``conduct`` locally, i.e. without installation, ``cd`` into the project directory and execute:
+For OS X, you should ensure firstly that you have the latest Xcode command line tools installed.
+
+Now install the latest python3 version on your system, on OS X use:
+
+.. code:: bash
+
+  brew install python3
+
+The tests executing the tests in multiple python versions. For all OS environments, pyenv is used to support multiple installations of python during testing. Refer to https://github.com/yyuu/pyenv for information on how to install pyenv. With pyenv installed you can do things like ``pyenv local 3.4.3`` or ``pyenv local system``.
+
+Then for OS X, install python 3.4 and 3.2:
+
+.. code:: bash
+
+  CFLAGS="-I$(brew --prefix openssl)/include" \
+  LDFLAGS="-L$(brew --prefix openssl)/lib" \
+  pyenv install -v 3.4.3
+
+  CFLAGS="-I$(brew --prefix openssl)/include" \
+  LDFLAGS="-L$(brew --prefix openssl)/lib" \
+  pyenv install -v 3.2.6
+
+For others this is easier:
+
+.. code:: bash
+
+  pyenv install -v 3.4.3
+  pyenv install -v 3.2.6
+
+Make sure to install the ``virtualenv` module for python3:
+
+.. code:: bash
+
+  pip3 install virtualenv
+
+Also, make sure to install the necessary dependencies for each environment and to set the python versions for ``conductr-cli``:
+
+.. code:: bash
+
+  cd conductr-cli
+  pip3 install -e .
+  pyenv local system 3.2.6 3.4.3
+
+  
+Running
+^^^^^^^
+
+If you want to run ``conduct`` or ``sandbox`` locally, i.e. without installation, ``cd`` into the project directory and execute:
 
 .. code:: bash
 
     python3 -m conductr_cli.conduct
+    python3 -m conductr_cli.sandbox
 
-Make sure to install the necessary dependencies:
+Tests
+^^^^^
+
+Execute the following command to run unit tests for the current version of python3:
 
 .. code:: bash
 
-    pip install -e .
+    python3 -m unittest
 
-.. |Build Status| image:: https://travis-ci.org/typesafehub/conductr-cli.png
-    :target: https://travis-ci.org/typesafehub/conductr-cli
-    :alt: Build Status
-.. |Latest Version| image:: https://pypip.in/version/conductr-cli/badge.svg?style=flat
-    :target: https://pypi.python.org/pypi/conductr-cli/
-    :alt: Latest Version
-.. _releases page: https://github.com/typesafehub/conductr-cli/releases/new
-.. _conductr_cli/__init__.py: https://github.com/typesafehub/conductr-cli/blob/master/conductr_cli/__init__.py
+Execute the following command to run all defined tests:
+
+.. code:: bash
+
+    python3 setup.py test
+
+To run only a specific test case in a test suite:
+
+.. code:: bash
+
+    python3 setup.py test -a "-- -s conductr_cli.test.test_conduct_unload:TestConductUnloadCommand.test_failure_invalid_address"
+
+Releasing
+^^^^^^^^^
+
+CLI releases can be performed completely from the GitHub project page. Follow these steps to cut a release:
+
+1. Edit `conductr_cli/__init__.py`_ file to contain the version to be released.
+2. Create a new release in GitHub `releases page`_.
+
+After CI build is finished for the tagged commit, new version will automatically be deployed to PyPi repository.

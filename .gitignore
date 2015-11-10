@@ -8,3 +8,5 @@ deb_dist/*
 *.pyc
 .tox
 .eggs
+.python-version
+.cache

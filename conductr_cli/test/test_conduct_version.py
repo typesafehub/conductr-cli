@@ -1,4 +1,3 @@
-from unittest import TestCase
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import conduct_version
 
@@ -8,13 +7,13 @@ except ImportError:
     from mock import patch, MagicMock
 
 
-class TestConductVersionCommand(TestCase, CliTestCase):
+class TestConductVersionCommand(CliTestCase):
 
     def test_success(self):
         stdout = MagicMock()
 
         with patch('sys.stdout', stdout):
-            conduct_version.version(MagicMock())
+            conduct_version.version()
 
         from conductr_cli import __version__
         self.assertEqual(

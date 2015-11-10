@@ -1,6 +1,6 @@
 from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
-from conductr_cli import bundle_utils, conduct_url, conduct_logging
+from conductr_cli import bundle_utils, conduct_url, validation
 from functools import partial
 from urllib.parse import ParseResult, urlparse, urlunparse
 from urllib.request import urlretrieve
@@ -10,11 +10,14 @@ import json
 import requests
 
 
-@conduct_logging.handle_connection_error
-@conduct_logging.handle_http_error
-@conduct_logging.handle_invalid_config
-@conduct_logging.handle_no_file
-@conduct_logging.handle_bad_zip
+LOAD_HTTP_TIMEOUT = 30
+
+
+@validation.handle_connection_error
+@validation.handle_http_error
+@validation.handle_invalid_config
+@validation.handle_no_file
+@validation.handle_bad_zip
 def load(args):
     """`conduct load` command"""
 
@@ -40,11 +43,11 @@ def load(args):
         files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
 
     print('Loading bundle to ConductR...')
-    response = requests.post(url, files=files)
-    conduct_logging.raise_for_status_inc_3xx(response)
+    response = requests.post(url, files=files, timeout=LOAD_HTTP_TIMEOUT)
+    validation.raise_for_status_inc_3xx(response)
 
     if args.verbose:
-        conduct_logging.pretty_json(response.text)
+        validation.pretty_json(response.text)
 
     response_json = json.loads(response.text)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
@@ -70,7 +73,7 @@ def get_url(uri):
     op = Path(uri)
     np = str(op.cwd() / op if parsed.scheme == 'file' and op.root == '' else parsed.path)
     url = urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
-    return (url.split('/')[-1], url)
+    return url.split('/')[-1], url
 
 
 def get_payload(api_version, bundle_name, bundle_file, bundle_configuration):

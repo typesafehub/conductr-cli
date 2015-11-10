@@ -1,6 +1,7 @@
-from unittest import TestCase
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import conduct_info
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+
 
 try:
     from unittest.mock import patch, MagicMock  # 3.3 and beyond
@@ -8,7 +9,7 @@ except ImportError:
     from mock import patch, MagicMock
 
 
-class TestConductInfoCommand(TestCase, CliTestCase):
+class TestConductInfoCommand(CliTestCase):
 
     default_args = {
         'ip': '127.0.0.1',
@@ -27,7 +28,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|ID  NAME  #REP  #STR  #RUN
                             |"""),
@@ -47,7 +48,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|ID       NAME         #REP  #STR  #RUN
                             |45e0c47  test-bundle     1     0     0
@@ -80,7 +81,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|ID               NAME           #REP  #STR  #RUN
                             |45e0c47          test-bundle-1     1     0     1
@@ -111,7 +112,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
             args.update({'verbose': True})
             conduct_info.info(MagicMock(**args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|[
                             |  {
@@ -171,7 +172,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
             args.update({'long_ids': True})
             conduct_info.info(MagicMock(**args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|ID                                NAME         #REP  #STR  #RUN
                             |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle     1     0     0
@@ -192,7 +193,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|ID       NAME         #REP  #STR  #RUN
                             |45e0c47  test-bundle    10     0     0
@@ -214,7 +215,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stdout', stdout):
             conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin("""|ID         NAME         #REP  #STR  #RUN
                             |! 45e0c47  test-bundle    10     0     0
@@ -229,7 +230,7 @@ class TestConductInfoCommand(TestCase, CliTestCase):
         with patch('requests.get', http_method), patch('sys.stderr', stderr):
             conduct_info.info(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
             self.output(stderr))

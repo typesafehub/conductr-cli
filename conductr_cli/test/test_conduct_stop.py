@@ -1,6 +1,7 @@
-from unittest import TestCase
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import conduct_stop
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+
 
 try:
     from unittest.mock import patch, MagicMock  # 3.3 and beyond
@@ -8,7 +9,7 @@ except ImportError:
     from mock import patch, MagicMock
 
 
-class TestConductStopCommand(TestCase, CliTestCase):
+class TestConductStopCommand(CliTestCase):
 
     @property
     def default_response(self):
@@ -44,7 +45,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
             conduct_stop.stop(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
@@ -57,7 +58,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
             args.update({'verbose': True})
             conduct_stop.stop(MagicMock(**args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
 
@@ -70,7 +71,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
             args.update({'long_ids': True})
             conduct_stop.stop(MagicMock(**args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
@@ -84,7 +85,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
             args.update({'cli_parameters': cli_parameters})
             conduct_stop.stop(MagicMock(**args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(
             self.default_output(params=cli_parameters),
@@ -97,7 +98,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         with patch('requests.put', http_method), patch('sys.stderr', stderr):
             conduct_stop.stop(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(
             strip_margin("""|ERROR: 404 Not Found
@@ -111,7 +112,7 @@ class TestConductStopCommand(TestCase, CliTestCase):
         with patch('requests.put', http_method), patch('sys.stderr', stderr):
             conduct_stop.stop(MagicMock(**self.default_args))
 
-        http_method.assert_called_with(self.default_url)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(
             self.default_connection_error.format(self.default_url),

@@ -1,35 +1,37 @@
-from conductr_cli import bundle_utils, conduct_url, conduct_logging, screen_utils
+from conductr_cli import bundle_utils, conduct_url, validation, screen_utils
 import json
 import requests
 from urllib.parse import urlparse
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 
-@conduct_logging.handle_connection_error
-@conduct_logging.handle_http_error
+@validation.handle_connection_error
+@validation.handle_http_error
 def services(args):
     """`conduct services` command"""
 
     url = conduct_url.url('bundles', args)
-    response = requests.get(url)
-    conduct_logging.raise_for_status_inc_3xx(response)
+    response = requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT)
+    validation.raise_for_status_inc_3xx(response)
 
     if args.verbose:
-        conduct_logging.pretty_json(response.text)
+        validation.pretty_json(response.text)
 
     data = sorted([
-        (
-            {
-                'service': service,
-                'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId']),
-                'bundle_name': bundle['attributes']['bundleName'],
-                'status': 'Running' if execution['isStarted'] else 'Starting'
-            }
-        )
-        for bundle in json.loads(response.text)
-        for execution in bundle['bundleExecutions']
-        for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items()
-        for service in endpoint['services']
-    ], key=lambda line: line['service'])
+                  (
+                      {
+                          'service': service,
+                          'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(
+                              bundle['bundleId']),
+                          'bundle_name': bundle['attributes']['bundleName'],
+                          'status': 'Running' if execution['isStarted'] else 'Starting'
+                      }
+                  )
+                  for bundle in json.loads(response.text)
+                  for execution in bundle['bundleExecutions']
+                  for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items()
+                  for service in endpoint['services']
+                  ], key=lambda line: line['service'])
 
     service_endpoints = {}
     for service in data:
@@ -47,9 +49,14 @@ def services(args):
     padding = 2
     column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
     for row in data:
-        print('{service: <{service_width}}{padding}{bundle_id: <{bundle_id_width}}{padding}{bundle_name: <{bundle_name_width}}{padding}{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
+        print(
+            '{service: <{service_width}}{padding}'
+            '{bundle_id: <{bundle_id_width}}{padding}'
+            '{bundle_name: <{bundle_name_width}}{padding}'
+            '{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
 
     if len(duplicate_endpoints) > 0:
         print()
-        conduct_logging.warning('Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_endpoints)))
-        conduct_logging.warning('Service resolution for these services is undefined.')
+        validation.warning(
+            'Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_endpoints)))
+        validation.warning('Service resolution for these services is undefined.')
