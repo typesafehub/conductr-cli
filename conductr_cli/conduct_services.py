@@ -57,6 +57,6 @@ def services(args):
 
     if len(duplicate_endpoints) > 0:
         print()
-        validation.warning(
+        validation.warn(
             'Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_endpoints)))
-        validation.warning('Service resolution for these services is undefined.')
+        validation.warn('Service resolution for these services is undefined.')

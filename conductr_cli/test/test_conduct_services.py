@@ -1,4 +1,4 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_warn
 from conductr_cli import conduct_services
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
@@ -43,19 +43,19 @@ class TestConductServicesCommand(CliTestCase):
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
-            strip_margin("""|SERVICE                   BUNDLE ID  BUNDLE NAME                   STATUS
-                            |http://:6011/comp2-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                            |http://:7010/comp3-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                            |http://:7011/comp3-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                            |http://:8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
-                            |http://:8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
-                            |http://:9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
-                            |http://:9010/comp2-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                            |http://:9011/comp2-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
-                            |
-                            |WARNING: Multiple endpoints found for the following services: /comp2-endp2
-                            |WARNING: Service resolution for these services is undefined.
-                            |"""),
+            as_warn(strip_margin("""|SERVICE                   BUNDLE ID  BUNDLE NAME                   STATUS
+                                    |http://:6011/comp2-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                                    |http://:7010/comp3-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                                    |http://:7011/comp3-endp2  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                                    |http://:8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
+                                    |http://:8011/comp1-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
+                                    |http://:9010/comp2-endp1  f804d64    multi-comp-multi-endp-1.0.0   Running
+                                    |http://:9010/comp2-endp1  6e4560e    multi2-comp-multi-endp-1.0.0  Running
+                                    |http://:9011/comp2-endp2  f804d64    multi-comp-multi-endp-1.0.0   Running
+                                    |
+                                    |Warning: Multiple endpoints found for the following services: /comp2-endp2
+                                    |Warning: Service resolution for these services is undefined.
+                                    |""")),
             self.output(stdout))
 
     def test_two_bundles_mult_components_endpoints_no_path(self):

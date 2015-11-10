@@ -3,6 +3,7 @@ import shutil
 import tempfile
 from unittest import TestCase
 from requests.exceptions import ConnectionError, HTTPError
+from conductr_cli.ansi_colors import RED, YELLOW, UNDERLINE, ENDC
 
 try:
     from unittest.mock import MagicMock  # 3.3 and beyond
@@ -15,10 +16,10 @@ class CliTestCase(TestCase):
 
     @property
     def default_connection_error(self):
-        return strip_margin("""|ERROR: Unable to contact ConductR.
-                               |ERROR: Reason: test reason
-                               |ERROR: Start the ConductR sandbox with: sandbox run IMAGE_VERSION
-                               |""")
+        return as_error(strip_margin("""|Error: Unable to contact ConductR.
+                               |Error: Reason: test reason
+                               |Error: Start the ConductR sandbox with: sandbox run IMAGE_VERSION
+                               |"""))
 
     @staticmethod
     def respond_with(status_code=200, text=''):
@@ -56,6 +57,14 @@ class CliTestCase(TestCase):
 
 def strip_margin(string, margin_char='|'):
     return '\n'.join([line[line.find(margin_char) + 1:] for line in string.split('\n')])
+
+
+def as_error(string):
+    return string.replace('Error:', '{red}{underline}Error{end}:'.format(red=RED, underline=UNDERLINE, end=ENDC))
+
+
+def as_warn(string):
+    return string.replace('Warning:', '{yellow}{underline}Warning{end}:'.format(yellow=YELLOW, underline=UNDERLINE, end=ENDC))
 
 
 def create_temp_bundle_with_contents(contents):
