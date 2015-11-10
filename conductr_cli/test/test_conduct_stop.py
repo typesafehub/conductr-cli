@@ -1,4 +1,4 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import conduct_stop
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
@@ -101,8 +101,8 @@ class TestConductStopCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(
-            strip_margin("""|ERROR: 404 Not Found
-                            |"""),
+            as_error(strip_margin("""|Error: 404 Not Found
+                                     |""")),
             self.output(stderr))
 
     def test_failure_invalid_address(self):

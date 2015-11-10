@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, create_temp_bundle, create_temp_bundle_with_contents, \
-    strip_margin
+    strip_margin, as_error
 from conductr_cli import conduct_load
 from conductr_cli.conduct_load import LOAD_HTTP_TIMEOUT
 from urllib.error import URLError
@@ -170,8 +170,8 @@ class ConductLoadTestBase(CliTestCase):
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
         self.assertEqual(
-            strip_margin("""|ERROR: 404 Not Found
-                            |"""),
+            as_error(strip_margin("""|Error: 404 Not Found
+                                     |""")),
             self.output(stderr))
 
     def base_test_failure_invalid_address(self):
@@ -208,9 +208,9 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: Unable to parse bundle.conf.
-                            |ERROR: No configuration setting found for key nrOfCpus.
-                            |"""),
+            as_error(strip_margin("""|Error: Unable to parse bundle.conf.
+                                     |Error: No configuration setting found for key nrOfCpus.
+                                     |""")),
             self.output(stderr))
 
         shutil.rmtree(tmpdir)
@@ -230,9 +230,9 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: Unable to parse bundle.conf.
-                            |ERROR: No configuration setting found for key memory.
-                            |"""),
+            as_error(strip_margin("""|Error: Unable to parse bundle.conf.
+                                     |Error: No configuration setting found for key memory.
+                                     |""")),
             self.output(stderr))
 
         shutil.rmtree(tmpdir)
@@ -252,9 +252,9 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: Unable to parse bundle.conf.
-                            |ERROR: No configuration setting found for key diskSpace.
-                            |"""),
+            as_error(strip_margin("""|Error: Unable to parse bundle.conf.
+                                     |Error: No configuration setting found for key diskSpace.
+                                     |""")),
             self.output(stderr))
 
         shutil.rmtree(tmpdir)
@@ -274,9 +274,9 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: Unable to parse bundle.conf.
-                            |ERROR: No configuration setting found for key roles.
-                            |"""),
+            as_error(strip_margin("""|Error: Unable to parse bundle.conf.
+                                     |Error: No configuration setting found for key roles.
+                                     |""")),
             self.output(stderr))
 
         shutil.rmtree(tmpdir)
@@ -297,9 +297,9 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: Unable to parse bundle.conf.
-                            |ERROR: roles has type 'str' rather than 'list'.
-                            |"""),
+            as_error(strip_margin("""|Error: Unable to parse bundle.conf.
+                                     |Error: roles has type 'str' rather than 'list'.
+                                     |""")),
             self.output(stderr))
 
         shutil.rmtree(tmpdir)
@@ -314,8 +314,8 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: File not found: no_such.bundle
-                            |"""),
+            as_error(strip_margin("""|Error: File not found: no_such.bundle
+                                     |""")),
             self.output(stderr))
 
     def base_test_failure_no_configuration(self):
@@ -329,6 +329,6 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: File not found: no_such.conf
-                            |"""),
+            as_error(strip_margin("""|Error: File not found: no_such.conf
+                                     |""")),
             self.output(stderr))

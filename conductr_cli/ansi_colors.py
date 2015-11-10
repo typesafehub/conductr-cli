@@ -1,0 +1,4 @@
+RED = '\033[91m'
+YELLOW = '\033[93m'
+UNDERLINE = '\033[4m'
+ENDC = '\033[0m'

@@ -10,17 +10,18 @@ from requests.exceptions import ConnectionError, HTTPError
 from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal
+from conductr_cli.ansi_colors import RED, YELLOW, UNDERLINE, ENDC
 from conductr_cli.exceptions import DockerMachineError, Boot2DockerError
 from subprocess import CalledProcessError
 
 
 def error(message, *objs):
     """print to stderr"""
-    print('ERROR: {}'.format(message.format(*objs)), file=sys.stderr)
+    print('{}{}Error{}: {}'.format(RED, UNDERLINE, ENDC, message.format(*objs)), file=sys.stderr)
 
 
-def warning(message, *objs):
-    print('WARNING: {}'.format(message.format(*objs)), file=sys.stdout)
+def warn(message, *objs):
+    print('{}{}Warning{}: {}'.format(YELLOW, UNDERLINE, ENDC, message.format(*objs)), file=sys.stdout)
 
 
 def connection_error(err, args):
@@ -156,8 +157,8 @@ def handle_docker_errors(func):
             terminal.docker_ps()
             print('The Docker environment variables have been set for this command.')
             print('Continue processing..')
-            warning('To set the environment variables for each terminal session follow the instructions of the command:')
-            warning('  docker-machine env default')
+            warn('To set the environment variables for each terminal session follow the instructions of the command:')
+            warn('  docker-machine env default')
             print('')
             return func(*args, **kwargs)
         except CalledProcessError:
@@ -172,7 +173,7 @@ def handle_docker_errors(func):
             try:
                 env_lines = terminal.boot2docker_shellinit()
                 print('Retrieved docker environment variables with: boot2docker shellinit')
-                warning('boot2docker is deprecated. Upgrade to docker-machine.')
+                warn('boot2docker is deprecated. Upgrade to docker-machine.')
             except FileNotFoundError:
                 return []
         return [resolve_env(line) for line in env_lines if line.startswith('export')]

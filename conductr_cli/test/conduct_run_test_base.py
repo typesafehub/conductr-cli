@@ -1,4 +1,4 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import conduct_run
 
 try:
@@ -89,8 +89,8 @@ class ConductRunTestBase(CliTestCase):
         http_method.assert_called_with(self.default_url)
 
         self.assertEqual(
-            strip_margin("""|ERROR: 404 Not Found
-                            |"""),
+            as_error(strip_margin("""|Error: 404 Not Found
+                                     |""")),
             self.output(stderr))
 
     def base_test_failure_invalid_address(self):
