@@ -5,7 +5,7 @@ def url(path, args):
 
 
 def api_version_path(api_version):
-    if api_version == '1.0':
+    if api_version == '1':
         return ''
     else:
         return '/v{}'.format(api_version)

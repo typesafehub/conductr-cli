@@ -7,7 +7,7 @@ from conductr_cli import \
 import os
 
 DEFAULT_PORT = os.getenv('CONDUCTR_PORT', '9005')
-DEFAULT_API_VERSION = os.getenv('CONDUCTR_API_VERSION', '1.0')
+DEFAULT_API_VERSION = os.getenv('CONDUCTR_API_VERSION', '1')
 
 
 def add_ip_and_port(sub_parser):
