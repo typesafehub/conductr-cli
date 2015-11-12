@@ -2,7 +2,7 @@ from conductr_cli import __version__
 
 
 def supported_api_versions():
-    return ['1.0', '1.1']
+    return ['1', '2']
 
 
 def version():

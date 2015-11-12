@@ -27,3 +27,20 @@ class Conf(TestCase):
 
     def tearDown(self):  # noqa
         shutil.rmtree(self.tmpdir)
+
+
+class ZipEntry(TestCase):
+
+    def setUp(self):  # noqa
+        self.tmpdir, self.bundle_path = create_temp_bundle('bundle conf contents')
+
+    def test_zip_entry_present(self):
+        result = bundle_utils.zip_entry('bundle.conf', self.bundle_path)
+        self.assertIsNotNone(result, 'Zip entry should be present')
+
+    def test_zip_entry_missing(self):
+        result = bundle_utils.zip_entry('SHOULD-NOT-EXIST', self.bundle_path)
+        self.assertIsNone(result, 'Zip entry should not be present')
+
+    def tearDown(self):  # noqa
+        shutil.rmtree(self.tmpdir)
