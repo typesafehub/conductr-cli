@@ -99,6 +99,7 @@ The sandbox is connecting to the running Docker VM to start the ConductR nodes i
   In order to use the following features you should ensure that the machine that runs Docker has enough memory, typically at least 2GB. VM configurations such as those provided via docker-machine and Oracle's VirtualBox can be configured like so:
 
 .. code:: bash
+
         docker-machine stop default
         VBoxManage modifyvm default --memory 2048
         docker-machine start default
