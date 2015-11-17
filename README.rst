@@ -96,6 +96,13 @@ e.g.
 
 The sandbox is connecting to the running Docker VM to start the ConductR nodes inside Docker containers. The host IP address of the Docker VM is automatically resolved by using either `docker-machine` or `boot2docker`. If none of the Docker commands exist then the IP address is resolved with the command `hostname` or as the last fallback the IP address ``127.0.0.1`` is used. It is also possible to skip this automatic resolving of the Docker host IP by setting the environment variable ``CONDUCTR_IP`` which will be then used instead.
 
+  In order to use the following features you should ensure that the machine that runs Docker has enough memory, typically at least 2GB. VM configurations such as those provided via docker-machine and Oracle's VirtualBox can be configured like so:
+
+.. code:: bash
+        docker-machine stop default
+        VBoxManage modifyvm default --memory 2048
+        docker-machine start default
+
 To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature run:
 
 .. code:: bash
