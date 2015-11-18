@@ -1,6 +1,7 @@
 from unittest import TestCase
 from conductr_cli.conduct import build_parser, get_cli_parameters
 from argparse import Namespace
+import os
 
 
 class TestConduct(TestCase):
@@ -13,12 +14,14 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'version')
 
     def test_default(self):
-        args = self.parser.parse_args('info --ip 127.0.1.1 --port 9999 -v --long-ids --api-version 2'.split())
+        args = self.parser.parse_args(
+            'info --ip 127.0.1.1 --port 9999 -v --long-ids --api-version 2 --settings-dir /settings-dir'.split())
 
         self.assertEqual(args.func.__name__, 'info')
         self.assertEqual(args.ip, '127.0.1.1')
         self.assertEqual(args.port, 9999)
         self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '/settings-dir')
         self.assertEqual(args.verbose, True)
         self.assertEqual(args.long_ids, True)
 
@@ -29,6 +32,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
 
@@ -39,6 +43,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
 
@@ -49,6 +54,22 @@ class TestConduct(TestCase):
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.resolve_cache_dir, '{}/.conductr/cache'.format(os.path.expanduser('~')))
+        self.assertEqual(args.verbose, False)
+        self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.bundle, 'path-to-bundle')
+        self.assertEqual(args.configuration, 'path-to-conf')
+
+    def test_parser_load_with_custom_resolve_cache_dir(self):
+        args = self.parser.parse_args('load --resolve-cache-dir /somewhere path-to-bundle path-to-conf'.split())
+
+        self.assertEqual(args.func.__name__, 'load')
+        self.assertEqual(args.ip, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.resolve_cache_dir, '/somewhere')
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.bundle, 'path-to-bundle')
@@ -61,6 +82,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.scale, 5)
@@ -73,6 +95,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.bundle, 'path-to-bundle')
@@ -84,6 +107,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.bundle, 'path-to-bundle')

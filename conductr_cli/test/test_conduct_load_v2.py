@@ -18,10 +18,11 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.memory = 200
         self.disk_space = 100
         self.roles = ['web-server']
-        self.bundleName = 'bundle'
+        self.bundle_name = 'bundle.zip'
         self.system = 'bundle'
-        self.systemVersion = '2.3'
-        self.compatibilityVersion = '2.0'
+        self.system_version = '2.3'
+        self.compatibility_version = '2.0'
+        self.bundle_resolve_cache_dir = 'bundle-resolve-cache-dir'
 
         self.tmpdir, self.bundle_file = create_temp_bundle(
             strip_margin("""|nrOfCpus               = {}
@@ -36,10 +37,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                          self.memory,
                                          self.disk_space,
                                          ', '.join(self.roles),
-                                         self.bundleName,
+                                         self.bundle_name,
                                          self.system,
-                                         self.systemVersion,
-                                         self.compatibilityVersion))
+                                         self.system_version,
+                                         self.compatibility_version))
 
         self.default_args = {
             'ip': '127.0.0.1',
@@ -48,6 +49,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'verbose': False,
             'long_ids': False,
             'cli_parameters': '',
+            'resolve_cache_dir': self.bundle_resolve_cache_dir,
             'bundle': self.bundle_file,
             'configuration': None
         }
@@ -56,7 +58,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         self.default_files = [
             ('bundleConf', ('bundle.conf', 'mock bundle.conf')),
-            ('bundle', ('bundle.zip', 1))
+            ('bundle', (self.bundle_name, 1))
         ]
 
     def test_success(self):
@@ -89,13 +91,13 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        urlretrieve_mock = MagicMock(side_effect=[(self.bundle_file, ()), (config_file, ())])
+        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
         zip_entry_mock = MagicMock(side_effect=['mock bundle.conf', 'mock bundle.conf overlay'])
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
 
-        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
                 patch('requests.post', http_method), \
                 patch('sys.stdout', stdout), \
@@ -103,6 +105,14 @@ class TestConductLoadCommand(ConductLoadTestBase):
             args = self.default_args.copy()
             args.update({'configuration': config_file})
             conduct_load.load(MagicMock(**args))
+
+        self.assertEqual(
+            resolve_bundle_mock.call_args_list,
+            [
+                call(self.bundle_resolve_cache_dir, self.bundle_file),
+                call(self.bundle_resolve_cache_dir, config_file)
+            ]
+        )
 
         self.assertEqual(
             open_mock.call_args_list,
@@ -113,7 +123,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             ('bundleConf', ('bundle.conf', 'mock bundle.conf')),
             ('bundleConfOverlay', ('bundle.conf', 'mock bundle.conf overlay')),
             ('bundle', ('bundle.zip', 1)),
-            ('configuration', ('bundle.zip', 1))
+            ('configuration', ('config.zip', 1))
         ]
         http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT)
 
@@ -130,13 +140,13 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        urlretrieve_mock = MagicMock(side_effect=[(self.bundle_file, ()), (config_file, ())])
+        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
         zip_entry_mock = MagicMock(side_effect=['mock bundle.conf', None])
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
 
-        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
                 patch('requests.post', http_method), \
                 patch('sys.stdout', stdout), \
@@ -146,6 +156,14 @@ class TestConductLoadCommand(ConductLoadTestBase):
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
+            resolve_bundle_mock.call_args_list,
+            [
+                call(self.bundle_resolve_cache_dir, self.bundle_file),
+                call(self.bundle_resolve_cache_dir, config_file)
+            ]
+        )
+
+        self.assertEqual(
             open_mock.call_args_list,
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
@@ -153,7 +171,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         expected_files = [
             ('bundleConf', ('bundle.conf', 'mock bundle.conf')),
             ('bundle', ('bundle.zip', 1)),
-            ('configuration', ('bundle.zip', 1))
+            ('configuration', ('config.zip', 1))
         ]
         http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT)
 
@@ -181,14 +199,16 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.base_test_failure_no_bundle()
 
     def test_failure_no_bundle_conf(self):
-        urlretrieve_mock = MagicMock(return_value=(self.bundle_file, ()))
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
         zip_entry_mock = MagicMock(return_value=None)
         stderr = MagicMock()
 
-        with patch('conductr_cli.conduct_load.urlretrieve', urlretrieve_mock), \
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('sys.stderr', stderr), patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
             args = self.default_args.copy()
             conduct_load.load(MagicMock(**args))
+
+        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Problem with the bundle: Unable to find bundle.conf within the bundle file
