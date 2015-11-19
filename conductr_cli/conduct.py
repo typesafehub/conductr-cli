@@ -172,7 +172,6 @@ def get_cli_parameters(args):
     if getattr(args, 'ip'):
         parameters.append('--ip {}'.format(args.ip))
     if getattr(args, 'port', int(DEFAULT_PORT)) != int(DEFAULT_PORT):
-        print('port: {}'.format(args.port))
         parameters.append('--port {}'.format(args.port))
     if getattr(args, 'api_version', DEFAULT_API_VERSION) != DEFAULT_API_VERSION:
         parameters.append('--api-version {}'.format(args.api_version))
