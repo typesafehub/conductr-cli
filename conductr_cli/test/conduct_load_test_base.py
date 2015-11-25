@@ -31,6 +31,7 @@ class ConductLoadTestBase(CliTestCase):
         self.memory = None
         self.nr_of_cpus = None
         self.roles = []
+        self.custom_settings = None
         self.bundle_resolve_cache_dir = None
 
     @property
@@ -60,7 +61,7 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**self.default_args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
         self.assertEqual(self.default_output(), self.output(stdout))
@@ -80,7 +81,7 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
         self.assertEqual(self.default_output(verbose=self.default_response), self.output(stdout))
@@ -100,7 +101,7 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
@@ -121,7 +122,7 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
         self.assertEqual(
@@ -141,7 +142,7 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**self.default_args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
         self.assertEqual(
@@ -162,7 +163,7 @@ class ConductLoadTestBase(CliTestCase):
             conduct_load.load(MagicMock(**self.default_args))
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
         self.assertEqual(
@@ -178,7 +179,7 @@ class ConductLoadTestBase(CliTestCase):
             args.update({'bundle': 'no_such.bundle'})
             conduct_load.load(MagicMock(**args))
 
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, 'no_such.bundle')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, 'no_such.bundle')
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Bundle not found: some message
@@ -199,8 +200,8 @@ class ConductLoadTestBase(CliTestCase):
         self.assertEqual(
             resolve_bundle_mock.call_args_list,
             [
-                call(self.bundle_resolve_cache_dir, self.bundle_file),
-                call(self.bundle_resolve_cache_dir, 'no_such.conf')
+                call(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file),
+                call(self.custom_settings, self.bundle_resolve_cache_dir, 'no_such.conf')
             ]
         )
 
