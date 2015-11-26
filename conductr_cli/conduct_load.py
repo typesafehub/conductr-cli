@@ -2,7 +2,7 @@ from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
 from conductr_cli import bundle_utils, conduct_url, validation
 from conductr_cli.exceptions import MalformedBundleError
-from conductr_cli import resolver
+from conductr_cli import resolver, bundle_installation
 from functools import partial
 
 import json
@@ -20,6 +20,7 @@ LOAD_HTTP_TIMEOUT = 30
 @validation.handle_bad_zip
 @validation.handle_malformed_bundle
 @validation.handle_bundle_resolution_error
+@validation.handle_wait_timeout_error
 def load(args):
     if args.api_version == '1':
         return load_v1(args)
@@ -60,6 +61,9 @@ def load_v1(args):
 
     response_json = json.loads(response.text)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
+
+    if not args.no_wait:
+        bundle_installation.wait_for_installation(response_json['bundleId'], args)
 
     log.info('Bundle loaded.')
     log.info('Start bundle with: conduct run{} {}'.format(args.cli_parameters, bundle_id))
@@ -131,6 +135,9 @@ def load_v2(args):
 
         response_json = json.loads(response.text)
         bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
+
+        if not args.no_wait:
+            bundle_installation.wait_for_installation(response_json['bundleId'], args)
 
         log.info('Bundle loaded.')
         log.info('Start bundle with: conduct run{} {}'.format(args.cli_parameters, bundle_id))

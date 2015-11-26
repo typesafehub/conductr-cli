@@ -11,7 +11,8 @@ from requests.exceptions import ConnectionError, HTTPError
 from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal
-from conductr_cli.exceptions import DockerMachineError, Boot2DockerError, MalformedBundleError, BundleResolutionError
+from conductr_cli.exceptions import DockerMachineError, Boot2DockerError, MalformedBundleError, BundleResolutionError, \
+    WaitTimeoutError
 from subprocess import CalledProcessError
 
 
@@ -143,6 +144,22 @@ def handle_bundle_resolution_error(func):
         except BundleResolutionError as err:
             log = get_logger_for_func(func)
             log.error('Bundle not found: {}'.format(err.args[0]))
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_wait_timeout_error(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except WaitTimeoutError as err:
+            log = get_logger_for_func(func)
+            log.error('Timed out: {}'.format(err.args[0]))
             return False
 
     # Do not change the wrapped function name,

@@ -1,7 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import conduct_load, logging_setup
 from conductr_cli.conduct_load import LOAD_HTTP_TIMEOUT
-from conductr_cli.exceptions import BundleResolutionError
+from conductr_cli.exceptions import BundleResolutionError, WaitTimeoutError
 from zipfile import BadZipFile
 from urllib.error import HTTPError, URLError
 
@@ -24,6 +24,7 @@ class ConductLoadTestBase(CliTestCase):
     def __init__(self, method_name):
         super().__init__(method_name)
 
+        self.bundle_id = None
         self.bundle_name = None
         self.bundle_file = None
         self.default_args = {}
@@ -55,17 +56,21 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
 
+        input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
-            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            result = conduct_load.load(MagicMock(**self.default_args))
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
@@ -74,19 +79,24 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'verbose': True})
+        input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
-            args = self.default_args.copy()
-            args.update({'verbose': True})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            result = conduct_load.load(MagicMock(**args))
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
         self.assertEqual(self.default_output(verbose=self.default_response), self.output(stdout))
 
@@ -95,19 +105,24 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'quiet': True})
+        input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
-            args = self.default_args.copy()
-            args.update({'quiet': True})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            result = conduct_load.load(MagicMock(**args))
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
         self.assertEqual('45e0c477d3e5ea92aa8d85c0d8f3e25c\n', self.output(stdout))
 
@@ -116,19 +131,24 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'long_ids': True})
+        input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
-            args = self.default_args.copy()
-            args.update({'long_ids': True})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            result = conduct_load.load(MagicMock(**args))
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
@@ -137,24 +157,52 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
 
         cli_parameters = ' --ip 127.0.1.1 --port 9006'
+        args = self.default_args.copy()
+        args.update({'cli_parameters': cli_parameters})
+        input_args = MagicMock(**args)
+
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('requests.post', http_method), \
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
+            self.assertTrue(result)
+
+        open_mock.assert_called_with(self.bundle_file, 'rb')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
+        self.assertEqual(
+            self.default_output(params=cli_parameters),
+            self.output(stdout))
+
+    def base_test_success_no_wait(self):
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        open_mock = MagicMock(return_value=1)
+
+        args = self.default_args.copy()
+        args.update({'no_wait': True})
+        input_args = MagicMock(**args)
+
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
-            args = self.default_args.copy()
-            args.update({'cli_parameters': cli_parameters})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            result = conduct_load.load(MagicMock(**args))
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
 
-        self.assertEqual(
-            self.default_output(params=cli_parameters),
-            self.output(stdout))
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def base_test_failure(self):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
@@ -295,5 +343,31 @@ class ConductLoadTestBase(CliTestCase):
 
         self.assertEqual(
             as_error(strip_margin("""|Error: File not found: reason
+                                     |""")),
+            self.output(stderr))
+
+    def base_test_failure_install_timeout(self):
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
+        http_method = self.respond_with(200, self.default_response)
+        stderr = MagicMock()
+        open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock(side_effect=WaitTimeoutError('test timeout'))
+
+        input_args = MagicMock(**self.default_args)
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('requests.post', http_method), \
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, err_output=stderr)
+            result = conduct_load.load(input_args)
+            self.assertFalse(result)
+
+        open_mock.assert_called_with(self.bundle_file, 'rb')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
+        self.assertEqual(
+            as_error(strip_margin("""|Error: Timed out: test timeout
                                      |""")),
             self.output(stderr))

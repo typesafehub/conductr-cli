@@ -14,6 +14,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def __init__(self, method_name):
         super().__init__(method_name)
 
+        self.bundle_id = '45e0c477d3e5ea92aa8d85c0d8f3e25c'
         self.nr_of_cpus = 1.0
         self.memory = 200
         self.disk_space = 100
@@ -49,6 +50,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'api_version': '2',
             'verbose': False,
             'quiet': False,
+            'no_wait': False,
             'long_ids': False,
             'cli_parameters': '',
             'custom_settings': self.custom_settings,
@@ -105,15 +107,19 @@ class TestConductLoadCommand(ConductLoadTestBase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'configuration': config_file})
+        input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
-            args = self.default_args.copy()
-            args.update({'configuration': config_file})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            result = conduct_load.load(MagicMock(**args))
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
             self.assertTrue(result)
 
         self.assertEqual(
@@ -137,6 +143,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
         ]
         http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT)
 
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
         self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'),
                          self.output(stdout))
 
@@ -155,15 +163,20 @@ class TestConductLoadCommand(ConductLoadTestBase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'configuration': config_file})
+        input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
-            args = self.default_args.copy()
-            args.update({'configuration': config_file})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_load.load(MagicMock(**args))
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
+            self.assertTrue(result)
 
         self.assertEqual(
             resolve_bundle_mock.call_args_list,
@@ -185,6 +198,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
         ]
         http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT)
 
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
         self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'),
                          self.output(stdout))
 
@@ -192,6 +207,12 @@ class TestConductLoadCommand(ConductLoadTestBase):
             zip_entry_mock.call_args_list,
             [call('bundle.conf', self.bundle_file), call('bundle.conf', config_file)]
         )
+
+    def test_success_no_wait(self):
+        zip_entry_mock = MagicMock(return_value='mock bundle.conf')
+        with patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
+            self.base_test_success_no_wait()
+        zip_entry_mock.assert_called_with('bundle.conf', self.bundle_file)
 
     def test_failure(self):
         zip_entry_mock = MagicMock(return_value='mock bundle.conf')
@@ -235,4 +256,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
             as_error(strip_margin("""|Error: Problem with the bundle: Unable to find bundle.conf within the bundle file
                                      |""")),
             self.output(stderr))
+        zip_entry_mock.assert_called_with('bundle.conf', self.bundle_file)
+
+    def test_failure_install_timeout(self):
+        zip_entry_mock = MagicMock(return_value='mock bundle.conf')
+        with patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
+            self.base_test_failure_install_timeout()
         zip_entry_mock.assert_called_with('bundle.conf', self.bundle_file)

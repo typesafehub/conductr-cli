@@ -1,4 +1,4 @@
-from conductr_cli import bundle_utils, conduct_url, validation
+from conductr_cli import bundle_utils, conduct_url, validation, bundle_scale
 import json
 import requests
 import logging
@@ -7,6 +7,7 @@ from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 @validation.handle_connection_error
 @validation.handle_http_error
+@validation.handle_wait_timeout_error
 def stop(args):
     """`conduct stop` command"""
 
@@ -23,6 +24,10 @@ def stop(args):
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     log.info('Bundle stop request sent.')
+
+    if not args.no_wait:
+        bundle_scale.wait_for_scale(response_json['bundleId'], 0, args)
+
     log.info('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundle_id))
     log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
 

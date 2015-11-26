@@ -17,6 +17,7 @@ DEFAULT_CUSTOM_SETTINGS_FILE = os.getenv('CONDUCTR_CUSTOM_SETTINGS_FILE',
                                          '{}/settings.conf'.format(DEFAULT_CLI_SETTINGS_DIR))
 DEFAULT_CUSTOM_PLUGINS_DIR = os.getenv('CONDUCTR_CUSTOM_PLUGINS_DIR',
                                        '{}/plugins'.format(DEFAULT_CLI_SETTINGS_DIR))
+DEFAULT_WAIT_TIMEOUT = 60  # seconds
 
 
 def add_ip_and_port(sub_parser):
@@ -103,6 +104,24 @@ def add_quiet_flag(sub_parser):
                             action='store_true')
 
 
+def add_wait_timeout(sub_parser):
+    sub_parser.add_argument('--wait-timeout',
+                            help='Timeout in seconds waiting for bundle scale to be achieved in conduct run, '
+                                 'or bundle to be stopped in conduct stop, defaults to'.format(DEFAULT_WAIT_TIMEOUT),
+                            default=DEFAULT_WAIT_TIMEOUT,
+                            dest='wait_timeout',
+                            action='store_true')
+
+
+def add_no_wait(sub_parser):
+    sub_parser.add_argument('--no-wait',
+                            help='Disables waiting for bundle scale to be achieved in conduct run, or bundle to be '
+                                 'stopped in conduct stop, defaults to',
+                            default=False,
+                            dest='no_wait',
+                            action='store_true')
+
+
 def add_default_arguments(sub_parser):
     add_ip_and_port(sub_parser)
     add_verbose(sub_parser)
@@ -149,6 +168,8 @@ def build_parser():
                              help='The optional configuration for the bundle')
     add_default_arguments(load_parser)
     add_bundle_resolve_cache_dir(load_parser)
+    add_wait_timeout(load_parser)
+    add_no_wait(load_parser)
     load_parser.set_defaults(func=conduct_load.load)
 
     # Sub-parser for `run` sub-command
@@ -164,6 +185,8 @@ def build_parser():
     run_parser.add_argument('bundle',
                             help='The ID of the bundle')
     add_default_arguments(run_parser)
+    add_wait_timeout(run_parser)
+    add_no_wait(run_parser)
     run_parser.set_defaults(func=conduct_run.run)
 
     # Sub-parser for `stop` sub-command
@@ -172,6 +195,8 @@ def build_parser():
     stop_parser.add_argument('bundle',
                              help='The ID of the bundle')
     add_default_arguments(stop_parser)
+    add_wait_timeout(stop_parser)
+    add_no_wait(stop_parser)
     stop_parser.set_defaults(func=conduct_stop.stop)
 
     # Sub-parser for `unload` sub-command
