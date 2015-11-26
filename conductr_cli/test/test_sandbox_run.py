@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from conductr_cli import sandbox_run
+from conductr_cli import sandbox_run, logging_setup
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION
 
 
@@ -45,8 +45,8 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'), \
-                patch('sys.stdout', stdout):
+                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_run.run(MagicMock(**self.default_args))
 
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
@@ -70,10 +70,10 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'), \
-                patch('sys.stdout', stdout):
+                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'):
             args = self.default_args.copy()
             args.update({'nr_of_containers': nr_of_containers})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             sandbox_run.run(MagicMock(**args))
 
         expected_stdout = strip_margin("""|Starting ConductR nodes..
@@ -126,8 +126,7 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'), \
-                patch('sys.stdout', stdout):
+                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'):
             args = self.default_args.copy()
             args.update({
                 'image_version': image_version,
@@ -139,6 +138,7 @@ class TestSandboxRunCommand(CliTestCase):
                 'ports': ports,
                 'features': features
             })
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             sandbox_run.run(MagicMock(**args))
 
         expected_stdout = strip_margin("""|Starting ConductR nodes..
@@ -166,13 +166,13 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'), \
-                patch('sys.stdout', stdout):
+                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'):
             args = self.default_args.copy()
             args.update({
                 'nr_of_containers': nr_of_containers,
                 'conductr_roles': conductr_roles
             })
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             sandbox_run.run(MagicMock(**args))
 
         expected_stdout = strip_margin("""|Starting ConductR nodes..
@@ -216,8 +216,8 @@ class TestSandboxRunCommand(CliTestCase):
         with \
                 patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers',
-                      return_value=['cond-0']), \
-                patch('sys.stdout', stdout):
+                      return_value=['cond-0']):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_run.run(MagicMock(**self.default_args))
 
         expected_stdout = strip_margin("""|ConductR nodes {} already exists, leaving them alone.
@@ -232,8 +232,8 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
                 patch('conductr_cli.terminal.docker_rm', return_value='') as mock_docker_rm, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers',
-                      return_value=['cond-0', 'cond-1', 'cond-2']), \
-                patch('sys.stdout', stdout):
+                      return_value=['cond-0', 'cond-1', 'cond-2']):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_run.run(MagicMock(**self.default_args))
 
         expected_stdout = strip_margin("""|Stopping ConductR nodes..

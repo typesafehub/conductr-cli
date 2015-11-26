@@ -3,7 +3,7 @@ import argparse
 from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_services,\
     conduct_stop, conduct_unload, conduct_version, conduct_logs,\
-    conduct_events, host
+    conduct_events, host, logging_setup
 from pyhocon import ConfigFactory
 import os
 import sys
@@ -95,9 +95,18 @@ def add_bundle_resolve_cache_dir(sub_parser):
                             dest='resolve_cache_dir')
 
 
+def add_quiet_flag(sub_parser):
+    sub_parser.add_argument('-q',
+                            help='Prints affected bundle id on screen if enabled',
+                            default=False,
+                            dest='quiet',
+                            action='store_true')
+
+
 def add_default_arguments(sub_parser):
     add_ip_and_port(sub_parser)
     add_verbose(sub_parser)
+    add_quiet_flag(sub_parser)
     add_long_ids(sub_parser)
     add_api_version(sub_parser)
     add_local_connection_flag(sub_parser)
@@ -256,6 +265,7 @@ def run():
 
         args.cli_parameters = get_cli_parameters(args)
         args.custom_settings = get_custom_settings(args)
+        logging_setup.configure_logging(args)
         args.func(args)
 
 

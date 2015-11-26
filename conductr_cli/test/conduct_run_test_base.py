@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
-from conductr_cli import conduct_run
+from conductr_cli import conduct_run, logging_setup
 
 try:
     from unittest.mock import patch, MagicMock  # 3.3 and beyond
@@ -30,7 +30,8 @@ class ConductRunTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_run.run(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url)
@@ -41,9 +42,10 @@ class ConductRunTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
             args = self.default_args.copy()
             args.update({'verbose': True})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_run.run(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
@@ -54,9 +56,10 @@ class ConductRunTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
             args = self.default_args.copy()
             args.update({'long_ids': True})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_run.run(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
@@ -71,6 +74,7 @@ class ConductRunTestBase(CliTestCase):
         with patch('requests.put', http_method), patch('sys.stdout', stdout):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_run.run(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url)
@@ -83,7 +87,8 @@ class ConductRunTestBase(CliTestCase):
         http_method = self.respond_with(404)
         stderr = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stderr', stderr):
+        with patch('requests.put', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             conduct_run.run(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url)
@@ -97,7 +102,8 @@ class ConductRunTestBase(CliTestCase):
         http_method = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stderr', stderr):
+        with patch('requests.put', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             conduct_run.run(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url)

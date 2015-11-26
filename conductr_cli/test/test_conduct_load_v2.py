@@ -1,7 +1,7 @@
 from conductr_cli.test.cli_test_case import create_temp_bundle, strip_margin, as_error, \
     create_temp_bundle_with_contents
 from conductr_cli.test.conduct_load_test_base import ConductLoadTestBase
-from conductr_cli import conduct_load
+from conductr_cli import conduct_load, logging_setup
 from conductr_cli.conduct_load import LOAD_HTTP_TIMEOUT
 
 try:
@@ -48,6 +48,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'port': 9005,
             'api_version': '2',
             'verbose': False,
+            'quiet': False,
             'long_ids': False,
             'cli_parameters': '',
             'custom_settings': self.custom_settings,
@@ -73,6 +74,12 @@ class TestConductLoadCommand(ConductLoadTestBase):
         zip_entry_mock = MagicMock(return_value='mock bundle.conf')
         with patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
             self.base_test_success_verbose()
+        zip_entry_mock.assert_called_with('bundle.conf', self.bundle_file)
+
+    def test_success_quiet(self):
+        zip_entry_mock = MagicMock(return_value='mock bundle.conf')
+        with patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
+            self.base_test_success_quiet()
         zip_entry_mock.assert_called_with('bundle.conf', self.bundle_file)
 
     def test_success_long_ids(self):
@@ -102,10 +109,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
                 patch('requests.post', http_method), \
-                patch('sys.stdout', stdout), \
                 patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'configuration': config_file})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
@@ -151,10 +158,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
                 patch('requests.post', http_method), \
-                patch('sys.stdout', stdout), \
                 patch('builtins.open', open_mock):
             args = self.default_args.copy()
             args.update({'configuration': config_file})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_load.load(MagicMock(**args))
 
         self.assertEqual(
@@ -200,14 +207,24 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_failure_no_bundle(self):
         self.base_test_failure_no_bundle()
 
+    def test_failure_bad_zip(self):
+        self.base_test_failure_bad_zip()
+
+    def test_failure_no_file_http_error(self):
+        self.base_test_failure_no_file_http_error()
+
+    def test_failure_no_file_url_error(self):
+        self.base_test_failure_no_file_url_error()
+
     def test_failure_no_bundle_conf(self):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
         zip_entry_mock = MagicMock(return_value=None)
         stderr = MagicMock()
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
-                patch('sys.stderr', stderr), patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
+                patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
             args = self.default_args.copy()
+            logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
             conduct_load.load(MagicMock(**args))
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)

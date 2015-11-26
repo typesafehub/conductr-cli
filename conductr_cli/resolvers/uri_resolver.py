@@ -3,16 +3,19 @@ from urllib.parse import ParseResult, urlparse, urlunparse
 from urllib.error import URLError
 from pathlib import Path
 import os
+import logging
 
 
 def resolve_bundle(cache_dir, uri):
+    log = logging.getLogger(__name__)
+
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
 
     try:
         bundle_name, bundle_url = get_url(uri)
         cached_file = cache_path(cache_dir, uri)
-        print('Retrieving {}'.format(bundle_url))
+        log.info('Retrieving {}'.format(bundle_url))
         bundle_file, bundle_headers = urlretrieve(bundle_url, cached_file)
         return True, bundle_name, bundle_file
     except URLError:
@@ -25,10 +28,12 @@ def load_from_cache(cache_dir, uri):
     if parsed.scheme == 'file':
         return False, None, None
     else:
+        log = logging.getLogger(__name__)
+
         cached_file = cache_path(cache_dir, uri)
         if os.path.exists(cached_file):
             bundle_name = os.path.basename(cached_file)
-            print('Retrieving from cache {}'.format(cached_file))
+            log.info('Retrieving from cache {}'.format(cached_file))
             return True, bundle_name, cached_file
         else:
             return False, None, None

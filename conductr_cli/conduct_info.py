@@ -1,5 +1,6 @@
 from conductr_cli import bundle_utils, conduct_url, validation, screen_utils
 import json
+import logging
 import requests
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
@@ -9,12 +10,13 @@ from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 def info(args):
     """`conduct info` command"""
 
+    log = logging.getLogger(__name__)
     url = conduct_url.url('bundles', args)
     response = requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT)
     validation.raise_for_status_inc_3xx(response)
 
-    if args.verbose:
-        validation.pretty_json(response.text)
+    if log.is_verbose_enabled():
+        log.verbose(validation.pretty_json(response.text))
 
     data = [
         {
@@ -33,7 +35,7 @@ def info(args):
     has_error = False
     for row in data:
         has_error |= '!' in row['id']
-        print('''\
+        log.screen('''\
 {id: <{id_width}}{padding}\
 {name: <{name_width}}{padding}\
 {replications: >{replications_width}}{padding}\
@@ -41,4 +43,4 @@ def info(args):
 {executions: >{executions_width}}'''.format(**dict(row, **column_widths)).rstrip())
 
     if has_error:
-        print('There are errors: use `conduct events` or `conduct logs` for further information')
+        log.screen('There are errors: use `conduct events` or `conduct logs` for further information')

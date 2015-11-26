@@ -1,7 +1,9 @@
 import argcomplete
 import argparse
 from functools import partial
+from conductr_cli import logging_setup
 import hashlib
+import logging
 import os
 import shutil
 import tempfile
@@ -12,6 +14,7 @@ def run(argv=None):
     parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args(argv)
+    logging_setup.configure_logging(args)
     args.func(args)
 
 
@@ -29,6 +32,7 @@ def build_parser():
 
 
 def shazar(args):
+    log = logging.getLogger(__name__)
     source_base_name = os.path.basename(args.source.rstrip('\\/'))
     temp_file = tempfile.NamedTemporaryFile(suffix='.zip', delete=False).name
 
@@ -44,7 +48,7 @@ def shazar(args):
 
     dest = os.path.join(args.output_dir, '{}-{}.zip'.format(source_base_name, create_digest(temp_file)))
     shutil.move(temp_file, dest)
-    print('Created digested ZIP archive at {}'.format(dest))
+    log.info('Created digested ZIP archive at {}'.format(dest))
 
 
 def create_digest(file_name):

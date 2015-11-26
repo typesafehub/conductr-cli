@@ -1,5 +1,6 @@
 from conductr_cli import bundle_utils, conduct_url, validation, screen_utils
 import json
+import logging
 import requests
 from urllib.parse import urlparse
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
@@ -10,12 +11,13 @@ from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 def services(args):
     """`conduct services` command"""
 
+    log = logging.getLogger(__name__)
     url = conduct_url.url('bundles', args)
     response = requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT)
     validation.raise_for_status_inc_3xx(response)
 
-    if args.verbose:
-        validation.pretty_json(response.text)
+    if log.is_verbose_enabled():
+        log.verbose(validation.pretty_json(response.text))
 
     data = sorted([
                   (
@@ -49,14 +51,13 @@ def services(args):
     padding = 2
     column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
     for row in data:
-        print(
+        log.screen(
             '{service: <{service_width}}{padding}'
             '{bundle_id: <{bundle_id_width}}{padding}'
             '{bundle_name: <{bundle_name_width}}{padding}'
             '{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
 
     if len(duplicate_endpoints) > 0:
-        print()
-        validation.warn(
-            'Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_endpoints)))
-        validation.warn('Service resolution for these services is undefined.')
+        log.screen('')
+        log.warning('Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_endpoints)))
+        log.warning('Service resolution for these services is undefined.')

@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_warn
-from conductr_cli import conduct_services
+from conductr_cli import conduct_services, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 
@@ -25,7 +25,8 @@ class TestConductServicesCommand(CliTestCase):
         http_method = self.respond_with(200, '[]')
         stdout = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_services.services(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -38,7 +39,8 @@ class TestConductServicesCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/two_bundles.json')
         stdout = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_services.services(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -62,7 +64,8 @@ class TestConductServicesCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/two_bundles_no_path.json')
         stdout = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_services.services(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -83,7 +86,8 @@ class TestConductServicesCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/one_bundle_starting.json')
         stdout = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_services.services(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -101,9 +105,10 @@ class TestConductServicesCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/one_bundle_starting.json')
         stdout = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+        with patch('requests.get', http_method):
             args = self.default_args.copy()
             args.update({'long_ids': True})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_services.services(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)

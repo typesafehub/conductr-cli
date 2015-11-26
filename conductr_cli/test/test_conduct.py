@@ -76,6 +76,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.bundle, 'path-to-bundle')
         self.assertEqual(args.configuration, 'path-to-conf')
+        self.assertFalse(args.quiet)
 
     def test_parser_run(self):
         args = self.parser.parse_args('run --scale 5 path-to-bundle'.split())

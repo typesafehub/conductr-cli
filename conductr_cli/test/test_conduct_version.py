@@ -1,10 +1,10 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from conductr_cli import conduct_version
+from conductr_cli import conduct_version, logging_setup
 
 try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
+    from unittest.mock import MagicMock  # 3.3 and beyond
 except ImportError:
-    from mock import patch, MagicMock
+    from mock import MagicMock
 
 
 class TestConductVersionCommand(CliTestCase):
@@ -13,8 +13,8 @@ class TestConductVersionCommand(CliTestCase):
         args = MagicMock()
         stdout = MagicMock()
 
-        with patch('sys.stdout', stdout):
-            conduct_version.version(args)
+        logging_setup.configure_logging(args, stdout)
+        conduct_version.version(args)
 
         from conductr_cli import __version__
         self.assertEqual(

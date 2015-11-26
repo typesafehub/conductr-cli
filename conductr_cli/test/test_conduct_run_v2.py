@@ -1,5 +1,5 @@
 from conductr_cli.test.conduct_run_test_base import ConductRunTestBase
-from conductr_cli import conduct_run
+from conductr_cli import conduct_run, logging_setup
 
 try:
     from unittest.mock import patch, MagicMock  # 3.3 and beyond
@@ -17,6 +17,7 @@ class TestConductRunCommand(ConductRunTestBase):
             'port': 9005,
             'api_version': '2',
             'verbose': False,
+            'quiet': False,
             'long_ids': False,
             'cli_parameters': '',
             'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
@@ -55,6 +56,7 @@ class TestConductRunCommand(ConductRunTestBase):
             'port': 9005,
             'api_version': '2',
             'verbose': False,
+            'quiet': False,
             'long_ids': False,
             'cli_parameters': '',
             'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
@@ -68,7 +70,8 @@ class TestConductRunCommand(ConductRunTestBase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_run.run(MagicMock(**args))
 
         http_method.assert_called_with(expected_url)

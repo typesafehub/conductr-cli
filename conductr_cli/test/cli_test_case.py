@@ -52,7 +52,7 @@ class CliTestCase(TestCase):
 
     @staticmethod
     def output(logger):
-        return ''.join([args[0] for name, args, kwargs in logger.method_calls])
+        return ''.join([args[0] for name, args, kwargs in logger.method_calls if len(args) > 0])
 
 
 def strip_margin(string, margin_char='|'):
@@ -84,3 +84,17 @@ def create_temp_bundle_with_contents(contents):
 
 def create_temp_bundle(bundle_conf):
     return create_temp_bundle_with_contents({'bundle.conf': bundle_conf, 'password.txt': 'monkey'})
+
+
+def create_mock_logger():
+    log_mock = MagicMock()
+    log_mock.debug = MagicMock()
+    log_mock.verbose = MagicMock()
+    log_mock.info = MagicMock()
+    log_mock.quiet = MagicMock()
+    log_mock.warn = MagicMock()
+    log_mock.error = MagicMock()
+
+    get_logger_mock = MagicMock(return_value=log_mock)
+
+    return get_logger_mock, log_mock
