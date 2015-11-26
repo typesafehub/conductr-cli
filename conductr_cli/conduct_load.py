@@ -2,10 +2,8 @@ from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
 from conductr_cli import bundle_utils, conduct_url, validation
 from conductr_cli.exceptions import MalformedBundleError
+from conductr_cli import resolver
 from functools import partial
-from urllib.parse import ParseResult, urlparse, urlunparse
-from urllib.request import urlretrieve
-from pathlib import Path
 
 import json
 import requests
@@ -20,6 +18,7 @@ LOAD_HTTP_TIMEOUT = 30
 @validation.handle_no_file
 @validation.handle_bad_zip
 @validation.handle_malformed_bundle
+@validation.handle_bundle_resolution_error
 def load(args):
     if args.api_version == '1':
         return load_v1(args)
@@ -29,14 +28,13 @@ def load(args):
 
 def load_v1(args):
     print('Retrieving bundle...')
-    bundle_name, bundle_url = get_url(args.bundle)
-    bundle_file, bundle_headers = urlretrieve(bundle_url)
+    resolve_cache_dir = args.resolve_cache_dir
+    bundle_name, bundle_file = resolver.resolve_bundle(resolve_cache_dir, args.bundle)
 
-    configuration_file, configuration_headers, configuration_name = (None, None, None)
+    configuration_name, configuration_file = (None, None)
     if args.configuration is not None:
         print('Retrieving configuration...')
-        configuration_name, configuration_url = get_url(args.configuration)
-        configuration_file, configuration_headers = urlretrieve(configuration_url)
+        configuration_name, configuration_file = resolver.resolve_bundle(resolve_cache_dir, args.configuration)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -75,14 +73,6 @@ def apply_to_configurations(base_conf, overlay_conf, method, key):
             return method(base_conf, key)
 
 
-def get_url(uri):
-    parsed = urlparse(uri, scheme='file')
-    op = Path(uri)
-    np = str(op.cwd() / op if parsed.scheme == 'file' and op.root == '' else parsed.path)
-    url = urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
-    return url.split('/')[-1], url
-
-
 def get_payload(bundle_name, bundle_file, bundle_configuration):
     return [
         ('nrOfCpus', bundle_configuration(ConfigTree.get_string, 'nrOfCpus')),
@@ -97,18 +87,17 @@ def get_payload(bundle_name, bundle_file, bundle_configuration):
 
 def load_v2(args):
     print('Retrieving bundle...')
-    bundle_name, bundle_url = get_url(args.bundle)
-    bundle_file, bundle_headers = urlretrieve(bundle_url)
+    resolve_cache_dir = args.resolve_cache_dir
+    bundle_name, bundle_file = resolver.resolve_bundle(resolve_cache_dir, args.bundle)
     bundle_conf = bundle_utils.zip_entry('bundle.conf', bundle_file)
 
     if bundle_conf is None:
         raise MalformedBundleError('Unable to find bundle.conf within the bundle file')
     else:
-        configuration_file, bundle_conf_overlay = (None, None)
+        configuration_name, configuration_file, bundle_conf_overlay = (None, None, None)
         if args.configuration is not None:
             print('Retrieving configuration...')
-            configuration_name, configuration_url = get_url(args.configuration)
-            configuration_file, configuration_headers = urlretrieve(configuration_url)
+            configuration_name, configuration_file = resolver.resolve_bundle(resolve_cache_dir, args.configuration)
             bundle_conf_overlay = bundle_utils.zip_entry('bundle.conf', configuration_file)
 
         files = [('bundleConf', ('bundle.conf', bundle_conf))]

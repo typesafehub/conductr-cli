@@ -8,6 +8,9 @@ import os
 
 DEFAULT_PORT = os.getenv('CONDUCTR_PORT', '9005')
 DEFAULT_API_VERSION = os.getenv('CONDUCTR_API_VERSION', '1')
+DEFAULT_CLI_SETTINGS_DIR = os.getenv('CONDUCTR_CLI_SETTINGS_DIR', '{}/.conductr'.format(os.path.expanduser('~')))
+DEFAULT_BUNDLE_RESOLVE_CACHE_DIR = os.getenv('CONDUCTR_BUNDLE_RESOLVE_CACHE_DIR',
+                                             '{}/cache'.format(DEFAULT_CLI_SETTINGS_DIR))
 
 
 def add_ip_and_port(sub_parser):
@@ -54,12 +57,29 @@ def add_local_connection_flag(sub_parser):
                             help=argparse.SUPPRESS)
 
 
+def add_cli_settings_dir(sub_parser):
+    sub_parser.add_argument('--settings-dir',
+                            help='Directory where ConductR CLI settings are stored, defaults to {}'.format(
+                                DEFAULT_CLI_SETTINGS_DIR),
+                            default=DEFAULT_CLI_SETTINGS_DIR,
+                            dest='cli_settings_dir')
+
+
+def add_bundle_resolve_cache_dir(sub_parser):
+    sub_parser.add_argument('--resolve-cache-dir',
+                            help='Directory where resolved bundles are cached, defaults to {}'.format(
+                                DEFAULT_BUNDLE_RESOLVE_CACHE_DIR),
+                            default=DEFAULT_BUNDLE_RESOLVE_CACHE_DIR,
+                            dest='resolve_cache_dir')
+
+
 def add_default_arguments(sub_parser):
     add_ip_and_port(sub_parser)
     add_verbose(sub_parser)
     add_long_ids(sub_parser)
     add_api_version(sub_parser)
     add_local_connection_flag(sub_parser)
+    add_cli_settings_dir(sub_parser)
 
 
 def build_parser():
@@ -95,6 +115,7 @@ def build_parser():
                              default=None,
                              help='The optional configuration for the bundle')
     add_default_arguments(load_parser)
+    add_bundle_resolve_cache_dir(load_parser)
     load_parser.set_defaults(func=conduct_load.load)
 
     # Sub-parser for `run` sub-command
