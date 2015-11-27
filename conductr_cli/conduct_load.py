@@ -28,13 +28,14 @@ def load(args):
 
 def load_v1(args):
     print('Retrieving bundle...')
+    custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
-    bundle_name, bundle_file = resolver.resolve_bundle(resolve_cache_dir, args.bundle)
+    bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
 
     configuration_name, configuration_file = (None, None)
     if args.configuration is not None:
         print('Retrieving configuration...')
-        configuration_name, configuration_file = resolver.resolve_bundle(resolve_cache_dir, args.configuration)
+        configuration_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.configuration)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -87,8 +88,9 @@ def get_payload(bundle_name, bundle_file, bundle_configuration):
 
 def load_v2(args):
     print('Retrieving bundle...')
+    custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
-    bundle_name, bundle_file = resolver.resolve_bundle(resolve_cache_dir, args.bundle)
+    bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
     bundle_conf = bundle_utils.zip_entry('bundle.conf', bundle_file)
 
     if bundle_conf is None:
@@ -97,7 +99,7 @@ def load_v2(args):
         configuration_name, configuration_file, bundle_conf_overlay = (None, None, None)
         if args.configuration is not None:
             print('Retrieving configuration...')
-            configuration_name, configuration_file = resolver.resolve_bundle(resolve_cache_dir, args.configuration)
+            configuration_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.configuration)
             bundle_conf_overlay = bundle_utils.zip_entry('bundle.conf', configuration_file)
 
         files = [('bundleConf', ('bundle.conf', bundle_conf))]

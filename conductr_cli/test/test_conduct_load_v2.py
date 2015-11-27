@@ -5,9 +5,9 @@ from conductr_cli import conduct_load
 from conductr_cli.conduct_load import LOAD_HTTP_TIMEOUT
 
 try:
-    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
+    from unittest.mock import call, patch, MagicMock, Mock  # 3.3 and beyond
 except ImportError:
-    from mock import call, patch, MagicMock
+    from mock import call, patch, MagicMock, Mock
 
 
 class TestConductLoadCommand(ConductLoadTestBase):
@@ -22,6 +22,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.system = 'bundle'
         self.system_version = '2.3'
         self.compatibility_version = '2.0'
+        self.custom_settings = Mock()
         self.bundle_resolve_cache_dir = 'bundle-resolve-cache-dir'
 
         self.tmpdir, self.bundle_file = create_temp_bundle(
@@ -49,6 +50,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'verbose': False,
             'long_ids': False,
             'cli_parameters': '',
+            'custom_settings': self.custom_settings,
             'resolve_cache_dir': self.bundle_resolve_cache_dir,
             'bundle': self.bundle_file,
             'configuration': None
@@ -109,8 +111,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.assertEqual(
             resolve_bundle_mock.call_args_list,
             [
-                call(self.bundle_resolve_cache_dir, self.bundle_file),
-                call(self.bundle_resolve_cache_dir, config_file)
+                call(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file),
+                call(self.custom_settings, self.bundle_resolve_cache_dir, config_file)
             ]
         )
 
@@ -158,8 +160,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.assertEqual(
             resolve_bundle_mock.call_args_list,
             [
-                call(self.bundle_resolve_cache_dir, self.bundle_file),
-                call(self.bundle_resolve_cache_dir, config_file)
+                call(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file),
+                call(self.custom_settings, self.bundle_resolve_cache_dir, config_file)
             ]
         )
 
@@ -208,7 +210,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             args = self.default_args.copy()
             conduct_load.load(MagicMock(**args))
 
-        resolve_bundle_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Problem with the bundle: Unable to find bundle.conf within the bundle file

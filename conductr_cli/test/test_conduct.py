@@ -15,13 +15,15 @@ class TestConduct(TestCase):
 
     def test_default(self):
         args = self.parser.parse_args(
-            'info --ip 127.0.1.1 --port 9999 -v --long-ids --api-version 2 --settings-dir /settings-dir'.split())
+            'info --ip 127.0.1.1 --port 9999 -v --long-ids --api-version 2 '
+            '--settings-dir /settings-dir --custom-plugins-dir /custom-plugins-dir'.split())
 
         self.assertEqual(args.func.__name__, 'info')
         self.assertEqual(args.ip, '127.0.1.1')
         self.assertEqual(args.port, 9999)
         self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '/settings-dir')
+        self.assertEqual(args.custom_plugins_dir, '/custom-plugins-dir')
         self.assertEqual(args.verbose, True)
         self.assertEqual(args.long_ids, True)
 

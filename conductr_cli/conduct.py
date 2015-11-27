@@ -4,13 +4,19 @@ from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_services,\
     conduct_stop, conduct_unload, conduct_version, conduct_logs,\
     conduct_events, host
+from pyhocon import ConfigFactory
 import os
+import sys
 
 DEFAULT_PORT = os.getenv('CONDUCTR_PORT', '9005')
 DEFAULT_API_VERSION = os.getenv('CONDUCTR_API_VERSION', '1')
 DEFAULT_CLI_SETTINGS_DIR = os.getenv('CONDUCTR_CLI_SETTINGS_DIR', '{}/.conductr'.format(os.path.expanduser('~')))
 DEFAULT_BUNDLE_RESOLVE_CACHE_DIR = os.getenv('CONDUCTR_BUNDLE_RESOLVE_CACHE_DIR',
                                              '{}/cache'.format(DEFAULT_CLI_SETTINGS_DIR))
+DEFAULT_CUSTOM_SETTINGS_FILE = os.getenv('CONDUCTR_CUSTOM_SETTINGS_FILE',
+                                         '{}/settings.conf'.format(DEFAULT_CLI_SETTINGS_DIR))
+DEFAULT_CUSTOM_PLUGINS_DIR = os.getenv('CONDUCTR_CUSTOM_PLUGINS_DIR',
+                                       '{}/plugins'.format(DEFAULT_CLI_SETTINGS_DIR))
 
 
 def add_ip_and_port(sub_parser):
@@ -65,6 +71,22 @@ def add_cli_settings_dir(sub_parser):
                             dest='cli_settings_dir')
 
 
+def add_custom_settings_file(sub_parser):
+    sub_parser.add_argument('--custom-settings-file',
+                            help='Configuration where custom settings for ConductR CLI are stored in HOCON format,'
+                            'defaults to {}'.format(DEFAULT_CUSTOM_SETTINGS_FILE),
+                            default=DEFAULT_CUSTOM_SETTINGS_FILE,
+                            dest='custom_settings_file')
+
+
+def add_custom_plugins_dir(sub_parser):
+    sub_parser.add_argument('--custom-plugins-dir',
+                            help='Directory where custom plugins for ConductR CLI are stored, defaults to {}'.format(
+                                DEFAULT_CUSTOM_PLUGINS_DIR),
+                            default=DEFAULT_CUSTOM_PLUGINS_DIR,
+                            dest='custom_plugins_dir')
+
+
 def add_bundle_resolve_cache_dir(sub_parser):
     sub_parser.add_argument('--resolve-cache-dir',
                             help='Directory where resolved bundles are cached, defaults to {}'.format(
@@ -80,6 +102,8 @@ def add_default_arguments(sub_parser):
     add_api_version(sub_parser)
     add_local_connection_flag(sub_parser)
     add_cli_settings_dir(sub_parser)
+    add_custom_settings_file(sub_parser)
+    add_custom_plugins_dir(sub_parser)
 
 
 def build_parser():
@@ -199,6 +223,15 @@ def get_cli_parameters(args):
     return ' '.join(parameters)
 
 
+def get_custom_settings(args):
+    custom_settings_file = args.custom_settings_file
+    if os.path.exists(custom_settings_file):
+        print('Loading custom settings {}'.format(custom_settings_file))
+        return ConfigFactory.parse_file(custom_settings_file)
+    else:
+        return None
+
+
 def run():
     # Parse arguments
     parser = build_parser()
@@ -207,6 +240,9 @@ def run():
     if not vars(args).get('func'):
         parser.print_help()
     else:
+        # Add custom plugin dir to import path
+        sys.path.append(args.custom_plugins_dir)
+
         # Resolve default ip if the --ip argument hasn't been specified
         if not args.ip:
             # Returns None if an error has occurred
@@ -216,6 +252,7 @@ def run():
         else:
             args.local_connection = False
         args.cli_parameters = get_cli_parameters(args)
+        args.custom_settings = get_custom_settings(args)
         args.func(args)
 
 
