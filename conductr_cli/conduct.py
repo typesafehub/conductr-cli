@@ -214,18 +214,18 @@ def build_parser():
 
 def get_cli_parameters(args):
     parameters = ['']
-    if getattr(args, 'ip'):
+    if vars(args).get('ip'):
         parameters.append('--ip {}'.format(args.ip))
-    if getattr(args, 'port', int(DEFAULT_PORT)) != int(DEFAULT_PORT):
+    if vars(args).get('port', int(DEFAULT_PORT)) != int(DEFAULT_PORT):
         parameters.append('--port {}'.format(args.port))
-    if getattr(args, 'api_version', DEFAULT_API_VERSION) != DEFAULT_API_VERSION:
+    if vars(args).get('api_version', DEFAULT_API_VERSION) != DEFAULT_API_VERSION:
         parameters.append('--api-version {}'.format(args.api_version))
     return ' '.join(parameters)
 
 
 def get_custom_settings(args):
-    custom_settings_file = args.custom_settings_file
-    if os.path.exists(custom_settings_file):
+    custom_settings_file = vars(args).get('custom_settings_file')
+    if custom_settings_file and os.path.exists(custom_settings_file):
         print('Loading custom settings {}'.format(custom_settings_file))
         return ConfigFactory.parse_file(custom_settings_file)
     else:
@@ -241,16 +241,19 @@ def run():
         parser.print_help()
     else:
         # Add custom plugin dir to import path
-        sys.path.append(args.custom_plugins_dir)
+        custom_plugins_dir = vars(args).get('custom_plugins_dir')
+        if custom_plugins_dir:
+            sys.path.append(custom_plugins_dir)
 
         # Resolve default ip if the --ip argument hasn't been specified
-        if not args.ip:
+        if not vars(args).get('ip'):
             # Returns None if an error has occurred
             args.ip = host.resolve_default_ip()
             if not args.ip:
                 return
         else:
             args.local_connection = False
+
         args.cli_parameters = get_cli_parameters(args)
         args.custom_settings = get_custom_settings(args)
         args.func(args)
