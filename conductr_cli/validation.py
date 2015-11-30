@@ -15,6 +15,10 @@ from conductr_cli.exceptions import DockerMachineError, Boot2DockerError, Malfor
 from subprocess import CalledProcessError
 
 
+# FileNotFoundError is only available on > python 3.3
+NOT_FOUND_ERROR = getattr(__builtins__, 'FileNotFoundError', OSError)
+
+
 def error(message, *objs):
     """print to stderr"""
     print('{}{}Error{}: {}'.format(RED, UNDERLINE, ENDC, message.format(*objs)), file=sys.stderr)
@@ -197,12 +201,12 @@ def handle_docker_errors(func):
         try:
             env_lines = terminal.docker_machine_env('default')
             print('Retrieved docker environment variables with `docker-machine env default`')
-        except FileNotFoundError:
+        except NOT_FOUND_ERROR:
             try:
                 env_lines = terminal.boot2docker_shellinit()
                 print('Retrieved docker environment variables with: boot2docker shellinit')
                 warn('boot2docker is deprecated. Upgrade to docker-machine.')
-            except FileNotFoundError:
+            except NOT_FOUND_ERROR:
                 return []
         return [resolve_env(line) for line in env_lines if line.startswith('export')]
 
@@ -224,7 +228,7 @@ def handle_docker_errors(func):
             else:
                 return handle_non_linux(*args, **kwargs)
 
-        except FileNotFoundError:
+        except NOT_FOUND_ERROR:
             error('docker command has not been found.')
             error('The sandbox need Docker to run the ConductR nodes in virtual containers.')
             error('Please install Docker first: https://www.docker.com')
