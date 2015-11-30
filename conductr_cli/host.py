@@ -9,13 +9,13 @@ def resolve_default_ip():
     def resolve():
         try:
             return with_docker_machine()
-        except FileNotFoundError:
+        except validation.NOT_FOUND_ERROR:
             try:
                 return with_boot2docker()
-            except FileNotFoundError:
+            except validation.NOT_FOUND_ERROR:
                 try:
                     return with_hostname()
-                except FileNotFoundError:
+                except validation.NOT_FOUND_ERROR:
                     return '127.0.0.1'
 
     return os.getenv('CONDUCTR_IP', resolve())
