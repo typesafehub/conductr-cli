@@ -10,10 +10,11 @@ except ImportError:
 class TestConductVersionCommand(CliTestCase):
 
     def test_success(self):
+        args = MagicMock()
         stdout = MagicMock()
 
         with patch('sys.stdout', stdout):
-            conduct_version.version()
+            conduct_version.version(args)
 
         from conductr_cli import __version__
         self.assertEqual(
