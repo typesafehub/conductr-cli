@@ -3,6 +3,7 @@ from conductr_cli.resolvers import uri_resolver
 from conductr_cli import bundle_shorthand
 from requests.exceptions import HTTPError
 import json
+import logging
 import os
 import requests
 
@@ -13,10 +14,11 @@ BINTRAY_CREDENTIAL_FILE_PATH = '{}/.bintray/.credentials'.format(os.path.expandu
 
 
 def resolve_bundle(cache_dir, uri):
+    log = logging.getLogger(__name__)
     try:
         bintray_username, bintray_password = load_bintray_credentials()
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse(uri)
-        log('Resolving bundle', org, repo, package_name, compatibility_version, digest)
+        log.info(log_message('Resolving bundle', org, repo, package_name, compatibility_version, digest))
         bundle_download_url = bintray_download_url(bintray_username, bintray_password, org, repo, package_name,
                                                    compatibility_version, digest)
         if bundle_download_url:
@@ -30,10 +32,11 @@ def resolve_bundle(cache_dir, uri):
 
 
 def load_from_cache(cache_dir, uri):
+    log = logging.getLogger(__name__)
     try:
         bintray_username, bintray_password = load_bintray_credentials()
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse(uri)
-        log('Loading bundle from cache', org, repo, package_name, compatibility_version, digest)
+        log.info(log_message('Loading bundle from cache', org, repo, package_name, compatibility_version, digest))
         bundle_download_url = bintray_download_url(bintray_username, bintray_password, org, repo, package_name,
                                                    compatibility_version, digest)
         if bundle_download_url:
@@ -47,8 +50,9 @@ def load_from_cache(cache_dir, uri):
 
 
 def load_bintray_credentials():
+    log = logging.getLogger(__name__)
     if not os.path.exists(BINTRAY_CREDENTIAL_FILE_PATH):
-        print('Bintray credentials not found in {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
+        log.debug('Bintray credentials not found in {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
         return None, None
     else:
         with open(BINTRAY_CREDENTIAL_FILE_PATH, 'r') as cred_file:
@@ -60,7 +64,7 @@ def load_bintray_credentials():
 
             username = None if 'user' not in data else data['user']
             password = None if 'password' not in data else data['password']
-            print('Bintray credentials loaded from {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
+            log.info('Bintray credentials loaded from {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
             return username, password
 
 
@@ -146,11 +150,11 @@ def get_json(uri, username, password):
     return json.loads(response.text)
 
 
-def log(message, org, repo, package_name, compatibility_version, digest):
+def log_message(message, org, repo, package_name, compatibility_version, digest):
     if compatibility_version is None and digest is None:
-        print('{} {}/{}/{}'.format(message, org, repo, package_name))
+        return '{} {}/{}/{}'.format(message, org, repo, package_name)
     elif compatibility_version is not None and digest is None:
-        print('{} {}/{}/{}:{}'.format(message, org, repo, package_name, compatibility_version))
+        return '{} {}/{}/{}:{}'.format(message, org, repo, package_name, compatibility_version)
     else:
         version = '{}-{}'.format(compatibility_version, digest)
-        print('{} {}/{}/{}:{}'.format(message, org, repo, package_name, version))
+        return '{} {}/{}/{}:{}'.format(message, org, repo, package_name, version)

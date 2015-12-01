@@ -1,12 +1,12 @@
-from conductr_cli.test.cli_test_case import strip_margin
+from conductr_cli.test.cli_test_case import strip_margin, as_error
 from conductr_cli.test.conduct_run_test_base import ConductRunTestBase
-from conductr_cli import conduct_run
+from conductr_cli import conduct_run, logging_setup
 
 
 try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
+    from unittest.mock import MagicMock  # 3.3 and beyond
 except ImportError:
-    from mock import patch, MagicMock
+    from mock import MagicMock
 
 
 class TestConductRunCommand(ConductRunTestBase):
@@ -19,6 +19,7 @@ class TestConductRunCommand(ConductRunTestBase):
             'port': 9005,
             'api_version': '1',
             'verbose': False,
+            'quiet': False,
             'long_ids': False,
             'cli_parameters': '',
             'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
@@ -55,7 +56,7 @@ class TestConductRunCommand(ConductRunTestBase):
         args = {
             'ip': '127.0.0.1',
             'port': 9005,
-            'api_version': '1.0',
+            'api_version': '1',
             'verbose': False,
             'long_ids': False,
             'cli_parameters': '',
@@ -65,10 +66,11 @@ class TestConductRunCommand(ConductRunTestBase):
         }
 
         stderr = MagicMock()
-        with patch('sys.stderr', stderr):
-            conduct_run.run(MagicMock(**args))
+
+        logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
+        conduct_run.run(MagicMock(**args))
 
         self.assertEqual(
-            strip_margin("""|ERROR: Affinity feature is only available for v1.1 onwards of ConductR
-                            |"""),
+            as_error(strip_margin("""|Error: Affinity feature is only available for v1.1 onwards of ConductR
+                            |""")),
             self.output(stderr))

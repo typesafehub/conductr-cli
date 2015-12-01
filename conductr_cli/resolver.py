@@ -1,6 +1,7 @@
 from conductr_cli.exceptions import BundleResolutionError
 from conductr_cli.resolvers import bintray_resolver, uri_resolver
 import importlib
+import logging
 
 
 # Try to resolve from local file system before we attempting resolution using bintray
@@ -24,10 +25,11 @@ def resolve_bundle(custom_settings, cache_dir, uri):
 
 
 def resolver_chain(custom_settings):
+    log = logging.getLogger(__name__)
     if custom_settings is not None and 'resolvers' in custom_settings:
         resolver_names = custom_settings.get_list('resolvers')
         if resolver_names:
-            print('Using custom bundle resolver chain {}'.format(resolver_names))
+            log.info('Using custom bundle resolver chain {}'.format(resolver_names))
             custom_resolver_chain = [importlib.import_module(resolver_name) for resolver_name in resolver_names]
             return custom_resolver_chain
 

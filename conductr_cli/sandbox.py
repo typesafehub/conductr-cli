@@ -1,7 +1,7 @@
 import argcomplete
 import argparse
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_common
+from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, logging_setup
 
 
 def build_parser():
@@ -121,6 +121,7 @@ def run():
                     'to obtain the current version information.')
     # Call sandbox function
     else:
+        logging_setup.configure_logging(args)
         args.func(args)
 
 

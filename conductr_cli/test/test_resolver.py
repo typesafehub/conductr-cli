@@ -1,5 +1,5 @@
 from unittest import TestCase
-from conductr_cli.test.cli_test_case import strip_margin
+from conductr_cli.test.cli_test_case import strip_margin, create_mock_logger
 from conductr_cli.exceptions import BundleResolutionError
 from conductr_cli import resolver
 from conductr_cli.resolvers import bintray_resolver, uri_resolver
@@ -81,9 +81,16 @@ class TestResolverChain(TestCase):
                             |]
                             |""")
         )
-        result = resolver.resolver_chain(custom_settings)
-        expected_result = [uri_resolver]
-        self.assertEqual(expected_result, result)
+
+        get_logger_mock, log_mock = create_mock_logger()
+
+        with patch('logging.getLogger', get_logger_mock):
+            result = resolver.resolver_chain(custom_settings)
+            expected_result = [uri_resolver]
+            self.assertEqual(expected_result, result)
+
+        get_logger_mock.assert_called_with('conductr_cli.resolver')
+        log_mock.info.assert_called_with('Using custom bundle resolver chain [\'conductr_cli.resolvers.uri_resolver\']')
 
     def test_none_input(self):
         result = resolver.resolver_chain(None)

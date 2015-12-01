@@ -1,4 +1,5 @@
 from conductr_cli import __version__
+import logging
 
 
 def supported_api_versions():
@@ -7,5 +8,6 @@ def supported_api_versions():
 
 def version(args):
     """`conduct version` command"""
-    print(__version__)
-    print('Supported API version(s): {}'.format(', '.join(supported_api_versions())))
+    log = logging.getLogger(__name__)
+    log.screen(__version__)
+    log.screen('Supported API version(s): {}'.format(', '.join(supported_api_versions())))

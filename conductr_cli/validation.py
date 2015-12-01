@@ -1,4 +1,5 @@
 import json
+import logging
 import sys
 import urllib
 import arrow
@@ -10,7 +11,6 @@ from requests.exceptions import ConnectionError, HTTPError
 from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal
-from conductr_cli.ansi_colors import RED, YELLOW, UNDERLINE, ENDC
 from conductr_cli.exceptions import DockerMachineError, Boot2DockerError, MalformedBundleError, BundleResolutionError
 from subprocess import CalledProcessError
 
@@ -19,27 +19,18 @@ from subprocess import CalledProcessError
 NOT_FOUND_ERROR = getattr(__builtins__, 'FileNotFoundError', OSError)
 
 
-def error(message, *objs):
-    """print to stderr"""
-    print('{}{}Error{}: {}'.format(RED, UNDERLINE, ENDC, message.format(*objs)), file=sys.stderr)
-
-
-def warn(message, *objs):
-    print('{}{}Warning{}: {}'.format(YELLOW, UNDERLINE, ENDC, message.format(*objs)), file=sys.stdout)
-
-
-def connection_error(err, args):
-    error('Unable to contact ConductR.')
-    error('Reason: {}'.format(err.args[0]))
+def connection_error(log, err, args):
+    log.error('Unable to contact ConductR.')
+    log.error('Reason: {}'.format(err.args[0]))
     if args.local_connection:
-        error('Start the ConductR sandbox with: sandbox run IMAGE_VERSION')
+        log.error('Start the ConductR sandbox with: sandbox run IMAGE_VERSION')
     else:
-        error('Make sure it can be accessed at {}'.format(err.request.url))
+        log.error('Make sure it can be accessed at {}'.format(err.request.url))
 
 
 def pretty_json(s):
     s_json = json.loads(s)
-    print(json.dumps(s_json, sort_keys=True, indent=2, separators=(',', ': ')))
+    return json.dumps(s_json, sort_keys=True, indent=2, separators=(',', ': '))
 
 
 def handle_connection_error(func):
@@ -47,7 +38,8 @@ def handle_connection_error(func):
         try:
             return func(*args, **kwargs)
         except ConnectionError as err:
-            connection_error(err, *args)
+            log = get_logger_for_func(func)
+            connection_error(log, err, *args)
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -61,9 +53,10 @@ def handle_http_error(func):
         try:
             return func(*args, **kwargs)
         except HTTPError as err:
-            error('{} {}', err.response.status_code, err.response.reason)
+            log = get_logger_for_func(func)
+            log.error('{} {}'.format(err.response.status_code, err.response.reason))
             if err.response.text != '':
-                error(err.response.text)
+                log.error(err.response.text)
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -77,8 +70,9 @@ def handle_invalid_config(func):
         try:
             return func(*args, **kwargs)
         except ConfigException as err:
-            error('Unable to parse bundle.conf.')
-            error('{}.', err.args[0])
+            log = get_logger_for_func(func)
+            log.error('Unable to parse bundle.conf.')
+            log.error('{}.'.format(err.args[0]))
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -92,9 +86,11 @@ def handle_no_file(func):
         try:
             return func(*args, **kwargs)
         except urllib.error.HTTPError as err:
-            error('Resource not found: {}', err.url)
+            log = get_logger_for_func(func)
+            log.error('Resource not found: {}'.format(err.url))
         except URLError as err:
-            error('File not found: {}', err.args[0])
+            log = get_logger_for_func(func)
+            log.error('File not found: {}'.format(err.args[0]))
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -108,7 +104,8 @@ def handle_bad_zip(func):
         try:
             return func(*args, **kwargs)
         except BadZipFile as err:
-            error('Problem with the bundle: {}', err.args[0])
+            log = get_logger_for_func(func)
+            log.error('Problem with the bundle: {}'.format(err.args[0]))
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -122,7 +119,8 @@ def handle_malformed_bundle(func):
         try:
             return func(*args, **kwargs)
         except MalformedBundleError as err:
-            error('Problem with the bundle: {}', err.args[0])
+            log = get_logger_for_func(func)
+            log.error('Problem with the bundle: {}'.format(err.args[0]))
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -136,7 +134,8 @@ def handle_bundle_resolution_error(func):
         try:
             return func(*args, **kwargs)
         except BundleResolutionError as err:
-            error('Bundle not found: {}', err.args[0])
+            log = get_logger_for_func(func)
+            log.error('Bundle not found: {}'.format(err.args[0]))
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -160,13 +159,15 @@ def handle_docker_vm_error(func):
         try:
             return func(*args, **kwargs)
         except DockerMachineError:
-            error('Docker VM has not been started.')
-            error('Use the following command to start the VM:')
-            error('  docker-machine start default')
+            log = get_logger_for_func(func)
+            log.error('Docker VM has not been started.')
+            log.error('Use the following command to start the VM:')
+            log.error('  docker-machine start default')
         except Boot2DockerError:
-            error('Docker VM has not been started.')
-            error('Use the following command to start the VM:')
-            error('  boot2docker up')
+            log = get_logger_for_func(func)
+            log.error('Docker VM has not been started.')
+            log.error('Use the following command to start the VM:')
+            log.error('  boot2docker up')
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -176,36 +177,39 @@ def handle_docker_vm_error(func):
 
 
 def handle_docker_errors(func):
+    log = get_logger_for_func(func)
+
     def handle_linux():
-        error('The docker service has not been started.')
-        error('To start the docker service run:')
-        error('  sudo service docker start')
+        log.error('The docker service has not been started.')
+        log.error('To start the docker service run:')
+        log.error('  sudo service docker start')
 
     def handle_non_linux(*args, **kwargs):
-        print('Docker could not connect to the docker VM.')
-        print('It looks like the docker environment variables are not set. Let me try to set them..')
+        log.info('Docker could not connect to the docker VM.')
+        log.info('It looks like the docker environment variables are not set. Let me try to set them..')
         [set_env(env[0], env[1]) for env in resolve_envs()]
         try:
             terminal.docker_ps()
-            print('The Docker environment variables have been set for this command.')
-            print('Continue processing..')
-            warn('To set the environment variables for each terminal session follow the instructions of the command:')
-            warn('  docker-machine env default')
-            print('')
+            log.info('The Docker environment variables have been set for this command.')
+            log.info('Continue processing..')
+            log.warning('To set the environment variables for each terminal session '
+                        'follow the instructions of the command:')
+            log.warning('  docker-machine env default')
+            log.info('')
             return func(*args, **kwargs)
         except CalledProcessError:
-            error('Docker could not be configured automatically.')
-            error('Please set the docker environment variables.')
+            log.error('Docker could not be configured automatically.')
+            log.error('Please set the docker environment variables.')
 
     def resolve_envs():
         try:
             env_lines = terminal.docker_machine_env('default')
-            print('Retrieved docker environment variables with `docker-machine env default`')
+            log.info('Retrieved docker environment variables with `docker-machine env default`')
         except NOT_FOUND_ERROR:
             try:
                 env_lines = terminal.boot2docker_shellinit()
-                print('Retrieved docker environment variables with: boot2docker shellinit')
-                warn('boot2docker is deprecated. Upgrade to docker-machine.')
+                log.info('Retrieved docker environment variables with: boot2docker shellinit')
+                log.warning('boot2docker is deprecated. Upgrade to docker-machine.')
             except NOT_FOUND_ERROR:
                 return []
         return [resolve_env(line) for line in env_lines if line.startswith('export')]
@@ -216,7 +220,7 @@ def handle_docker_errors(func):
         return key, value
 
     def set_env(key, value):
-        print('Set environment variable: {}="{}"'.format(key, value))
+        log.info('Set environment variable: {}="{}"'.format(key, value))
         os.environ[key] = value
 
     def handler(*args, **kwargs):
@@ -229,9 +233,9 @@ def handle_docker_errors(func):
                 return handle_non_linux(*args, **kwargs)
 
         except NOT_FOUND_ERROR:
-            error('docker command has not been found.')
-            error('The sandbox need Docker to run the ConductR nodes in virtual containers.')
-            error('Please install Docker first: https://www.docker.com')
+            log.error('docker command has not been found.')
+            log.error('The sandbox need Docker to run the ConductR nodes in virtual containers.')
+            log.error('Please install Docker first: https://www.docker.com')
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -251,3 +255,7 @@ def format_timestamp(timestamp, args):
         return date.to('UTC').strftime('%H:%M:%SZ')
     else:
         return date.to('local').strftime('%X')
+
+
+def get_logger_for_func(func):
+    return logging.getLogger('conductr_cli.{}'.format(func.__name__))

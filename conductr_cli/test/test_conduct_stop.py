@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
-from conductr_cli import conduct_stop
+from conductr_cli import conduct_stop, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 
@@ -23,6 +23,7 @@ class TestConductStopCommand(CliTestCase):
         'port': 9005,
         'api_version': '1',
         'verbose': False,
+        'quiet': False,
         'long_ids': False,
         'cli_parameters': '',
         'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c'
@@ -42,7 +43,8 @@ class TestConductStopCommand(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_stop.stop(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -53,9 +55,10 @@ class TestConductStopCommand(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
             args = self.default_args.copy()
             args.update({'verbose': True})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_stop.stop(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -66,9 +69,10 @@ class TestConductStopCommand(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
             args = self.default_args.copy()
             args.update({'long_ids': True})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_stop.stop(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -80,9 +84,10 @@ class TestConductStopCommand(CliTestCase):
         stdout = MagicMock()
 
         cli_parameters = ' --ip 127.0.1.1 --port 9006'
-        with patch('requests.put', http_method), patch('sys.stdout', stdout):
+        with patch('requests.put', http_method):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
             conduct_stop.stop(MagicMock(**args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -95,7 +100,8 @@ class TestConductStopCommand(CliTestCase):
         http_method = self.respond_with(404)
         stderr = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stderr', stderr):
+        with patch('requests.put', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             conduct_stop.stop(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -109,7 +115,8 @@ class TestConductStopCommand(CliTestCase):
         http_method = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
 
-        with patch('requests.put', http_method), patch('sys.stderr', stderr):
+        with patch('requests.put', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             conduct_stop.stop(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)

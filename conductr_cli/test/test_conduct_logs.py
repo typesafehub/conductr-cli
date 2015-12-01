@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from conductr_cli import conduct_logs
+from conductr_cli import conduct_logs, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 
@@ -27,7 +27,8 @@ class TestConductLogsCommand(CliTestCase):
         http_method = self.respond_with(text='{}')
         stdout = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_logs.logs(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -51,7 +52,8 @@ class TestConductLogsCommand(CliTestCase):
         ]""")
         stdout = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stdout', stdout):
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             conduct_logs.logs(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
@@ -66,7 +68,8 @@ class TestConductLogsCommand(CliTestCase):
         http_method = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
 
-        with patch('requests.get', http_method), patch('sys.stderr', stderr):
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             conduct_logs.logs(MagicMock(**self.default_args))
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)

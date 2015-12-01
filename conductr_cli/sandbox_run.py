@@ -1,5 +1,6 @@
 from conductr_cli import sandbox_common, terminal, validation
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
+import logging
 
 
 @validation.handle_docker_errors
@@ -13,7 +14,8 @@ def run(args):
 
 def pull_image(args):
     if args.image == CONDUCTR_DEV_IMAGE and not terminal.docker_images(CONDUCTR_DEV_IMAGE):
-        print('Pulling down the ConductR development image..')
+        log = logging.getLogger(__name__)
+        log.info('Pulling down the ConductR development image..')
         terminal.docker_pull('{image_name}:{image_version}'
                              .format(image_name=CONDUCTR_DEV_IMAGE, image_version=args.image_version))
 
@@ -40,11 +42,14 @@ def scale_cluster(args, ports):
     elif args.nr_of_containers < len(running_containers):
         stop_nodes(args, running_containers)
     else:
-        print('ConductR nodes {} already exists, leaving them alone.'.format(', '.join(running_containers)))
+        log = logging.getLogger(__name__)
+        log.info('ConductR nodes {} already exists, leaving them alone.'.format(', '.join(running_containers)))
 
 
 def start_nodes(args, ports):
-    print('Starting ConductR nodes..')
+    log = logging.getLogger(__name__)
+
+    log.info('Starting ConductR nodes..')
     for i in range(args.nr_of_containers):
         container_name = '{prefix}{nr}'.format(prefix=CONDUCTR_NAME_PREFIX, nr=i)
         container_id = terminal.docker_ps('name={}'.format(container_name))
@@ -56,7 +61,7 @@ def start_nodes(args, ports):
                 ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port)) for port in ports])
             else:
                 ports_desc = ''
-            print('Starting container {container}{port_desc}..'.format(container=container_name, port_desc=ports_desc))
+            log.info('Starting container {container}{port_desc}..'.format(container=container_name, port_desc=ports_desc))
             cond0_ip = inspect_cond0_ip() if i > 0 else None
             conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, i)
             run_conductr_cmd(
@@ -71,7 +76,7 @@ def start_nodes(args, ports):
                 conductr_container_roles
             )
         else:
-            print('ConductR node {} already exists, leaving it alone.'.format(container_name))
+            log.info('ConductR node {} already exists, leaving it alone.'.format(container_name))
 
 
 def map_port(instance, port):
@@ -137,7 +142,9 @@ def resolve_docker_run_positional_args(cond0_ip):
 
 
 def stop_nodes(args, running_containers):
-    print('Stopping ConductR nodes..')
+    log = logging.getLogger(__name__)
+
+    log.info('Stopping ConductR nodes..')
     last_containers = len(running_containers) - args.nr_of_containers
     containers_to_be_stopped = running_containers[-last_containers:]
     return terminal.docker_rm(containers_to_be_stopped)
