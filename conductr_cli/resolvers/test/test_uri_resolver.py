@@ -5,21 +5,25 @@ from conductr_cli.test.cli_test_case import create_mock_logger
 import os
 
 try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
+    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
 except ImportError:
-    from mock import patch, MagicMock
+    from mock import call, patch, MagicMock
 
 
 class TestResolveBundle(TestCase):
     def test_resolve_success(self):
-        os_path_exists_mock = MagicMock(return_value=True)
+        os_path_exists_mock = MagicMock(side_effect=[True, True])
+        os_remove_mock = MagicMock()
+        file_move_mock = MagicMock()
         cache_path_mock = MagicMock(return_value='/bundle-cached-path')
         get_url_mock = MagicMock(return_value=('bundle-name', '/bundle-url-resolved'))
-        urlretrieve_mock = MagicMock(return_value=('mock-bundle-file', ()))
+        urlretrieve_mock = MagicMock()
 
         get_logger_mock, log_mock = create_mock_logger()
 
         with patch('os.path.exists', os_path_exists_mock), \
+                patch('os.remove', os_remove_mock), \
+                patch('shutil.move', file_move_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.urlretrieve', urlretrieve_mock), \
@@ -27,27 +31,34 @@ class TestResolveBundle(TestCase):
             is_resolved, bundle_name, bundle_file = uri_resolver.resolve_bundle('/cache-dir', '/bundle-url')
             self.assertTrue(is_resolved)
             self.assertEqual('bundle-name', bundle_name)
-            self.assertEqual('mock-bundle-file', bundle_file)
+            self.assertEqual('/bundle-cached-path', bundle_file)
 
-        os_path_exists_mock.assert_called_with('/cache-dir')
+        self.assertEqual([
+            call('/cache-dir'),
+            call('/bundle-cached-path.tmp')
+        ], os_path_exists_mock.call_args_list)
         cache_path_mock.assert_called_with('/cache-dir', '/bundle-url')
         get_url_mock.assert_called_with('/bundle-url')
-        urlretrieve_mock.assert_called_with('/bundle-url-resolved', '/bundle-cached-path')
+        os_remove_mock.assert_called_with('/bundle-cached-path.tmp')
+        urlretrieve_mock.assert_called_with('/bundle-url-resolved', '/bundle-cached-path.tmp')
+        file_move_mock.assert_called_with('/bundle-cached-path.tmp', '/bundle-cached-path')
 
         get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
         log_mock.info.assert_called_with('Retrieving /bundle-url-resolved')
 
     def test_resolve_success_create_cache_dir(self):
-        os_path_exists_mock = MagicMock(return_value=False)
+        os_path_exists_mock = MagicMock(side_effect=[False, False])
+        file_move_mock = MagicMock()
         os_mkdirs_mock = MagicMock(return_value=())
         cache_path_mock = MagicMock(return_value='/bundle-cached-path')
         get_url_mock = MagicMock(return_value=('bundle-name', '/bundle-url-resolved'))
-        urlretrieve_mock = MagicMock(return_value=('mock-bundle-file', ()))
+        urlretrieve_mock = MagicMock()
 
         get_logger_mock, log_mock = create_mock_logger()
 
         with patch('os.path.exists', os_path_exists_mock), \
                 patch('os.makedirs', os_mkdirs_mock), \
+                patch('shutil.move', file_move_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.urlretrieve', urlretrieve_mock), \
@@ -55,19 +66,23 @@ class TestResolveBundle(TestCase):
             is_resolved, bundle_name, bundle_file = uri_resolver.resolve_bundle('/cache-dir', '/bundle-url')
             self.assertTrue(is_resolved)
             self.assertEqual('bundle-name', bundle_name)
-            self.assertEqual('mock-bundle-file', bundle_file)
+            self.assertEqual('/bundle-cached-path', bundle_file)
 
-        os_path_exists_mock.assert_called_with('/cache-dir')
+        self.assertEqual([
+            call('/cache-dir'),
+            call('/bundle-cached-path.tmp')
+        ], os_path_exists_mock.call_args_list)
         os_mkdirs_mock.assert_called_with('/cache-dir')
         cache_path_mock.assert_called_with('/cache-dir', '/bundle-url')
         get_url_mock.assert_called_with('/bundle-url')
-        urlretrieve_mock.assert_called_with('/bundle-url-resolved', '/bundle-cached-path')
+        urlretrieve_mock.assert_called_with('/bundle-url-resolved', '/bundle-cached-path.tmp')
+        file_move_mock.assert_called_with('/bundle-cached-path.tmp', '/bundle-cached-path')
 
         get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
         log_mock.info.assert_called_with('Retrieving /bundle-url-resolved')
 
     def test_resolve_not_found(self):
-        os_path_exists_mock = MagicMock(return_value=True)
+        os_path_exists_mock = MagicMock(side_effect=[True, False])
         cache_path_mock = MagicMock(return_value='/bundle-cached-path')
         urlretrieve_mock = MagicMock(side_effect=URLError('no_such.bundle'))
         get_url_mock = MagicMock(return_value=('bundle-name', '/bundle-url-resolved'))
@@ -84,10 +99,13 @@ class TestResolveBundle(TestCase):
             self.assertIsNone(bundle_name)
             self.assertIsNone(bundle_file)
 
-        os_path_exists_mock.assert_called_with('/cache-dir')
+        self.assertEqual([
+            call('/cache-dir'),
+            call('/bundle-cached-path.tmp')
+        ], os_path_exists_mock.call_args_list)
         cache_path_mock.assert_called_with('/cache-dir', '/bundle-url')
         get_url_mock.assert_called_with('/bundle-url')
-        urlretrieve_mock.assert_called_with('/bundle-url-resolved', '/bundle-cached-path')
+        urlretrieve_mock.assert_called_with('/bundle-url-resolved', '/bundle-cached-path.tmp')
 
         get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
         log_mock.info.assert_called_with('Retrieving /bundle-url-resolved')

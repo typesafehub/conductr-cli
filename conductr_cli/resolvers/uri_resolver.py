@@ -4,6 +4,7 @@ from urllib.error import URLError
 from pathlib import Path
 import os
 import logging
+import shutil
 
 
 def resolve_bundle(cache_dir, uri):
@@ -14,10 +15,18 @@ def resolve_bundle(cache_dir, uri):
 
     try:
         bundle_name, bundle_url = get_url(uri)
+
         cached_file = cache_path(cache_dir, uri)
+        tmp_download_path = '{}.tmp'.format(cached_file)
+
+        if os.path.exists(tmp_download_path):
+            os.remove(tmp_download_path)
+
         log.info('Retrieving {}'.format(bundle_url))
-        bundle_file, bundle_headers = urlretrieve(bundle_url, cached_file)
-        return True, bundle_name, bundle_file
+        urlretrieve(bundle_url, tmp_download_path)
+
+        shutil.move(tmp_download_path, cached_file)
+        return True, bundle_name, cached_file
     except URLError:
         return False, None, None
 
