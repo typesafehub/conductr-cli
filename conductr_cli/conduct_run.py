@@ -32,3 +32,5 @@ def run(args):
     log.info('Bundle run request sent.')
     log.info('Stop bundle with: conduct stop{} {}'.format(args.cli_parameters, bundle_id))
     log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+
+    return True

@@ -20,3 +20,5 @@ def unload(args):
 
     log.info('Bundle unload request sent.')
     log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+
+    return True

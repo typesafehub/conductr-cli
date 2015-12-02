@@ -11,3 +11,4 @@ def version(args):
     log = logging.getLogger(__name__)
     log.screen(__version__)
     log.screen('Supported API version(s): {}'.format(', '.join(supported_api_versions())))
+    return True

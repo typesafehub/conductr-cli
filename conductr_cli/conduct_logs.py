@@ -32,3 +32,5 @@ def logs(args):
 {time: <{time_width}}{padding}\
 {host: <{host_width}}{padding}\
 {log: <{log_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
+
+    return True

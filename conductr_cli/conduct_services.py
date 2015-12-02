@@ -61,3 +61,5 @@ def services(args):
         log.screen('')
         log.warning('Multiple endpoints found for the following services: {}'.format(', '.join(duplicate_endpoints)))
         log.warning('Service resolution for these services is undefined.')
+
+    return True

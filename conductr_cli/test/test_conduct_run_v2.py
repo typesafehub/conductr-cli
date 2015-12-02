@@ -72,7 +72,8 @@ class TestConductRunCommand(ConductRunTestBase):
 
         with patch('requests.put', http_method):
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_run.run(MagicMock(**args))
+            result = conduct_run.run(MagicMock(**args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(expected_url)
 

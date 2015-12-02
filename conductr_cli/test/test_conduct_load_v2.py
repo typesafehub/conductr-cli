@@ -113,7 +113,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             args = self.default_args.copy()
             args.update({'configuration': config_file})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertTrue(result)
 
         self.assertEqual(
             resolve_bundle_mock.call_args_list,
@@ -225,7 +226,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
             args = self.default_args.copy()
             logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertFalse(result)
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
 

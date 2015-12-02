@@ -25,3 +25,5 @@ def stop(args):
     log.info('Bundle stop request sent.')
     log.info('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundle_id))
     log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+
+    return True

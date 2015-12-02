@@ -27,7 +27,8 @@ class TestConductServicesCommand(CliTestCase):
 
         with patch('requests.get', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_services.services(MagicMock(**self.default_args))
+            result = conduct_services.services(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
@@ -41,7 +42,8 @@ class TestConductServicesCommand(CliTestCase):
 
         with patch('requests.get', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_services.services(MagicMock(**self.default_args))
+            result = conduct_services.services(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
@@ -66,7 +68,8 @@ class TestConductServicesCommand(CliTestCase):
 
         with patch('requests.get', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_services.services(MagicMock(**self.default_args))
+            result = conduct_services.services(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
@@ -88,7 +91,8 @@ class TestConductServicesCommand(CliTestCase):
 
         with patch('requests.get', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_services.services(MagicMock(**self.default_args))
+            result = conduct_services.services(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
@@ -109,7 +113,8 @@ class TestConductServicesCommand(CliTestCase):
             args = self.default_args.copy()
             args.update({'long_ids': True})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_services.services(MagicMock(**args))
+            result = conduct_services.services(MagicMock(**args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(

@@ -14,7 +14,8 @@ class TestConductVersionCommand(CliTestCase):
         stdout = MagicMock()
 
         logging_setup.configure_logging(args, stdout)
-        conduct_version.version(args)
+        result = conduct_version.version(args)
+        self.assertTrue(result)
 
         from conductr_cli import __version__
         self.assertEqual(

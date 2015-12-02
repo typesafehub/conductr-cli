@@ -44,3 +44,5 @@ def info(args):
 
     if has_error:
         log.screen('There are errors: use `conduct events` or `conduct logs` for further information')
+
+    return True
