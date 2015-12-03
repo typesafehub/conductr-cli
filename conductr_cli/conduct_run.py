@@ -1,4 +1,5 @@
 from conductr_cli import bundle_utils, conduct_url, validation
+from conductr_cli import bundle_scale
 import json
 import logging
 import requests
@@ -6,6 +7,7 @@ import requests
 
 @validation.handle_connection_error
 @validation.handle_http_error
+@validation.handle_wait_timeout_error
 def run(args):
     """`conduct run` command"""
 
@@ -30,6 +32,10 @@ def run(args):
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     log.info('Bundle run request sent.')
+
+    if not args.no_wait:
+        bundle_scale.wait_for_scale(response_json['bundleId'], args.scale, args)
+
     log.info('Stop bundle with: conduct stop{} {}'.format(args.cli_parameters, bundle_id))
     log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
 
