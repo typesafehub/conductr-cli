@@ -266,7 +266,10 @@ def run():
         args.cli_parameters = get_cli_parameters(args)
         args.custom_settings = get_custom_settings(args)
         logging_setup.configure_logging(args)
-        args.func(args)
+
+        is_completed_without_error = args.func(args)
+        if not is_completed_without_error:
+            exit(1)
 
 
 if __name__ == '__main__':

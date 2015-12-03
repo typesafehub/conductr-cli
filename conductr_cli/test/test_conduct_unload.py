@@ -42,7 +42,8 @@ class TestConductUnloadCommand(CliTestCase):
 
         with patch('requests.delete', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_unload.unload(MagicMock(**self.default_args))
+            result = conduct_unload.unload(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
@@ -56,7 +57,8 @@ class TestConductUnloadCommand(CliTestCase):
             args = self.default_args.copy()
             args.update({'verbose': True})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_unload.unload(MagicMock(**args))
+            result = conduct_unload.unload(MagicMock(**args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
@@ -71,7 +73,8 @@ class TestConductUnloadCommand(CliTestCase):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_unload.unload(MagicMock(**args))
+            result = conduct_unload.unload(MagicMock(**args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
@@ -85,7 +88,8 @@ class TestConductUnloadCommand(CliTestCase):
 
         with patch('requests.delete', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
-            conduct_unload.unload(MagicMock(**self.default_args))
+            result = conduct_unload.unload(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
@@ -100,7 +104,8 @@ class TestConductUnloadCommand(CliTestCase):
 
         with patch('requests.delete', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
-            conduct_unload.unload(MagicMock(**self.default_args))
+            result = conduct_unload.unload(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 

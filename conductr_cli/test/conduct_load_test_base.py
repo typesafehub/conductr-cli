@@ -60,7 +60,8 @@ class ConductLoadTestBase(CliTestCase):
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_load.load(MagicMock(**self.default_args))
+            result = conduct_load.load(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
@@ -80,7 +81,8 @@ class ConductLoadTestBase(CliTestCase):
             args = self.default_args.copy()
             args.update({'verbose': True})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
@@ -100,7 +102,8 @@ class ConductLoadTestBase(CliTestCase):
             args = self.default_args.copy()
             args.update({'quiet': True})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
@@ -120,7 +123,8 @@ class ConductLoadTestBase(CliTestCase):
             args = self.default_args.copy()
             args.update({'long_ids': True})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
@@ -141,7 +145,8 @@ class ConductLoadTestBase(CliTestCase):
             args = self.default_args.copy()
             args.update({'cli_parameters': cli_parameters})
             logging_setup.configure_logging(MagicMock(**args), stdout)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
@@ -162,7 +167,8 @@ class ConductLoadTestBase(CliTestCase):
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout, stderr)
-            conduct_load.load(MagicMock(**self.default_args))
+            result = conduct_load.load(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
@@ -184,7 +190,8 @@ class ConductLoadTestBase(CliTestCase):
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout, stderr)
-            conduct_load.load(MagicMock(**self.default_args))
+            result = conduct_load.load(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
@@ -203,7 +210,8 @@ class ConductLoadTestBase(CliTestCase):
             args = self.default_args.copy()
             args.update({'bundle': 'no_such.bundle'})
             logging_setup.configure_logging(MagicMock(**args), stdout, stderr)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertFalse(result)
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, 'no_such.bundle')
 
@@ -222,7 +230,8 @@ class ConductLoadTestBase(CliTestCase):
             args = self.default_args.copy()
             args.update({'configuration': 'no_such.conf'})
             logging_setup.configure_logging(MagicMock(**args), stdout, stderr)
-            conduct_load.load(MagicMock(**args))
+            result = conduct_load.load(MagicMock(**args))
+            self.assertFalse(result)
 
         self.assertEqual(
             resolve_bundle_mock.call_args_list,
@@ -245,7 +254,8 @@ class ConductLoadTestBase(CliTestCase):
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
-            conduct_load.load(MagicMock(**self.default_args))
+            result = conduct_load.load(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
         open_mock.assert_called_with(self.bundle_file, 'rb')
@@ -262,7 +272,8 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
-            conduct_load.load(MagicMock(**self.default_args))
+            result = conduct_load.load(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
 
@@ -277,7 +288,8 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
-            conduct_load.load(MagicMock(**self.default_args))
+            result = conduct_load.load(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
 

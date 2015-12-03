@@ -69,6 +69,8 @@ def load_v1(args):
     if not log.is_info_enabled() and log.is_quiet_enabled():
         log.quiet(response_json['bundleId'])
 
+    return True
+
 
 def apply_to_configurations(base_conf, overlay_conf, method, key):
     if overlay_conf is None:
@@ -137,3 +139,5 @@ def load_v2(args):
 
         if not log.is_info_enabled() and log.is_quiet_enabled():
             log.quiet(response_json['bundleId'])
+
+    return True

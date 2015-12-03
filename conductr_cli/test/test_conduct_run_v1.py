@@ -68,7 +68,8 @@ class TestConductRunCommand(ConductRunTestBase):
         stderr = MagicMock()
 
         logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
-        conduct_run.run(MagicMock(**args))
+        result = conduct_run.run(MagicMock(**args))
+        self.assertFalse(result)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Affinity feature is only available for v1.1 onwards of ConductR

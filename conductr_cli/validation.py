@@ -40,6 +40,7 @@ def handle_connection_error(func):
         except ConnectionError as err:
             log = get_logger_for_func(func)
             connection_error(log, err, *args)
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -57,6 +58,7 @@ def handle_http_error(func):
             log.error('{} {}'.format(err.response.status_code, err.response.reason))
             if err.response.text != '':
                 log.error(err.response.text)
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -73,6 +75,7 @@ def handle_invalid_config(func):
             log = get_logger_for_func(func)
             log.error('Unable to parse bundle.conf.')
             log.error('{}.'.format(err.args[0]))
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -88,9 +91,11 @@ def handle_no_file(func):
         except urllib.error.HTTPError as err:
             log = get_logger_for_func(func)
             log.error('Resource not found: {}'.format(err.url))
+            return False
         except URLError as err:
             log = get_logger_for_func(func)
             log.error('File not found: {}'.format(err.args[0]))
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -106,6 +111,7 @@ def handle_bad_zip(func):
         except BadZipFile as err:
             log = get_logger_for_func(func)
             log.error('Problem with the bundle: {}'.format(err.args[0]))
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -121,6 +127,7 @@ def handle_malformed_bundle(func):
         except MalformedBundleError as err:
             log = get_logger_for_func(func)
             log.error('Problem with the bundle: {}'.format(err.args[0]))
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -136,6 +143,7 @@ def handle_bundle_resolution_error(func):
         except BundleResolutionError as err:
             log = get_logger_for_func(func)
             log.error('Bundle not found: {}'.format(err.args[0]))
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.

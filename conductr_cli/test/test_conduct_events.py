@@ -29,7 +29,8 @@ class TestConductEventsCommand(CliTestCase):
 
         with patch('requests.get', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_events.events(MagicMock(**self.default_args))
+            result = conduct_events.events(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
@@ -54,7 +55,8 @@ class TestConductEventsCommand(CliTestCase):
 
         with patch('requests.get', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            conduct_events.events(MagicMock(**self.default_args))
+            result = conduct_events.events(MagicMock(**self.default_args))
+            self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
@@ -70,7 +72,8 @@ class TestConductEventsCommand(CliTestCase):
 
         with patch('requests.get', http_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
-            conduct_events.events(MagicMock(**self.default_args))
+            result = conduct_events.events(MagicMock(**self.default_args))
+            self.assertFalse(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
