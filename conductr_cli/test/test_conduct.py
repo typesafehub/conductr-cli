@@ -60,6 +60,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.resolve_cache_dir, '{}/.conductr/cache'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.bundle, 'path-to-bundle')
         self.assertEqual(args.configuration, 'path-to-conf')
 
@@ -74,6 +76,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.resolve_cache_dir, '/somewhere')
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.bundle, 'path-to-bundle')
         self.assertEqual(args.configuration, 'path-to-conf')
         self.assertFalse(args.quiet)
@@ -88,6 +92,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.scale, 5)
         self.assertEqual(args.bundle, 'path-to-bundle')
 
@@ -101,6 +107,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.bundle, 'path-to-bundle')
 
     def test_parser_unload(self):
@@ -113,6 +121,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.bundle, 'path-to-bundle')
 
     def test_get_cli_parameters(self):

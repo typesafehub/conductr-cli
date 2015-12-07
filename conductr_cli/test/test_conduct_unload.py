@@ -22,6 +22,7 @@ class TestConductUnloadCommand(CliTestCase):
         'port': 9005,
         'api_version': '1',
         'verbose': False,
+        'no_wait': False,
         'quiet': False,
         'cli_parameters': '',
         'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c'
@@ -37,50 +38,100 @@ class TestConductUnloadCommand(CliTestCase):
         return strip_margin(self.output_template.format(**{'params': params}))
 
     def test_success(self):
+        wait_for_uninstallation_mock = MagicMock()
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
 
+        input_args = MagicMock(**self.default_args)
+        with patch('requests.delete', http_method), \
+                patch('conductr_cli.bundle_installation.wait_for_uninstallation', wait_for_uninstallation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_unload.unload(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
+        wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
+
+        self.assertEqual(self.default_output(), self.output(stdout))
+
+    def test_success_verbose(self):
+        wait_for_uninstallation_mock = MagicMock()
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'verbose': True})
+        input_args = MagicMock(**args)
+
+        with patch('requests.delete', http_method), \
+                patch('conductr_cli.bundle_installation.wait_for_uninstallation', wait_for_uninstallation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_unload.unload(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
+        wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
+
+        self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
+
+    def test_success_quiet(self):
+        wait_for_uninstallation_mock = MagicMock()
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'quiet': True})
+        input_args = MagicMock(**args)
+
+        with patch('requests.delete', http_method), \
+                patch('conductr_cli.bundle_installation.wait_for_uninstallation', wait_for_uninstallation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_unload.unload(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
+        wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
+
+        self.assertEqual('45e0c477d3e5ea92aa8d85c0d8f3e25c\n', self.output(stdout))
+
+    def test_success_with_configuration(self):
+        wait_for_uninstallation_mock = MagicMock()
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        cli_parameters = ' --ip 127.0.1.1 --port 9006'
+        args.update({'cli_parameters': cli_parameters})
+        input_args = MagicMock(**args)
+
+        with patch('requests.delete', http_method), \
+                patch('conductr_cli.bundle_installation.wait_for_uninstallation', wait_for_uninstallation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_unload.unload(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
+        wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
+
+        self.assertEqual(
+            self.default_output(params=cli_parameters),
+            self.output(stdout))
+
+    def test_success_no_wait(self):
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'no_wait': True})
+        input_args = MagicMock(**args)
         with patch('requests.delete', http_method):
-            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            result = conduct_unload.unload(MagicMock(**self.default_args))
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_unload.unload(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
 
         self.assertEqual(self.default_output(), self.output(stdout))
-
-    def test_success_verbose(self):
-        http_method = self.respond_with(200, self.default_response)
-        stdout = MagicMock()
-
-        with patch('requests.delete', http_method), patch('sys.stdout', stdout):
-            args = self.default_args.copy()
-            args.update({'verbose': True})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            result = conduct_unload.unload(MagicMock(**args))
-            self.assertTrue(result)
-
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
-
-        self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
-
-    def test_success_with_configuration(self):
-        http_method = self.respond_with(200, self.default_response)
-        stdout = MagicMock()
-
-        cli_parameters = ' --ip 127.0.1.1 --port 9006'
-        with patch('requests.delete', http_method):
-            args = self.default_args.copy()
-            args.update({'cli_parameters': cli_parameters})
-            logging_setup.configure_logging(MagicMock(**args), stdout)
-            result = conduct_unload.unload(MagicMock(**args))
-            self.assertTrue(result)
-
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
-
-        self.assertEqual(
-            self.default_output(params=cli_parameters),
-            self.output(stdout))
 
     def test_failure(self):
         http_method = self.respond_with(404)

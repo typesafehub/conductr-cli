@@ -1,4 +1,5 @@
-from conductr_cli import conduct_url, validation
+from conductr_cli import conduct_url, validation, bundle_installation
+import json
 import logging
 import requests
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
@@ -19,6 +20,14 @@ def unload(args):
         log.verbose(validation.pretty_json(response.text))
 
     log.info('Bundle unload request sent.')
+
+    response_json = json.loads(response.text)
+    if not args.no_wait:
+        bundle_installation.wait_for_uninstallation(response_json['bundleId'], args)
+
     log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+
+    if not log.is_info_enabled() and log.is_quiet_enabled():
+        log.quiet(response_json['bundleId'])
 
     return True
