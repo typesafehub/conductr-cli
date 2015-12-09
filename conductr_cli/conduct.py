@@ -205,6 +205,8 @@ def build_parser():
     unload_parser.add_argument('bundle',
                                help='The ID of the bundle')
     add_default_arguments(unload_parser)
+    add_wait_timeout(unload_parser)
+    add_no_wait(unload_parser)
     unload_parser.set_defaults(func=conduct_unload.unload)
 
     # Sub-parser for `events` sub-command
