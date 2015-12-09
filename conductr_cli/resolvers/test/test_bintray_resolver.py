@@ -28,7 +28,7 @@ class TestResolveBundle(TestCase):
             self.assertEqual('bundle-name', bundle_name)
             self.assertEqual('mock bundle file', bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
         bintray_download_url_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name', 'v1',
                                                      'digest')
@@ -47,7 +47,7 @@ class TestResolveBundle(TestCase):
             self.assertIsNone(bundle_name)
             self.assertIsNone(bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
         bintray_download_url_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name', 'v1',
                                                      'digest')
@@ -63,7 +63,7 @@ class TestResolveBundle(TestCase):
             self.assertIsNone(bundle_name)
             self.assertIsNone(bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
 
     def test_failure_http_error(self):
@@ -79,7 +79,7 @@ class TestResolveBundle(TestCase):
             self.assertIsNone(bundle_name)
             self.assertIsNone(bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
         bintray_download_url_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name', 'v1',
                                                      'digest')
@@ -101,7 +101,7 @@ class TestLoadFromCache(TestCase):
             self.assertEqual('bundle-name', bundle_name)
             self.assertEqual('mock bundle file', bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
         bintray_download_url_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name', 'v1',
                                                      'digest')
@@ -120,7 +120,7 @@ class TestLoadFromCache(TestCase):
             self.assertIsNone(bundle_name)
             self.assertIsNone(bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
         bintray_download_url_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name', 'v1',
                                                      'digest')
@@ -136,7 +136,7 @@ class TestLoadFromCache(TestCase):
             self.assertIsNone(bundle_name)
             self.assertIsNone(bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
 
     def test_failure_http_error(self):
@@ -152,7 +152,7 @@ class TestLoadFromCache(TestCase):
             self.assertIsNone(bundle_name)
             self.assertIsNone(bundle_file)
 
-        load_bintray_credentials_mock.assert_called()
+        load_bintray_credentials_mock.assert_called_with()
         parse_mock.assert_called_with('bundle-name:v1')
         bintray_download_url_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name', 'v1',
                                                      'digest')
@@ -445,7 +445,7 @@ class TestGetJson(TestCase):
             self.assertEqual([1, 2, 3], result)
 
         requests_get_mock.assert_called_with('http://site.com', auth=('username', 'password'))
-        response_raise_for_status_mock.assert_called()
+        response_raise_for_status_mock.assert_called_with()
 
     def test_get_json_no_credentials(self):
         response_mock = Mock()
@@ -459,4 +459,4 @@ class TestGetJson(TestCase):
             self.assertEqual([1, 2, 3], result)
 
         requests_get_mock.assert_called_with('http://site.com')
-        response_raise_for_status_mock.assert_called()
+        response_raise_for_status_mock.assert_called_with()
