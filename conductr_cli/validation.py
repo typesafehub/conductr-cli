@@ -10,7 +10,7 @@ from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError
 from urllib.error import URLError
 from zipfile import BadZipFile
-from conductr_cli import terminal
+from conductr_cli import terminal, docker_machine
 from conductr_cli.exceptions import DockerMachineError, Boot2DockerError, MalformedBundleError, BundleResolutionError, \
     WaitTimeoutError
 from subprocess import CalledProcessError
@@ -180,6 +180,8 @@ def raise_for_status_inc_3xx(response):
 
 
 def handle_docker_vm_error(func):
+    vm_name = docker_machine.vm_name()
+
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -187,7 +189,7 @@ def handle_docker_vm_error(func):
             log = get_logger_for_func(func)
             log.error('Docker VM has not been started.')
             log.error('Use the following command to start the VM:')
-            log.error('  docker-machine start default')
+            log.error('  docker-machine start {}'.format(vm_name))
         except Boot2DockerError:
             log = get_logger_for_func(func)
             log.error('Docker VM has not been started.')
@@ -203,6 +205,7 @@ def handle_docker_vm_error(func):
 
 def handle_docker_errors(func):
     log = get_logger_for_func(func)
+    vm_name = docker_machine.vm_name()
 
     def handle_linux():
         log.error('The docker service has not been started.')
@@ -219,7 +222,7 @@ def handle_docker_errors(func):
             log.info('Continue processing..')
             log.warning('To set the environment variables for each terminal session '
                         'follow the instructions of the command:')
-            log.warning('  docker-machine env default')
+            log.warning('  docker-machine env {}'.format(vm_name))
             log.info('')
             return func(*args, **kwargs)
         except CalledProcessError:
@@ -228,8 +231,8 @@ def handle_docker_errors(func):
 
     def resolve_envs():
         try:
-            env_lines = terminal.docker_machine_env('default')
-            log.info('Retrieved docker environment variables with `docker-machine env default`')
+            env_lines = terminal.docker_machine_env(vm_name)
+            log.info('Retrieved docker environment variables with `docker-machine env {}`'.format(vm_name))
         except NOT_FOUND_ERROR:
             try:
                 env_lines = terminal.boot2docker_shellinit()

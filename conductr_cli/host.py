@@ -1,5 +1,5 @@
 import os
-from conductr_cli import terminal, validation
+from conductr_cli import terminal, validation, docker_machine
 from conductr_cli.exceptions import DockerMachineError, Boot2DockerError
 from subprocess import CalledProcessError
 
@@ -23,7 +23,8 @@ def resolve_default_ip():
 
 def with_docker_machine():
     try:
-        output = terminal.docker_machine_ip('default')
+        vm_name = docker_machine.vm_name()
+        output = terminal.docker_machine_ip(vm_name)
         if output:
             return output
         else:
