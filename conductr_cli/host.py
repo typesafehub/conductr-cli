@@ -22,10 +22,13 @@ def resolve_default_ip():
 
 
 def with_docker_machine():
-    output = terminal.docker_machine_ip('default')
-    if output:
-        return output
-    else:
+    try:
+        output = terminal.docker_machine_ip('default')
+        if output:
+            return output
+        else:
+            raise DockerMachineError('docker-machine host is not running.')
+    except CalledProcessError:
         raise DockerMachineError('docker-machine host is not running.')
 
 
