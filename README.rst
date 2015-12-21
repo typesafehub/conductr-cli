@@ -263,9 +263,9 @@ After CI build is finished for the tagged commit, new version will automatically
 
 
 .. |build_status| image:: https://travis-ci.org/typesafehub/conductr-cli.svg?branch=master
-    :target: https://pypi.python.org/pypi/conductr-cli
-    :alt: Latest version released on PyPi
-
-.. |latest_version| image:: https://img.shields.io/pypi/v/conductr-cli.svg?label=latest%20version
     :target: https://travis-ci.org/typesafehub/conductr-cli
     :alt: Build status of the master branch
+
+.. |latest_version| image:: https://img.shields.io/pypi/v/conductr-cli.svg?label=latest%20version
+    :target: https://pypi.python.org/pypi/conductr-cli
+    :alt: Latest version released on PyPi
