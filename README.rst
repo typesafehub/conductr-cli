@@ -1,4 +1,4 @@
-|Build Status| |Latest Version|
+|build_status| |latest_version|
 
 Command Line Interface (CLI) for Typesafe ConductR
 --------------------------------------------------
@@ -255,7 +255,17 @@ Releasing
 
 CLI releases can be performed completely from the GitHub project page. Follow these steps to cut a release:
 
-1. Edit `conductr_cli/__init__.py`_ file to contain the version to be released.
-2. Create a new release in GitHub `releases page`_.
+1. Edit `conductr_cli/__init__.py <conductr_cli/__init__.py>`_ file to contain the version to be released.
+2. Create a new release on the `Github releases page <https://github.com/typesafehub/conductr-cli/releases>`_.
 
 After CI build is finished for the tagged commit, new version will automatically be deployed to PyPi repository.
+
+
+
+.. |build_status| image:: https://travis-ci.org/typesafehub/conductr-cli.svg?branch=master
+    :target: https://pypi.python.org/pypi/conductr-cli
+    :alt: Latest version released on PyPi
+
+.. |latest_version| image:: https://img.shields.io/pypi/v/conductr-cli.svg?label=latest%20version
+    :target: https://travis-ci.org/typesafehub/conductr-cli
+    :alt: Build status of the master branch
