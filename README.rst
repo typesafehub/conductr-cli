@@ -15,7 +15,9 @@ You may either install or upgrade to all users:
 
 .. code:: bash
 
-    sudo pip3 install -U conductr-cli
+    sudo pip3 install conductr-cli
+
+(use -U with the above if you need to upgrade)
 
 ... or, and if you’re not using brew (there’s a problem with user installs as of the time writing this), install to the current user (make sure to have ``~/.local/bin`` in your PATH):
 
