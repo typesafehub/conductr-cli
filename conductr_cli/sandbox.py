@@ -1,7 +1,7 @@
 import argcomplete
 import argparse
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, logging_setup
+from conductr_cli import sandbox_run, sandbox_stop, sandbox_init, sandbox_common, logging_setup
 
 
 def build_parser():
@@ -82,6 +82,7 @@ def build_parser():
     # Sub-parser for `debug` sub-command
     debug_parser = subparsers.add_parser('debug',
                                          help='Not supported. Use \'sbt-conductr-sandbox\' instead.')
+    add_resolve_ip(debug_parser, False)
     debug_parser.set_defaults(func='debug')
 
     # Sub-parser for `stop` sub-command
@@ -90,12 +91,26 @@ def build_parser():
     add_default_arguments(stop_parser)
     stop_parser.set_defaults(func=sandbox_stop.stop)
 
+    # Sub-parser for `init` sub-command
+    init_parser = subparsers.add_parser('init',
+                                        help='Initializes ConductR sandbox environment')
+    add_resolve_ip(init_parser, False)
+    init_parser.set_defaults(func=sandbox_init.init)
     return parser
 
 
 def add_default_arguments(sub_parser):
     sub_parser.add_argument('--local-connection',
                             default=True,
+                            help=argparse.SUPPRESS)
+    add_resolve_ip(sub_parser, True)
+
+
+def add_resolve_ip(sub_parser, default_value):
+    sub_parser.add_argument('--resolve-ip',
+                            default=default_value,
+                            dest='resolve_ip',
+                            action='store_true',
                             help=argparse.SUPPRESS)
 
 
@@ -112,7 +127,7 @@ def run():
         parser.exit('Debugging a ConductR cluster is not supported by the \'conductr-cli\'.\n'
                     'Use the sbt plugin \'sbt-conductr-sandbox\' instead.')
     # Validate host IP address
-    elif not sandbox_common.resolve_host_ip():
+    elif args.resolve_ip and not sandbox_common.resolve_host_ip():
         return
     # Validate image_version
     elif vars(args).get('func').__name__ == 'run' and not args.image_version:

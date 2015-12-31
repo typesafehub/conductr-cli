@@ -42,6 +42,26 @@ def docker_machine_ip(vm_name):
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
+def docker_machine_create_vm(vm_name):
+    cmd = ['docker-machine', 'create', vm_name, '-d', 'virtualbox']
+    return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
+def docker_machine_start_vm(vm_name):
+    cmd = ['docker-machine', 'start', vm_name]
+    return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
+def docker_machine_stop_vm(vm_name):
+    cmd = ['docker-machine', 'stop', vm_name]
+    return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
+def docker_machine_help():
+    cmd = ['docker-machine', 'help']
+    return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
 def boot2docker_shellinit():
     cmd = ['boot2docker', 'shellinit']
     output = subprocess.check_output(cmd, universal_newlines=True)
@@ -50,6 +70,11 @@ def boot2docker_shellinit():
 
 def boot2docker_ip():
     cmd = ['boot2docker', 'ip']
+    return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
+def vbox_manage_increase_ram(vm_name, ram_size):
+    cmd = ['VBoxManage', 'modifyvm', vm_name, '--memory', ram_size]
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
