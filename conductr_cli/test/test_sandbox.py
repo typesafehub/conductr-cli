@@ -26,6 +26,7 @@ class TestSandbox(TestCase):
         self.assertEqual(args.ports, [])
         self.assertEqual(args.features, [])
         self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.resolve_ip, True)
 
     def test_parser_run_custom_args(self):
         args = self.parser.parse_args('run 1.1.0 '
@@ -46,12 +47,20 @@ class TestSandbox(TestCase):
         self.assertEqual(args.ports, [1000, 1001])
         self.assertEqual(args.features, ['visualization', 'logging'])
         self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.resolve_ip, True)
 
     def test_parser_stop(self):
         args = self.parser.parse_args('stop'.split())
         self.assertEqual(args.func.__name__, 'stop')
         self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.resolve_ip, True)
 
     def test_parser_debug(self):
         args = self.parser.parse_args('debug'.split())
         self.assertEqual(args.func, 'debug')
+        self.assertEqual(args.resolve_ip, False)
+
+    def test_parser_init(self):
+        args = self.parser.parse_args('init'.split())
+        self.assertEqual(args.func.__name__, 'init')
+        self.assertEqual(args.resolve_ip, False)
