@@ -9,15 +9,27 @@ def init(args):
     log = logging.getLogger(__name__)
     vm_name = docker_machine.vm_name()
     if is_docker_machine_installed():
-        is_docker_vm_installed, output = docker_vm_install_check(vm_name)
+        is_docker_vm_installed = docker_vm_install_check(vm_name)
         if not is_docker_vm_installed:
             log.info('Creating Docker VM {}'.format(vm_name))
             log.info('This will take a few minutes - please be patient...')
             terminal.docker_machine_create_vm(vm_name)
+        else:
+            log.info('Docker VM {} already installed'.format(vm_name))
 
-            log.info('Increasing RAM for Docker VM {}'.format(vm_name))
-            log.info('We will need to stop the Docker VM {}, modify the RAM, and restart'.format(vm_name))
+        is_docker_vm_started = docker_vm_running_check(vm_name)
+        if not is_docker_vm_started:
+            log.info('Starting Docker VM {}'.format(vm_name))
+            terminal.docker_machine_start_vm(vm_name)
+        else:
+            log.info('Docker VM {} already running'.format(vm_name))
 
+        existing_ram, has_sufficient_ram = docker_vm_ram_check(vm_name)
+        if not has_sufficient_ram:
+            log.warning('Docker VM {} has insufficient RAM of {}MB'
+                        ' - increasing to the minimum of {}MB'.format(vm_name,
+                                                                      existing_ram,
+                                                                      docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE))
             log.info('Stopping Docker VM {}'.format(vm_name))
             terminal.docker_machine_stop_vm(vm_name)
 
@@ -28,7 +40,7 @@ def init(args):
             log.info('Starting Docker VM {}'.format(vm_name))
             terminal.docker_machine_start_vm(vm_name)
         else:
-            log.info('Docker VM {} is already installed'.format(vm_name))
+            log.info('Docker VM {} already has sufficient RAM'.format(vm_name))
 
         log.info('Sandbox initialization complete')
     else:
@@ -45,7 +57,19 @@ def is_docker_machine_installed():
 
 def docker_vm_install_check(vm_name):
     try:
-        output = terminal.docker_machine_env(vm_name)
-        return True, output
+        terminal.docker_machine_status(vm_name)
+        return True
     except CalledProcessError:
-        return False, None
+        return False
+
+
+def docker_vm_running_check(vm_name):
+    output = terminal.docker_machine_status(vm_name)
+    return output == 'Running'
+
+
+def docker_vm_ram_check(vm_name):
+    existing_ram_size = terminal.vbox_manage_get_ram_size(vm_name)
+    minimum_ram_size = int(docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE)
+    has_sufficient_ram = existing_ram_size >= minimum_ram_size
+    return existing_ram_size, has_sufficient_ram
