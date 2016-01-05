@@ -42,6 +42,11 @@ def docker_machine_ip(vm_name):
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
+def docker_machine_status(vm_name):
+    cmd = ['docker-machine', 'status', vm_name]
+    return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
 def docker_machine_create_vm(vm_name):
     cmd = ['docker-machine', 'create', vm_name, '-d', 'virtualbox']
     return subprocess.check_output(cmd, universal_newlines=True).strip()
@@ -76,6 +81,14 @@ def boot2docker_ip():
 def vbox_manage_increase_ram(vm_name, ram_size):
     cmd = ['VBoxManage', 'modifyvm', vm_name, '--memory', ram_size]
     return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
+def vbox_manage_get_ram_size(vm_name):
+    cmd = ['VBoxManage', 'showvminfo', vm_name]
+    output = subprocess.check_output(cmd, universal_newlines=True).strip()
+    ram_info = [line for line in output.split('\n') if line.startswith('Memory size:')][0]
+    key, ram_value = ram_info.split(':')
+    return int(ram_value.strip().replace('MB', ''))
 
 
 def hostname():
