@@ -7,7 +7,7 @@ import os
 
 from pyhocon.exceptions import ConfigException
 from requests import status_codes
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal, docker_machine
@@ -160,6 +160,24 @@ def handle_wait_timeout_error(func):
         except WaitTimeoutError as err:
             log = get_logger_for_func(func)
             log.error('Timed out: {}'.format(err.args[0]))
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_conduct_load_read_timeout_error(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ReadTimeout as err:
+            log = get_logger_for_func(func)
+            log.error('Timed out waiting for response from the server: {}'.format(err.args[0]))
+            log.error('One possible issue may be that there are not enough resources or machines with the roles '
+                      'that your bundle requires')
             return False
 
     # Do not change the wrapped function name,

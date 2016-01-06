@@ -249,6 +249,31 @@ class ConductLoadTestBase(CliTestCase):
             self.default_connection_error.format(self.default_url),
             self.output(stderr))
 
+    def base_test_failure_no_response(self):
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
+        http_method = self.raise_read_timeout_error('test reason', self.default_url)
+        stdout = MagicMock()
+        stderr = MagicMock()
+        open_mock = MagicMock(return_value=1)
+
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('requests.post', http_method), \
+                patch('builtins.open', open_mock):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout, stderr)
+            result = conduct_load.load(MagicMock(**self.default_args))
+            self.assertFalse(result)
+
+        open_mock.assert_called_with(self.bundle_file, 'rb')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        http_method.assert_called_with(self.default_url, files=self.default_files, timeout=LOAD_HTTP_TIMEOUT)
+
+        self.assertEqual(
+            as_error(
+                strip_margin("""|Error: Timed out waiting for response from the server: test reason
+                                |Error: One possible issue may be that there are not enough resources or machines with the roles that your bundle requires
+                                |""")),
+            self.output(stderr))
+
     def base_test_failure_no_bundle(self):
         resolve_bundle_mock = MagicMock(side_effect=BundleResolutionError('some message'))
         stdout = MagicMock()
