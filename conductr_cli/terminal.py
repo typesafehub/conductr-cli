@@ -84,11 +84,29 @@ def vbox_manage_increase_ram(vm_name, ram_size):
 
 
 def vbox_manage_get_ram_size(vm_name):
+    ram_value = vbox_manage_get_info(vm_name, 'Memory size')
+    return int(ram_value.replace('MB', ''))
+
+
+def vbox_manage_increase_cpu(vm_name, no_of_cpu):
+    cmd = ['VBoxManage', 'modifyvm', vm_name, '--cpus', no_of_cpu]
+    return subprocess.check_output(cmd, universal_newlines=True).strip()
+
+
+def vbox_manage_get_cpu_count(vm_name):
+    no_of_cpu = vbox_manage_get_info(vm_name, 'Number of CPUs')
+    return int(no_of_cpu)
+
+
+def vbox_manage_get_info(vm_name, vm_property):
     cmd = ['VBoxManage', 'showvminfo', vm_name]
     output = subprocess.check_output(cmd, universal_newlines=True).strip()
-    ram_info = [line for line in output.split('\n') if line.startswith('Memory size:')][0]
-    key, ram_value = ram_info.split(':')
-    return int(ram_value.strip().replace('MB', ''))
+    matching_lines = [line for line in output.split('\n') if line.startswith('{}:'.format(vm_property))]
+    if matching_lines:
+        key, value = matching_lines[0].split(':')
+        return value.strip()
+    else:
+        return None
 
 
 def hostname():
