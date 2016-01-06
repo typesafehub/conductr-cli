@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 from unittest import TestCase
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from conductr_cli.ansi_colors import RED, YELLOW, UNDERLINE, ENDC
 
 try:
@@ -49,6 +49,10 @@ class CliTestCase(TestCase):
     @staticmethod
     def raise_connection_error(reason, url):
         return MagicMock(side_effect=ConnectionError(reason, request=MagicMock(url=url)))
+
+    @staticmethod
+    def raise_read_timeout_error(reason, url):
+        return MagicMock(side_effect=ReadTimeout(reason, request=MagicMock(url=url)))
 
     @staticmethod
     def output(logger):

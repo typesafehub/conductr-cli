@@ -134,6 +134,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_failure_invalid_address(self):
         self.base_test_failure_invalid_address()
 
+    def test_failure_no_response(self):
+        self.base_test_failure_no_response()
+
     def test_failure_no_bundle(self):
         self.base_test_failure_no_bundle()
 

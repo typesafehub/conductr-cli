@@ -226,6 +226,12 @@ class TestConductLoadCommand(ConductLoadTestBase):
             self.base_test_failure_invalid_address()
         zip_entry_mock.assert_called_with('bundle.conf', self.bundle_file)
 
+    def test_failure_no_response(self):
+        zip_entry_mock = MagicMock(return_value='mock bundle.conf')
+        with patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock):
+            self.base_test_failure_no_response()
+        zip_entry_mock.assert_called_with('bundle.conf', self.bundle_file)
+
     def test_failure_no_bundle(self):
         self.base_test_failure_no_bundle()
 

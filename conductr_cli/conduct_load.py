@@ -21,6 +21,7 @@ LOAD_HTTP_TIMEOUT = 30
 @validation.handle_malformed_bundle
 @validation.handle_bundle_resolution_error
 @validation.handle_wait_timeout_error
+@validation.handle_conduct_load_read_timeout_error
 def load(args):
     if args.api_version == '1':
         return load_v1(args)
