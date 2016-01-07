@@ -176,3 +176,107 @@ class TestCachePath(TestCase):
     def test_cache_path_url(self):
         result = uri_resolver.cache_path('/cache-dir', 'http://some-site.com/path/test/file.zip')
         self.assertEqual('/cache-dir/file.zip', result)
+
+
+class TestProgressBar(TestCase):
+    def test_show_progress_bar(self):
+        os_path_exists_mock = MagicMock(side_effect=[True, True])
+        os_remove_mock = MagicMock()
+        file_move_mock = MagicMock()
+        cache_path_mock = MagicMock(return_value='/bundle-cached-path')
+        get_url_mock = MagicMock(return_value=('bundle-name', 'http://site.com/bundle-url-resolved'))
+        urlretrieve_mock = MagicMock()
+        report_hook_mock = MagicMock()
+        show_progress_mock = MagicMock(return_value=report_hook_mock)
+
+        get_logger_mock, log_mock = create_mock_logger()
+
+        with patch('os.path.exists', os_path_exists_mock), \
+                patch('os.remove', os_remove_mock), \
+                patch('shutil.move', file_move_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.urlretrieve', urlretrieve_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.show_progress', show_progress_mock), \
+                patch('logging.getLogger', get_logger_mock):
+            is_resolved, bundle_name, bundle_file = uri_resolver.resolve_bundle('/cache-dir',
+                                                                                'http://site.com/bundle-url')
+            self.assertTrue(is_resolved)
+            self.assertEqual('bundle-name', bundle_name)
+            self.assertEqual('/bundle-cached-path', bundle_file)
+
+        self.assertEqual([
+            call('/cache-dir'),
+            call('/bundle-cached-path.tmp')
+        ], os_path_exists_mock.call_args_list)
+        cache_path_mock.assert_called_with('/cache-dir', 'http://site.com/bundle-url')
+        get_url_mock.assert_called_with('http://site.com/bundle-url')
+        os_remove_mock.assert_called_with('/bundle-cached-path.tmp')
+        urlretrieve_mock.assert_called_with('http://site.com/bundle-url-resolved',
+                                            '/bundle-cached-path.tmp', reporthook=report_hook_mock)
+        file_move_mock.assert_called_with('/bundle-cached-path.tmp', '/bundle-cached-path')
+
+        get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
+        log_mock.info.assert_called_with('Retrieving http://site.com/bundle-url-resolved')
+
+    def test_no_progress_bar_given_quiet_mode(self):
+        os_path_exists_mock = MagicMock(side_effect=[True, True])
+        os_remove_mock = MagicMock()
+        file_move_mock = MagicMock()
+        cache_path_mock = MagicMock(return_value='/bundle-cached-path')
+        get_url_mock = MagicMock(return_value=('bundle-name', 'http://site.com/bundle-url-resolved'))
+        urlretrieve_mock = MagicMock()
+
+        get_logger_mock, log_mock = create_mock_logger()
+        log_mock.is_progress_enabled = MagicMock(return_value=False)
+
+        with patch('os.path.exists', os_path_exists_mock), \
+                patch('os.remove', os_remove_mock), \
+                patch('shutil.move', file_move_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.urlretrieve', urlretrieve_mock), \
+                patch('logging.getLogger', get_logger_mock):
+            is_resolved, bundle_name, bundle_file = uri_resolver.resolve_bundle('/cache-dir',
+                                                                                'http://site.com/bundle-url')
+            self.assertTrue(is_resolved)
+            self.assertEqual('bundle-name', bundle_name)
+            self.assertEqual('/bundle-cached-path', bundle_file)
+
+        self.assertEqual([
+            call('/cache-dir'),
+            call('/bundle-cached-path.tmp')
+        ], os_path_exists_mock.call_args_list)
+        cache_path_mock.assert_called_with('/cache-dir', 'http://site.com/bundle-url')
+        get_url_mock.assert_called_with('http://site.com/bundle-url')
+        os_remove_mock.assert_called_with('/bundle-cached-path.tmp')
+        urlretrieve_mock.assert_called_with('http://site.com/bundle-url-resolved', '/bundle-cached-path.tmp')
+        file_move_mock.assert_called_with('/bundle-cached-path.tmp', '/bundle-cached-path')
+
+        get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
+        log_mock.info.assert_called_with('Retrieving http://site.com/bundle-url-resolved')
+
+
+class TestShowProgress(TestCase):
+    def test_log_progress_until_completion(self):
+        log_mock = MagicMock()
+
+        log_progress_mock = MagicMock()
+        log_mock.progress = log_progress_mock
+
+        progress_bar_mock = MagicMock(return_value='mock progress bar')
+
+        with patch('conductr_cli.screen_utils.progress_bar', progress_bar_mock):
+            progress_tracker = uri_resolver.show_progress(log_mock)
+
+            progress_tracker(0, 10, 200)
+            progress_bar_mock.assert_called_with(0, 200)
+            log_progress_mock.assert_called_with('mock progress bar', flush=False)
+
+            progress_tracker(5, 10, 200)
+            progress_bar_mock.assert_called_with(50, 200)
+            log_progress_mock.assert_called_with('mock progress bar', flush=False)
+
+            progress_tracker(20, 10, 200)
+            progress_bar_mock.assert_called_with(200, 200)
+            log_progress_mock.assert_called_with('mock progress bar', flush=True)
