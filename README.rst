@@ -185,26 +185,21 @@ Now install the latest python3 version on your system, on OS X use:
 
   brew install python3
 
-The tests executing the tests in multiple python versions. For all OS environments, pyenv is used to support multiple installations of python during testing. Refer to https://github.com/yyuu/pyenv for information on how to install pyenv. With pyenv installed you can do things like ``pyenv local 3.4.3`` or ``pyenv local system``.
+The tests executing the tests in multiple python versions. For all OS environments, pyenv is used to support multiple installations of python during testing. Refer to https://github.com/yyuu/pyenv for information on how to install pyenv. With pyenv installed you can do things like ``pyenv local 3.4.3`` or ``pyenv local system``. Don't forget to update your login profile to setup pyenv (the doc describes how).
 
-Then for OS X, install python 3.4 and 3.2:
+Then for OS X, install python 3.4:
 
 .. code:: bash
 
   CFLAGS="-I$(brew --prefix openssl)/include" \
   LDFLAGS="-L$(brew --prefix openssl)/lib" \
   pyenv install -v 3.4.3
-
-  CFLAGS="-I$(brew --prefix openssl)/include" \
-  LDFLAGS="-L$(brew --prefix openssl)/lib" \
-  pyenv install -v 3.2.6
 
 For others this is easier:
 
 .. code:: bash
 
   pyenv install -v 3.4.3
-  pyenv install -v 3.2.6
 
 Make sure to install the ``virtualenv` module for python3:
 
@@ -216,11 +211,15 @@ Also, make sure to install the necessary dependencies for each environment and t
 
 .. code:: bash
 
-  cd conductr-cli
   pip3 install -e .
-  pyenv local system 3.2.6 3.4.3
+  pyenv local system 3.4.3
 
-  
+Be sure to install flake for testing:
+
+.. code:: bash
+
+  pip3 install flake8
+
 Running
 ^^^^^^^
 
