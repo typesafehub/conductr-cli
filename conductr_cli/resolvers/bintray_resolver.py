@@ -5,12 +5,14 @@ from requests.exceptions import HTTPError
 import json
 import logging
 import os
+import re
 import requests
 
 
 BINTRAY_API_BASE_URL = 'https://api.bintray.com'
 BINTRAY_DOWNLOAD_BASE_URL = 'https://dl.bintray.com'
 BINTRAY_CREDENTIAL_FILE_PATH = '{}/.bintray/.credentials'.format(os.path.expanduser('~'))
+BINTRAY_PROPERTIES_RE = re.compile('^(\S+)\s*=\s*([\S]+)$')
 
 
 def resolve_bundle(cache_dir, uri):
@@ -59,8 +61,13 @@ def load_bintray_credentials():
             lines = [line.replace('\n', '') for line in cred_file.readlines()]
             data = dict()
             for line in lines:
-                key, value = line.replace(' = ', '=').split('=')
-                data[key] = value
+                match = BINTRAY_PROPERTIES_RE.match(line)
+                if match is not None:
+                    try:
+                        key, value = match.group(1, 2)
+                        data[key] = value
+                    except IndexError:
+                        pass
 
             username = None if 'user' not in data else data['user']
             password = None if 'password' not in data else data['password']
