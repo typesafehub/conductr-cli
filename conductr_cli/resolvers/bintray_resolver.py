@@ -10,6 +10,7 @@ import requests
 
 BINTRAY_API_BASE_URL = 'https://api.bintray.com'
 BINTRAY_DOWNLOAD_BASE_URL = 'https://dl.bintray.com'
+BINTRAY_DOWNLOAD_REALM = 'Bintray'
 BINTRAY_CREDENTIAL_FILE_PATH = '{}/.bintray/.credentials'.format(os.path.expanduser('~'))
 
 
@@ -22,7 +23,8 @@ def resolve_bundle(cache_dir, uri):
         bundle_download_url = bintray_download_url(bintray_username, bintray_password, org, repo, package_name,
                                                    compatibility_version, digest)
         if bundle_download_url:
-            return uri_resolver.resolve_bundle(cache_dir, bundle_download_url)
+            auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password) if bintray_username else None
+            return uri_resolver.resolve_bundle(cache_dir, bundle_download_url, auth)
         else:
             return False, None, None
     except MalformedBundleUriError:
