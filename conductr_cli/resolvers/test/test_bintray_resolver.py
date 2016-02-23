@@ -32,7 +32,8 @@ class TestResolveBundle(TestCase):
         parse_mock.assert_called_with('bundle-name:v1')
         bintray_download_url_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name', 'v1',
                                                      'digest')
-        resolve_bundle_mock.assert_called_with('/cache-dir', 'https://dl.bintray.com/download.zip')
+        resolve_bundle_mock.assert_called_with('/cache-dir', 'https://dl.bintray.com/download.zip',
+                                               ('Bintray', 'username', 'password'))
 
     def test_bintray_version_not_found(self):
         load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))

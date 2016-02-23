@@ -6,9 +6,10 @@ from conductr_cli import screen_utils
 import os
 import logging
 import shutil
+import urllib
 
 
-def resolve_bundle(cache_dir, uri):
+def resolve_bundle(cache_dir, uri, auth=None):
     log = logging.getLogger(__name__)
 
     if not os.path.exists(cache_dir):
@@ -23,7 +24,7 @@ def resolve_bundle(cache_dir, uri):
         if os.path.exists(tmp_download_path):
             os.remove(tmp_download_path)
 
-        download_bundle(log, bundle_url, tmp_download_path)
+        download_bundle(log, bundle_url, tmp_download_path, auth)
 
         shutil.move(tmp_download_path, cached_file)
         return True, bundle_name, cached_file
@@ -62,11 +63,21 @@ def cache_path(cache_dir, uri):
     return '{}/{}'.format(cache_dir, basename)
 
 
-def download_bundle(log, bundle_url, tmp_download_path):
+def download_bundle(log, bundle_url, tmp_download_path, auth):
     log.info('Retrieving {}'.format(bundle_url))
 
     parsed = urlparse(bundle_url, scheme='file')
     is_http_download = parsed.scheme == 'http' or parsed.scheme == 'https'
+
+    if is_http_download and auth:
+        realm, username, password = auth
+        authinfo = urllib.request.HTTPBasicAuthHandler()
+        authinfo.add_password(realm=realm,
+                              uri=bundle_url,
+                              user=username,
+                              passwd=password)
+        opener = urllib.request.build_opener(authinfo)
+        urllib.request.install_opener(opener)
 
     if log.is_progress_enabled() and is_http_download:
         urlretrieve(bundle_url, tmp_download_path, reporthook=show_progress(log))
