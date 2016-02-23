@@ -390,7 +390,8 @@ class TestLoadBintrayCredentials(TestCase):
     def test_success(self):
         bintray_credential_file = strip_margin(
             """|user = user1
-               |password = secret
+               |password = sec=ret
+               |# Some comment
                |""")
 
         exists_mock = MagicMock(return_value=True)
@@ -400,7 +401,7 @@ class TestLoadBintrayCredentials(TestCase):
                 patch('builtins.open', open_mock):
             username, password = bintray_resolver.load_bintray_credentials()
             self.assertEqual('user1', username)
-            self.assertEqual('secret', password)
+            self.assertEqual('sec=ret', password)
 
         exists_mock.assert_called_with('{}/.bintray/.credentials'.format(os.path.expanduser('~')))
         open_mock.assert_called_with('{}/.bintray/.credentials'.format(os.path.expanduser('~')), 'r')
