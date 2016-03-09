@@ -3,11 +3,11 @@ import logging
 import sys
 
 # Default python log levels
-LOG_LEVEL_DEBUG = logging.getLevelName('DEBUG')
-LOG_LEVEL_INFO = logging.getLevelName('INFO')
-LOG_LEVEL_WARN = logging.getLevelName('WARN')
-LOG_LEVEL_ERROR = logging.getLevelName('ERROR')
-LOG_LEVEL_CRITICAL = logging.getLevelName('CRITICAL')
+LOG_LEVEL_DEBUG = logging.DEBUG
+LOG_LEVEL_INFO = logging.INFO
+LOG_LEVEL_WARN = logging.WARN
+LOG_LEVEL_ERROR = logging.ERROR
+LOG_LEVEL_CRITICAL = logging.CRITICAL
 
 # Custom log level for ConductR CLI
 LOG_LEVEL_VERBOSE = int((LOG_LEVEL_DEBUG + LOG_LEVEL_INFO) / 2)
