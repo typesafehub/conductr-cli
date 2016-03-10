@@ -3,7 +3,7 @@ import argparse
 from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_services,\
     conduct_stop, conduct_unload, conduct_version, conduct_logs,\
-    conduct_events, host, logging_setup
+    conduct_events, conduct_acls, host, logging_setup
 from conductr_cli.constants import \
     DEFAULT_PORT, DEFAULT_API_VERSION, DEFAULT_CLI_SETTINGS_DIR,\
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR,\
@@ -148,6 +148,15 @@ def build_parser():
                                             help='print service information')
     add_default_arguments(services_parser)
     services_parser.set_defaults(func=conduct_services.services)
+
+    # Sub-parser for `acls` sub-command
+    acls_parser = subparsers.add_parser('acls',
+                                        help='print request ACL information')
+    acls_parser.add_argument('protocol_family',
+                             choices=conduct_acls.SUPPORTED_PROTOCOL_FAMILIES,
+                             help='The protocol family of the ACL to be displayed, either http or tcp')
+    add_default_arguments(acls_parser)
+    acls_parser.set_defaults(func=conduct_acls.acls)
 
     # Sub-parser for `load` sub-command
     load_parser = subparsers.add_parser('load',

@@ -31,7 +31,7 @@ def services(args):
                   )
                   for bundle in json.loads(response.text)
                   for execution in bundle['bundleExecutions']
-                  for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items()
+                  for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items() if 'services' in endpoint
                   for service in endpoint['services']
                   ], key=lambda line: line['service'])
 

@@ -37,7 +37,7 @@ class TestConductServicesCommand(CliTestCase):
             self.output(stdout))
 
     def test_two_bundles_mult_components_endpoints(self):
-        http_method = self.respond_with_file_contents('data/two_bundles.json')
+        http_method = self.respond_with_file_contents('data/bundle_with_services/two_bundles.json')
         stdout = MagicMock()
 
         with patch('requests.get', http_method):
@@ -63,7 +63,7 @@ class TestConductServicesCommand(CliTestCase):
             self.output(stdout))
 
     def test_two_bundles_mult_components_endpoints_no_path(self):
-        http_method = self.respond_with_file_contents('data/two_bundles_no_path.json')
+        http_method = self.respond_with_file_contents('data/bundle_with_services/two_bundles_no_path.json')
         stdout = MagicMock()
 
         with patch('requests.get', http_method):
@@ -86,7 +86,7 @@ class TestConductServicesCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_bundle_starting(self):
-        http_method = self.respond_with_file_contents('data/one_bundle_starting.json')
+        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
         stdout = MagicMock()
 
         with patch('requests.get', http_method):
@@ -106,7 +106,7 @@ class TestConductServicesCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_bundle_starting_long_ids(self):
-        http_method = self.respond_with_file_contents('data/one_bundle_starting.json')
+        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
         stdout = MagicMock()
 
         with patch('requests.get', http_method):
@@ -126,4 +126,21 @@ class TestConductServicesCommand(CliTestCase):
                    |http://:9011/comp2-endp2  f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
                    |http://my.service         f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
                    |"""),
+            self.output(stdout))
+
+    def test_one_bundle_no_services(self):
+        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_tcp.json')
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method):
+            args = self.default_args.copy()
+            args.update({'long_ids': True})
+            logging_setup.configure_logging(MagicMock(**args), stdout)
+            result = conduct_services.services(MagicMock(**args))
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
+        self.assertEqual(
+            strip_margin("""|SERVICE  BUNDLE ID  BUNDLE NAME  STATUS
+                        |"""),
             self.output(stdout))
