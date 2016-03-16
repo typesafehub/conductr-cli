@@ -3,6 +3,7 @@ import json
 import logging
 import requests
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+from urllib.parse import quote_plus
 
 
 @validation.handle_connection_error
@@ -11,7 +12,7 @@ def logs(args):
     """`conduct logs` command"""
 
     log = logging.getLogger(__name__)
-    request_url = conduct_url.url('bundles/{}/logs?count={}'.format(args.bundle, args.lines), args)
+    request_url = conduct_url.url('bundles/{}/logs?count={}'.format(quote_plus(args.bundle), args.lines), args)
     response = requests.get(request_url, timeout=DEFAULT_HTTP_TIMEOUT)
     validation.raise_for_status_inc_3xx(response)
 
