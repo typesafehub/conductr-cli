@@ -163,9 +163,12 @@ class TestGetUrl(TestCase):
             'bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip')
         self.assertEqual(
             'bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', filename)
+        # os.getcwd() does not return path starting with '/' on windows - additional '/' will be required to form a
+        # correct file uri on windows
+        base_uri = 'file://' + os.getcwd() if os.getcwd().startswith('/') else 'file:///' + os.getcwd()
         self.assertEqual(
-            'file://' + os.getcwd() +
-            '/bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', url)
+            base_uri + os.sep +
+            'bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', url)
 
 
 class TestCachePath(TestCase):

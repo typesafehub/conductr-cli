@@ -54,7 +54,7 @@ def get_url(uri):
     op = Path(uri)
     np = str(op.cwd() / op if parsed.scheme == 'file' and op.root == '' else parsed.path)
     url = urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
-    return url.split('/')[-1], url
+    return os.path.basename(url), url
 
 
 def cache_path(cache_dir, uri):
