@@ -11,23 +11,29 @@ except ImportError:
 
 class TestConductEventsCommand(CliTestCase):
 
+    bundle_id = 'ab8f513'
+
+    bundle_id_urlencoded = 'bundle+id'
+
     default_args = {
         'ip': '127.0.0.1',
         'port': '9005',
         'api_version': '1',
-        'bundle': 'ab8f513',
+        'bundle': bundle_id,
         'lines': 1,
         'date': True,
         'utc': True
     }
 
-    default_url = 'http://127.0.0.1:9005/bundles/ab8f513/events?count=1'
+    default_url = 'http://127.0.0.1:9005/bundles/{}/events?count=1'.format(bundle_id_urlencoded)
 
     def test_no_events(self):
         http_method = self.respond_with(text='{}')
+        quote_method = MagicMock(return_value=self.bundle_id_urlencoded)
         stdout = MagicMock()
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('urllib.parse.quote', quote_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             result = conduct_events.events(MagicMock(**self.default_args))
             self.assertTrue(result)
@@ -51,9 +57,11 @@ class TestConductEventsCommand(CliTestCase):
                 "description":"Bundle written: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer"
             }
         ]""")
+        quote_method = MagicMock(return_value=self.bundle_id_urlencoded)
         stdout = MagicMock()
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('urllib.parse.quote', quote_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             result = conduct_events.events(MagicMock(**self.default_args))
             self.assertTrue(result)
@@ -68,9 +76,11 @@ class TestConductEventsCommand(CliTestCase):
 
     def test_failure_invalid_address(self):
         http_method = self.raise_connection_error('test reason', self.default_url)
+        quote_method = MagicMock(return_value=self.bundle_id_urlencoded)
         stderr = MagicMock()
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('urllib.parse.quote', quote_method):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             result = conduct_events.events(MagicMock(**self.default_args))
             self.assertFalse(result)
