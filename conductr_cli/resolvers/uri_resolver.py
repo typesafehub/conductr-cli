@@ -52,7 +52,10 @@ def load_from_cache(cache_dir, uri):
 def get_url(uri):
     parsed = urlparse(uri, scheme='file')
     op = Path(uri)
-    np = str(op.cwd() / op if parsed.scheme == 'file' and op.root == '' else parsed.path)
+    if parsed.scheme == 'file' and op.root == '' and not parsed.path.startswith('/'):
+        np = str(op.cwd() / op)
+    else:
+        np = parsed.path
     url = urlunparse(ParseResult(parsed.scheme, parsed.netloc, np, parsed.params, parsed.query, parsed.fragment))
     return os.path.basename(url), url
 

@@ -170,6 +170,14 @@ class TestGetUrl(TestCase):
             base_uri + os.sep +
             'bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', url)
 
+    def test_file_with_protocol_prefix(self):
+        filename, url = uri_resolver.get_url(
+            'file:///basedir/bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip')
+        self.assertEqual(
+            'bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', filename)
+        self.assertEqual(
+            'file:///basedir/bundle-1.0-e78ed07d4a895e14595a21aef1bf616b1b0e4d886f3265bc7b152acf93d259b5.zip', url)
+
 
 class TestCachePath(TestCase):
     def test_cache_path_file(self):
