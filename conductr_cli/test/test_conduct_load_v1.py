@@ -27,12 +27,12 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.bundle_resolve_cache_dir = 'bundle-resolve-cache-dir'
 
         self.tmpdir, self.bundle_file = create_temp_bundle(
-            strip_margin("""|nrOfCpus   = {}
-                            |memory     = {}
-                            |diskSpace  = {}
-                            |roles      = [{}]
-                            |name       = {}
-                            |system     = {}
+            strip_margin("""|nrOfCpus   = {},
+                            |memory     = {},
+                            |diskSpace  = {},
+                            |roles      = [{}],
+                            |name       = {},
+                            |system     = {},
                             |""").format(self.nr_of_cpus,
                                          self.memory,
                                          self.disk_space,

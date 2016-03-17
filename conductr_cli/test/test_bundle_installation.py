@@ -169,7 +169,7 @@ class TestWaitForInstallation(CliTestCase):
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = MagicMock(**{
             # Purposely set no timeout to invoke the error
-            'wait_timeout': 0
+            'wait_timeout': -1
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
@@ -290,7 +290,7 @@ class TestWaitForUninstallation(CliTestCase):
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = MagicMock(**{
             # Purposely set no timeout to invoke the error
-            'wait_timeout': 0
+            'wait_timeout': -1
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \

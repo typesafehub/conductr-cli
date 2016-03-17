@@ -1,6 +1,7 @@
 from unittest import TestCase
 import shutil
 import tempfile
+import os
 from os import remove
 from conductr_cli import logging_setup
 from conductr_cli.shazar import create_digest, build_parser, run
@@ -42,6 +43,7 @@ class TestIntegration(CliTestCase):
 
     def setUp(self):  # noqa
         self.tmpfile.write(b'test file data')
+        self.tmpfile.close()
 
     def test(self):
         stdout = MagicMock()
@@ -53,9 +55,12 @@ class TestIntegration(CliTestCase):
         with patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock):
             run('--output-dir {} {}'.format(self.tmpdir, self.tmpfile.name).split())
 
+        # The file separator on Windows `\` need to be escaped before used as part of regex comparison,
+        # otherwise it will form an incomplete escape character.
+        bundle_dir = '{}{}'.format(self.tmpdir, os.sep).replace('\\', '\\\\')
         self.assertRegex(
             self.output(stdout),
-            'Created digested ZIP archive at {}/tmp[a-z0-9_]{{6,8}}-[a-f0-9]{{64}}\.zip'.format(self.tmpdir)
+            'Created digested ZIP archive at {}tmp[a-z0-9_]{{6,8}}-[a-f0-9]{{64}}\.zip'.format(bundle_dir)
         )
 
     def tearDown(self):  # noqa

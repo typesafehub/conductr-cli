@@ -198,7 +198,7 @@ class TestWaitForScale(CliTestCase):
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = MagicMock(**{
             # Purposely set no timeout to invoke the error
-            'wait_timeout': 0
+            'wait_timeout': -1
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
