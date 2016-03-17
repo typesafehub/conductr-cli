@@ -4,7 +4,7 @@ import tempfile
 import os
 from os import remove
 from conductr_cli import logging_setup
-from conductr_cli.shazar import create_digest, build_parser, run
+from conductr_cli.shazar_main import create_digest, build_parser, run
 from conductr_cli.test.cli_test_case import CliTestCase
 
 try:

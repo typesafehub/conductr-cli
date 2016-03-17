@@ -1,5 +1,5 @@
 from unittest import TestCase
-from conductr_cli.conduct import build_parser, get_cli_parameters
+from conductr_cli.conduct_main import build_parser, get_cli_parameters
 from argparse import Namespace
 import os
 
