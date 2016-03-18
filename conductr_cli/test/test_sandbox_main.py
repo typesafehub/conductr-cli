@@ -1,5 +1,5 @@
 from unittest import TestCase
-from conductr_cli import sandbox
+from conductr_cli import sandbox_main
 from conductr_cli.sandbox_common import LATEST_CONDUCTR_VERSION, CONDUCTR_DEV_IMAGE
 
 
@@ -12,7 +12,7 @@ except ImportError:
 class TestSandbox(TestCase):
 
     with patch('conductr_cli.sandbox_common.resolve_host_ip', '127.0.0.1'):
-        parser = sandbox.build_parser()
+        parser = sandbox_main.build_parser()
 
     def test_parser_run_default_args(self):
         args = self.parser.parse_args('run {}'.format(LATEST_CONDUCTR_VERSION).split())
