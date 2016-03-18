@@ -5,5 +5,9 @@ def main_method():
     from conductr_cli import sandbox_main
     sandbox_main.run()
 
-if __name__ == '__main__':
+
+def run():
     main_handler.run(main_method)
+
+if __name__ == '__main__':
+    run()
