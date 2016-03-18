@@ -201,7 +201,7 @@ For others this is easier:
 
   pyenv install -v 3.4.3
 
-Make sure to install the ``virtualenv` module for python3:
+Make sure to install the ``virtualenv`` module for python3:
 
 .. code:: bash
 
