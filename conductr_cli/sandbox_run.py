@@ -27,7 +27,7 @@ def collect_ports(args):
         if feature_name == 'visualization':
             return {'name': feature_name, 'ports': [9999]}
         elif feature_name == 'logging':
-            return {'name': feature_name, 'ports': [5601, 9200]}
+            return {'name': feature_name, 'ports': [5601]}
         elif feature_name == 'monitoring':
             return {'name': feature_name, 'ports': []}
 
@@ -58,7 +58,7 @@ def start_nodes(args, ports):
             # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
             if ports:
                 host_ip = sandbox_common.resolve_host_ip()
-                ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port)) for port in ports])
+                ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port)) for port in sorted(ports)])
             else:
                 ports_desc = ''
             log.info('Starting container {container}{port_desc}..'.format(container=container_name, port_desc=ports_desc))
@@ -72,6 +72,7 @@ def start_nodes(args, ports):
                 '{image}:{version}'.format(image=args.image, version=args.image_version),
                 args.log_level,
                 ports,
+                args.bundle_http_port,
                 args.features,
                 conductr_container_roles
             )
@@ -106,10 +107,11 @@ def resolve_conductr_roles_by_container(conductr_roles, instance):
         return conductr_roles[remaining_instance - 1]
 
 
-def run_conductr_cmd(instance, container_name, cond0_ip, envs, image, log_level, ports, feature_names, conductr_roles):
+def run_conductr_cmd(instance, container_name, cond0_ip, envs, image, log_level, ports, bundle_http_port, feature_names, conductr_roles):
     general_args = ['-d', '--name', container_name]
     env_args = resolve_docker_run_envs(envs, log_level, cond0_ip, feature_names, conductr_roles)
-    port_args = resolve_docker_run_port_args(ports | CONDUCTR_PORTS, instance)
+    all_conductr_ports = CONDUCTR_PORTS | {bundle_http_port}
+    port_args = resolve_docker_run_port_args(ports | all_conductr_ports, instance)
     optional_args = general_args + env_args + port_args
     positional_args = resolve_docker_run_positional_args(cond0_ip)
     terminal.docker_run(optional_args, image, positional_args)
