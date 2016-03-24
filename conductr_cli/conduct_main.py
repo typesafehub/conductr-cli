@@ -100,10 +100,9 @@ def add_quiet_flag(sub_parser):
 def add_wait_timeout(sub_parser):
     sub_parser.add_argument('--wait-timeout',
                             help='Timeout in seconds waiting for bundle scale to be achieved in conduct run, '
-                                 'or bundle to be stopped in conduct stop, defaults to'.format(DEFAULT_WAIT_TIMEOUT),
+                                 'or bundle to be stopped in conduct stop, defaults to {}'.format(DEFAULT_WAIT_TIMEOUT),
                             default=DEFAULT_WAIT_TIMEOUT,
-                            dest='wait_timeout',
-                            action='store_true')
+                            dest='wait_timeout')
 
 
 def add_no_wait(sub_parser):
