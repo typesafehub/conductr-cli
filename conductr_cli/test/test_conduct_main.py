@@ -49,6 +49,18 @@ class TestConduct(TestCase):
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
 
+    def test_parser_acls_http(self):
+        for protocol_family in ['http', 'tcp']:
+            args = self.parser.parse_args('acls {}'.format(protocol_family).split())
+
+            self.assertEqual(args.func.__name__, 'acls')
+            self.assertEqual(args.ip, None)
+            self.assertEqual(args.port, 9005)
+            self.assertEqual(args.api_version, '1')
+            self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+            self.assertEqual(args.verbose, False)
+            self.assertEqual(args.long_ids, False)
+
     def test_parser_load(self):
         args = self.parser.parse_args('load path-to-bundle path-to-conf'.split())
 
