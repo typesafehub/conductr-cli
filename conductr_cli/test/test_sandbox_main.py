@@ -36,6 +36,7 @@ class TestSandbox(TestCase):
                                       '--log-level debug '
                                       '--nr-of-containers 5 '
                                       '--port 1000 -p 1001 '
+                                      '--bundle-http-port 7111 '
                                       '--feature visualization -f logging'.split())
         self.assertEqual(args.func.__name__, 'run')
         self.assertEqual(args.image_version, '1.1.0')
@@ -48,6 +49,7 @@ class TestSandbox(TestCase):
         self.assertEqual(args.features, ['visualization', 'logging'])
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.resolve_ip, True)
+        self.assertEqual(args.bundle_http_port, 7111)
 
     def test_parser_stop(self):
         args = self.parser.parse_args('stop'.split())

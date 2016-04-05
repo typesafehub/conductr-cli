@@ -68,6 +68,12 @@ def build_parser():
                             default=[],
                             help='Set additional ports to be made public by each of the ConductR containers.',
                             metavar='')
+    run_parser.add_argument('--bundle-http-port',
+                            dest='bundle_http_port',
+                            type=int,
+                            default=sandbox_common.bundle_http_port(),
+                            help='Set default frontend port for proxying HTTP based request ACLs.',
+                            metavar='')
     features = ['visualization', 'logging', 'monitoring']
     run_parser.add_argument('-f', '--feature',
                             dest='features',
