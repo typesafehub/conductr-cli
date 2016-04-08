@@ -5,7 +5,8 @@
       "diskSpace": 100,
       "memory": 200,
       "nrOfCpus": 1.0,
-      "roles": []
+      "roles": [],
+      "system": "my-bundle-1.0.0"
     },
     "bundleConfig": {
       "endpoints": {
@@ -61,7 +62,8 @@
       "diskSpace": 100,
       "memory": 200,
       "nrOfCpus": 1.0,
-      "roles": []
+      "roles": [],
+      "system": "other-bundle-1.0.0"
     },
     "bundleConfig": {
       "endpoints": {
@@ -117,7 +119,8 @@
       "diskSpace": 100,
       "memory": 200,
       "nrOfCpus": 1.0,
-      "roles": []
+      "roles": [],
+      "system": "some-bundle-1.0.0"
     },
     "bundleConfig": {
       "endpoints": {
