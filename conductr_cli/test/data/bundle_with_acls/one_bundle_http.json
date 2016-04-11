@@ -5,7 +5,8 @@
       "diskSpace": 100,
       "memory": 200,
       "nrOfCpus": 1.0,
-      "roles": []
+      "roles": [],
+      "system": "multi-comp-multi-endp-1.0.0"
     },
     "bundleConfig": {
       "endpoints": {

@@ -1,37 +1,23 @@
 [
   {
     "attributes": {
-      "bundleName": "multi-comp-multi-endp-1.0.0",
+      "bundleName": "dup-bundle-1",
       "diskSpace": 100,
       "memory": 200,
       "nrOfCpus": 1.0,
       "roles": [],
-      "system": "multi-comp-multi-endp-1.0.0"
+      "system": "dup-system",
+      "systemVersion": "1"
     },
     "bundleConfig": {
       "endpoints": {
-        "comp1-endp1": {
+        "duplicate": {
           "protocol": "http",
-          "servicesName": "comp1-endp1",
+          "servicesName": "duplicate",
           "acls": [
             {
-              "http": {
-                "requests": [
-                  {
-                    "path": "/foo"
-                  },
-                  {
-                    "pathBeg": "/bar"
-                  },
-                  {
-                    "pathBeg": "/baz/boom",
-                    "method": "POST",
-                    "rewrite": "/foo"
-                  },
-                  {
-                    "pathReg": "/order/(.*)"
-                  }
-                ]
+              "tcp": {
+                "requests": [12001]
               }
             }
           ]
@@ -42,13 +28,13 @@
     "bundleExecutions": [
       {
         "endpoints": {
-          "comp1-endp1": {
+          "duplicate": {
             "bindPort": 8000,
             "hostPort": 8000
           }
         },
         "host": "172.17.0.4",
-        "isStarted": false
+        "isStarted": true
       }
     ],
     "bundleId": "f804d644a01a5ab9f679f76939f5c7e2",
@@ -71,38 +57,34 @@
   },
   {
     "attributes": {
-      "bundleName": "my-endp-1.0.0",
+      "bundleName": "dup-bundle-2",
       "diskSpace": 100,
       "memory": 200,
       "nrOfCpus": 1.0,
       "roles": [],
-      "system": "my-endp-1.0.0"
+      "system": "dup-system",
+      "systemVersion": "1"
     },
     "bundleConfig": {
       "endpoints": {
-        "dostat": {
+        "duplicate": {
           "protocol": "http",
-          "servicesName": "dostat",
+          "servicesName": "duplicate",
           "acls": [
             {
-              "http": {
-                "requests": [
-                  {
-                    "pathRegex": "/user/(.*)/item/(.*)",
-                    "rewrite": "/my-items/\\1-\\2"
-                  }
-                ]
+              "tcp": {
+                "requests": [12002]
               }
             }
           ]
         }
       }
     },
-    "bundleDigest": "bbb4d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db",
+    "bundleDigest": "a904d644a01a5ab9f679f76939f5c6668301e1aecc83627877065cef26de1cca",
     "bundleExecutions": [
       {
         "endpoints": {
-          "comp1-endp1": {
+          "duplicate": {
             "bindPort": 8100,
             "hostPort": 8100
           }
@@ -111,17 +93,17 @@
         "isStarted": true
       }
     ],
-    "bundleId": "bbb4d644a01a5ab9f679f76939f5c7e2",
+    "bundleId": "a904d644a01a5ab9f679f76939f5c666",
     "bundleInstallations": [
       {
-        "bundleFile": "file:///tmp/bbb4d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db.zip",
+        "bundleFile": "file:///tmp/a904d644a01a5ab9f679f76939f5c6668301e1aecc83627877065cef26de1cca.zip",
         "uniqueAddress": {
           "address": "akka.tcp://conductr@172.17.0.4:9004",
           "uid": -29020887
         }
       },
       {
-        "bundleFile": "file:///tmp/bbb4d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db.zip",
+        "bundleFile": "file:///tmp/a904d644a01a5ab9f679f76939f5c6668301e1aecc83627877065cef26de1cca.zip",
         "uniqueAddress": {
           "address": "akka.tcp://conductr@172.17.0.3:9004",
           "uid": 247035768

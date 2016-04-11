@@ -1,4 +1,4 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_warn
 from conductr_cli import conduct_acls, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
@@ -32,8 +32,8 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |*       /foo           f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -52,8 +52,8 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  BUNDLE ID                         BUNDLE NAME                  STATUS
-                   |*       /foo           f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID                         BUNDLE NAME                  STATUS
+                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -69,11 +69,11 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH                  REWRITE          BUNDLE ID  BUNDLE NAME                  STATUS
-                   |*       /user/(.*)/item/(.*)  /my-items/\\1-\\2  bbb4d64    my-endp-1.0.0                Running
-                   |POST    ^/baz/boom            /foo             f804d64    multi-comp-multi-endp-1.0.0  Starting
-                   |*       ^/bar                                  f804d64    multi-comp-multi-endp-1.0.0  Starting
-                   |*       /foo                                   f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH                  REWRITE          SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /user/(.*)/item/(.*)  /my-items/\\1-\\2  my-endp-1.0.0                1.0.0           dostat         bbb4d64    my-endp-1.0.0                Running
+                   |POST    ^/baz/boom            /foo             multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                   |*       ^/bar                                  multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                   |*       /foo                                   multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -89,7 +89,7 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME  STATUS
+                """|METHOD  PATH  REWRITE  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
             self.output(stdout))
 
@@ -105,8 +105,30 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME  STATUS
+                """|METHOD  PATH  REWRITE  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
+            self.output(stdout))
+
+    def test_duplicate_endpoints(self):
+        http_method = self.respond_with_file_contents('data/bundle_with_acls/duplicate_endpoints_http.json')
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
+            result = conduct_acls.acls(MagicMock(**self.default_args))
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
+        self.assertEqual(
+            as_warn(strip_margin(
+                    """|METHOD  PATH         REWRITE  SYSTEM      SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME   STATUS
+                       |*       /path                 dup-system  1               duplicate      f804d64    dup-bundle-1  Running
+                       |*       /other-path           dup-system  1               duplicate      a904d64    dup-bundle-2  Running
+                       |
+                       |Warning: Multiple endpoints found: dup-system/1/duplicate
+                       |Warning: Unable to expose these endpoint via ConductR HAProxy.
+                       |Warning: Please ensure the ENDPOINT NAME is unique within a particular SYSTEM and SYSTEM VERSION.
+                       |""")),
             self.output(stdout))
 
 
@@ -134,8 +156,8 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |9001      f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -154,8 +176,8 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  BUNDLE ID                         BUNDLE NAME                  STATUS
-                   |9001      f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID                         BUNDLE NAME                  STATUS
+                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -171,10 +193,10 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  BUNDLE ID  BUNDLE NAME         STATUS
-                   |7101      aaa4d64    other-bundle-1.0.0  Starting
-                   |9006      f804d64    my-bundle-1.0.0     Starting
-                   |19001     bbb4d64    some-bundle-1.0.0   Starting
+                """|TCP/PORT  SYSTEM              SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME         STATUS
+                   |7101      other-bundle-1.0.0  1.0.0           tunnel         aaa4d64    other-bundle-1.0.0  Starting
+                   |9006      my-bundle-1.0.0     1.0.0           bin-one        f804d64    my-bundle-1.0.0     Starting
+                   |19001     some-bundle-1.0.0   1.0.0           streamer       bbb4d64    some-bundle-1.0.0   Starting
                    |"""),
             self.output(stdout))
 
@@ -190,7 +212,7 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  BUNDLE ID  BUNDLE NAME  STATUS
+                """|TCP/PORT  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
             self.output(stdout))
 
@@ -206,6 +228,29 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  BUNDLE ID  BUNDLE NAME  STATUS
+                """|TCP/PORT  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
+            self.output(stdout))
+
+    def test_duplicate_endpoints(self):
+        http_method = self.respond_with_file_contents('data/bundle_with_acls/duplicate_endpoints_tcp.json')
+        stdout = MagicMock()
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
+            result = conduct_acls.acls(MagicMock(**self.default_args))
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT)
+        self.maxDiff = None
+        self.assertEqual(
+            as_warn(strip_margin(
+                    """|TCP/PORT  SYSTEM      SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME   STATUS
+                       |12001     dup-system  1               duplicate      f804d64    dup-bundle-1  Running
+                       |12002     dup-system  1               duplicate      a904d64    dup-bundle-2  Running
+                       |
+                       |Warning: Multiple endpoints found: dup-system/1/duplicate
+                       |Warning: Unable to expose these endpoint via ConductR HAProxy.
+                       |Warning: Please ensure the ENDPOINT NAME is unique within a particular SYSTEM and SYSTEM VERSION.
+                       |""")),
             self.output(stdout))
