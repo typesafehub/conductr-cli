@@ -9,3 +9,11 @@ def api_version_path(api_version):
         return ''
     else:
         return '/v{}'.format(api_version)
+
+
+def request_headers(args):
+    headers = {}
+    if args.ip:
+        headers.update({'Host': args.ip})
+
+    return headers if headers else None

@@ -54,7 +54,12 @@ def load_v1(args):
         files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
 
     log.info('Loading bundle to ConductR...')
-    response = requests.post(url, files=files, timeout=LOAD_HTTP_TIMEOUT)
+    # At the time when this comment is being written, we need to pass the Host header when making HTTP request due to
+    # a bug with requests python library not working properly when IPv6 address is supplied:
+    # https://github.com/kennethreitz/requests/issues/3002
+    # The workaround for this problem is to explicitly set the Host header when making HTTP request.
+    # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
+    response = requests.post(url, files=files, timeout=LOAD_HTTP_TIMEOUT, headers=conduct_url.request_headers(args))
     validation.raise_for_status_inc_3xx(response)
 
     if log.is_verbose_enabled():
@@ -128,7 +133,12 @@ def load_v2(args):
         url = conduct_url.url('bundles', args)
 
         log.info('Loading bundle to ConductR...')
-        response = requests.post(url, files=files, timeout=LOAD_HTTP_TIMEOUT)
+        # At the time when this comment is being written, we need to pass the Host header when making HTTP request due
+        # to a bug with requests python library not working properly when IPv6 address is supplied:
+        # https://github.com/kennethreitz/requests/issues/3002
+        # The workaround for this problem is to explicitly set the Host header when making HTTP request.
+        # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
+        response = requests.post(url, files=files, timeout=LOAD_HTTP_TIMEOUT, headers=conduct_url.request_headers(args))
         validation.raise_for_status_inc_3xx(response)
 
         if log.is_verbose_enabled():

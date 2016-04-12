@@ -24,3 +24,20 @@ class TestConductUrl(TestCase):
         args.api_version = '2'
         result = conduct_url.url('test', args)
         self.assertEqual('http://127.0.0.1:9005/v2/test', result)
+
+
+class TestRequestHeaders(TestCase):
+
+    def test_return_headers(self):
+        ip_address = "my-test-ip"
+        args = {'ip': ip_address}
+        input_args = MagicMock(**args)
+        result = conduct_url.request_headers(input_args)
+        expected_result = {'Host': ip_address}
+        self.assertEqual(result, expected_result)
+
+    def test_return_none(self):
+        args = {'ip': None}
+        input_args = MagicMock(**args)
+        result = conduct_url.request_headers(input_args)
+        self.assertIsNone(result)
