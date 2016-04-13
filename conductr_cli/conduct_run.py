@@ -22,7 +22,12 @@ def run(args):
         path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
 
     url = conduct_url.url(path, args)
-    response = requests.put(url)
+    # At the time when this comment is being written, we need to pass the Host header when making HTTP request due to
+    # a bug with requests python library not working properly when IPv6 address is supplied:
+    # https://github.com/kennethreitz/requests/issues/3002
+    # The workaround for this problem is to explicitly set the Host header when making HTTP request.
+    # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
+    response = requests.put(url, headers=conduct_url.request_headers(args))
     validation.raise_for_status_inc_3xx(response)
 
     if log.is_verbose_enabled():

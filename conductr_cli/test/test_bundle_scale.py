@@ -9,7 +9,10 @@ except ImportError:
 
 
 class TestGetScale(CliTestCase):
+    mock_headers = {'pretend': 'header'}
+
     def test_return_scale_v1(self):
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
         bundles_endpoint_reply = """
             [{
                 "bundleId": "a101449418187d92c789d1adc240b6d6",
@@ -39,19 +42,23 @@ class TestGetScale(CliTestCase):
         """
         http_method = self.respond_with(text=bundles_endpoint_reply)
 
-        with patch('requests.get', http_method):
-            bundle_id = 'a101449418187d92c789d1adc240b6d6'
-            args = {
-                'ip': '127.0.0.1',
-                'port': '9005',
-                'api_version': '1'
-            }
-            result = bundle_scale.get_scale(bundle_id, MagicMock(**args))
+        bundle_id = 'a101449418187d92c789d1adc240b6d6'
+        args = {
+            'ip': '127.0.0.1',
+            'port': '9005',
+            'api_version': '1'
+        }
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method), \
+                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
+            result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles')
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers=self.mock_headers)
 
     def test_return_scale_v2(self):
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
         bundles_endpoint_reply = """
             [{
                 "bundleId": "a101449418187d92c789d1adc240b6d6",
@@ -81,49 +88,60 @@ class TestGetScale(CliTestCase):
         """
         http_method = self.respond_with(text=bundles_endpoint_reply)
 
-        with patch('requests.get', http_method):
-            bundle_id = 'a101449418187d92c789d1adc240b6d6'
-            args = {
-                'ip': '127.0.0.1',
-                'port': '9005',
-                'api_version': '2'
-            }
-            result = bundle_scale.get_scale(bundle_id, MagicMock(**args))
+        bundle_id = 'a101449418187d92c789d1adc240b6d6'
+        args = {
+            'ip': '127.0.0.1',
+            'port': '9005',
+            'api_version': '2'
+        }
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method), \
+                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
+            result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles')
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers=self.mock_headers)
 
     def test_return_zero_v1(self):
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
         bundles_endpoint_reply = '[]'
         http_method = self.respond_with(text=bundles_endpoint_reply)
 
-        with patch('requests.get', http_method):
-            bundle_id = 'a101449418187d92c789d1adc240b6d6'
-            args = {
-                'ip': '127.0.0.1',
-                'port': '9005',
-                'api_version': '1'
-            }
-            result = bundle_scale.get_scale(bundle_id, MagicMock(**args))
+        bundle_id = 'a101449418187d92c789d1adc240b6d6'
+        args = {
+            'ip': '127.0.0.1',
+            'port': '9005',
+            'api_version': '1'
+        }
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method), \
+                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
+            result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles')
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers=self.mock_headers)
 
     def test_return_zero_v2(self):
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
         bundles_endpoint_reply = '[]'
         http_method = self.respond_with(text=bundles_endpoint_reply)
 
-        with patch('requests.get', http_method):
-            bundle_id = 'a101449418187d92c789d1adc240b6d6'
-            args = {
-                'ip': '127.0.0.1',
-                'port': '9005',
-                'api_version': '2'
-            }
-            result = bundle_scale.get_scale(bundle_id, MagicMock(**args))
+        bundle_id = 'a101449418187d92c789d1adc240b6d6'
+        args = {
+            'ip': '127.0.0.1',
+            'port': '9005',
+            'api_version': '2'
+        }
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method), \
+                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
+            result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles')
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers=self.mock_headers)
 
 
 class TestWaitForScale(CliTestCase):

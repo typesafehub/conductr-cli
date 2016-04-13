@@ -13,7 +13,12 @@ def events(args):
 
     log = logging.getLogger(__name__)
     request_url = conduct_url.url('bundles/{}/events?count={}'.format(quote_plus(args.bundle), args.lines), args)
-    response = requests.get(request_url, timeout=DEFAULT_HTTP_TIMEOUT)
+    # At the time when this comment is being written, we need to pass the Host header when making HTTP request due to
+    # a bug with requests python library not working properly when IPv6 address is supplied:
+    # https://github.com/kennethreitz/requests/issues/3002
+    # The workaround for this problem is to explicitly set the Host header when making HTTP request.
+    # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
+    response = requests.get(request_url, timeout=DEFAULT_HTTP_TIMEOUT, headers=conduct_url.request_headers(args))
     validation.raise_for_status_inc_3xx(response)
 
     data = [

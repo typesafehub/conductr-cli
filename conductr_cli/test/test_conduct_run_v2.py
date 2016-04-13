@@ -77,18 +77,21 @@ class TestConductRunCommand(ConductRunTestBase):
         expected_url = \
             'http://127.0.0.1:9005/v2/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=3&affinity=other-bundle'
 
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
         http_method = self.respond_with(200, self.default_response)
         wait_for_scale_mock = MagicMock()
         stdout = MagicMock()
 
         input_args = MagicMock(**args)
         with patch('requests.put', http_method), \
+                patch('conductr_cli.conduct_url.request_headers', request_headers_mock), \
                 patch('conductr_cli.bundle_scale.wait_for_scale', wait_for_scale_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(expected_url)
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with(expected_url, headers=self.mock_headers)
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))

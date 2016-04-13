@@ -58,12 +58,22 @@ class Client:
     - Parse only for event and data string within SSE
     - No support for retries and last event id
     """
-    def __init__(self, url):
+    def __init__(self, url, headers=None):
         self.url = url
+        self.headers = headers
         self.response = None
 
     def connect(self):
-        response = requests.get(self.url, stream=True, **SSE_REQUEST_INPUT)
+        sse_request_input = dict(SSE_REQUEST_INPUT)
+        if self.headers:
+            sse_request_input['headers'].update(self.headers)
+
+        # At the time when this comment is being written, we need to pass the Host header when making HTTP request due
+        # to a bug with requests python library not working properly when IPv6 address is supplied:
+        # https://github.com/kennethreitz/requests/issues/3002
+        # The workaround for this problem is to explicitly set the Host header when making HTTP request.
+        # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
+        response = requests.get(self.url, stream=True, **sse_request_input)
         response.raise_for_status()
         self.response = response
 
@@ -81,7 +91,7 @@ class Client:
         return parse_event(raw_sse)
 
 
-def get_events(url):
-    client = Client(url)
+def get_events(url, headers=None):
+    client = Client(url, headers)
     client.connect()
     return client
