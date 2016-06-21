@@ -8,15 +8,19 @@ from subprocess import CalledProcessError
 def resolve_default_ip():
     def resolve():
         try:
-            return with_docker_machine()
-        except validation.NOT_FOUND_ERROR:
+            terminal.docker_ps()
+            return '127.0.0.1'
+        except CalledProcessError:
             try:
-                return with_boot2docker()
+                return with_docker_machine()
             except validation.NOT_FOUND_ERROR:
                 try:
-                    return with_hostname()
+                    return with_boot2docker()
                 except validation.NOT_FOUND_ERROR:
-                    return '127.0.0.1'
+                    try:
+                        return with_hostname()
+                    except validation.NOT_FOUND_ERROR:
+                        return '127.0.0.1'
 
     return os.getenv('CONDUCTR_IP', resolve())
 
