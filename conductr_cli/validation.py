@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 import urllib
 import arrow
 import os
@@ -10,8 +9,8 @@ from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
-from conductr_cli import terminal, docker_machine
-from conductr_cli.exceptions import DockerMachineError, Boot2DockerError, MalformedBundleError, BundleResolutionError, \
+from conductr_cli import terminal, docker, platform
+from conductr_cli.exceptions import DockerMachineError, MalformedBundleError, BundleResolutionError, \
     WaitTimeoutError
 from subprocess import CalledProcessError
 
@@ -198,7 +197,9 @@ def raise_for_status_inc_3xx(response):
 
 
 def handle_docker_vm_error(func):
-    vm_name = docker_machine.vm_name()
+    vm_type = docker.vm_type()
+    vm_name =
+    vm_start_text = 'docker start'
 
     def handler(*args, **kwargs):
         try:
@@ -208,11 +209,6 @@ def handle_docker_vm_error(func):
             log.error('Docker VM has not been started.')
             log.error('Use the following command to start the VM:')
             log.error('  docker-machine start {}'.format(vm_name))
-        except Boot2DockerError:
-            log = get_logger_for_func(func)
-            log.error('Docker VM has not been started.')
-            log.error('Use the following command to start the VM:')
-            log.error('  boot2docker up')
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -252,12 +248,7 @@ def handle_docker_errors(func):
             env_lines = terminal.docker_machine_env(vm_name)
             log.info('Retrieved docker environment variables with `docker-machine env {}`'.format(vm_name))
         except NOT_FOUND_ERROR:
-            try:
-                env_lines = terminal.boot2docker_shellinit()
-                log.info('Retrieved docker environment variables with: boot2docker shellinit')
-                log.warning('boot2docker is deprecated. Upgrade to docker-machine.')
-            except NOT_FOUND_ERROR:
-                return []
+            return []
         return [resolve_env(line) for line in env_lines if line.startswith('export')]
 
     def resolve_env(line):
@@ -273,7 +264,7 @@ def handle_docker_errors(func):
         try:
             return func(*args, **kwargs)
         except CalledProcessError:
-            if sys.platform == 'linux' or sys.platform == 'linux2':
+            if platform.is_linux():
                 return handle_linux()
             else:
                 return handle_non_linux(*args, **kwargs)
