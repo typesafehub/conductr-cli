@@ -1,6 +1,16 @@
 import subprocess
 
 
+def docker_version():
+    cmd = ['docker', '--version']
+    output = subprocess.check_output(cmd, universal_newlines=True).strip()
+    if output:
+        full_version = output.split('Docker version ')[1].split(',')[0]
+        return float('.'.join(full_version.split('.', 2)[:2]))   # Version format: 1.23
+    else:
+        None
+
+
 def docker_images(image):
     return subprocess.check_output(['docker', 'images', '--quiet', image]).strip()
 
@@ -64,17 +74,6 @@ def docker_machine_stop_vm(vm_name):
 
 def docker_machine_help():
     cmd = ['docker-machine', 'help']
-    return subprocess.check_output(cmd, universal_newlines=True).strip()
-
-
-def boot2docker_shellinit():
-    cmd = ['boot2docker', 'shellinit']
-    output = subprocess.check_output(cmd, universal_newlines=True)
-    return [line.strip() for line in output.splitlines()]
-
-
-def boot2docker_ip():
-    cmd = ['boot2docker', 'ip']
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
