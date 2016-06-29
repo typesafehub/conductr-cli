@@ -1,6 +1,10 @@
 import subprocess
 
 
+def docker_info():
+    return subprocess.check_output(['docker', 'info']).strip()
+
+
 def docker_images(image):
     return subprocess.check_output(['docker', 'images', '--quiet', image]).strip()
 
