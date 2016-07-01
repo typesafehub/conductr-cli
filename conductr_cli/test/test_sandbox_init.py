@@ -22,12 +22,12 @@ class TestSandboxInitCommand(CliTestCase):
 
         docker_info_mock.assert_called_with()
         self.assertEqual(
-            as_warn("Warning: Docker has insufficient RAM of 2.0MiB - please increase to a minimum of 2.9MiB\n"),
+            as_warn("Warning: Docker has insufficient RAM of 2.0MiB - please increase to a minimum of 3.8MiB\n"),
             self.output(stdout_mock))
 
     def test_docker_insufficient_cpu(self):
         stdout_mock = MagicMock()
-        docker_info_mock = MagicMock(return_value=b'\nTotal Memory: 2.9 GiB\nCPUs: 3')
+        docker_info_mock = MagicMock(return_value=b'\nTotal Memory: 3.8 GiB\nCPUs: 3')
         docker_machine_help_mock = MagicMock(side_effect=CalledProcessError(-1, 'test only'))
 
         logging_setup.configure_logging(MagicMock(), output=stdout_mock)
@@ -42,7 +42,7 @@ class TestSandboxInitCommand(CliTestCase):
 
     def test_docker_sufficient_ram_and_cpu(self):
         stdout_mock = MagicMock()
-        docker_info_mock = MagicMock(return_value=b'\nTotal Memory: 2.9 GiB\nCPUs: 4')
+        docker_info_mock = MagicMock(return_value=b'\nTotal Memory: 3.8 GiB\nCPUs: 4')
         docker_machine_help_mock = MagicMock(side_effect=CalledProcessError(-1, 'test only'))
 
         logging_setup.configure_logging(MagicMock(), output=stdout_mock)
@@ -89,7 +89,7 @@ class TestSandboxInitCommand(CliTestCase):
         vbox_manage_get_ram_size_mock.assert_called_with('vm_name')
         vbox_manage_get_cpu_count_mock.assert_called_with('vm_name')
         docker_machine_stop_vm_mock.assert_called_with('vm_name')
-        vbox_manage_increase_ram_mock.assert_called_with('vm_name', '3072')
+        vbox_manage_increase_ram_mock.assert_called_with('vm_name', '4096')
         vbox_manage_increase_cpu_mock.assert_called_with('vm_name', '4')
         docker_machine_start_vm_mock.assert_called_with('vm_name')
 
@@ -98,7 +98,7 @@ class TestSandboxInitCommand(CliTestCase):
         docker_machine_vm_name_mock = MagicMock(return_value='vm_name')
         docker_machine_help_mock = MagicMock()
         docker_machine_status_mock = MagicMock(return_value='Stopped')
-        vbox_manage_get_ram_size_mock = MagicMock(return_value=3072)
+        vbox_manage_get_ram_size_mock = MagicMock(return_value=4096)
         vbox_manage_get_cpu_count_mock = MagicMock(return_value=4)
         docker_machine_start_vm_mock = MagicMock()
 
@@ -146,7 +146,7 @@ class TestSandboxInitCommand(CliTestCase):
         vbox_manage_get_ram_size_mock.assert_called_with('vm_name')
         vbox_manage_get_cpu_count_mock.assert_called_with('vm_name')
         docker_machine_stop_vm_mock.assert_called_with('vm_name')
-        vbox_manage_increase_ram_mock.assert_called_with('vm_name', '3072')
+        vbox_manage_increase_ram_mock.assert_called_with('vm_name', '4096')
         docker_machine_start_vm_mock.assert_called_with('vm_name')
 
     def test_docker_machine_insufficient_cpu(self):
@@ -154,7 +154,7 @@ class TestSandboxInitCommand(CliTestCase):
         docker_machine_vm_name_mock = MagicMock(return_value='vm_name')
         docker_machine_help_mock = MagicMock()
         docker_machine_status_mock = MagicMock(return_value='Running')
-        vbox_manage_get_ram_size_mock = MagicMock(return_value=3072)
+        vbox_manage_get_ram_size_mock = MagicMock(return_value=4096)
         vbox_manage_get_cpu_count_mock = MagicMock(return_value=1)
         docker_machine_stop_vm_mock = MagicMock()
         vbox_manage_increase_cpu_mock = MagicMock()
@@ -185,7 +185,7 @@ class TestSandboxInitCommand(CliTestCase):
         docker_machine_vm_name_mock = MagicMock(return_value='vm_name')
         docker_machine_help_mock = MagicMock()
         docker_machine_status_mock = MagicMock(return_value='Running')
-        vbox_manage_get_ram_size_mock = MagicMock(return_value=3072)
+        vbox_manage_get_ram_size_mock = MagicMock(return_value=4096)
         vbox_manage_get_cpu_count_mock = MagicMock(return_value=4)
 
         with patch('conductr_cli.terminal.docker_info', docker_info_mock), \
