@@ -8,9 +8,9 @@ from subprocess import CalledProcessError
 def resolve_default_ip():
     def resolve():
         try:
-            terminal.docker_ps()
+            terminal.docker_info()
             return '127.0.0.1'
-        except CalledProcessError:
+        except (CalledProcessError, FileNotFoundError):
             try:
                 return with_docker_machine()
             except validation.NOT_FOUND_ERROR:
