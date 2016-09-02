@@ -15,13 +15,13 @@ class TestConduct(TestCase):
 
     def test_default(self):
         args = self.parser.parse_args(
-            'info --ip 127.0.1.1 --port 9999 -v --long-ids --api-version 2 '
+            'info --ip 127.0.1.1 --port 9999 -v --long-ids --api-version 1 '
             '--settings-dir /settings-dir --custom-plugins-dir /custom-plugins-dir'.split())
 
         self.assertEqual(args.func.__name__, 'info')
         self.assertEqual(args.ip, '127.0.1.1')
         self.assertEqual(args.port, 9999)
-        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.api_version, '1')
         self.assertEqual(args.cli_settings_dir, '/settings-dir')
         self.assertEqual(args.custom_plugins_dir, '/custom-plugins-dir')
         self.assertEqual(args.verbose, True)
@@ -33,7 +33,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'info')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
-        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
@@ -44,7 +44,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'services')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
-        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
@@ -56,7 +56,7 @@ class TestConduct(TestCase):
             self.assertEqual(args.func.__name__, 'acls')
             self.assertEqual(args.ip, None)
             self.assertEqual(args.port, 9005)
-            self.assertEqual(args.api_version, '1')
+            self.assertEqual(args.api_version, '2')
             self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
             self.assertEqual(args.verbose, False)
             self.assertEqual(args.long_ids, False)
@@ -67,7 +67,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'load')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
-        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.resolve_cache_dir, '{}/.conductr/cache'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
@@ -83,7 +83,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'load')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
-        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.resolve_cache_dir, '/somewhere')
         self.assertEqual(args.verbose, False)
@@ -100,7 +100,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'run')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
-        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
@@ -115,7 +115,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'stop')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
-        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
@@ -129,7 +129,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.func.__name__, 'unload')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
-        self.assertEqual(args.api_version, '1')
+        self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
@@ -138,7 +138,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.bundle, 'path-to-bundle')
 
     def test_get_cli_parameters(self):
-        args = Namespace(ip=None, port=9005, api_version='1')
+        args = Namespace(ip=None, port=9005, api_version='2')
         self.assertEqual(get_cli_parameters(args), '')
 
         args = Namespace(ip='127.0.1.1', port=9005)
@@ -147,8 +147,8 @@ class TestConduct(TestCase):
         args = Namespace(ip=None, port=9006)
         self.assertEqual(get_cli_parameters(args), ' --port 9006')
 
-        args = Namespace(ip=None, port=9005, api_version='2')
-        self.assertEqual(get_cli_parameters(args), ' --api-version 2')
+        args = Namespace(ip=None, port=9005, api_version='1')
+        self.assertEqual(get_cli_parameters(args), ' --api-version 1')
 
-        args = Namespace(ip='127.0.1.1', port=9006, api_version='2')
-        self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1 --port 9006 --api-version 2')
+        args = Namespace(ip='127.0.1.1', port=9006, api_version='1')
+        self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1 --port 9006 --api-version 1')
