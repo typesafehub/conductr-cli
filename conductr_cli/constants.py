@@ -2,7 +2,7 @@ import os
 
 
 DEFAULT_PORT = os.getenv('CONDUCTR_PORT', '9005')
-DEFAULT_API_VERSION = os.getenv('CONDUCTR_API_VERSION', '1')
+DEFAULT_API_VERSION = os.getenv('CONDUCTR_API_VERSION', '2')
 DEFAULT_CLI_SETTINGS_DIR = os.getenv('CONDUCTR_CLI_SETTINGS_DIR', '{}/.conductr'.format(os.path.expanduser('~')))
 DEFAULT_BUNDLE_RESOLVE_CACHE_DIR = os.getenv('CONDUCTR_BUNDLE_RESOLVE_CACHE_DIR',
                                              '{}/cache'.format(DEFAULT_CLI_SETTINGS_DIR))
