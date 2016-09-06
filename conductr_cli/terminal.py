@@ -2,11 +2,11 @@ import subprocess
 
 
 def docker_info():
-    return subprocess.check_output(['docker', 'info']).strip()
+    return subprocess.check_output(['docker', 'info'], stderr=subprocess.DEVNULL).strip()
 
 
 def docker_images(image):
-    return subprocess.check_output(['docker', 'images', '--quiet', image]).strip()
+    return subprocess.check_output(['docker', 'images', '--quiet', image], stderr=subprocess.DEVNULL).strip()
 
 
 def docker_pull(image):
@@ -16,7 +16,7 @@ def docker_pull(image):
 def docker_ps(ps_filter=None):
     ps_filter_arg = ['--filter', ps_filter] if ps_filter else []
     cmd = ['docker', 'ps', '--quiet'] + ps_filter_arg
-    output = subprocess.check_output(cmd, universal_newlines=True).strip()
+    output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.DEVNULL).strip()
     return output.splitlines()
 
 
