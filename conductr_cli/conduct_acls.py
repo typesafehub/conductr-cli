@@ -37,6 +37,12 @@ def acls(args):
         else:
             return bundle['attributes']['system'].split('-')[-1]
 
+    def is_started(bundle_executions):
+        for execution in bundle_executions:
+            if execution['isStarted']:
+                return 'Running'
+        return 'Starting'
+
     all_acls = [
         {
             'acl': acl,
@@ -45,10 +51,9 @@ def acls(args):
             'endpoint_name': endpoint_name,
             'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId']),
             'bundle_name': bundle['attributes']['bundleName'],
-            'status': 'Running' if execution['isStarted'] else 'Starting'
+            'status': is_started(bundle['bundleExecutions'])
         }
-        for bundle in json.loads(response.text)
-        for execution in bundle['bundleExecutions']
+        for bundle in json.loads(response.text) if bundle['bundleExecutions']
         for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items() if 'acls' in endpoint
         for acl in endpoint['acls']
     ]

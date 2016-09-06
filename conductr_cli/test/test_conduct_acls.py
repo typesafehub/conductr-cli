@@ -66,6 +66,28 @@ class TestConductAclsCommandForHttp(CliTestCase):
                    |"""),
             self.output(stdout))
 
+    def test_display_multiple_executions(self):
+        self.maxDiff = None
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
+        http_method = self.respond_with_file_contents('data/bundle_with_acls/display_multiple_executions_http.json')
+        stdout = MagicMock()
+
+        input_args = MagicMock(**self.default_args)
+        with patch('requests.get', http_method), \
+                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_acls.acls(input_args)
+            self.assertTrue(result)
+
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers=self.mock_headers)
+        self.assertEqual(
+            strip_margin(
+                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                   |"""),
+            self.output(stdout))
+
     def test_multiple_acls_sorted(self):
         request_headers_mock = MagicMock(return_value=self.mock_headers)
         http_method = self.respond_with_file_contents('data/bundle_with_acls/multiple_bundles_http.json')
@@ -214,6 +236,27 @@ class TestConductAclsCommandForTcp(CliTestCase):
             strip_margin(
                 """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID                         BUNDLE NAME                  STATUS
                    |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                   |"""),
+            self.output(stdout))
+
+    def test_display_multiple_executions(self):
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
+        http_method = self.respond_with_file_contents('data/bundle_with_acls/display_multiple_executions_tcp.json')
+        stdout = MagicMock()
+
+        input_args = MagicMock(**self.default_args)
+        with patch('requests.get', http_method), \
+                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_acls.acls(input_args)
+            self.assertTrue(result)
+
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers=self.mock_headers)
+        self.assertEqual(
+            strip_margin(
+                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
