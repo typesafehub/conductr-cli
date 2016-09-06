@@ -1,3 +1,4 @@
+import subprocess
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import terminal
 
@@ -10,6 +11,16 @@ except ImportError:
 
 class TestTerminal(CliTestCase):
 
+    def test_docker_info(self):
+        output = "test"
+        check_output_mock = MagicMock(return_value='{}\n'.format(output))
+
+        with patch('subprocess.check_output', check_output_mock):
+            result = terminal.docker_info()
+
+        self.assertEqual(result, output)
+        check_output_mock.assert_called_with(['docker', 'info'], stderr=subprocess.DEVNULL)
+
     def test_docker_images(self):
         image = 'my-image-id'
 
@@ -19,7 +30,7 @@ class TestTerminal(CliTestCase):
             result = terminal.docker_images(image)
 
         self.assertEqual(result, image)
-        check_output_mock.assert_called_with(['docker', 'images', '--quiet', image])
+        check_output_mock.assert_called_with(['docker', 'images', '--quiet', image], stderr=subprocess.DEVNULL)
 
     def test_docker_pull(self):
         image = 'image:version'
@@ -45,7 +56,7 @@ class TestTerminal(CliTestCase):
 
         self.assertEqual(result, [image1, image2])
         check_output_mock.assert_called_with(['docker', 'ps', '--quiet', '--filter', ps_filter],
-                                             universal_newlines=True)
+                                             universal_newlines=True, stderr=subprocess.DEVNULL)
 
     def test_docker_inspect(self):
         container_id = 'cond-0'
