@@ -1,4 +1,4 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_warn
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import conduct_acls, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
@@ -152,32 +152,6 @@ class TestConductAclsCommandForHttp(CliTestCase):
                    |"""),
             self.output(stdout))
 
-    def test_duplicate_endpoints(self):
-        request_headers_mock = MagicMock(return_value=self.mock_headers)
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/duplicate_endpoints_http.json')
-        stdout = MagicMock()
-
-        input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
-                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
-            logging_setup.configure_logging(input_args, stdout)
-            result = conduct_acls.acls(input_args)
-            self.assertTrue(result)
-
-        request_headers_mock.assert_called_with(input_args)
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers=self.mock_headers)
-        self.assertEqual(
-            as_warn(strip_margin(
-                    """|METHOD  PATH         REWRITE  SYSTEM      SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME   STATUS
-                       |*       /path                 dup-system  1               duplicate      f804d64    dup-bundle-1  Running
-                       |*       /other-path           dup-system  1               duplicate      a904d64    dup-bundle-2  Running
-                       |
-                       |Warning: Multiple endpoints found: dup-system/1/duplicate
-                       |Warning: Unable to expose these endpoint via ConductR HAProxy.
-                       |Warning: Please ensure the ENDPOINT NAME is unique within a particular SYSTEM and SYSTEM VERSION.
-                       |""")),
-            self.output(stdout))
-
 
 class TestConductAclsCommandForTcp(CliTestCase):
     default_args = {
@@ -322,31 +296,4 @@ class TestConductAclsCommandForTcp(CliTestCase):
             strip_margin(
                 """|TCP/PORT  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
-            self.output(stdout))
-
-    def test_duplicate_endpoints(self):
-        request_headers_mock = MagicMock(return_value=self.mock_headers)
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/duplicate_endpoints_tcp.json')
-        stdout = MagicMock()
-
-        input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
-                patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
-            logging_setup.configure_logging(input_args, stdout)
-            result = conduct_acls.acls(input_args)
-            self.assertTrue(result)
-
-        request_headers_mock.assert_called_with(input_args)
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers=self.mock_headers)
-        self.maxDiff = None
-        self.assertEqual(
-            as_warn(strip_margin(
-                    """|TCP/PORT  SYSTEM      SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME   STATUS
-                       |12001     dup-system  1               duplicate      f804d64    dup-bundle-1  Running
-                       |12002     dup-system  1               duplicate      a904d64    dup-bundle-2  Running
-                       |
-                       |Warning: Multiple endpoints found: dup-system/1/duplicate
-                       |Warning: Unable to expose these endpoint via ConductR HAProxy.
-                       |Warning: Please ensure the ENDPOINT NAME is unique within a particular SYSTEM and SYSTEM VERSION.
-                       |""")),
             self.output(stdout))

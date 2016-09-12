@@ -109,10 +109,6 @@ def display_tcp_acls(log, tcp_acls):
             '{bundle_name: <{bundle_name_width}}{padding}'
             '{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
 
-    duplicate_endpoints = find_duplicate_endpoints(tcp_acls)
-    if duplicate_endpoints:
-        log_duplicate_endpoints(log, duplicate_endpoints)
-
 
 def display_http_acls(log, http_acls):
     http_request_mappings = [
@@ -179,10 +175,6 @@ def display_http_acls(log, http_acls):
             '{bundle_name: <{bundle_name_width}}{padding}'
             '{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
 
-    duplicate_endpoints = find_duplicate_endpoints(http_acls)
-    if duplicate_endpoints:
-        log_duplicate_endpoints(log, duplicate_endpoints)
-
 
 def get_http_acl(http_request_mapping):
     if 'path' in http_request_mapping:
@@ -200,32 +192,3 @@ def get_http_acl_type(http_request_mapping):
         return HTTP_ACL_PATH_BEG
     elif 'pathRegex' in http_request_mapping:
         return HTTP_ACL_PATH_REGEX
-
-
-def find_duplicate_endpoints(acls):
-    endpoint_counts = {}
-    for acl in acls:
-        system = acl['system']
-        system_version = acl['system_version']
-        endpoint_name = acl['endpoint_name']
-        key = "{}/{}/{}".format(system, system_version, endpoint_name)
-        if key in endpoint_counts:
-            count = endpoint_counts[key]
-            endpoint_counts.update({key: count + 1})
-        else:
-            endpoint_counts.update({key: 1})
-
-    duplicate_endpoints = []
-    for key in endpoint_counts:
-        count = endpoint_counts[key]
-        if count > 1:
-            duplicate_endpoints.append(key)
-
-    return sorted(duplicate_endpoints)
-
-
-def log_duplicate_endpoints(log, duplicate_endpoints):
-    log.screen('')
-    log.warning('Multiple endpoints found: {}'.format(', '.join(duplicate_endpoints)))
-    log.warning('Unable to expose these endpoint via ConductR HAProxy.')
-    log.warning('Please ensure the ENDPOINT NAME is unique within a particular SYSTEM and SYSTEM VERSION.')
