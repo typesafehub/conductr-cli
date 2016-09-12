@@ -170,3 +170,24 @@ class TestConductServicesCommand(CliTestCase):
             strip_margin("""|SERVICE  BUNDLE ID  BUNDLE NAME  STATUS
                         |"""),
             self.output(stdout))
+
+    def test_one_bundle_multiple_executions(self):
+        request_headers_mock = MagicMock(return_value=self.mock_headers)
+        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_multiple_executions.json')
+        stdout = MagicMock()
+
+        input_args = MagicMock(**self.default_args)
+        with patch('requests.get', http_method), \
+             patch('conductr_cli.conduct_url.request_headers', request_headers_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_services.services(input_args)
+            self.assertTrue(result)
+
+        request_headers_mock.assert_called_with(input_args)
+        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers=self.mock_headers)
+        self.assertEqual(
+                strip_margin("""|SERVICE                   BUNDLE ID  BUNDLE NAME                  STATUS
+                            |http://:8010/comp1-endp1  f804d64    multi-comp-multi-endp-1.0.0  Running
+                            |http://my.service         f804d64    multi-comp-multi-endp-1.0.0  Running
+                            |"""),
+                self.output(stdout))

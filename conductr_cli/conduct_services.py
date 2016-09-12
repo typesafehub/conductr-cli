@@ -24,6 +24,12 @@ def services(args):
     if log.is_verbose_enabled():
         log.verbose(validation.pretty_json(response.text))
 
+    def execution_status(bundle_executions):
+        for execution in bundle_executions:
+            if execution['isStarted']:
+                return 'Running'
+        return 'Starting'
+
     data = sorted([
                   (
                       {
@@ -31,11 +37,10 @@ def services(args):
                           'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(
                               bundle['bundleId']),
                           'bundle_name': bundle['attributes']['bundleName'],
-                          'status': 'Running' if execution['isStarted'] else 'Starting'
+                          'status': execution_status(bundle['bundleExecutions'])
                       }
                   )
-                  for bundle in json.loads(response.text)
-                  for execution in bundle['bundleExecutions']
+                  for bundle in json.loads(response.text) if bundle['bundleExecutions']
                   for endpoint_name, endpoint in bundle['bundleConfig']['endpoints'].items() if 'services' in endpoint
                   for service in endpoint['services']
                   ], key=lambda line: line['service'])
