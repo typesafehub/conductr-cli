@@ -243,3 +243,32 @@ class TestSandboxRunCommand(CliTestCase):
 
         self.assertEqual(expected_stdout, self.output(stdout))
         mock_docker_rm.assert_called_once_with(['cond-1', 'cond-2'])
+
+    def test_run_options(self):
+        stdout = MagicMock()
+        run_options = "-v /etc/haproxy:/usr/local/etc/haproxy"
+
+        with \
+                patch('conductr_cli.terminal.docker_images', return_value=''), \
+                patch('conductr_cli.terminal.docker_pull', return_value=''), \
+                patch('conductr_cli.terminal.docker_ps', return_value=''), \
+                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
+                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
+                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
+                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'), \
+                patch('os.getenv', return_value=run_options) as mock_get_env:
+            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
+            sandbox_run.run(MagicMock(**self.default_args))
+
+        expected_stdout = strip_margin("""|Pulling down the ConductR development image..
+                                          |Starting ConductR nodes..
+                                          |Starting container cond-0..
+                                          |""")
+        expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
+        expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
+        expected_positional_args = self.default_positional_args
+
+        self.assertEqual(expected_stdout, self.output(stdout))
+        mock_get_env.assert_called_once_with('CONDUCTR_DOCKER_RUN_OPTS')
+        mock_docker_run.assert_called_once_with(expected_optional_args + ['-v', '/etc/haproxy:/usr/local/etc/haproxy'],
+                                                expected_image, expected_positional_args)
