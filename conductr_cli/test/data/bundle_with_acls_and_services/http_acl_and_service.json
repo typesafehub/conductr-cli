@@ -1,0 +1,116 @@
+[
+  {
+    "attributes": {
+      "bundleName": "bundle-with-acl-1.0.0",
+      "diskSpace": 100,
+      "memory": 200,
+      "nrOfCpus": 1.0,
+      "roles": [],
+      "system": "bundle-with-acl-1.0.0"
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "my-endp1": {
+          "protocol": "http",
+          "serviceName": "my-endp1",
+          "acls": [
+            {
+              "http": {
+                "requests": [
+                  {
+                    "path": "/foo"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "bundleDigest": "f804d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db",
+    "bundleExecutions": [
+      {
+        "endpoints": {
+          "comp1-endp1": {
+            "bindPort": 8000,
+            "hostPort": 8000
+          }
+        },
+        "host": "172.17.0.4",
+        "isStarted": true
+      }
+    ],
+    "bundleId": "f804d644a01a5ab9f679f76939f5c7e2",
+    "bundleInstallations": [
+      {
+        "bundleFile": "file:///tmp/f804d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db.zip",
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@172.17.0.4:9004",
+          "uid": -29020887
+        }
+      },
+      {
+        "bundleFile": "file:///tmp/f804d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db.zip",
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@172.17.0.3:9004",
+          "uid": 247035768
+        }
+      }
+    ]
+  },
+  {
+    "attributes": {
+      "bundleName": "bundle-with-services-1.0.0",
+      "diskSpace": 100,
+      "memory": 200,
+      "nrOfCpus": 1.0,
+      "roles": []
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "my-svc1": {
+          "protocol": "http",
+          "services": ["http://:8010/my-svc1", "http://my.service"]
+        },
+        "my-svc2": {
+          "protocol": "http",
+          "services": ["http://:8011/my-svc2"]
+        }
+      }
+    },
+    "bundleDigest": "ga04d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db",
+    "bundleExecutions": [
+      {
+        "endpoints": {
+          "my-svc1": {
+            "bindPort": 8000,
+            "hostPort": 8000
+          },
+          "my-svc2": {
+            "bindPort": 8001,
+            "hostPort": 8001
+          }
+        },
+        "host": "172.17.0.5",
+        "isStarted": false
+      }
+    ],
+    "bundleId": "ga04d644a01a5ab9f679f76939f5c7e2",
+    "bundleInstallations": [
+      {
+        "bundleFile": "file:///tmp/ga04d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db.zip",
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@172.17.0.4:9004",
+          "uid": -29020897
+        }
+      },
+      {
+        "bundleFile": "file:///tmp/ga04d644a01a5ab9f679f76939f5c7e28301e1aecc83627877065cef26de12db.zip",
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@172.17.0.3:9004",
+          "uid": 247035568
+        }
+      }
+    ]
+  }
+]
