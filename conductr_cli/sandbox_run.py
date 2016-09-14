@@ -1,6 +1,7 @@
 from conductr_cli import sandbox_common, terminal, validation
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
 import logging
+import os
 
 
 @validation.handle_docker_errors
@@ -113,8 +114,9 @@ def run_conductr_cmd(instance, container_name, cond0_ip, envs, image, log_level,
     all_conductr_ports = CONDUCTR_PORTS | {bundle_http_port}
     port_args = resolve_docker_run_port_args(ports | all_conductr_ports, instance)
     optional_args = general_args + env_args + port_args
+    additional_optional_args = resolve_conductr_docker_run_opts()
     positional_args = resolve_docker_run_positional_args(cond0_ip)
-    terminal.docker_run(optional_args, image, positional_args)
+    terminal.docker_run(optional_args + additional_optional_args, image, positional_args)
 
 
 def resolve_docker_run_envs(envs, log_level, cond0_ip, feature_names, conductr_roles):
@@ -141,6 +143,14 @@ def resolve_docker_run_port_args(ports, instance):
 def resolve_docker_run_positional_args(cond0_ip):
     seed_node_arg = ['--seed', '{}:{}'.format(cond0_ip, 9004)] if cond0_ip else []
     return ['--discover-host-ip'] + seed_node_arg
+
+
+def resolve_conductr_docker_run_opts():
+    conductr_docker_run_opts = os.getenv('CONDUCTR_DOCKER_RUN_OPTS')
+    if conductr_docker_run_opts:
+        return conductr_docker_run_opts.split(' ')
+    else:
+        return []
 
 
 def stop_nodes(args, running_containers):
