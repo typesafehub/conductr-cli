@@ -1,16 +1,37 @@
-from conductr_cli import sandbox_common, terminal, validation
+from conductr_cli import conduct_url, sandbox_common, terminal, validation
+from conductr_cli.constants import DEFAULT_PORT, DEFAULT_API_VERSION
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
+from requests import Session
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util import Retry
 import logging
 import os
 
 
+# Up to 7 retries with doubling backoff times starting from 0.1 seconds
+# Will retry up to about 12 seconds, with backoffs of 0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4 seconds
+DEFAULT_WAIT_RETRIES = 7
+DEFAULT_WAIT_BACKOFF_FACTOR = 0.1
+
+
+# Arguments for conduct requests, such as waiting for ConductR to start in the sandbox
+class ConductArgs():
+    ip = sandbox_common.resolve_host_ip()
+    port = DEFAULT_PORT
+    api_version = DEFAULT_API_VERSION
+
+
 @validation.handle_docker_errors
+@validation.handle_connection_error
+@validation.handle_http_error
 def run(args):
     """`sandbox run` command"""
 
     pull_image(args)
     ports = collect_ports(args)
     scale_cluster(args, ports)
+    wait_for_start(args)
 
 
 def pull_image(args):
@@ -160,3 +181,20 @@ def stop_nodes(args, running_containers):
     last_containers = len(running_containers) - args.nr_of_containers
     containers_to_be_stopped = running_containers[-last_containers:]
     return terminal.docker_rm(containers_to_be_stopped)
+
+
+def wait_for_start(args):
+    if not args.no_wait:
+        log = logging.getLogger(__name__)
+        retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
+        backoff_factor = float(os.getenv('CONDUCTR_SANDBOX_WAIT_BACKOFF_FACTOR', DEFAULT_WAIT_BACKOFF_FACTOR))
+        wait_for_conductr(retries, backoff_factor)
+        log.info('ConductR Sandbox is running. Print ConductR info with: conduct info')
+
+
+def wait_for_conductr(retries, backoff_factor):
+    # retry connections to ConductR where backoff time is `{backoff factor} * (2 ^ ({number of total retries} - 1))`
+    conduct_args = ConductArgs()
+    session = Session()
+    session.mount('http://', HTTPAdapter(max_retries=Retry(total=retries, backoff_factor=backoff_factor)))
+    session.get(conduct_url.url('members', conduct_args), timeout=DEFAULT_HTTP_TIMEOUT, headers=conduct_url.request_headers(conduct_args))
