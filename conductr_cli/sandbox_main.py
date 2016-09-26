@@ -83,6 +83,11 @@ def build_parser():
                                  'Available features: ' + ', '.join(features),
                             choices=features,
                             metavar='')
+    run_parser.add_argument('--no-wait',
+                            help='Disables waiting for ConductR to be started in the sandbox',
+                            default=False,
+                            dest='no_wait',
+                            action='store_true')
     run_parser.set_defaults(func=sandbox_run.run)
 
     # Sub-parser for `debug` sub-command
