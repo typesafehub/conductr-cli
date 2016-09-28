@@ -13,7 +13,7 @@ def resolve_bundle(cache_dir, uri, auth=None):
     log = logging.getLogger(__name__)
 
     if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
+        os.makedirs(cache_dir, mode=0o700)
 
     try:
         bundle_name, bundle_url = get_url(uri)
