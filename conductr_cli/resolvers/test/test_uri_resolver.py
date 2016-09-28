@@ -72,7 +72,7 @@ class TestResolveBundle(TestCase):
             call('/cache-dir'),
             call('/bundle-cached-path.tmp')
         ], os_path_exists_mock.call_args_list)
-        os_mkdirs_mock.assert_called_with('/cache-dir')
+        os_mkdirs_mock.assert_called_with('/cache-dir', mode=448)
         cache_path_mock.assert_called_with('/cache-dir', '/bundle-url')
         get_url_mock.assert_called_with('/bundle-url')
         urlretrieve_mock.assert_called_with('/bundle-url-resolved', '/bundle-cached-path.tmp')

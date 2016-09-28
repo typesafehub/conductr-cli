@@ -1,10 +1,12 @@
 from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
 from conductr_cli import bundle_utils, conduct_url, validation
-from conductr_cli.exceptions import MalformedBundleError
+from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
 from functools import partial
 
+import os
+import stat
 import json
 import logging
 import requests
@@ -22,6 +24,7 @@ LOAD_HTTP_TIMEOUT = 30
 @validation.handle_bundle_resolution_error
 @validation.handle_wait_timeout_error
 @validation.handle_conduct_load_read_timeout_error
+@validation.handle_insecure_file_permissions
 def load(args):
     if args.api_version == '1':
         return load_v1(args)
@@ -35,12 +38,16 @@ def load_v1(args):
     log.info('Retrieving bundle...')
     custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
+
+    validate_cache_dir_permissions(resolve_cache_dir)
+
     bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
 
     configuration_name, configuration_file = (None, None)
     if args.configuration is not None:
         log.info('Retrieving configuration...')
-        configuration_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.configuration)
+        configuration_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
+                                                                         args.configuration)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -52,6 +59,9 @@ def load_v1(args):
     files = get_payload(bundle_name, bundle_file, with_bundle_configurations)
     if configuration_file is not None:
         files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
+
+    if configuration_file and os.path.exists(configuration_file):
+        os.remove(configuration_file)
 
     log.info('Loading bundle to ConductR...')
     # At the time when this comment is being written, we need to pass the Host header when making HTTP request due to
@@ -104,12 +114,22 @@ def get_payload(bundle_name, bundle_file, bundle_configuration):
     ]
 
 
+def validate_cache_dir_permissions(cache_dir):
+    if os.path.exists(cache_dir):
+        permissions = oct(stat.S_IMODE(os.lstat(cache_dir).st_mode))[-3:]
+        if permissions[-2:] != '00':
+            raise InsecureFilePermissions('The cache directory {} has the permissions: {}'.format(cache_dir, permissions))
+
+
 def load_v2(args):
     log = logging.getLogger(__name__)
 
     log.info('Retrieving bundle...')
     custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
+
+    validate_cache_dir_permissions(resolve_cache_dir)
+
     bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
     bundle_conf = bundle_utils.zip_entry('bundle.conf', bundle_file)
 
@@ -129,6 +149,9 @@ def load_v2(args):
         files.append(('bundle', (bundle_name, open(bundle_file, 'rb'))))
         if configuration_file is not None:
             files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
+
+        if configuration_file and os.path.exists(configuration_file):
+            os.remove(configuration_file)
 
         url = conduct_url.url('bundles', args)
 
