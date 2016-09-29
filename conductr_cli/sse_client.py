@@ -21,11 +21,12 @@ def parse_event(raw_sse_string):
     event, data = None, None
     lines = raw_sse_string.split('\n')
     for line in lines:
-        key, value = line.split(':')
-        if key == 'event':
-            event = value
-        elif key == 'data':
-            data = value
+        if line.rstrip():
+            key, value = line.split(':')
+            if key == 'event':
+                event = value
+            elif key == 'data':
+                data = value
     return Event(event, data)
 
 
