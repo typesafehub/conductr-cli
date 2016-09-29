@@ -3,6 +3,7 @@ from pyhocon.exceptions import ConfigMissingException
 from conductr_cli import bundle_utils, conduct_url, validation
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
+from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR
 from functools import partial
 
 import os
@@ -39,7 +40,7 @@ def load_v1(args):
     custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
 
-    validate_cache_dir_permissions(resolve_cache_dir)
+    validate_cache_dir_permissions(resolve_cache_dir, log)
 
     bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
 
@@ -114,11 +115,17 @@ def get_payload(bundle_name, bundle_file, bundle_configuration):
     ]
 
 
-def validate_cache_dir_permissions(cache_dir):
+def validate_cache_dir_permissions(cache_dir, log):
     if os.path.exists(cache_dir):
         permissions = oct(stat.S_IMODE(os.lstat(cache_dir).st_mode))[-3:]
         if permissions[-2:] != '00':
-            raise InsecureFilePermissions('The cache directory {} has the permissions: {}'.format(cache_dir, permissions))
+            if cache_dir == DEFAULT_BUNDLE_RESOLVE_CACHE_DIR:
+                log.info('Cache directory {} has the permissions {}. Setting permissions to 700.'.format(cache_dir,
+                                                                                                         permissions))
+                os.chmod(cache_dir, 0o700)
+            else:
+                raise InsecureFilePermissions('The cache directory {} has the permissions: {}'.format(cache_dir,
+                                                                                                      permissions))
 
 
 def load_v2(args):
@@ -128,7 +135,7 @@ def load_v2(args):
     custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
 
-    validate_cache_dir_permissions(resolve_cache_dir)
+    validate_cache_dir_permissions(resolve_cache_dir, log)
 
     bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
     bundle_conf = bundle_utils.zip_entry('bundle.conf', bundle_file)
