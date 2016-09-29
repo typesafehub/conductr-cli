@@ -26,6 +26,7 @@ def resolve_bundle(cache_dir, uri, auth=None):
 
         download_bundle(log, bundle_url, tmp_download_path, auth)
 
+        os.chmod(tmp_download_path, 0o600)
         shutil.move(tmp_download_path, cached_file)
         return True, bundle_name, cached_file
     except URLError:

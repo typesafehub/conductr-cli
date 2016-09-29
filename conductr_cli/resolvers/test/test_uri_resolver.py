@@ -14,6 +14,7 @@ class TestResolveBundle(TestCase):
     def test_resolve_success(self):
         os_path_exists_mock = MagicMock(side_effect=[True, True])
         os_remove_mock = MagicMock()
+        os_chmod_mock = MagicMock()
         file_move_mock = MagicMock()
         cache_path_mock = MagicMock(return_value='/bundle-cached-path')
         get_url_mock = MagicMock(return_value=('bundle-name', '/bundle-url-resolved'))
@@ -23,6 +24,7 @@ class TestResolveBundle(TestCase):
 
         with patch('os.path.exists', os_path_exists_mock), \
                 patch('os.remove', os_remove_mock), \
+                patch('os.chmod', os_chmod_mock), \
                 patch('shutil.move', file_move_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
@@ -49,6 +51,7 @@ class TestResolveBundle(TestCase):
     def test_resolve_success_create_cache_dir(self):
         os_path_exists_mock = MagicMock(side_effect=[False, False])
         file_move_mock = MagicMock()
+        os_chmod_mock = MagicMock()
         os_mkdirs_mock = MagicMock(return_value=())
         cache_path_mock = MagicMock(return_value='/bundle-cached-path')
         get_url_mock = MagicMock(return_value=('bundle-name', '/bundle-url-resolved'))
@@ -58,6 +61,7 @@ class TestResolveBundle(TestCase):
 
         with patch('os.path.exists', os_path_exists_mock), \
                 patch('os.makedirs', os_mkdirs_mock), \
+                patch('os.chmod', os_chmod_mock), \
                 patch('shutil.move', file_move_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
@@ -193,6 +197,7 @@ class TestProgressBar(TestCase):
     def test_show_progress_bar(self):
         os_path_exists_mock = MagicMock(side_effect=[True, True])
         os_remove_mock = MagicMock()
+        os_chmod_mock = MagicMock()
         file_move_mock = MagicMock()
         cache_path_mock = MagicMock(return_value='/bundle-cached-path')
         get_url_mock = MagicMock(return_value=('bundle-name', 'http://site.com/bundle-url-resolved'))
@@ -204,6 +209,7 @@ class TestProgressBar(TestCase):
 
         with patch('os.path.exists', os_path_exists_mock), \
                 patch('os.remove', os_remove_mock), \
+                patch('os.chmod', os_chmod_mock), \
                 patch('shutil.move', file_move_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
@@ -233,6 +239,7 @@ class TestProgressBar(TestCase):
     def test_no_progress_bar_given_quiet_mode(self):
         os_path_exists_mock = MagicMock(side_effect=[True, True])
         os_remove_mock = MagicMock()
+        os_chmod_mock = MagicMock()
         file_move_mock = MagicMock()
         cache_path_mock = MagicMock(return_value='/bundle-cached-path')
         get_url_mock = MagicMock(return_value=('bundle-name', 'http://site.com/bundle-url-resolved'))
@@ -243,6 +250,7 @@ class TestProgressBar(TestCase):
 
         with patch('os.path.exists', os_path_exists_mock), \
                 patch('os.remove', os_remove_mock), \
+                patch('os.chmod', os_chmod_mock), \
                 patch('shutil.move', file_move_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
                 patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
