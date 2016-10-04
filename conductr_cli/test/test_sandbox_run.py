@@ -1,7 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import sandbox_run, logging_setup
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION
-from conductr_cli.sandbox_run import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR
+from conductr_cli.sandbox_run import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
 import os
 
 
@@ -58,7 +58,7 @@ class TestSandboxRunCommand(CliTestCase):
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
                                           |Starting ConductR nodes..
                                           |Starting container cond-0..
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
         expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
@@ -66,7 +66,7 @@ class TestSandboxRunCommand(CliTestCase):
 
         self.assertEqual(expected_stdout, self.output(stdout))
         mock_docker_run.assert_called_once_with(expected_optional_args, expected_image, expected_positional_args)
-        mock_wait_for_conductr.assert_called_once_with(DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_multiple_container(self):
         stdout = MagicMock()
@@ -90,7 +90,7 @@ class TestSandboxRunCommand(CliTestCase):
                                           |Starting container cond-0..
                                           |Starting container cond-1..
                                           |Starting container cond-2..
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
 
@@ -119,7 +119,7 @@ class TestSandboxRunCommand(CliTestCase):
             expected_image,
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )
-        mock_wait_for_conductr.assert_called_once_with(DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_with_custom_args(self):
         stdout = MagicMock()
@@ -158,7 +158,7 @@ class TestSandboxRunCommand(CliTestCase):
 
         expected_stdout = strip_margin("""|Starting ConductR nodes..
                                           |Starting container cond-0 exposing 192.168.99.100:3000, 192.168.99.100:3001, 192.168.99.100:5601, 192.168.99.100:9999..
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
 
         self.assertEqual(expected_stdout, self.output(stdout))
@@ -170,7 +170,7 @@ class TestSandboxRunCommand(CliTestCase):
             '{}:{}'.format(image, image_version),
             self.default_positional_args
         )
-        mock_wait_for_conductr.assert_called_once_with(DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_roles(self):
         stdout = MagicMock()
@@ -198,7 +198,7 @@ class TestSandboxRunCommand(CliTestCase):
                                           |Starting container cond-0..
                                           |Starting container cond-1..
                                           |Starting container cond-2..
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
 
@@ -229,7 +229,7 @@ class TestSandboxRunCommand(CliTestCase):
             expected_image,
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )
-        mock_wait_for_conductr.assert_called_once_with(DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_containers_already_running(self):
         stdout = MagicMock()
@@ -244,11 +244,11 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(MagicMock(**self.default_args))
 
         expected_stdout = strip_margin("""|ConductR nodes {} already exists, leaving them alone.
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""".format('cond-0'))
 
         self.assertEqual(expected_stdout, self.output(stdout))
-        mock_wait_for_conductr.assert_called_once_with(DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_scaling_down(self):
         stdout = MagicMock()
@@ -264,12 +264,12 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(MagicMock(**self.default_args))
 
         expected_stdout = strip_margin("""|Stopping ConductR nodes..
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
 
         self.assertEqual(expected_stdout, self.output(stdout))
         mock_docker_rm.assert_called_once_with(['cond-1', 'cond-2'])
-        mock_wait_for_conductr.assert_called_once_with(DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_run_options(self):
         stdout = MagicMock()
@@ -295,7 +295,7 @@ class TestSandboxRunCommand(CliTestCase):
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
                                           |Starting ConductR nodes..
                                           |Starting container cond-0..
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
         expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
@@ -305,7 +305,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_get_env.assert_any_call('CONDUCTR_DOCKER_RUN_OPTS')
         mock_docker_run.assert_called_once_with(expected_optional_args + ['-v', '/etc/haproxy:/usr/local/etc/haproxy'],
                                                 expected_image, expected_positional_args)
-        mock_wait_for_conductr.assert_called_once_with(DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_no_wait(self):
         stdout = MagicMock()
@@ -341,10 +341,10 @@ class TestSandboxRunCommand(CliTestCase):
         stdout = MagicMock()
         mock_wait_for_conductr = MagicMock()
         wait_retries = 3
-        wait_backoff_factor = 1.0
+        wait_retry_interval = 1.0
         wait_options = {
             'CONDUCTR_SANDBOX_WAIT_RETRIES': str(wait_retries),
-            'CONDUCTR_SANDBOX_WAIT_BACKOFF_FACTOR': str(wait_backoff_factor)
+            'CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL': str(wait_retry_interval)
         }
 
         def wait_env(key, default=None):
@@ -366,7 +366,7 @@ class TestSandboxRunCommand(CliTestCase):
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
                                           |Starting ConductR nodes..
                                           |Starting container cond-0..
-                                          |ConductR Sandbox is running. Print ConductR info with: conduct info
+                                          |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
         expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
@@ -374,6 +374,6 @@ class TestSandboxRunCommand(CliTestCase):
 
         self.assertEqual(expected_stdout, self.output(stdout))
         mock_getenv.assert_any_call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES)
-        mock_getenv.assert_any_call('CONDUCTR_SANDBOX_WAIT_BACKOFF_FACTOR', DEFAULT_WAIT_BACKOFF_FACTOR)
+        mock_getenv.assert_any_call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
         mock_docker_run.assert_called_once_with(expected_optional_args, expected_image, expected_positional_args)
-        mock_wait_for_conductr.assert_called_once_with(wait_retries, wait_backoff_factor)
+        mock_wait_for_conductr.assert_called_once_with(0, wait_retries, wait_retry_interval)
