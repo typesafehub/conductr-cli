@@ -2,21 +2,21 @@ from conductr_cli import conduct_url, sandbox_common, terminal, validation
 from conductr_cli.constants import DEFAULT_PORT, DEFAULT_API_VERSION
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
-from requests import Session
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
+from requests.exceptions import ConnectionError
+
+import requests
 import logging
 import os
+import time
 
 
-# Up to 7 retries with doubling backoff times starting from 0.1 seconds
-# Will retry up to about 12 seconds, with backoffs of 0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4 seconds
-DEFAULT_WAIT_RETRIES = 7
-DEFAULT_WAIT_BACKOFF_FACTOR = 0.1
+# Will retry 30 times, every second
+DEFAULT_WAIT_RETRIES = 30
+DEFAULT_WAIT_RETRY_INTERVAL = 1.0
 
 
 # Arguments for conduct requests, such as waiting for ConductR to start in the sandbox
-class ConductArgs():
+class ConductArgs:
     ip = sandbox_common.resolve_host_ip()
     port = DEFAULT_PORT
     api_version = DEFAULT_API_VERSION
@@ -80,10 +80,12 @@ def start_nodes(args, ports):
             # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
             if ports:
                 host_ip = sandbox_common.resolve_host_ip()
-                ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port)) for port in sorted(ports)])
+                ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port))
+                                                       for port in sorted(ports)])
             else:
                 ports_desc = ''
-            log.info('Starting container {container}{port_desc}..'.format(container=container_name, port_desc=ports_desc))
+            log.info('Starting container {container}{port_desc}..'.format(container=container_name,
+                                                                          port_desc=ports_desc))
             cond0_ip = inspect_cond0_ip() if i > 0 else None
             conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, i)
             run_conductr_cmd(
@@ -129,7 +131,8 @@ def resolve_conductr_roles_by_container(conductr_roles, instance):
         return conductr_roles[remaining_instance - 1]
 
 
-def run_conductr_cmd(instance, container_name, cond0_ip, envs, image, log_level, ports, bundle_http_port, feature_names, conductr_roles):
+def run_conductr_cmd(instance, container_name, cond0_ip, envs, image, log_level, ports,
+                     bundle_http_port, feature_names, conductr_roles):
     general_args = ['-d', '--name', container_name]
     env_args = resolve_docker_run_envs(envs, log_level, cond0_ip, feature_names, conductr_roles)
     all_conductr_ports = CONDUCTR_PORTS | {bundle_http_port}
@@ -157,7 +160,8 @@ def resolve_docker_run_port_args(ports, instance):
     port_args = []
     for port in ports:
         port_args.append('-p')
-        port_args.append('{external_port}:{internal_port}'.format(external_port=map_port(instance, port), internal_port=port))
+        port_args.append('{external_port}:{internal_port}'.format(external_port=map_port(instance, port),
+                                                                  internal_port=port))
     return port_args
 
 
@@ -176,7 +180,6 @@ def resolve_conductr_docker_run_opts():
 
 def stop_nodes(args, running_containers):
     log = logging.getLogger(__name__)
-
     log.info('Stopping ConductR nodes..')
     last_containers = len(running_containers) - args.nr_of_containers
     containers_to_be_stopped = running_containers[-last_containers:]
@@ -186,15 +189,27 @@ def stop_nodes(args, running_containers):
 def wait_for_start(args):
     if not args.no_wait:
         log = logging.getLogger(__name__)
+        print('Waiting for ConductR to start', end='', flush=True)
         retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
-        backoff_factor = float(os.getenv('CONDUCTR_SANDBOX_WAIT_BACKOFF_FACTOR', DEFAULT_WAIT_BACKOFF_FACTOR))
-        wait_for_conductr(retries, backoff_factor)
-        log.info('ConductR Sandbox is running. Print ConductR info with: conduct info')
+        interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
+        is_started = wait_for_conductr(0, retries, interval)
+        print('')
+        if is_started:
+            log.info('ConductR has been started. Check current bundle status with: conduct info')
+        else:
+            log.error('ConductR has not been started within {} seconds.'.format(retries * interval))
+            log.error('Try to increase the CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL.')
 
 
-def wait_for_conductr(retries, backoff_factor):
-    # retry connections to ConductR where backoff time is `{backoff factor} * (2 ^ ({number of total retries} - 1))`
-    conduct_args = ConductArgs()
-    session = Session()
-    session.mount('http://', HTTPAdapter(max_retries=Retry(total=retries, backoff_factor=backoff_factor)))
-    session.get(conduct_url.url('members', conduct_args), timeout=DEFAULT_HTTP_TIMEOUT, headers=conduct_url.request_headers(conduct_args))
+def wait_for_conductr(current_retry, max_retries, interval):
+    for attempt in range(0, max_retries):
+        time.sleep(interval)
+        print('.', end='', flush=True)
+        conduct_args = ConductArgs()
+        url = conduct_url.url('members', conduct_args)
+        try:
+            requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT, headers=conduct_url.request_headers(conduct_args))
+            break
+        except ConnectionError:
+            current_retry += 1
+    return True if current_retry < max_retries else False
