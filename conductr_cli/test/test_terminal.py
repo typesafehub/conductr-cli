@@ -55,7 +55,7 @@ class TestTerminal(CliTestCase):
             result = terminal.docker_ps(ps_filter)
 
         self.assertEqual(result, [image1, image2])
-        check_output_mock.assert_called_with(['docker', 'ps', '--quiet', '--filter', ps_filter],
+        check_output_mock.assert_called_with(['docker', 'ps', '--all', '--quiet', '--filter', ps_filter],
                                              universal_newlines=True, stderr=subprocess.DEVNULL)
 
     def test_docker_inspect(self):
