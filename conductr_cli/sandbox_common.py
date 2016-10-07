@@ -9,7 +9,7 @@ CONDUCTR_PORTS = {5601,  # conductr-kibana bundle
                   9006,  # ConductR bundleStreamServer
                   9999}  # visualizer bundle
 CONDUCTR_DEV_IMAGE = 'typesafe-docker-registry-for-subscribers-only.bintray.io/conductr/conductr'
-LATEST_CONDUCTR_VERSION = '1.0.12'
+LATEST_CONDUCTR_VERSION = '1.1.9'
 
 
 host_ip = None
