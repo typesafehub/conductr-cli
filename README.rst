@@ -110,7 +110,7 @@ To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature
 
 .. code:: bash
 
-    sandbox run 1.0.12 --nr-of-containers 3 --feature visualization
+    sandbox run 1.1.9 --nr-of-containers 3 --feature visualization
 
 To stop this cluster run:
 
