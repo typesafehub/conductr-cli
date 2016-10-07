@@ -15,7 +15,7 @@ def docker_pull(image):
 
 def docker_ps(ps_filter=None):
     ps_filter_arg = ['--filter', ps_filter] if ps_filter else []
-    cmd = ['docker', 'ps', '--quiet'] + ps_filter_arg
+    cmd = ['docker', 'ps', '--all', '--quiet'] + ps_filter_arg
     output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.DEVNULL).strip()
     return output.splitlines()
 

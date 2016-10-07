@@ -235,40 +235,29 @@ class TestSandboxRunCommand(CliTestCase):
         stdout = MagicMock()
         mock_wait_for_conductr = MagicMock()
 
-        with \
-                patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers',
-                      return_value=['cond-0']), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
-            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            sandbox_run.run(MagicMock(**self.default_args))
-
-        expected_stdout = strip_margin("""|ConductR nodes {} already exists, leaving them alone.
-                                          |ConductR has been started. Check current bundle status with: conduct info
-                                          |""".format('cond-0'))
-
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
-
-    def test_scaling_down(self):
-        stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
+        running_containers = ['cond-0']
 
         with \
                 patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
-                patch('conductr_cli.terminal.docker_rm', return_value='') as mock_docker_rm, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers',
-                      return_value=['cond-0', 'cond-1', 'cond-2']), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
+                patch('conductr_cli.terminal.docker_pull', return_value=''), \
+                patch('conductr_cli.terminal.docker_ps', return_value=''), \
+                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
+                patch('conductr_cli.terminal.docker_run', return_value=''), \
+                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=running_containers), \
+                patch('conductr_cli.sandbox_common.resolve_host_ip', return_value='192.168.99.100'), \
+                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
+                patch('conductr_cli.terminal.docker_rm') as mock_docker_rm:
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_run.run(MagicMock(**self.default_args))
 
-        expected_stdout = strip_margin("""|Stopping ConductR nodes..
+        expected_stdout = strip_margin("""|Stopping ConductR..
+                                          |Starting ConductR nodes..
+                                          |Starting container cond-0..
                                           |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
 
         self.assertEqual(expected_stdout, self.output(stdout))
-        mock_docker_rm.assert_called_once_with(['cond-1', 'cond-2'])
+        mock_docker_rm.assert_called_once_with(running_containers)
         mock_wait_for_conductr.assert_called_once_with(0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
     def test_run_options(self):

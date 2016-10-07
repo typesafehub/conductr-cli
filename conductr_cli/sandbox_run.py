@@ -1,4 +1,4 @@
-from conductr_cli import conduct_url, sandbox_common, terminal, validation
+from conductr_cli import conduct_url, sandbox_common, terminal, validation, sandbox_stop
 from conductr_cli.constants import DEFAULT_PORT, DEFAULT_API_VERSION
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
@@ -58,14 +58,8 @@ def collect_ports(args):
 
 
 def scale_cluster(args, ports):
-    running_containers = sandbox_common.resolve_running_docker_containers()
-    if args.nr_of_containers > len(running_containers):
-        start_nodes(args, ports)
-    elif args.nr_of_containers < len(running_containers):
-        stop_nodes(args, running_containers)
-    else:
-        log = logging.getLogger(__name__)
-        log.info('ConductR nodes {} already exists, leaving them alone.'.format(', '.join(running_containers)))
+    sandbox_stop.stop(args)
+    start_nodes(args, ports)
 
 
 def start_nodes(args, ports):
@@ -74,34 +68,30 @@ def start_nodes(args, ports):
     log.info('Starting ConductR nodes..')
     for i in range(args.nr_of_containers):
         container_name = '{prefix}{nr}'.format(prefix=CONDUCTR_NAME_PREFIX, nr=i)
-        container_id = terminal.docker_ps('name={}'.format(container_name))
-        if not container_id:
-            # Display the ports on the command line. Only if the user specifies a certain feature, then
-            # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
-            if ports:
-                host_ip = sandbox_common.resolve_host_ip()
-                ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port))
-                                                       for port in sorted(ports)])
-            else:
-                ports_desc = ''
-            log.info('Starting container {container}{port_desc}..'.format(container=container_name,
-                                                                          port_desc=ports_desc))
-            cond0_ip = inspect_cond0_ip() if i > 0 else None
-            conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, i)
-            run_conductr_cmd(
-                i,
-                container_name,
-                cond0_ip,
-                args.envs,
-                '{image}:{version}'.format(image=args.image, version=args.image_version),
-                args.log_level,
-                ports,
-                args.bundle_http_port,
-                args.features,
-                conductr_container_roles
-            )
+        # Display the ports on the command line. Only if the user specifies a certain feature, then
+        # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
+        if ports:
+            host_ip = sandbox_common.resolve_host_ip()
+            ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port))
+                                                   for port in sorted(ports)])
         else:
-            log.info('ConductR node {} already exists, leaving it alone.'.format(container_name))
+            ports_desc = ''
+        log.info('Starting container {container}{port_desc}..'.format(container=container_name,
+                                                                      port_desc=ports_desc))
+        cond0_ip = inspect_cond0_ip() if i > 0 else None
+        conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, i)
+        run_conductr_cmd(
+            i,
+            container_name,
+            cond0_ip,
+            args.envs,
+            '{image}:{version}'.format(image=args.image, version=args.image_version),
+            args.log_level,
+            ports,
+            args.bundle_http_port,
+            args.features,
+            conductr_container_roles
+        )
 
 
 def map_port(instance, port):
@@ -178,12 +168,10 @@ def resolve_conductr_docker_run_opts():
         return []
 
 
-def stop_nodes(args, running_containers):
+def stop_nodes(running_containers):
     log = logging.getLogger(__name__)
     log.info('Stopping ConductR nodes..')
-    last_containers = len(running_containers) - args.nr_of_containers
-    containers_to_be_stopped = running_containers[-last_containers:]
-    return terminal.docker_rm(containers_to_be_stopped)
+    return terminal.docker_rm(running_containers)
 
 
 def wait_for_start(args):
