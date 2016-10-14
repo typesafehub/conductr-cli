@@ -49,9 +49,9 @@ def collect_ports(args):
         if feature_name == 'visualization':
             return {'name': feature_name, 'ports': [9999]}
         elif feature_name == 'logging':
-            return {'name': feature_name, 'ports': [5601]}
+            return {'name': feature_name, 'ports': [5601, 9200]}
         elif feature_name == 'monitoring':
-            return {'name': feature_name, 'ports': [3000, 9200]}
+            return {'name': feature_name, 'ports': [3000]}
 
     all_feature_ports = [to_feature(feature_name)['ports'] for feature_name in args.features]
     return set(args.ports + [port for feature_ports in all_feature_ports for port in feature_ports])
