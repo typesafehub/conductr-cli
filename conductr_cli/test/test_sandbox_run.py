@@ -31,12 +31,10 @@ class TestSandboxRunCommand(CliTestCase):
         return ['-d', '--name', container_name]
 
     default_env_args = ['-e', 'AKKA_LOGLEVEL=info']
-    default_port_args = ['-p', '5601:5601',
-                         '-p', '9000:9000',
+    default_port_args = ['-p', '9000:9000',
                          '-p', '9004:9004',
                          '-p', '9005:9005',
-                         '-p', '9006:9006',
-                         '-p', '9999:9999']
+                         '-p', '9006:9006']
     default_positional_args = ['--discover-host-ip']
 
     def test_default_args(self):
@@ -98,24 +96,21 @@ class TestSandboxRunCommand(CliTestCase):
         # Assert cond-0
         mock_docker_run.assert_any_call(
             ['-d', '--name', 'cond-0', '-e', 'AKKA_LOGLEVEL=info',
-             '-p', '5601:5601', '-p', '9000:9000', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006',
-             '-p', '9999:9999'],
+             '-p', '9000:9000', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006'],
             expected_image,
             self.default_positional_args
         )
         # Assert cond-1
         mock_docker_run.assert_any_call(
             ['-d', '--name', 'cond-1', '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
-             '-p', '5611:5601', '-p', '9010:9000', '-p', '9014:9004', '-p', '9015:9005', '-p', '9016:9006',
-             '-p', '9909:9999'],
+             '-p', '9010:9000', '-p', '9014:9004', '-p', '9015:9005', '-p', '9016:9006'],
             expected_image,
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )
         # Assert cond-2
         mock_docker_run.assert_any_call(
             ['-d', '--name', 'cond-2', '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
-             '-p', '5621:5601', '-p', '9020:9000', '-p', '9024:9004', '-p', '9025:9005', '-p', '9026:9006',
-             '-p', '9919:9999'],
+             '-p', '9020:9000', '-p', '9024:9004', '-p', '9025:9005', '-p', '9026:9006'],
             expected_image,
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )
@@ -157,7 +152,7 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(MagicMock(**args))
 
         expected_stdout = strip_margin("""|Starting ConductR nodes..
-                                          |Starting container cond-0 exposing 192.168.99.100:3000, 192.168.99.100:3001, 192.168.99.100:5601, 192.168.99.100:9999..
+                                          |Starting container cond-0 exposing 192.168.99.100:3000, 192.168.99.100:3001, 192.168.99.100:5601, 192.168.99.100:9200, 192.168.99.100:9999..
                                           |ConductR has been started. Check current bundle status with: conduct info
                                           |""")
 
@@ -166,7 +161,8 @@ class TestSandboxRunCommand(CliTestCase):
             ['-d', '--name', 'cond-0', '-e', 'key1=value1', '-e', 'key2=value2', '-e', 'AKKA_LOGLEVEL=debug',
              '-e', 'CONDUCTR_FEATURES=visualization,logging', '-e', 'CONDUCTR_ROLES=role1,role2',
              '-p', '5601:5601', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006',
-             '-p', '9999:9999', '-p', '7222:7222', '-p', '3000:3000', '-p', '3001:3001'],
+             '-p', '9999:9999', '-p', '9200:9200', '-p', '7222:7222', '-p', '3000:3000',
+             '-p', '3001:3001'],
             '{}:{}'.format(image, image_version),
             self.default_positional_args
         )
@@ -206,8 +202,7 @@ class TestSandboxRunCommand(CliTestCase):
         # Assert cond-0
         mock_docker_run.assert_any_call(
             ['-d', '--name', 'cond-0', '-e', 'AKKA_LOGLEVEL=info', '-e', 'CONDUCTR_ROLES=role1,role2',
-             '-p', '5601:5601', '-p', '9000:9000', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006',
-             '-p', '9999:9999'],
+             '-p', '9000:9000', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006'],
             expected_image,
             self.default_positional_args
         )
@@ -215,8 +210,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_docker_run.assert_any_call(
             ['-d', '--name', 'cond-1', '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
              '-e', 'CONDUCTR_ROLES=role3',
-             '-p', '5611:5601', '-p', '9010:9000', '-p', '9014:9004', '-p', '9015:9005', '-p', '9016:9006',
-             '-p', '9909:9999'],
+             '-p', '9010:9000', '-p', '9014:9004', '-p', '9015:9005', '-p', '9016:9006'],
             expected_image,
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )
@@ -224,8 +218,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_docker_run.assert_any_call(
             ['-d', '--name', 'cond-2', '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
              '-e', 'CONDUCTR_ROLES=role1,role2',
-             '-p', '5621:5601', '-p', '9020:9000', '-p', '9024:9004', '-p', '9025:9005', '-p', '9026:9006',
-             '-p', '9919:9999'],
+             '-p', '9020:9000', '-p', '9024:9004', '-p', '9025:9005', '-p', '9026:9006'],
             expected_image,
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )

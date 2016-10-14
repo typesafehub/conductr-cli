@@ -3,11 +3,9 @@ import os
 
 
 CONDUCTR_NAME_PREFIX = 'cond-'
-CONDUCTR_PORTS = {5601,  # conductr-kibana bundle
-                  9004,  # ConductR internal akka remoting
+CONDUCTR_PORTS = {9004,  # ConductR internal akka remoting
                   9005,  # ConductR controlServer
-                  9006,  # ConductR bundleStreamServer
-                  9999}  # visualizer bundle
+                  9006}  # ConductR bundleStreamServer
 CONDUCTR_DEV_IMAGE = 'typesafe-docker-registry-for-subscribers-only.bintray.io/conductr/conductr'
 LATEST_CONDUCTR_VERSION = '1.1.9'
 
