@@ -2,6 +2,7 @@ from conductr_cli import conduct_url, sandbox_common, terminal, validation, sand
 from conductr_cli.constants import DEFAULT_PORT, DEFAULT_API_VERSION
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
+from conductr_cli.sandbox_features import collect_features
 from requests.exceptions import ConnectionError
 
 import requests
@@ -29,9 +30,13 @@ def run(args):
     """`sandbox run` command"""
 
     pull_image(args)
-    ports = collect_ports(args)
-    scale_cluster(args, ports)
+    features = collect_features(args.features)
+    ports = collect_ports(args, features)
+    bootstrap_features = collect_bootstrap_features(features)
+    scale_cluster(args, ports, bootstrap_features)
     wait_for_start(args)
+    for feature in features:
+        feature.start()
 
 
 def pull_image(args):
@@ -42,27 +47,27 @@ def pull_image(args):
                              .format(image_name=CONDUCTR_DEV_IMAGE, image_version=args.image_version))
 
 
-def collect_ports(args):
+def collect_ports(args, features):
     """Return a Set of ports based on the ports of each enabled feature and the ports specified by the user"""
 
-    def to_feature(feature_name):
-        if feature_name == 'visualization':
-            return {'name': feature_name, 'ports': [9999]}
-        elif feature_name == 'logging':
-            return {'name': feature_name, 'ports': [5601, 9200]}
-        elif feature_name == 'monitoring':
-            return {'name': feature_name, 'ports': [3000]}
-
-    all_feature_ports = [to_feature(feature_name)['ports'] for feature_name in args.features]
+    all_feature_ports = [feature.ports for feature in features]
     return set(args.ports + [port for feature_ports in all_feature_ports for port in feature_ports])
 
 
-def scale_cluster(args, ports):
+def collect_bootstrap_features(features):
+    """Return features that should be enabled in ConductR bootstrap"""
+
+    return [bootstrap_feature
+            for bootstrap_features in [feature.bootstrap_features for feature in features]
+            for bootstrap_feature in bootstrap_features]
+
+
+def scale_cluster(args, ports, features):
     sandbox_stop.stop(args)
-    start_nodes(args, ports)
+    start_nodes(args, ports, features)
 
 
-def start_nodes(args, ports):
+def start_nodes(args, ports, features):
     log = logging.getLogger(__name__)
 
     log.info('Starting ConductR nodes..')
@@ -89,7 +94,7 @@ def start_nodes(args, ports):
             args.log_level,
             ports,
             args.bundle_http_port,
-            args.features,
+            features,
             conductr_container_roles
         )
 

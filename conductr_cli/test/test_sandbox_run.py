@@ -126,7 +126,7 @@ class TestSandboxRunCommand(CliTestCase):
         log_level = 'debug'
         nr_of_containers = 1
         ports = [3000, 3001]
-        features = ['visualization', 'logging']
+        features = [['visualization'], ['logging']]
 
         with \
                 patch('conductr_cli.terminal.docker_images', return_value='some-image'), \

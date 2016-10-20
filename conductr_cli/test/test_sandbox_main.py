@@ -37,7 +37,7 @@ class TestSandbox(TestCase):
                                       '--nr-of-containers 5 '
                                       '--port 1000 -p 1001 '
                                       '--bundle-http-port 7111 '
-                                      '--feature visualization -f logging'.split())
+                                      '--feature visualization -f logging -f monitoring 2.1.0'.split())
         self.assertEqual(args.func.__name__, 'run')
         self.assertEqual(args.image_version, '1.1.0')
         self.assertEqual(args.conductr_roles, [['role1', 'role2'], ['role3']])
@@ -46,7 +46,7 @@ class TestSandbox(TestCase):
         self.assertEqual(args.log_level, 'debug')
         self.assertEqual(args.nr_of_containers, 5)
         self.assertEqual(args.ports, [1000, 1001])
-        self.assertEqual(args.features, ['visualization', 'logging'])
+        self.assertEqual(args.features, [['visualization'], ['logging'], ['monitoring', '2.1.0']])
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.resolve_ip, True)
         self.assertEqual(args.bundle_http_port, 7111)
