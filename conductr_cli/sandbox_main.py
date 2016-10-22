@@ -1,6 +1,7 @@
 import argcomplete
 import argparse
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
+from conductr_cli.sandbox_features import feature_names
 from conductr_cli import sandbox_run, sandbox_stop, sandbox_init, sandbox_common, logging_setup
 
 
@@ -74,14 +75,13 @@ def build_parser():
                             default=sandbox_common.bundle_http_port(),
                             help='Set default frontend port for proxying HTTP based request ACLs.',
                             metavar='')
-    features = ['visualization', 'logging', 'monitoring']
     run_parser.add_argument('-f', '--feature',
                             dest='features',
                             action='append',
+                            nargs='*',
                             default=[],
                             help='Features to be enabled.\n'
-                                 'Available features: ' + ', '.join(features),
-                            choices=features,
+                                 'Available features: ' + ', '.join(feature_names),
                             metavar='')
     run_parser.add_argument('--no-wait',
                             help='Disables waiting for ConductR to be started in the sandbox',
@@ -130,6 +130,13 @@ def run():
     parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
+    # Check that all feature arguments are valid
+    if vars(args).get('func').__name__ == 'run':
+        invalid_features = [f for f, *a in args.features if f not in feature_names]
+        if invalid_features:
+            parser.exit('Invalid features: %s (choose from %s)' %
+                        (', '.join("'%s'" % f for f in invalid_features),
+                         ', '.join("'%s'" % f for f in feature_names)))
     # Print help or execute subparser function
     if vars(args).get('func') is None:
         parser.print_help()

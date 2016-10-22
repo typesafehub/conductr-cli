@@ -269,11 +269,11 @@ def get_custom_settings(args):
         return None
 
 
-def run():
+def run(_args=[]):
     # Parse arguments
     parser = build_parser()
     argcomplete.autocomplete(parser)
-    args = parser.parse_args()
+    args = parser.parse_args(_args) if _args else parser.parse_args()
     if not vars(args).get('func'):
         parser.print_help()
     else:
