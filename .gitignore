@@ -10,3 +10,4 @@ deb_dist/*
 .eggs
 .python-version
 .cache
+build

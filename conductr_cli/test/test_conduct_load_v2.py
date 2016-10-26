@@ -45,8 +45,11 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                          self.compatibility_version))
 
         self.default_args = {
+            'dcos_mode': False,
+            'scheme': 'http',
             'ip': '127.0.0.1',
             'port': 9005,
+            'base_path': '/',
             'api_version': '2',
             'verbose': False,
             'quiet': False,
@@ -102,7 +105,6 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        request_headers_mock = MagicMock(return_value=self.mock_headers)
         resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
         zip_entry_mock = MagicMock(side_effect=['mock bundle.conf', 'mock bundle.conf overlay'])
         http_method = self.respond_with(200, self.default_response)
@@ -116,7 +118,6 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
-                patch('conductr_cli.conduct_url.request_headers', request_headers_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
@@ -137,7 +138,6 @@ class TestConductLoadCommand(ConductLoadTestBase):
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
-        request_headers_mock.assert_called_with(input_args)
         expected_files = [
             ('bundleConf', ('bundle.conf', 'mock bundle.conf')),
             ('bundleConfOverlay', ('bundle.conf', 'mock bundle.conf overlay')),
@@ -145,7 +145,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             ('configuration', ('config.zip', 1))
         ]
         http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT,
-                                       headers=self.mock_headers)
+                                       headers={'Host': '127.0.0.1'})
 
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
@@ -162,7 +162,6 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        request_headers_mock = MagicMock(return_value=self.mock_headers)
         resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
         zip_entry_mock = MagicMock(side_effect=['mock bundle.conf', None])
         http_method = self.respond_with(200, self.default_response)
@@ -176,7 +175,6 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.bundle_utils.zip_entry', zip_entry_mock), \
-                patch('conductr_cli.conduct_url.request_headers', request_headers_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
@@ -197,14 +195,13 @@ class TestConductLoadCommand(ConductLoadTestBase):
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
-        request_headers_mock.assert_called_with(input_args)
         expected_files = [
             ('bundleConf', ('bundle.conf', 'mock bundle.conf')),
             ('bundle', ('bundle.zip', 1)),
             ('configuration', ('config.zip', 1))
         ]
         http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT,
-                                       headers=self.mock_headers)
+                                       headers={'Host': '127.0.0.1'})
 
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 

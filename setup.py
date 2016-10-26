@@ -8,10 +8,11 @@ from setuptools.command.test import test
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 install_requires = [
-    'requests>=2.3.0',
+    'requests>=2.11.1',
     'argcomplete>=0.8.1',
     'pyhocon==0.2.1',
-    'arrow>=0.6.0'
+    'arrow>=0.6.0',
+    'dcos>=0.4.15, <0.5.0'
 ]
 if sys.version_info[:2] == (3, 2):
     install_requires.extend([

@@ -1,11 +1,10 @@
-from conductr_cli import conduct_url, terminal, validation, sandbox_stop, host
-from conductr_cli.constants import DEFAULT_PORT, DEFAULT_API_VERSION
+from conductr_cli import conduct_request, conduct_url, terminal, validation, sandbox_stop, host
+from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
 from conductr_cli.sandbox_features import collect_features
 from requests.exceptions import ConnectionError
 
-import requests
 import logging
 import os
 import time
@@ -22,7 +21,9 @@ class ConductArgs:
     def __init__(self, vm_type):
         self.ip = host.resolve_ip_by_vm_type(vm_type)
 
+    scheme = DEFAULT_SCHEME
     port = DEFAULT_PORT
+    base_path = DEFAULT_BASE_PATH
     api_version = DEFAULT_API_VERSION
 
 
@@ -203,7 +204,7 @@ def wait_for_conductr(args, current_retry, max_retries, interval):
         conduct_args = ConductArgs(args.vm_type)
         url = conduct_url.url('members', conduct_args)
         try:
-            requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT, headers=conduct_url.request_headers(conduct_args))
+            conduct_request.get(dcos_mode=False, host=conduct_args.ip, url=url, timeout=DEFAULT_HTTP_TIMEOUT)
             break
         except ConnectionError:
             current_retry += 1

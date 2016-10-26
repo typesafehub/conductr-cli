@@ -1,3 +1,4 @@
+import dcos
 import json
 import logging
 import urllib
@@ -49,7 +50,7 @@ def handle_http_error(func):
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except HTTPError as err:
+        except (HTTPError, dcos.errors.DCOSHTTPException) as err:
             log = get_logger_for_func(func)
             log.error('{} {}'.format(err.response.status_code, err.response.reason))
             if err.response.text != '':

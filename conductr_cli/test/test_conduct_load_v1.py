@@ -40,8 +40,11 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                          self.bundle_name,
                                          self.system))
         self.default_args = {
+            'dcos_mode': False,
+            'scheme': 'http',
             'ip': '127.0.0.1',
             'port': 9005,
+            'base_path': '/',
             'api_version': '1',
             'verbose': False,
             'quiet': False,
@@ -87,7 +90,6 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        request_headers_mock = MagicMock(return_value=self.mock_headers)
         resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
@@ -99,7 +101,6 @@ class TestConductLoadCommand(ConductLoadTestBase):
         input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
-                patch('conductr_cli.conduct_url.request_headers', request_headers_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
@@ -119,11 +120,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
                 call(self.custom_settings, self.bundle_resolve_cache_dir, config_file)
             ]
         )
-        request_headers_mock.assert_called_with(input_args)
         expected_files = self.default_files + [('configuration', ('config.zip', 1))]
         expected_files[4] = ('bundleName', 'overlaid-name')
         http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT,
-                                       headers=self.mock_headers)
+                                       headers={'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
         self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'),

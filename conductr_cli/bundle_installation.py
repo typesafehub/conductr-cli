@@ -1,20 +1,14 @@
 from __future__ import unicode_literals
-from conductr_cli import conduct_url, sse_client
+from conductr_cli import conduct_request, conduct_url, sse_client
 from conductr_cli.exceptions import WaitTimeoutError
 from datetime import datetime
 import json
 import logging
-import requests
 
 
 def count_installations(bundle_id, args):
     bundles_url = conduct_url.url('bundles', args)
-    # At the time when this comment is being written, we need to pass the Host header when making HTTP request due to
-    # a bug with requests python library not working properly when IPv6 address is supplied:
-    # https://github.com/kennethreitz/requests/issues/3002
-    # The workaround for this problem is to explicitly set the Host header when making HTTP request.
-    # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
-    response = requests.get(bundles_url, headers=conduct_url.request_headers(args))
+    response = conduct_request.get(args.dcos_mode, args.ip, bundles_url)
     response.raise_for_status()
     bundles = json.loads(response.text)
     matching_bundles = [bundle for bundle in bundles if bundle['bundleId'] == bundle_id]
@@ -45,7 +39,7 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
     else:
         log.info('Bundle {} waiting to be {}'.format(bundle_id, condition_name))
         bundle_events_url = conduct_url.url('bundles/events', args)
-        sse_events = sse_client.get_events(bundle_events_url, headers=conduct_url.request_headers(args))
+        sse_events = sse_client.get_events(args.dcos_mode, args.ip, bundle_events_url)
         for event in sse_events:
             elapsed = (datetime.now() - start_time).total_seconds()
             if elapsed > args.wait_timeout:

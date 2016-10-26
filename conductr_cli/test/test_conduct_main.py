@@ -6,7 +6,7 @@ import os
 
 class TestConduct(TestCase):
 
-    parser = build_parser()
+    parser = build_parser(False)
 
     def test_parser_version(self):
         args = self.parser.parse_args('version'.split())
@@ -19,8 +19,10 @@ class TestConduct(TestCase):
             '--settings-dir /settings-dir --custom-plugins-dir /custom-plugins-dir'.split())
 
         self.assertEqual(args.func.__name__, 'info')
+        self.assertEqual(args.scheme, 'http')
         self.assertEqual(args.ip, '127.0.1.1')
         self.assertEqual(args.port, 9999)
+        self.assertEqual(args.base_path, '/')
         self.assertEqual(args.api_version, '1')
         self.assertEqual(args.cli_settings_dir, '/settings-dir')
         self.assertEqual(args.custom_plugins_dir, '/custom-plugins-dir')
@@ -137,18 +139,32 @@ class TestConduct(TestCase):
         self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.bundle, 'path-to-bundle')
 
+    def test_default_with_dcos(self):
+        dcos_parser = build_parser(True)
+
+        args = dcos_parser.parse_args('info'.split())
+
+        self.assertEqual(args.service, 'conductr')
+
+    def test_default_with_dcos_info(self):
+        dcos_parser = build_parser(True)
+
+        args = dcos_parser.parse_args('--info'.split())
+
+        self.assertEqual(args.dcos_info, True)
+
     def test_get_cli_parameters(self):
-        args = Namespace(ip=None, port=9005, api_version='2')
+        args = Namespace(dcos_mode=False, ip=None, port=9005, api_version='2')
         self.assertEqual(get_cli_parameters(args), '')
 
-        args = Namespace(ip='127.0.1.1', port=9005)
+        args = Namespace(dcos_mode=False, ip='127.0.1.1', port=9005)
         self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1')
 
-        args = Namespace(ip=None, port=9006)
+        args = Namespace(dcos_mode=False, ip=None, port=9006)
         self.assertEqual(get_cli_parameters(args), ' --port 9006')
 
-        args = Namespace(ip=None, port=9005, api_version='1')
+        args = Namespace(dcos_mode=False, ip=None, port=9005, api_version='1')
         self.assertEqual(get_cli_parameters(args), ' --api-version 1')
 
-        args = Namespace(ip='127.0.1.1', port=9006, api_version='1')
+        args = Namespace(dcos_mode=False, ip='127.0.1.1', port=9006, api_version='1')
         self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1 --port 9006 --api-version 1')

@@ -18,7 +18,7 @@ class TestSSEClient(TestCase):
                                   |data:
                                   |
                                   |""")
-        raw_sse_iterators = [iter(list(line)) for line in list(raw_sse)]
+        raw_sse_iterators = [iter(list(raw_sse))]
         iter_content_mock = MagicMock(side_effect=raw_sse_iterators)
 
         raise_for_status_mock = MagicMock()
@@ -31,7 +31,7 @@ class TestSSEClient(TestCase):
 
         result = []
         with patch('requests.get', request_get_mock):
-            events = sse_client.get_events('http://host.com')
+            events = sse_client.get_events(False, '127.0.0.1', 'http://host.com')
             for event in events:
                 result.append(event)
 
