@@ -1,22 +1,25 @@
-from conductr_cli import docker, docker_machine, terminal
+from conductr_cli import docker, docker_machine, terminal, validation
+from conductr_cli.docker import DockerVmType
 import logging
 import re
 from subprocess import CalledProcessError
 
 
+@validation.handle_vbox_manage_not_found_error
 def init(args):
     """`sandbox init` command"""
 
     log = logging.getLogger(__name__)
+    vm_type = args.vm_type
 
-    try:
+    if vm_type is DockerVmType.DOCKER_ENGINE:
         info = terminal.docker_info()
         existing_ram, has_sufficient_ram = docker_ram_check(info)
         existing_cpu, has_sufficient_cpu = docker_cpu_check(info)
 
         if not has_sufficient_ram or not has_sufficient_cpu:
             if not has_sufficient_ram:
-                log.warning('Docker has insufficient RAM of {}MiB - please increase to a minimum of {}MiB'
+                log.warning('Docker has insufficient RAM of {} MiB - please increase to a minimum of {} MiB'
                             .format(existing_ram, docker.DEFAULT_DOCKER_RAM_SIZE))
 
             if not has_sufficient_cpu:
@@ -24,13 +27,10 @@ def init(args):
                             .format(existing_cpu, docker.DEFAULT_DOCKER_CPU_COUNT))
         else:
             log.info('Docker already has sufficient RAM and CPUs')
-
-    except (AttributeError, CalledProcessError):
-        pass
-
-    docker_machine_vm_name = docker_machine.vm_name()
-    if is_docker_machine_installed():
-        is_docker_machine_vm_installed = docker_machine_install_check(docker_machine_vm_name)
+        log.info('Sandbox initialization has successfully finished')
+    elif vm_type is DockerVmType.DOCKER_MACHINE:
+        docker_machine_vm_name = docker_machine.vm_name()
+        is_docker_machine_vm_installed = docker_machine_vm_install_check(docker_machine_vm_name)
         if not is_docker_machine_vm_installed:
             log.info('Creating Docker machine VM {}'.format(docker_machine_vm_name))
             log.info('This will take a few minutes - please be patient...')
@@ -50,7 +50,8 @@ def init(args):
 
         if not has_sufficient_ram or not has_sufficient_cpu:
             if not has_sufficient_ram:
-                log.warning('Docker machine VM {} has insufficient RAM of {}MiB - increasing to the minimum of {}MiB'
+                log.warning('Docker machine VM {} has insufficient RAM of {} MiB - '
+                            'increasing to the minimum of {} MiB'
                             .format(docker_machine_vm_name,
                                     existing_ram,
                                     docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE))
@@ -65,7 +66,7 @@ def init(args):
 
             if not has_sufficient_ram:
                 log.info(
-                    'Increasing Docker machine VM {} RAM to {}MB'
+                    'Increasing Docker machine VM {} RAM to {} MB'
                     .format(docker_machine_vm_name, docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE))
                 terminal.vbox_manage_increase_ram(docker_machine_vm_name,
                                                   docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE)
@@ -81,8 +82,7 @@ def init(args):
             terminal.docker_machine_start_vm(docker_machine_vm_name)
         else:
             log.info('Docker machine VM {} already has sufficient RAM and CPUs'.format(docker_machine_vm_name))
-
-        log.info('Sandbox initialization complete')
+        log.info('Sandbox initialization has successfully finished')
 
 
 def docker_ram_check(info):
@@ -99,19 +99,16 @@ def docker_cpu_check(info):
     return existing_cpu_count, has_sufficient_cpu
 
 
-def is_docker_machine_installed():
+def docker_machine_vm_install_check(vm_name):
     try:
-        terminal.docker_machine_help()
-        return True
+        output = terminal.docker_machine_status(vm_name)
+        if output == 'Error':
+            # Case: VM exists in docker-machine, but not in VirtualBox
+            return False
+        else:
+            return True
     except CalledProcessError:
-        return False
-
-
-def docker_machine_install_check(vm_name):
-    try:
-        terminal.docker_machine_status(vm_name)
-        return True
-    except CalledProcessError:
+        # Case: VM does not exist in docker-machine
         return False
 
 

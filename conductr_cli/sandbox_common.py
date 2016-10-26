@@ -1,4 +1,4 @@
-from conductr_cli import host, terminal
+from conductr_cli import terminal
 import os
 
 
@@ -8,16 +8,6 @@ CONDUCTR_PORTS = {9004,  # ConductR internal akka remoting
                   9006}  # ConductR bundleStreamServer
 CONDUCTR_DEV_IMAGE = 'typesafe-docker-registry-for-subscribers-only.bintray.io/conductr/conductr'
 LATEST_CONDUCTR_VERSION = '1.1.9'
-
-
-host_ip = None
-
-
-def resolve_host_ip():
-    global host_ip
-    if not host_ip:
-        host_ip = host.resolve_default_ip()
-    return host_ip
 
 
 def resolve_running_docker_containers():

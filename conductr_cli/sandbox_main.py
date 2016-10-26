@@ -1,8 +1,12 @@
 import argcomplete
 import argparse
+import logging
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
 from conductr_cli.sandbox_features import feature_names
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_init, sandbox_common, logging_setup
+from conductr_cli.docker import DockerVmType
+from conductr_cli import sandbox_run, sandbox_stop, sandbox_init, sandbox_common, logging_setup, docker, \
+    docker_machine, terminal
+from subprocess import CalledProcessError
 
 
 def build_parser():
@@ -125,34 +129,102 @@ def add_resolve_ip(sub_parser, default_value):
                             help=argparse.SUPPRESS)
 
 
+def validate_docker_vm(vm_type, is_init_command):
+    log = logging.getLogger(__name__)
+    if vm_type is DockerVmType.DOCKER_ENGINE:
+        try:
+            terminal.docker_info()
+            return True
+        except (AttributeError, CalledProcessError):
+            log.error('Docker native is installed but not running.')
+            log.error('Please start Docker with one of the Docker flavors based on your OS:')
+            log.error('  Linux:   Docker service')
+            log.error('  MacOS:   Docker for Mac')
+            log.error('  Windows: Docker for Windows')
+            log.error('A successful Docker startup can be verified with: docker info')
+            return False
+    elif vm_type is DockerVmType.DOCKER_MACHINE and is_init_command:
+        # The docker-machine validation is also performed in the sandbox init command. Therefore we skip the validation.
+        return True
+    elif vm_type is DockerVmType.DOCKER_MACHINE:
+        docker_machine_vm_name = docker_machine.vm_name()
+
+        try:
+            output = terminal.docker_machine_status(docker_machine_vm_name)
+            if output != 'Running':
+                log.error('Docker machine VM {} is not started'.format(docker_machine_vm_name))
+                log.error('Please use the following command to start the Docker machine VM: sandbox init')
+                return False
+        except CalledProcessError:
+            log.error('Docker machine VM {} does not exist'.format(docker_machine_vm_name))
+            log.error('Please use the following command to create the Docker machine VM: sandbox init')
+            return False
+
+        try:
+            terminal.docker_info()
+            return True
+        except (AttributeError, CalledProcessError):
+            print('out of docker info')
+            log.info('It looks like the Docker machine environment variables are not set correctly.')
+            log.info('Let me try to reset the Docker machine environment variables..')
+            docker_machine_vm_name = docker_machine.vm_name()
+            [docker_machine.set_env(env[0], env[1]) for env in docker_machine.envs(docker_machine_vm_name)]
+            try:
+                terminal.docker_info()
+                log.warning('To set the environment variables for each terminal session '
+                            'follow the instructions of the command:')
+                log.warning('  docker-machine env {}'.format(docker_machine_vm_name))
+                return True
+            except (AttributeError, CalledProcessError):
+                log.error('Docker still cannot connect to the Docker machine VM.')
+                log.error('Please set the docker environment variables.')
+                log.error('Afterwards verify that docker is up and running with: docker info')
+                return False
+
+    elif vm_type is DockerVmType.NONE:
+        log.error('Neither Docker native is installed nor the Docker machine environment variables are set.')
+        log.error('We recommend to use one of following the Docker distributions depending on your OS:')
+        log.error('  Linux:                                         Docker Engine')
+        log.error('  MacOS:                                         Docker for Mac')
+        log.error('  Windows 10+ Professional or Enterprise 64-bit: Docker for Windows')
+        log.error('  Other Windows:                                 Docker machine via Docker Toolbox')
+        log.error('For more information checkout: https://www.docker.com/products/overview')
+        return False
+
+
 def run():
     # Parse arguments
     parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    # Check that all feature arguments are valid
-    if vars(args).get('func').__name__ == 'run':
-        invalid_features = [f for f, *a in args.features if f not in feature_names]
-        if invalid_features:
-            parser.exit('Invalid features: %s (choose from %s)' %
-                        (', '.join("'%s'" % f for f in invalid_features),
-                         ', '.join("'%s'" % f for f in feature_names)))
+
     # Print help or execute subparser function
-    if vars(args).get('func') is None:
+    if not vars(args).get('func'):
         parser.print_help()
     # Exit with sandbox debug error message
     elif vars(args).get('func') == 'debug':
         parser.exit('Debugging a ConductR cluster is not supported by the \'conductr-cli\'.\n'
-                    'Use the sbt plugin \'sbt-conductr-sandbox\' instead.')
-    # Validate host IP address
-    elif args.resolve_ip and not sandbox_common.resolve_host_ip():
-        return
+                    'Use the sbt plugin \'sbt-conductr\' instead.')
     # Validate image_version
     elif vars(args).get('func').__name__ == 'run' and not args.image_version:
         parser.exit('The version of the ConductR Docker image must be set.\n'
-                    'Please visit https://www.typesafe.com/product/conductr/developer '
+                    'Please visit https://www.lightbend.com/product/conductr/developer '
                     'to obtain the current version information.')
     # Call sandbox function
     else:
         logging_setup.configure_logging(args)
-        args.func(args)
+        # Check that all feature arguments are valid
+        if vars(args).get('func').__name__ == 'run':
+            invalid_features = [f for f, *a in args.features if f not in feature_names]
+            if invalid_features:
+                parser.exit('Invalid features: %s (choose from %s)' %
+                            (', '.join("'%s'" % f for f in invalid_features),
+                             ', '.join("'%s'" % f for f in feature_names)))
+        # Docker VM validation
+        args.vm_type = docker.vm_type()
+        is_init_command = True if vars(args).get('func').__name__ == 'init' else False
+        docker_vm_validation_successful = validate_docker_vm(args.vm_type, is_init_command)
+        if not args.vm_type or not docker_vm_validation_successful:
+            exit(1)
+        else:
+            args.func(args)

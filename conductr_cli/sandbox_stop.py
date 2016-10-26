@@ -1,8 +1,7 @@
-from conductr_cli import sandbox_common, terminal, validation
+from conductr_cli import sandbox_common, terminal
 import logging
 
 
-@validation.handle_docker_errors
 def stop(args):
     """`sandbox stop` command"""
 

@@ -1,30 +1,26 @@
 import os
-from conductr_cli import terminal, validation, docker_machine
-from conductr_cli.exceptions import DockerMachineError, Boot2DockerError
+from conductr_cli import terminal, validation, docker_machine, docker
+from conductr_cli.exceptions import DockerMachineNotRunningError
 from subprocess import CalledProcessError
+from conductr_cli.docker import DockerVmType
 
 
-@validation.handle_docker_vm_error
 def resolve_default_ip():
     def resolve():
-        try:
-            terminal.docker_info()
-            return '127.0.0.1'
-        except (CalledProcessError, FileNotFoundError):
-            try:
-                return with_docker_machine()
-            except validation.NOT_FOUND_ERROR:
-                try:
-                    return with_boot2docker()
-                except validation.NOT_FOUND_ERROR:
-                    try:
-                        return with_hostname()
-                    except validation.NOT_FOUND_ERROR:
-                        return '127.0.0.1'
+        vm_type = docker.vm_type()
+        return resolve_ip_by_vm_type(vm_type)
 
     return os.getenv('CONDUCTR_IP', resolve())
 
 
+def resolve_ip_by_vm_type(vm_type):
+    if vm_type is DockerVmType.NONE or vm_type is DockerVmType.DOCKER_ENGINE:
+        return '127.0.0.1'
+    elif vm_type is DockerVmType.DOCKER_MACHINE:
+        return with_docker_machine()
+
+
+@validation.handle_docker_machine_not_running_error
 def with_docker_machine():
     try:
         vm_name = docker_machine.vm_name()
@@ -32,17 +28,6 @@ def with_docker_machine():
         if output:
             return output
         else:
-            raise DockerMachineError('docker-machine host is not running.')
+            raise DockerMachineNotRunningError('docker-machine host is not running.')
     except CalledProcessError:
-        raise DockerMachineError('docker-machine host is not running.')
-
-
-def with_boot2docker():
-    try:
-        return terminal.boot2docker_ip()
-    except CalledProcessError:
-        raise Boot2DockerError('boot2docker host is not running.')
-
-
-def with_hostname():
-    return terminal.hostname()
+        raise DockerMachineNotRunningError('docker-machine host is not running.')

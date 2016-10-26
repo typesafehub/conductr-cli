@@ -1,9 +1,7 @@
 import json
 import logging
-import sys
 import urllib
 import arrow
-import os
 
 from pyhocon.exceptions import ConfigException
 from requests import status_codes
@@ -11,13 +9,10 @@ from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal, docker_machine
-from conductr_cli.exceptions import DockerMachineError, Boot2DockerError, MalformedBundleError, BundleResolutionError, \
-    WaitTimeoutError, InsecureFilePermissions
+from conductr_cli.exceptions import AmbiguousDockerVmError, DockerMachineNotRunningError, \
+    DockerMachineCannotConnectToDockerError, MalformedBundleError, BundleResolutionError,  \
+    WaitTimeoutError, InsecureFilePermissions, NOT_FOUND_ERROR
 from subprocess import CalledProcessError
-
-
-# FileNotFoundError is only available on > python 3.3
-NOT_FOUND_ERROR = getattr(__builtins__, 'FileNotFoundError', OSError)
 
 
 def connection_error(log, err, args):
@@ -214,22 +209,40 @@ def raise_for_status_inc_3xx(response):
         raise HTTPError(status_codes._codes[response.status_code], response=response)  # FIXME: _codes is protected
 
 
-def handle_docker_vm_error(func):
-    vm_name = docker_machine.vm_name()
+def handle_ambiguous_vm_error(func):
 
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except DockerMachineError:
+        except AmbiguousDockerVmError:
             log = get_logger_for_func(func)
-            log.error('Docker VM has not been started.')
+            log.error('Docker native is installed and Docker machine environment variables are set.')
+            log.error('It is uncertain which Docker VM should be used.')
+            log.error('If Docker native should be used please unset the Docker machine environment variables:')
+            log.error('  DOCKER_CERT_PATH')
+            log.error('  DOCKER_HOST')
+            log.error('  DOCKER_MACHINE_NAME')
+            log.error('  DOCKER_TLS_VERIFY')
+            log.error('If Docker machine should be used please uninstall Docker native.')
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_docker_machine_not_running_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except DockerMachineNotRunningError:
+            vm_name = docker_machine.vm_name()
+            log = get_logger_for_func(func)
+            log.error('Docker machine VM has not been started.')
             log.error('Use the following command to start the VM:')
             log.error('  docker-machine start {}'.format(vm_name))
-        except Boot2DockerError:
-            log = get_logger_for_func(func)
-            log.error('Docker VM has not been started.')
-            log.error('Use the following command to start the VM:')
-            log.error('  boot2docker up')
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
@@ -238,73 +251,51 @@ def handle_docker_vm_error(func):
     return handler
 
 
-def handle_docker_errors(func):
-    log = get_logger_for_func(func)
-    vm_name = docker_machine.vm_name()
-
-    def handle_linux():
-        log.error('The docker service has not been started.')
-        log.error('To start the docker service run:')
-        log.error('  sudo service docker start')
-
-    def handle_non_linux(*args, **kwargs):
-        log.info('Docker could not connect to the docker VM.')
-        log.info('It looks like the docker environment variables are not set. Let me try to set them..')
-        [set_env(env[0], env[1]) for env in resolve_envs()]
-        try:
-            terminal.docker_ps()
-            log.info('The Docker environment variables have been set for this command.')
-            log.info('Continue processing..')
-            log.warning('To set the environment variables for each terminal session '
-                        'follow the instructions of the command:')
-            log.warning('  docker-machine env {}'.format(vm_name))
-            log.info('')
-            return func(*args, **kwargs)
-        except CalledProcessError:
-            log.error('Docker could not be configured automatically.')
-            log.error('Please set the docker environment variables.')
-
-    def resolve_envs():
-        try:
-            env_lines = terminal.docker_machine_env(vm_name)
-            log.info('Retrieved docker environment variables with `docker-machine env {}`'.format(vm_name))
-        except NOT_FOUND_ERROR:
-            try:
-                env_lines = terminal.boot2docker_shellinit()
-                log.info('Retrieved docker environment variables with: boot2docker shellinit')
-                log.warning('boot2docker is deprecated. Upgrade to docker-machine.')
-            except NOT_FOUND_ERROR:
-                return []
-        return [resolve_env(line) for line in env_lines if line.startswith('export')]
-
-    def resolve_env(line):
-        key = line.partition(' ')[-1].partition('=')[0]
-        value = line.partition(' ')[-1].partition('=')[2].strip('"')
-        return key, value
-
-    def set_env(key, value):
-        log.info('Set environment variable: {}="{}"'.format(key, value))
-        os.environ[key] = value
+def handle_docker_machine_cannot_connect_to_docker_error(func):
 
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except CalledProcessError:
-            if sys.platform == 'linux' or sys.platform == 'linux2':
-                return handle_linux()
-            else:
-                return handle_non_linux(*args, **kwargs)
-
-        except NOT_FOUND_ERROR:
-            log.error('docker command has not been found.')
-            log.error('The sandbox need Docker to run the ConductR nodes in virtual containers.')
-            log.error('Please install Docker first: https://www.docker.com')
+        except DockerMachineCannotConnectToDockerError:
+            log = get_logger_for_func(func)
+            log.info('It looks like the Docker machine environment variables are not set correctly.')
+            log.info('Let me try to reset the Docker machine environment variables..')
+            docker_machine_vm_name = docker_machine.vm_name()
+            [docker_machine.set_env(env[0], env[1]) for env in docker_machine.envs(docker_machine_vm_name)]
+            try:
+                terminal.docker_info()
+                log.warning('To set the environment variables for each terminal session '
+                            'follow the instructions of the command:')
+                log.warning('  docker-machine env {}'.format(docker_machine_vm_name))
+                return func(*args, **kwargs)
+            except (AttributeError, CalledProcessError):
+                log.error('Docker still cannot connect to the Docker machine VM.')
+                log.error('Please set the docker environment variables.')
+                log.error('Afterwards verify that docker is up and running with: docker info')
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
+
+
+def handle_vbox_manage_not_found_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except NOT_FOUND_ERROR:
+            log = get_logger_for_func(func)
+            log.error('VBoxManage command not found')
+            log.error('Make sure VirtualBox is installed and VBoxManage is in the path')
+            exit(1)
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler    
 
 
 def format_timestamp(timestamp, args):
