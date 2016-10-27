@@ -61,8 +61,12 @@ def load_v1(args):
     if configuration_file is not None:
         files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
 
-    if configuration_file and os.path.exists(configuration_file):
-        os.remove(configuration_file)
+    # TODO: Delete the bundle configuration file.
+    # Currently, this results into a permission error on Windows.
+    # Therefore, the deletion is disabled for now.
+    # Issue: https://github.com/typesafehub/conductr-cli/issues/175
+    # if configuration_file and os.path.exists(configuration_file):
+    #    os.remove(configuration_file)
 
     log.info('Loading bundle to ConductR...')
     # At the time when this comment is being written, we need to pass the Host header when making HTTP request due to
@@ -157,8 +161,12 @@ def load_v2(args):
         if configuration_file is not None:
             files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
 
-        if configuration_file and os.path.exists(configuration_file):
-            os.remove(configuration_file)
+        # TODO: Delete the bundle configuration file.
+        # Currently, this results into a permission error on Windows.
+        # Therefore, the deletion is disabled for now.
+        # Issue: https://github.com/typesafehub/conductr-cli/issues/175
+        # if configuration_file and os.path.exists(configuration_file):
+        #     os.remove(configuration_file)
 
         url = conduct_url.url('bundles', args)
 
