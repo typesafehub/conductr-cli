@@ -78,7 +78,7 @@ def start_nodes(args, ports, features):
         # Display the ports on the command line. Only if the user specifies a certain feature, then
         # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
         if ports:
-            host_ip = host.resolve_host_ip()
+            host_ip = host.resolve_ip_by_vm_type(args.vm_type)
             ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port))
                                                    for port in sorted(ports)])
         else:

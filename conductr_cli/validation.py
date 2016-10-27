@@ -295,7 +295,7 @@ def handle_vbox_manage_not_found_error(func):
     # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
-    return handler    
+    return handler
 
 
 def format_timestamp(timestamp, args):

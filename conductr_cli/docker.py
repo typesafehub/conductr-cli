@@ -36,4 +36,3 @@ def vm_type():
         return DockerVmType.DOCKER_MACHINE
     else:
         return DockerVmType.NONE
-

@@ -122,4 +122,4 @@ def vbox_manage_cmd():
             vbox_cmd = vbox_32_path
         elif os.path.exists(vbox_64_path):
             vbox_cmd = vbox_64_path
-    return vbox_cmd        
+    return vbox_cmd
