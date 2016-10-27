@@ -1,4 +1,4 @@
-from conductr_cli import conduct_url, sandbox_common, terminal, validation, sandbox_stop
+from conductr_cli import conduct_url, terminal, validation, sandbox_stop, host
 from conductr_cli.constants import DEFAULT_PORT, DEFAULT_API_VERSION
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
@@ -18,12 +18,14 @@ DEFAULT_WAIT_RETRY_INTERVAL = 1.0
 
 # Arguments for conduct requests, such as waiting for ConductR to start in the sandbox
 class ConductArgs:
-    ip = sandbox_common.resolve_host_ip()
+
+    def __init__(self, vm_type):
+        self.ip = host.resolve_ip_by_vm_type(vm_type)
+
     port = DEFAULT_PORT
     api_version = DEFAULT_API_VERSION
 
 
-@validation.handle_docker_errors
 @validation.handle_connection_error
 @validation.handle_http_error
 def run(args):
@@ -76,7 +78,7 @@ def start_nodes(args, ports, features):
         # Display the ports on the command line. Only if the user specifies a certain feature, then
         # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
         if ports:
-            host_ip = sandbox_common.resolve_host_ip()
+            host_ip = host.resolve_ip_by_vm_type(args.vm_type)
             ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port))
                                                    for port in sorted(ports)])
         else:
@@ -185,7 +187,7 @@ def wait_for_start(args):
         print('Waiting for ConductR to start', end='', flush=True)
         retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
         interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
-        is_started = wait_for_conductr(0, retries, interval)
+        is_started = wait_for_conductr(args, 0, retries, interval)
         print('')
         if is_started:
             log.info('ConductR has been started. Check current bundle status with: conduct info')
@@ -194,11 +196,11 @@ def wait_for_start(args):
             log.error('Try to increase the CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL.')
 
 
-def wait_for_conductr(current_retry, max_retries, interval):
+def wait_for_conductr(args, current_retry, max_retries, interval):
     for attempt in range(0, max_retries):
         time.sleep(interval)
         print('.', end='', flush=True)
-        conduct_args = ConductArgs()
+        conduct_args = ConductArgs(args.vm_type)
         url = conduct_url.url('members', conduct_args)
         try:
             requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT, headers=conduct_url.request_headers(conduct_args))

@@ -277,19 +277,20 @@ def run(_args=[]):
     if not vars(args).get('func'):
         parser.print_help()
     else:
-        # Add custom plugin dir to import path
-        custom_plugins_dir = vars(args).get('custom_plugins_dir')
-        if custom_plugins_dir:
-            sys.path.append(custom_plugins_dir)
+        if not vars(args).get('func').__name__ == 'version':
+            # Add custom plugin dir to import path
+            custom_plugins_dir = vars(args).get('custom_plugins_dir')
+            if custom_plugins_dir:
+                sys.path.append(custom_plugins_dir)
 
-        # Resolve default ip if the --ip argument hasn't been specified
-        if not vars(args).get('ip'):
-            # Returns None if an error has occurred
-            args.ip = host.resolve_default_ip()
-            if not args.ip:
-                return
-        else:
-            args.local_connection = False
+            # Resolve default ip if the --ip argument hasn't been specified
+            if not vars(args).get('ip'):
+                # Returns None if an error has occurred
+                args.ip = host.resolve_default_ip()
+                if not args.ip:
+                    exit(1)
+            else:
+                args.local_connection = False
 
         args.cli_parameters = get_cli_parameters(args)
         args.custom_settings = get_custom_settings(args)

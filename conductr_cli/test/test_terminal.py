@@ -189,39 +189,6 @@ class TestTerminal(CliTestCase):
         self.assertEqual(result, mock_output)
         check_output_mock.assert_called_with(['docker-machine', 'help'], universal_newlines=True)
 
-    def test_boot2docker_shellinit(self):
-        output = strip_margin("""|Writing /Users/mj/.boot2docker/certs/boot2docker-vm/ca.pem
-                                 |Writing /Users/mj/.boot2docker/certs/boot2docker-vm/cert.pem
-                                 |Writing /Users/mj/.boot2docker/certs/boot2docker-vm/key.pem
-                                 |    export DOCKER_HOST=tcp://192.168.59.103:2376
-                                 |    export DOCKER_CERT_PATH=/Users/mj/.boot2docker/certs/boot2docker-vm
-                                 |    export DOCKER_TLS_VERIFY=1
-                                 |""")
-        check_output_mock = MagicMock(return_value=output)
-
-        with patch('subprocess.check_output', check_output_mock):
-            result = terminal.boot2docker_shellinit()
-
-        expected_result = ['Writing /Users/mj/.boot2docker/certs/boot2docker-vm/ca.pem',
-                           'Writing /Users/mj/.boot2docker/certs/boot2docker-vm/cert.pem',
-                           'Writing /Users/mj/.boot2docker/certs/boot2docker-vm/key.pem',
-                           'export DOCKER_HOST=tcp://192.168.59.103:2376',
-                           'export DOCKER_CERT_PATH=/Users/mj/.boot2docker/certs/boot2docker-vm',
-                           'export DOCKER_TLS_VERIFY=1']
-
-        self.assertEqual(result, expected_result)
-        check_output_mock.assert_called_with(['boot2docker', 'shellinit'], universal_newlines=True)
-
-    def test_boot2docker_ip(self):
-        ip = '192.168.99.100'
-        check_output_mock = MagicMock(return_value='{}\n'.format(ip))
-
-        with patch('subprocess.check_output', check_output_mock):
-            result = terminal.boot2docker_ip()
-
-        self.assertEqual(result, ip)
-        check_output_mock.assert_called_with(['boot2docker', 'ip'], universal_newlines=True)
-
     def test_vbox_manage_increase_ram(self):
         vm_name = 'default'
         ram_size = '2048'
@@ -267,13 +234,3 @@ class TestTerminal(CliTestCase):
 
         self.assertEqual(result, 2)
         check_output_mock.assert_called_with(['VBoxManage', 'showvminfo', vm_name], universal_newlines=True)
-
-    def test_hostname(self):
-        hostname = 'my-hostname'
-        check_output_mock = MagicMock(return_value='{}\n'.format(hostname))
-
-        with patch('subprocess.check_output', check_output_mock):
-            result = terminal.hostname()
-
-        self.assertEqual(result, hostname)
-        check_output_mock.assert_called_with(['hostname'], universal_newlines=True)

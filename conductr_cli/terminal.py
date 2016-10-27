@@ -1,4 +1,6 @@
 import subprocess
+import os
+from conductr_cli.exceptions import NOT_FOUND_ERROR, VBoxManageNotFoundError
 
 
 def docker_info():
@@ -71,20 +73,12 @@ def docker_machine_help():
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
-def boot2docker_shellinit():
-    cmd = ['boot2docker', 'shellinit']
-    output = subprocess.check_output(cmd, universal_newlines=True)
-    return [line.strip() for line in output.splitlines()]
-
-
-def boot2docker_ip():
-    cmd = ['boot2docker', 'ip']
-    return subprocess.check_output(cmd, universal_newlines=True).strip()
-
-
 def vbox_manage_increase_ram(vm_name, ram_size):
-    cmd = ['VBoxManage', 'modifyvm', vm_name, '--memory', ram_size]
-    return subprocess.check_output(cmd, universal_newlines=True).strip()
+    try:
+        cmd = [vbox_manage_cmd(), 'modifyvm', vm_name, '--memory', ram_size]
+        return subprocess.check_output(cmd, universal_newlines=True).strip()
+    except NOT_FOUND_ERROR:
+        raise VBoxManageNotFoundError('VBoxManage command not found')
 
 
 def vbox_manage_get_ram_size(vm_name):
@@ -93,8 +87,11 @@ def vbox_manage_get_ram_size(vm_name):
 
 
 def vbox_manage_increase_cpu(vm_name, no_of_cpu):
-    cmd = ['VBoxManage', 'modifyvm', vm_name, '--cpus', no_of_cpu]
-    return subprocess.check_output(cmd, universal_newlines=True).strip()
+    try:
+        cmd = [vbox_manage_cmd(), 'modifyvm', vm_name, '--cpus', no_of_cpu]
+        return subprocess.check_output(cmd, universal_newlines=True).strip()
+    except NOT_FOUND_ERROR:
+        raise VBoxManageNotFoundError('VBoxManage command not found')
 
 
 def vbox_manage_get_cpu_count(vm_name):
@@ -103,15 +100,26 @@ def vbox_manage_get_cpu_count(vm_name):
 
 
 def vbox_manage_get_info(vm_name, vm_property):
-    cmd = ['VBoxManage', 'showvminfo', vm_name]
-    output = subprocess.check_output(cmd, universal_newlines=True).strip()
-    matching_lines = [line for line in output.split('\n') if line.startswith('{}:'.format(vm_property))]
-    if matching_lines:
-        key, value = matching_lines[0].split(':')
-        return value.strip()
-    else:
-        return None
+    try:
+        cmd = [vbox_manage_cmd(), 'showvminfo', vm_name]
+        output = subprocess.check_output(cmd, universal_newlines=True).strip()
+        matching_lines = [line for line in output.split('\n') if line.startswith('{}:'.format(vm_property))]
+        if matching_lines:
+            key, value = matching_lines[0].split(':')
+            return value.strip()
+        else:
+            return None
+    except NOT_FOUND_ERROR:
+        raise VBoxManageNotFoundError('VBoxManage command not found')
 
 
-def hostname():
-    return subprocess.check_output(['hostname'], universal_newlines=True).strip()
+def vbox_manage_cmd():
+    vbox_cmd = 'VBoxManage'
+    if os.name == 'nt':
+        vbox_32_path = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
+        vbox_64_path = 'C:\Program Files (x86)\Oracle\VirtualBox\VBoxManage.exe'
+        if os.path.exists(vbox_32_path):
+            vbox_cmd = vbox_32_path
+        elif os.path.exists(vbox_64_path):
+            vbox_cmd = vbox_64_path
+    return vbox_cmd
