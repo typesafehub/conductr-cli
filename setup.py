@@ -12,7 +12,15 @@ install_requires = [
     'argcomplete>=0.8.1',
     'pyhocon==0.2.1',
     'arrow>=0.6.0',
-    'dcos>=0.4.15, <0.5.0'
+
+    # FIXME: Remove the following dependencies when dcos can be depended on
+    'jsonschema==2.4',  # pin the exact version, jsonschema 2.5 broke py3
+    'pager>=3.3, <4.0',
+    'prettytable>=0.7, <1.0',
+    'pygments>=2.0, <3.0',
+    'requests>=2.6, <3.0',
+    'six>=1.9, <2.0',
+    'toml>=0.9, <1.0',
 ]
 if sys.version_info[:2] == (3, 2):
     install_requires.extend([

@@ -284,15 +284,20 @@ def build_parser(dcos_mode):
 def get_cli_parameters(args):
     parameters = ['']
     if not args.dcos_mode:
-        if vars(args).get('scheme') != DEFAULT_SCHEME:
+        arg = vars(args).get('scheme')
+        if arg and arg != DEFAULT_SCHEME:
             parameters.append('--scheme {}'.format(args.scheme))
-        if vars(args).get('ip') != host.resolve_default_ip():
+        arg = vars(args).get('ip')
+        if arg and arg != host.resolve_default_ip():
             parameters.append('--ip {}'.format(args.ip))
-        if vars(args).get('port', int(DEFAULT_PORT)) != int(DEFAULT_PORT):
+        arg = vars(args).get('port', int(DEFAULT_PORT))
+        if arg and arg != int(DEFAULT_PORT):
             parameters.append('--port {}'.format(args.port))
-        if vars(args).get('base_path', DEFAULT_BASE_PATH) != DEFAULT_BASE_PATH:
+        arg = vars(args).get('base_path', DEFAULT_BASE_PATH)
+        if arg and arg != DEFAULT_BASE_PATH:
             parameters.append('--base-path {}'.format(args.base_path))
-    if vars(args).get('api_version', DEFAULT_API_VERSION) != DEFAULT_API_VERSION:
+    arg = vars(args).get('api_version', DEFAULT_API_VERSION)
+    if arg and arg != DEFAULT_API_VERSION:
         parameters.append('--api-version {}'.format(args.api_version))
     return ' '.join(parameters)
 

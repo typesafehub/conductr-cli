@@ -177,6 +177,9 @@ For pointers on command usage run ``shazar -h``.
 Developers
 ~~~~~~~~~~
 
+> Note that we presently package the dcos library as source. When https://github.com/dcos/dcos-cli/pull/823 becomes available then
+we should remove this directory and depend on it directly.
+
 For OS X, you should ensure firstly that you have the latest Xcode command line tools installed.
 
 Now install the latest python3 version on your system, on OS X use:
