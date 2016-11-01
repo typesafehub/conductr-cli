@@ -41,9 +41,9 @@ class TestConduct(TestCase):
         self.assertEqual(args.long_ids, False)
 
     def test_parser_services(self):
-        args = self.parser.parse_args('services'.split())
+        args = self.parser.parse_args('service-names'.split())
 
-        self.assertEqual(args.func.__name__, 'services')
+        self.assertEqual(args.func.__name__, 'service_names')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '2')

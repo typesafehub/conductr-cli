@@ -1,7 +1,7 @@
 import argcomplete
 import argparse
 from conductr_cli import \
-    conduct_info, conduct_load, conduct_run, conduct_services,\
+    conduct_info, conduct_load, conduct_run, conduct_service_names,\
     conduct_stop, conduct_unload, conduct_version, conduct_logs,\
     conduct_events, conduct_acls, conduct_dcos, host, logging_setup
 from conductr_cli.constants import \
@@ -168,11 +168,11 @@ def build_parser(dcos_mode):
     add_default_arguments(info_parser, dcos_mode)
     info_parser.set_defaults(func=conduct_info.info)
 
-    # Sub-parser for `services` sub-command
-    services_parser = subparsers.add_parser('services',
-                                            help='print service information')
-    add_default_arguments(services_parser, dcos_mode)
-    services_parser.set_defaults(func=conduct_services.services)
+    # Sub-parser for `service-names` sub-command
+    service_names_parser = subparsers.add_parser('service-names',
+                                                 help='print the service names available to the service locator')
+    add_default_arguments(service_names_parser, dcos_mode)
+    service_names_parser.set_defaults(func=conduct_service_names.service_names)
 
     # Sub-parser for `acls` sub-command
     acls_parser = subparsers.add_parser('acls',
