@@ -7,8 +7,8 @@ from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 @validation.handle_connection_error
 @validation.handle_http_error
-def services(args):
-    """`conduct services` command"""
+def service_names(args):
+    """`conduct service-names` command"""
 
     log = logging.getLogger(__name__)
     url = conduct_url.url('bundles', args)

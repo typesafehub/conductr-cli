@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_warn
-from conductr_cli import conduct_services, logging_setup
+from conductr_cli import conduct_service_names, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 
@@ -9,7 +9,7 @@ except ImportError:
     from mock import patch, MagicMock
 
 
-class TestConductServicesCommand(CliTestCase):
+class TestConductServiceNamesCommand(CliTestCase):
 
     default_args = {
         'dcos_mode': False,
@@ -31,7 +31,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**self.default_args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
@@ -48,7 +48,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**self.default_args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
@@ -75,7 +75,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**self.default_args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
@@ -97,7 +97,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**self.default_args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
@@ -119,7 +119,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
@@ -142,7 +142,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
@@ -159,7 +159,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**self.default_args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
@@ -177,7 +177,7 @@ class TestConductServicesCommand(CliTestCase):
         input_args = MagicMock(**self.default_args)
         with patch('requests.get', http_method):
             logging_setup.configure_logging(input_args, stdout)
-            result = conduct_services.services(input_args)
+            result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
