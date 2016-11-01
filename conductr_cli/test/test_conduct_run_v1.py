@@ -17,8 +17,12 @@ class TestConductRunCommand(ConductRunTestBase):
         self.bundle_id = '45e0c477d3e5ea92aa8d85c0d8f3e25c'
         self.scale = 3
         self.default_args = {
+            'dcos_mode': False,
+            'command': 'conduct',
+            'scheme': 'http',
             'ip': '127.0.0.1',
             'port': 9005,
+            'base_path': '/',
             'api_version': '1',
             'verbose': False,
             'quiet': False,

@@ -1,5 +1,5 @@
+from conductr_cli import conduct_request
 import re
-import requests
 
 
 SSE_REQUEST_INPUT = {
@@ -59,24 +59,21 @@ class Client:
     - Parse only for event and data string within SSE
     - No support for retries and last event id
     """
-    def __init__(self, url, headers=None):
+    def __init__(self, dcos_mode, host, url, headers=None):
+        self.dcos_mode = dcos_mode
+        self.host = host
         self.url = url
         self.headers = headers
-        self.response = None
+        self.responseIter = None
 
     def connect(self):
         sse_request_input = dict(SSE_REQUEST_INPUT)
         if self.headers:
             sse_request_input['headers'].update(self.headers)
 
-        # At the time when this comment is being written, we need to pass the Host header when making HTTP request due
-        # to a bug with requests python library not working properly when IPv6 address is supplied:
-        # https://github.com/kennethreitz/requests/issues/3002
-        # The workaround for this problem is to explicitly set the Host header when making HTTP request.
-        # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
-        response = requests.get(self.url, stream=True, **sse_request_input)
+        response = conduct_request.get(self.dcos_mode, self.host, self.url, stream=True, **sse_request_input)
         response.raise_for_status()
-        self.response = response
+        self.responseIter = response.iter_content(decode_unicode=True)
 
     def __iter__(self):
         return self
@@ -84,7 +81,7 @@ class Client:
     def __next__(self):
         buf = ''
         while not is_event_complete(buf):
-            next_char = next(self.response.iter_content(decode_unicode=True))
+            next_char = next(self.responseIter)
             buf += next_char
 
         split = re.split(SSE_END_OF_FIELD, buf)
@@ -92,7 +89,7 @@ class Client:
         return parse_event(raw_sse)
 
 
-def get_events(url, headers=None):
-    client = Client(url, headers)
+def get_events(dcos_mode, host, url, headers=None):
+    client = Client(dcos_mode, host, url, headers)
     client.connect()
     return client

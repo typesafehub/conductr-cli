@@ -1,11 +1,10 @@
-from conductr_cli import conduct_url, terminal, validation, sandbox_stop, host
-from conductr_cli.constants import DEFAULT_PORT, DEFAULT_API_VERSION
+from conductr_cli import conduct_request, conduct_url, terminal, validation, sandbox_stop, host
+from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
 from conductr_cli.sandbox_features import collect_features
 from requests.exceptions import ConnectionError
 
-import requests
 import logging
 import os
 import time
@@ -22,7 +21,9 @@ class ConductArgs:
     def __init__(self, vm_type):
         self.ip = host.resolve_ip_by_vm_type(vm_type)
 
+    scheme = DEFAULT_SCHEME
     port = DEFAULT_PORT
+    base_path = DEFAULT_BASE_PATH
     api_version = DEFAULT_API_VERSION
 
 
@@ -89,6 +90,7 @@ def start_nodes(args, ports, features):
         conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, i)
         run_conductr_cmd(
             i,
+            args.nr_of_containers,
             container_name,
             cond0_ip,
             args.envs,
@@ -128,10 +130,10 @@ def resolve_conductr_roles_by_container(conductr_roles, instance):
         return conductr_roles[remaining_instance - 1]
 
 
-def run_conductr_cmd(instance, container_name, cond0_ip, envs, image, log_level, ports,
+def run_conductr_cmd(instance, nr_of_instances, container_name, cond0_ip, envs, image, log_level, ports,
                      bundle_http_port, feature_names, conductr_roles):
     general_args = ['-d', '--name', container_name]
-    env_args = resolve_docker_run_envs(envs, log_level, cond0_ip, feature_names, conductr_roles)
+    env_args = resolve_docker_run_envs(instance, nr_of_instances, envs, log_level, cond0_ip, feature_names, conductr_roles)
     all_conductr_ports = CONDUCTR_PORTS | {bundle_http_port}
     port_args = resolve_docker_run_port_args(ports | all_conductr_ports, instance)
     optional_args = general_args + env_args + port_args
@@ -140,12 +142,13 @@ def run_conductr_cmd(instance, container_name, cond0_ip, envs, image, log_level,
     terminal.docker_run(optional_args + additional_optional_args, image, positional_args)
 
 
-def resolve_docker_run_envs(envs, log_level, cond0_ip, feature_names, conductr_roles):
+def resolve_docker_run_envs(instance, nr_of_instances, envs, log_level, cond0_ip, feature_names, conductr_roles):
+    instance_env = ['CONDUCTR_INSTANCE={}'.format(instance), 'CONDUCTR_NR_OF_INSTANCES={}'.format(nr_of_instances)]
     log_level_env = ['AKKA_LOGLEVEL={}'.format(log_level)]
     syslog_ip_env = ['SYSLOG_IP={}'.format(cond0_ip)] if cond0_ip else []
     conductr_features_env = ['CONDUCTR_FEATURES={}'.format(','.join(feature_names))] if feature_names else []
     conductr_roles_env = ['CONDUCTR_ROLES={}'.format(','.join(conductr_roles))] if conductr_roles else []
-    all_envs = envs + log_level_env + syslog_ip_env + conductr_features_env + conductr_roles_env
+    all_envs = envs + instance_env + log_level_env + syslog_ip_env + conductr_features_env + conductr_roles_env
     env_args = []
     for env in all_envs:
         env_args.append('-e')
@@ -203,7 +206,7 @@ def wait_for_conductr(args, current_retry, max_retries, interval):
         conduct_args = ConductArgs(args.vm_type)
         url = conduct_url.url('members', conduct_args)
         try:
-            requests.get(url, timeout=DEFAULT_HTTP_TIMEOUT, headers=conduct_url.request_headers(conduct_args))
+            conduct_request.get(dcos_mode=False, host=conduct_args.ip, url=url, timeout=DEFAULT_HTTP_TIMEOUT)
             break
         except ConnectionError:
             current_retry += 1
