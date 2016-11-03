@@ -1,6 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase
 from conductr_cli import main_handler
-from conductr_cli.constants import DEFAULT_ERROR_LOG_FILE
+from conductr_cli.constants import DEFAULT_CLI_SETTINGS_DIR, DEFAULT_ERROR_LOG_FILE
 import sys
 
 
@@ -47,11 +47,16 @@ class TestMainHandler(CliTestCase):
         get_logger_mock = MagicMock(side_effect=[main_log, exception_log])
         sys_exit_mock = MagicMock()
 
+        makedirs_mock = MagicMock()
+
         with patch('logging.getLogger', get_logger_mock), \
                 patch('logging.Formatter', create_formatter_mock), \
                 patch('logging.handlers.RotatingFileHandler', create_rotating_file_handler_mock), \
+                patch('os.makedirs', makedirs_mock), \
                 patch('sys.exit', sys_exit_mock):
             main_handler.run(raise_unhandled_error)
+
+        makedirs_mock.assert_called_with(DEFAULT_CLI_SETTINGS_DIR)
 
         self.assertEqual(get_logger_mock.call_args_list, [
             call('conductr_cli.main'),
