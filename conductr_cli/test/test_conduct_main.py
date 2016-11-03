@@ -154,17 +154,17 @@ class TestConduct(TestCase):
         self.assertEqual(args.dcos_info, True)
 
     def test_get_cli_parameters(self):
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9005, api_version='2')
+        args = Namespace(scheme='http', ip='127.0.0.1', port=9005, api_version='2')
         self.assertEqual(get_cli_parameters(args), '')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.1.1', port=9005)
+        args = Namespace(scheme='http', ip='127.0.1.1', port=9005)
         self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9006)
+        args = Namespace(scheme='http', ip='127.0.0.1', port=9006)
         self.assertEqual(get_cli_parameters(args), ' --port 9006')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9005, api_version='1')
+        args = Namespace(scheme='http', ip='127.0.0.1', port=9005, api_version='1')
         self.assertEqual(get_cli_parameters(args), ' --api-version 1')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.1.1', port=9006, api_version='1')
+        args = Namespace(scheme='http', ip='127.0.1.1', port=9006, api_version='1')
         self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1 --port 9006 --api-version 1')
