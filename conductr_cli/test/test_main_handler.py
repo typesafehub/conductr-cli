@@ -56,7 +56,7 @@ class TestMainHandler(CliTestCase):
                 patch('sys.exit', sys_exit_mock):
             main_handler.run(raise_unhandled_error)
 
-        makedirs_mock.assert_called_with(DEFAULT_CLI_SETTINGS_DIR)
+        makedirs_mock.assert_called_with(DEFAULT_CLI_SETTINGS_DIR, exist_ok=True)
 
         self.assertEqual(get_logger_mock.call_args_list, [
             call('conductr_cli.main'),
