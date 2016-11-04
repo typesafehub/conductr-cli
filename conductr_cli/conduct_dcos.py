@@ -18,7 +18,7 @@ def setup(args):
     if os.path.exists(dst):
         os.remove(dst)
     else:
-        os.makedirs(os.path.dirname(dst))
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
     os.symlink(src, dst)
     log.screen('The DC/OS CLI is now configured.\n'
                'Prefix \'conduct\' with \'dcos\' when you want to contact ConductR on DC/OS e.g. \'dcos conduct info\'')

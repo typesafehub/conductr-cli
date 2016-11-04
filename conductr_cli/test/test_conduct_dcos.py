@@ -14,6 +14,7 @@ class TestConductDcosCommand(CliTestCase):
     def test_success(self):
         args = MagicMock()
         stdout = MagicMock()
+        makedirs = MagicMock()
         symlink = MagicMock()
 
         logging_setup.configure_logging(args, stdout)
@@ -21,10 +22,43 @@ class TestConductDcosCommand(CliTestCase):
         with patch('shutil.which', lambda x: '/somefile'), \
                 patch('os.path.exists', lambda x: True), \
                 patch('os.remove', lambda x: True), \
+                patch('os.makedirs', makedirs), \
                 patch('os.symlink', symlink):
             result = conduct_dcos.setup(args)
         self.assertTrue(result)
 
+        makedirs.assert_not_called()
+
+        symlink.assert_called_with('/somefile',
+                                   '{}/.dcos/subcommands/conductr/env/bin/dcos-conduct'.format(os.path.expanduser('~')))
+
+        self.assertEqual(
+            strip_margin("""|The DC/OS CLI is now configured.
+                            |Prefix \'conduct\' with \'dcos\' when you want to contact ConductR on DC/OS e.g. \'dcos conduct info\'
+                            |"""),
+            self.output(stdout))
+
+    def test_create_dir(self):
+        args = MagicMock()
+        stdout = MagicMock()
+        remove = MagicMock()
+        makedirs = MagicMock()
+        symlink = MagicMock()
+
+        logging_setup.configure_logging(args, stdout)
+
+        with patch('shutil.which', lambda x: '/somefile'), \
+                patch('os.path.exists', lambda x: False), \
+                patch('os.remove', remove), \
+                patch('os.makedirs', makedirs), \
+                patch('os.symlink', symlink):
+            result = conduct_dcos.setup(args)
+        self.assertTrue(result)
+
+        remove.assert_not_called()
+
+        makedirs.assert_called_with('{}/.dcos/subcommands/conductr/env/bin'.format(os.path.expanduser('~')),
+                                    exist_ok=True)
         symlink.assert_called_with('/somefile',
                                    '{}/.dcos/subcommands/conductr/env/bin/dcos-conduct'.format(os.path.expanduser('~')))
 

@@ -19,7 +19,7 @@ def run(callback):
 
         # Ensure log dir is present before errors are being logged
         log_dir = os.path.abspath(os.path.join(DEFAULT_ERROR_LOG_FILE, '..'))
-        os.makedirs(log_dir)
+        os.makedirs(log_dir, exist_ok=True)
 
         log = logging.getLogger('conductr_cli.main')
         log.error('Encountered unexpected error.')
