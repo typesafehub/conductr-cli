@@ -1,18 +1,17 @@
 from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
-from conductr_cli import bundle_utils, conduct_request, conduct_url, validation
+from conductr_cli import bundle_utils, conduct_request, conduct_url, screen_utils, validation
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
 from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR
 from functools import partial
+from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
+import io
 import os
 import stat
 import json
 import logging
-
-
-LOAD_HTTP_TIMEOUT = 30
 
 
 @validation.handle_connection_error
@@ -68,7 +67,10 @@ def load_v1(args):
     #    os.remove(configuration_file)
 
     log.info('Loading bundle to ConductR...')
-    response = conduct_request.post(args.dcos_mode, args.ip, url, files=files, timeout=LOAD_HTTP_TIMEOUT)
+    multipart = create_multipart(log, files)
+    response = conduct_request.post(args.dcos_mode, args.ip, url,
+                                    data=multipart,
+                                    headers={'Content-Type': multipart.content_type})
     validation.raise_for_status_inc_3xx(response)
 
     if log.is_verbose_enabled():
@@ -136,7 +138,7 @@ def load_v2(args):
     validate_cache_dir_permissions(resolve_cache_dir, log)
 
     bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
-    bundle_conf = bundle_utils.zip_entry('bundle.conf', bundle_file)
+    bundle_conf = bundle_utils.conf(bundle_file)
 
     if bundle_conf is None:
         raise MalformedBundleError('Unable to find bundle.conf within the bundle file')
@@ -146,11 +148,11 @@ def load_v2(args):
             log.info('Retrieving configuration...')
             configuration_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
                                                                              args.configuration)
-            bundle_conf_overlay = bundle_utils.zip_entry('bundle.conf', configuration_file)
+            bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
-        files = [('bundleConf', ('bundle.conf', bundle_conf))]
+        files = [('bundleConf', ('bundle.conf', string_io(bundle_conf)))]
         if bundle_conf_overlay is not None:
-            files.append(('bundleConfOverlay', ('bundle.conf', bundle_conf_overlay)))
+            files.append(('bundleConfOverlay', ('bundle.conf', string_io(bundle_conf_overlay))))
         files.append(('bundle', (bundle_name, open(bundle_file, 'rb'))))
         if configuration_file is not None:
             files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
@@ -165,7 +167,11 @@ def load_v2(args):
         url = conduct_url.url('bundles', args)
 
         log.info('Loading bundle to ConductR...')
-        response = conduct_request.post(args.dcos_mode, args.ip, url, files=files, timeout=LOAD_HTTP_TIMEOUT)
+        multipart = create_multipart(log, files)
+
+        response = conduct_request.post(args.dcos_mode, args.ip, url,
+                                        data=multipart,
+                                        headers={'Content-Type': multipart.content_type})
         validation.raise_for_status_inc_3xx(response)
 
         if log.is_verbose_enabled():
@@ -186,3 +192,33 @@ def load_v2(args):
             log.quiet(response_json['bundleId'])
 
     return True
+
+
+def create_multipart(log, files):
+    encoder = MultipartEncoder(files)
+    return MultipartEncoderMonitor(encoder, conduct_load_progress_monitor(log))
+
+
+def conduct_load_progress_monitor(log):
+    # The MultipartEncoderMonitor in the requests-toolbelt will invoke the callback once more after all data has been
+    # uploaded.
+    # Because of this, the upload_completed flag is required to ensure the callback is not called after all data has
+    # been uploaded.
+    # Without this flag, the scrollbar will progress until 100% as expected, and when it hits 100% the same scrollbar
+    # will be printed twice.
+    upload_completed = False
+
+    def continue_logging(monitor):
+        nonlocal upload_completed
+        if not upload_completed:
+            uploaded_progress = monitor.bytes_read
+            total_size = monitor.len
+            upload_completed = monitor.encoder.finished
+            progress_bar_text = screen_utils.progress_bar(uploaded_progress, total_size)
+            log.progress(progress_bar_text, flush=upload_completed)
+
+    return continue_logging
+
+
+def string_io(input_text):
+    return io.StringIO(input_text)
