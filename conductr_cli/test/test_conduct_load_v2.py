@@ -54,6 +54,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'quiet': False,
             'no_wait': False,
             'long_ids': False,
+            'command': 'conduct',
             'cli_parameters': '',
             'custom_settings': self.custom_settings,
             'resolve_cache_dir': self.bundle_resolve_cache_dir,
@@ -74,6 +75,15 @@ class TestConductLoadCommand(ConductLoadTestBase):
         with patch('conductr_cli.bundle_utils.conf', conf_mock), \
                 patch('conductr_cli.conduct_load.string_io', string_io_mock):
             self.base_test_success()
+        conf_mock.assert_called_with(self.bundle_file)
+        string_io_mock.assert_called_with('mock bundle.conf')
+
+    def test_success_dcos_mode(self):
+        conf_mock = MagicMock(return_value='mock bundle.conf')
+        string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
+        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+            self.base_test_success_dcos_mode()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
 
