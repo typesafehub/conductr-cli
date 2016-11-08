@@ -16,9 +16,9 @@ class ConductLoadTestBase(CliTestCase):
     output_template = """|Retrieving bundle...
                          |{downloading_configuration}Loading bundle to ConductR...
                          |{verbose}Bundle loaded.
-                         |Start bundle with: conduct run{params} {bundle_id}
-                         |Unload bundle with: conduct unload{params} {bundle_id}
-                         |Print ConductR info with: conduct info{params}
+                         |Start bundle with: {command} run{params} {bundle_id}
+                         |Unload bundle with: {command} unload{params} {bundle_id}
+                         |Print ConductR info with: {command} info{params}
                          |"""
 
     def __init__(self, method_name):
@@ -49,8 +49,9 @@ class ConductLoadTestBase(CliTestCase):
                                |}
                                |""")
 
-    def default_output(self, params='', bundle_id='45e0c47', downloading_configuration='', verbose=''):
+    def default_output(self, command='conduct', params='', bundle_id='45e0c47', downloading_configuration='', verbose=''):
         return strip_margin(self.output_template.format(**{
+            'command': command,
             'params': params,
             'bundle_id': bundle_id,
             'downloading_configuration': downloading_configuration,
@@ -83,6 +84,37 @@ class ConductLoadTestBase(CliTestCase):
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
+
+    def base_test_success_dcos_mode(self):
+        self.default_args['dcos_mode'] = True
+        self.default_args['command'] = 'dcos conduct'
+
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
+        create_multipart_mock = MagicMock(return_value=self.multipart_mock)
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        input_args = MagicMock(**self.default_args)
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
+                patch('dcos.http.post', http_method), \
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
+            self.assertTrue(result)
+
+        open_mock.assert_called_with(self.bundle_file, 'rb')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
+        http_method.assert_called_with(self.default_url,
+                                       data=self.multipart_mock,
+                                       headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
+        self.assertEqual(self.default_output(command=self.default_args['command']), self.output(stdout))
 
     def base_test_success_verbose(self):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))

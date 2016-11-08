@@ -49,6 +49,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'quiet': False,
             'no_wait': False,
             'long_ids': False,
+            'command': 'conduct',
             'cli_parameters': '',
             'custom_settings': self.custom_settings,
             'resolve_cache_dir': self.bundle_resolve_cache_dir,
@@ -70,6 +71,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
     def test_success(self):
         self.base_test_success()
+
+    def test_success_dcos_mode(self):
+        self.base_test_success_dcos_mode()
 
     def test_success_verbose(self):
         self.base_test_success_verbose()

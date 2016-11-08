@@ -83,9 +83,9 @@ def load_v1(args):
         bundle_installation.wait_for_installation(response_json['bundleId'], args)
 
     log.info('Bundle loaded.')
-    log.info('Start bundle with: conduct run{} {}'.format(args.cli_parameters, bundle_id))
-    log.info('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundle_id))
-    log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+    log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
+    log.info('Unload bundle with: {} unload{} {}'.format(args.command, args.cli_parameters, bundle_id))
+    log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
 
     if not log.is_info_enabled() and log.is_quiet_enabled():
         log.quiet(response_json['bundleId'])
@@ -184,9 +184,9 @@ def load_v2(args):
             bundle_installation.wait_for_installation(response_json['bundleId'], args)
 
         log.info('Bundle loaded.')
-        log.info('Start bundle with: conduct run{} {}'.format(args.cli_parameters, bundle_id))
-        log.info('Unload bundle with: conduct unload{} {}'.format(args.cli_parameters, bundle_id))
-        log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+        log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
+        log.info('Unload bundle with: {} unload{} {}'.format(args.command, args.cli_parameters, bundle_id))
+        log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
 
         if not log.is_info_enabled() and log.is_quiet_enabled():
             log.quiet(response_json['bundleId'])
