@@ -8,7 +8,7 @@ from setuptools.command.test import test
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 install_requires = [
-    'requests>=2.11.1',
+    'requests>=2.6.0',
     'requests-toolbelt>=0.7.0',
     'argcomplete>=0.8.1',
     'pyhocon==0.2.1',
@@ -19,7 +19,6 @@ install_requires = [
     'pager>=3.3, <4.0',
     'prettytable>=0.7, <1.0',
     'pygments>=2.0, <3.0',
-    'requests>=2.6, <3.0',
     'six>=1.9, <2.0',
     'toml>=0.9, <1.0',
 ]
