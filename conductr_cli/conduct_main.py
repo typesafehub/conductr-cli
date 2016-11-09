@@ -284,16 +284,16 @@ def build_parser(dcos_mode):
 def get_cli_parameters(args):
     parameters = ['']
     arg = vars(args).get('scheme')
-    if arg and arg != DEFAULT_SCHEME:
+    if not args.dcos_mode and arg and arg != DEFAULT_SCHEME:
         parameters.append('--scheme {}'.format(args.scheme))
     arg = vars(args).get('ip')
-    if arg and arg != host.resolve_default_ip():
+    if not args.dcos_mode and arg and arg != host.resolve_default_ip():
         parameters.append('--ip {}'.format(args.ip))
     arg = vars(args).get('port', int(DEFAULT_PORT))
-    if arg and arg != int(DEFAULT_PORT):
+    if not args.dcos_mode and arg and arg != int(DEFAULT_PORT):
         parameters.append('--port {}'.format(args.port))
     arg = vars(args).get('base_path', DEFAULT_BASE_PATH)
-    if arg and arg != DEFAULT_BASE_PATH:
+    if not args.dcos_mode and arg and arg != DEFAULT_BASE_PATH:
         parameters.append('--base-path {}'.format(args.base_path))
     arg = vars(args).get('api_version', DEFAULT_API_VERSION)
     if arg and arg != DEFAULT_API_VERSION:
