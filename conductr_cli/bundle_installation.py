@@ -45,7 +45,7 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
             if elapsed > args.wait_timeout:
                 raise WaitTimeoutError('Bundle {} waiting to be {}'.format(bundle_id, condition_name))
 
-            if event.event and event.event.startswith('bundleInstallation'):
+            if event.event:
                 installed_bundles = count_installations(bundle_id, args)
                 if condition(installed_bundles):
                     log.info('Bundle {} {}'.format(bundle_id, condition_name))

@@ -145,12 +145,13 @@ class TestGetScale(CliTestCase):
 
 class TestWaitForScale(CliTestCase):
     def test_wait_for_scale(self):
-        get_scale_mock = MagicMock(side_effect=[0, 1, 2, 3])
+        get_scale_mock = MagicMock(side_effect=[0, 1, 2, 2, 3])
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         get_events_mock = MagicMock(return_value=[
             self.create_test_event(None),
             self.create_test_event('bundleExecutionAdded'),
             self.create_test_event('bundleExecutionAdded'),
+            self.create_test_event('otherEvent'),
             self.create_test_event('bundleExecutionAdded')
         ])
 
@@ -170,6 +171,7 @@ class TestWaitForScale(CliTestCase):
             call(bundle_id, args),
             call(bundle_id, args),
             call(bundle_id, args),
+            call(bundle_id, args),
             call(bundle_id, args)
         ])
 
@@ -177,6 +179,7 @@ class TestWaitForScale(CliTestCase):
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3
                                          |Bundle a101449418187d92c789d1adc240b6d6 has scale 1, expected 3
+                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
                                          |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
                                          |Bundle a101449418187d92c789d1adc240b6d6 expected scale 3 is met
                                          |"""), self.output(stdout))

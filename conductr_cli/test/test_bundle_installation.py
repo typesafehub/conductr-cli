@@ -121,11 +121,12 @@ class TestCountInstallation(CliTestCase):
 
 class TestWaitForInstallation(CliTestCase):
     def test_wait_for_installation(self):
-        count_installations_mock = MagicMock(side_effect=[0, 1])
+        count_installations_mock = MagicMock(side_effect=[0, 0, 1])
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         get_events_mock = MagicMock(return_value=[
             create_test_event(None),
             create_test_event('bundleInstallationAdded'),
+            create_test_event('otherEvent'),
             create_test_event('bundleInstallationAdded')
         ])
 
@@ -143,12 +144,14 @@ class TestWaitForInstallation(CliTestCase):
 
         self.assertEqual(count_installations_mock.call_args_list, [
             call(bundle_id, args),
+            call(bundle_id, args),
             call(bundle_id, args)
         ])
 
         url_mock.assert_called_with('bundles/events', args)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed
+                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
                                          |Bundle a101449418187d92c789d1adc240b6d6 installed
                                          |"""), self.output(stdout))
 

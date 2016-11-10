@@ -40,7 +40,7 @@ def wait_for_scale(bundle_id, expected_scale, args):
             if elapsed > args.wait_timeout:
                 raise WaitTimeoutError('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
 
-            if event.event and event.event.startswith('bundleExecution'):
+            if event.event:
                 bundle_scale = get_scale(bundle_id, args)
                 if bundle_scale == expected_scale:
                     log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))
