@@ -37,6 +37,8 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
         log.info('Bundle {} is {}'.format(bundle_id, condition_name))
         return
     else:
+        sse_heartbeat_count_after_event = 0
+
         log.info('Bundle {} waiting to be {}'.format(bundle_id, condition_name))
         bundle_events_url = conduct_url.url('bundles/events', args)
         sse_events = sse_client.get_events(args.dcos_mode, args.ip, bundle_events_url)
@@ -45,7 +47,13 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
             if elapsed > args.wait_timeout:
                 raise WaitTimeoutError('Bundle {} waiting to be {}'.format(bundle_id, condition_name))
 
-            if event.event:
+            # Check for installed bundles every 3 heartbeats from the last received event.
+            if event.event or (sse_heartbeat_count_after_event % 3 == 0):
+                if event.event:
+                    sse_heartbeat_count_after_event = 0
+                else:
+                    sse_heartbeat_count_after_event += 1
+
                 installed_bundles = count_installations(bundle_id, args)
                 if condition(installed_bundles):
                     log.info('Bundle {} {}'.format(bundle_id, condition_name))

@@ -184,6 +184,51 @@ class TestWaitForScale(CliTestCase):
                                          |Bundle a101449418187d92c789d1adc240b6d6 expected scale 3 is met
                                          |"""), self.output(stdout))
 
+    def test_wait_for_scale_periodic_check(self):
+        get_scale_mock = MagicMock(side_effect=[0, 1, 2, 2, 2, 3])
+        url_mock = MagicMock(return_value='/bundle-events/endpoint')
+        get_events_mock = MagicMock(return_value=[
+            self.create_test_event(None),
+            self.create_test_event('bundleExecutionAdded'),
+            self.create_test_event('bundleExecutionAdded'),
+            self.create_test_event('otherEvent'),
+            self.create_test_event(None),
+            self.create_test_event(None),
+            self.create_test_event(None),
+            self.create_test_event('bundleExecutionAdded')
+        ])
+
+        stdout = MagicMock()
+
+        bundle_id = 'a101449418187d92c789d1adc240b6d6'
+        args = MagicMock(**{
+            'wait_timeout': 10
+        })
+        with patch('conductr_cli.conduct_url.url', url_mock), \
+                patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
+                patch('conductr_cli.sse_client.get_events', get_events_mock):
+            logging_setup.configure_logging(args, stdout)
+            bundle_scale.wait_for_scale(bundle_id, 3, args)
+
+        self.assertEqual(get_scale_mock.call_args_list, [
+            call(bundle_id, args),
+            call(bundle_id, args),
+            call(bundle_id, args),
+            call(bundle_id, args),
+            call(bundle_id, args),
+            call(bundle_id, args)
+        ])
+
+        url_mock.assert_called_with('bundles/events', args)
+
+        self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3
+                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 1, expected 3
+                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
+                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
+                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
+                                         |Bundle a101449418187d92c789d1adc240b6d6 expected scale 3 is met
+                                         |"""), self.output(stdout))
+
     def test_return_immediately_if_scale_is_met(self):
         get_scale_mock = MagicMock(side_effect=[3])
 
