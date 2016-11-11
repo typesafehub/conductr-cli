@@ -52,15 +52,17 @@ def wait_for_scale(bundle_id, expected_scale, args):
 
                 bundle_scale = get_scale(bundle_id, args)
                 if bundle_scale == expected_scale:
-                    print('')
+                    if not args.quiet and last_scale > -1:
+                        print('')
                     log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))
                     return
                 elif bundle_scale > last_scale:
-                    if last_scale > -1:
-                        print('')
-                    print('Bundle {} has scale {}, expected {}'.format(bundle_id, bundle_scale, expected_scale), end='', flush=True)
+                    if not args.quiet:
+                        if last_scale > -1:
+                            print('')
+                        print('Bundle {} has scale {}, expected {}'.format(bundle_id, bundle_scale, expected_scale), end='', flush=True)
                     last_scale = bundle_scale
-                else:
+                elif not args.quiet:
                     print('.', end='', flush=True)
 
         raise WaitTimeoutError('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
