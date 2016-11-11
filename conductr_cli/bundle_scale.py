@@ -37,6 +37,7 @@ def wait_for_scale(bundle_id, expected_scale, args):
         log.info('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
         bundle_events_url = conduct_url.url('bundles/events', args)
         sse_events = sse_client.get_events(args.dcos_mode, args.ip, bundle_events_url)
+        last_scale = -1
         for event in sse_events:
             elapsed = (datetime.now() - start_time).total_seconds()
             if elapsed > args.wait_timeout:
@@ -51,9 +52,15 @@ def wait_for_scale(bundle_id, expected_scale, args):
 
                 bundle_scale = get_scale(bundle_id, args)
                 if bundle_scale == expected_scale:
+                    print('')
                     log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))
                     return
+                elif bundle_scale > last_scale:
+                    if last_scale > -1:
+                        print('')
+                    print('Bundle {} has scale {}, expected {}'.format(bundle_id, bundle_scale, expected_scale), end='', flush=True)
+                    last_scale = bundle_scale
                 else:
-                    log.info('Bundle {} has scale {}, expected {}'.format(bundle_id, bundle_scale, expected_scale))
+                    print('.', end='', flush=True)
 
         raise WaitTimeoutError('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
