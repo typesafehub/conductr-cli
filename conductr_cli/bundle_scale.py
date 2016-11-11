@@ -32,6 +32,8 @@ def wait_for_scale(bundle_id, expected_scale, args):
         log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))
         return
     else:
+        sse_heartbeat_count_after_event = 0
+
         log.info('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
         bundle_events_url = conduct_url.url('bundles/events', args)
         sse_events = sse_client.get_events(args.dcos_mode, args.ip, bundle_events_url)
@@ -40,7 +42,13 @@ def wait_for_scale(bundle_id, expected_scale, args):
             if elapsed > args.wait_timeout:
                 raise WaitTimeoutError('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
 
-            if event.event and event.event.startswith('bundleExecution'):
+            # Check for bundle scale every 3 heartbeats from the last received event.
+            if event.event or (sse_heartbeat_count_after_event % 3 == 0):
+                if event.event:
+                    sse_heartbeat_count_after_event = 0
+                else:
+                    sse_heartbeat_count_after_event += 1
+
                 bundle_scale = get_scale(bundle_id, args)
                 if bundle_scale == expected_scale:
                     log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))

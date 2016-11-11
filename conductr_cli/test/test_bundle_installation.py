@@ -121,11 +121,12 @@ class TestCountInstallation(CliTestCase):
 
 class TestWaitForInstallation(CliTestCase):
     def test_wait_for_installation(self):
-        count_installations_mock = MagicMock(side_effect=[0, 1])
+        count_installations_mock = MagicMock(side_effect=[0, 0, 1])
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         get_events_mock = MagicMock(return_value=[
             create_test_event(None),
             create_test_event('bundleInstallationAdded'),
+            create_test_event('otherEvent'),
             create_test_event('bundleInstallationAdded')
         ])
 
@@ -143,12 +144,51 @@ class TestWaitForInstallation(CliTestCase):
 
         self.assertEqual(count_installations_mock.call_args_list, [
             call(bundle_id, args),
+            call(bundle_id, args),
             call(bundle_id, args)
         ])
 
         url_mock.assert_called_with('bundles/events', args)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed
+                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
+                                         |Bundle a101449418187d92c789d1adc240b6d6 installed
+                                         |"""), self.output(stdout))
+
+    def test_wait_for_installation_periodic_check(self):
+        count_installations_mock = MagicMock(side_effect=[0, 0, 1])
+        url_mock = MagicMock(return_value='/bundle-events/endpoint')
+        get_events_mock = MagicMock(return_value=[
+            create_test_event(None),
+            create_test_event('bundleInstallationAdded'),
+            create_test_event(None),
+            create_test_event(None),
+            create_test_event(None),
+            create_test_event('bundleInstallationAdded')
+        ])
+
+        stdout = MagicMock()
+
+        bundle_id = 'a101449418187d92c789d1adc240b6d6'
+        args = MagicMock(**{
+            'wait_timeout': 10
+        })
+        with patch('conductr_cli.conduct_url.url', url_mock), \
+                patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.sse_client.get_events', get_events_mock):
+            logging_setup.configure_logging(args, stdout)
+            bundle_installation.wait_for_installation(bundle_id, args)
+
+        self.assertEqual(count_installations_mock.call_args_list, [
+            call(bundle_id, args),
+            call(bundle_id, args),
+            call(bundle_id, args)
+        ])
+
+        url_mock.assert_called_with('bundles/events', args)
+
+        self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed
+                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
                                          |Bundle a101449418187d92c789d1adc240b6d6 installed
                                          |"""), self.output(stdout))
 
