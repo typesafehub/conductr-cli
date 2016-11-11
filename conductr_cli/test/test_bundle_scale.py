@@ -178,9 +178,6 @@ class TestWaitForScale(CliTestCase):
         url_mock.assert_called_with('bundles/events', args)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 1, expected 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
                                          |Bundle a101449418187d92c789d1adc240b6d6 expected scale 3 is met
                                          |"""), self.output(stdout))
 
@@ -222,10 +219,6 @@ class TestWaitForScale(CliTestCase):
         url_mock.assert_called_with('bundles/events', args)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 1, expected 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 2, expected 3
                                          |Bundle a101449418187d92c789d1adc240b6d6 expected scale 3 is met
                                          |"""), self.output(stdout))
 
@@ -311,9 +304,6 @@ class TestWaitForScale(CliTestCase):
         url_mock.assert_called_with('bundles/events', args)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 0, expected 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 0, expected 3
-                                         |Bundle a101449418187d92c789d1adc240b6d6 has scale 0, expected 3
                                          |"""), self.output(stdout))
 
     def create_test_event(self, event_name):
