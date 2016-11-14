@@ -20,7 +20,7 @@ class TestConductRunCommand(ConductRunTestBase):
             'dcos_mode': False,
             'command': 'conduct',
             'scheme': 'http',
-            'ip': '127.0.0.1',
+            'host': '127.0.0.1',
             'port': 9005,
             'base_path': '/',
             'api_version': '1',
@@ -50,8 +50,14 @@ class TestConductRunCommand(ConductRunTestBase):
     def test_success_long_ids(self):
         self.base_test_success_long_ids()
 
-    def test_success_with_configuration(self):
-        self.base_test_success_with_configuration()
+    def test_success_with_custom_ip_port(self):
+        self.base_test_success_with_custom_ip_port()
+
+    def test_success_with_custom_host_port(self):
+        self.base_test_success_with_custom_host_port()
+
+    def test_success_ip(self):
+        self.base_test_success_ip()
 
     def test_success_no_wait(self):
         self.base_test_success_no_wait()
@@ -67,7 +73,7 @@ class TestConductRunCommand(ConductRunTestBase):
 
     def test_error_with_affinity_switch(self):
         args = {
-            'ip': '127.0.0.1',
+            'host': '127.0.0.1',
             'port': 9005,
             'api_version': '1',
             'verbose': False,

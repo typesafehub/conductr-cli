@@ -46,7 +46,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.default_args = {
             'dcos_mode': False,
             'scheme': 'http',
-            'ip': '127.0.0.1',
+            'host': '127.0.0.1',
             'port': 9005,
             'base_path': '/',
             'api_version': '2',
@@ -120,6 +120,24 @@ class TestConductLoadCommand(ConductLoadTestBase):
         with patch('conductr_cli.bundle_utils.conf', conf_mock), \
                 patch('conductr_cli.conduct_load.string_io', string_io_mock):
             self.base_test_success_custom_ip_port()
+        conf_mock.assert_called_with(self.bundle_file)
+        string_io_mock.assert_called_with('mock bundle.conf')
+
+    def test_success_custom_host_port(self):
+        conf_mock = MagicMock(return_value='mock bundle.conf')
+        string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
+        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+            self.base_test_success_custom_host_port()
+        conf_mock.assert_called_with(self.bundle_file)
+        string_io_mock.assert_called_with('mock bundle.conf')
+
+    def test_success_ip(self):
+        conf_mock = MagicMock(return_value='mock bundle.conf')
+        string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
+        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+            self.base_test_success_ip()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
 

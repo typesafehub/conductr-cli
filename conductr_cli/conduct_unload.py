@@ -1,4 +1,5 @@
 from conductr_cli import conduct_request, conduct_url, validation, bundle_installation
+from conductr_cli.conduct_url import conductr_host
 import json
 import logging
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
@@ -12,7 +13,7 @@ def unload(args):
     log = logging.getLogger(__name__)
     path = 'bundles/{}'.format(args.bundle)
     url = conduct_url.url(path, args)
-    response = conduct_request.delete(args.dcos_mode, args.ip, url, timeout=DEFAULT_HTTP_TIMEOUT)
+    response = conduct_request.delete(args.dcos_mode, conductr_host(args), url, timeout=DEFAULT_HTTP_TIMEOUT)
     validation.raise_for_status_inc_3xx(response)
 
     if log.is_verbose_enabled():

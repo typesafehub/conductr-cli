@@ -5,6 +5,10 @@ from subprocess import CalledProcessError
 from conductr_cli.docker import DockerVmType
 
 
+def resolve_default_host():
+    return os.getenv('CONDUCTR_HOST', resolve_default_ip())
+
+
 def resolve_default_ip():
     def resolve():
         vm_type = docker.vm_type()

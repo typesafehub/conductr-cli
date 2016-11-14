@@ -243,6 +243,73 @@ class ConductLoadTestBase(CliTestCase):
             self.default_output(params=cli_parameters),
             self.output(stdout))
 
+    def base_test_success_custom_host_port(self):
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
+        create_multipart_mock = MagicMock(return_value=self.multipart_mock)
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        cli_parameters = ' --host 127.0.1.1 --port 9006'
+        args = self.default_args.copy()
+        args.update({'cli_parameters': cli_parameters})
+        input_args = MagicMock(**args)
+
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
+                patch('requests.post', http_method), \
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
+            self.assertTrue(result)
+
+        open_mock.assert_called_with(self.bundle_file, 'rb')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
+        http_method.assert_called_with(self.default_url,
+                                       data=self.multipart_mock,
+                                       headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
+        self.assertEqual(
+            self.default_output(params=cli_parameters),
+            self.output(stdout))
+
+    def base_test_success_ip(self):
+        args = {}
+        args.update(self.default_args)
+        args.pop('host')
+        args.update({'ip': '127.0.0.1'})
+
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
+        create_multipart_mock = MagicMock(return_value=self.multipart_mock)
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        open_mock = MagicMock(return_value=1)
+        wait_for_installation_mock = MagicMock()
+
+        input_args = MagicMock(**args)
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
+                patch('requests.post', http_method), \
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
+            self.assertTrue(result)
+
+        open_mock.assert_called_with(self.bundle_file, 'rb')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
+        http_method.assert_called_with(self.default_url,
+                                       data=self.multipart_mock,
+                                       headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
+        self.assertEqual(self.default_output(), self.output(stdout))
+
     def base_test_success_no_wait(self):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)

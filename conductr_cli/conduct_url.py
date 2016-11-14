@@ -1,7 +1,12 @@
 # build url from ConductR base url and given path
 def url(path, args):
-    base_url = '{}://{}:{}{}{}'.format(args.scheme, args.ip, args.port, args.base_path, api_version_path(args.api_version))
+    base_url = '{}://{}:{}{}{}'.format(args.scheme, conductr_host(args), args.port, args.base_path,
+                                       api_version_path(args.api_version))
     return '{}{}'.format(base_url, path)
+
+
+def conductr_host(args):
+    return vars(args).get('host') or vars(args).get('ip')
 
 
 def api_version_path(api_version):
