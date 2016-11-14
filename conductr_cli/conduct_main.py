@@ -321,22 +321,23 @@ def get_custom_settings(args):
 
 
 def run(_args=[]):
-    if not _args:
-        _args = sys.argv
     # If we're being invoked via DC/OS then route our http
     # calls via its extension to the requests library. In
-    # addition remove the dcos arg so that the conduct
+    # addition remove the 'conduct-dcos' and 'conduct' arg so that the conduct
     # sub-commands are positioned correctly, along with their
     # arguments.
-    if _args and Path(_args[0]).name == constants.DCOS_COMMAND_PREFIX + 'conduct':
-        _args = _args[1:]
+    if sys.argv and Path(sys.argv[0]).name == constants.DCOS_COMMAND_PREFIX + 'conduct':
         dcos_mode = True
+        _args = sys.argv[2:]
     else:
         dcos_mode = False
+        if not _args:
+            # Remove the 'conduct' arg so that we start with the sub command directly
+            _args = sys.argv[1:]
     # Parse arguments
     parser = build_parser(dcos_mode)
     argcomplete.autocomplete(parser)
-    args = parser.parse_args(_args[1:])
+    args = parser.parse_args(_args)
     args.dcos_mode = dcos_mode
     if not vars(args).get('func'):
         if vars(args).get('dcos_info'):
