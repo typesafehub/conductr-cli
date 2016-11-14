@@ -88,7 +88,7 @@ class ConductRunTestBase(CliTestCase):
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
-    def base_test_success_with_configuration(self):
+    def base_test_success_with_custom_ip_port(self):
         http_method = self.respond_with(200, self.default_response)
         wait_for_scale_mock = MagicMock()
         stdout = MagicMock()
@@ -110,6 +110,52 @@ class ConductRunTestBase(CliTestCase):
         self.assertEqual(
             self.default_output(params=cli_parameters),
             self.output(stdout))
+
+    def base_test_success_with_custom_host_port(self):
+        http_method = self.respond_with(200, self.default_response)
+        wait_for_scale_mock = MagicMock()
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        cli_parameters = ' --host 127.0.1.1 --port 9006'
+        args.update({'cli_parameters': cli_parameters})
+        input_args = MagicMock(**args)
+
+        with patch('requests.put', http_method), \
+                patch('conductr_cli.bundle_scale.wait_for_scale', wait_for_scale_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_run.run(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+
+        self.assertEqual(
+            self.default_output(params=cli_parameters),
+            self.output(stdout))
+
+    def base_test_success_ip(self):
+        args = {}
+        args.update(self.default_args)
+        args.pop('host')
+        args.update({'ip': '127.0.0.1'})
+
+        http_method = self.respond_with(200, self.default_response)
+        wait_for_scale_mock = MagicMock()
+        stdout = MagicMock()
+
+        input_args = MagicMock(**args)
+
+        with patch('requests.put', http_method), \
+                patch('conductr_cli.bundle_scale.wait_for_scale', wait_for_scale_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_run.run(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+
+        self.assertEqual(self.default_output(), self.output(stdout))
 
     def base_test_success_no_wait(self):
         http_method = self.respond_with(200, self.default_response)

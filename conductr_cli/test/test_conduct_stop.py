@@ -25,7 +25,7 @@ class TestConductStopCommand(CliTestCase):
         'dcos_mode': False,
         'command': 'conduct',
         'scheme': 'http',
-        'ip': '127.0.0.1',
+        'host': '127.0.0.1',
         'port': 9005,
         'base_path': '/',
         'api_version': '1',
@@ -177,3 +177,27 @@ class TestConductStopCommand(CliTestCase):
             as_error(strip_margin("""|Error: Timed out: test timeout error
                                      |""")),
             self.output(stderr))
+
+    def test_ip(self):
+        args = {}
+        args.update(self.default_args)
+        args.pop('host')
+        args.update({'ip': '10.0.0.1'})
+
+        default_url = 'http://10.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=0'
+
+        http_method = self.respond_with(200, self.default_response)
+        wait_for_scale_mock = MagicMock()
+        stdout = MagicMock()
+
+        input_args = MagicMock(**args)
+        with patch('requests.put', http_method), \
+                patch('conductr_cli.bundle_scale.wait_for_scale', wait_for_scale_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_stop.stop(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        wait_for_scale_mock.assert_called_with(self.bundle_id, 0, input_args)
+
+        self.assertEqual(self.default_output(), self.output(stdout))

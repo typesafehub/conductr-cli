@@ -13,7 +13,7 @@ class TestConductAclsCommandForHttp(CliTestCase):
         'protocol_family': 'http',
         'dcos_mode': False,
         'scheme': 'http',
-        'ip': '127.0.0.1',
+        'host': '127.0.0.1',
         'port': 9005,
         'base_path': '/',
         'api_version': '1',
@@ -136,13 +136,37 @@ class TestConductAclsCommandForHttp(CliTestCase):
                    |"""),
             self.output(stdout))
 
+    def test_conductr_ip(self):
+        args = {}
+        args.update(self.default_args)
+        args.pop('host')
+        args.update({'ip': '10.0.0.1'})
+        default_url = 'http://10.0.0.1:9005/bundles'
+
+        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_http.json')
+        stdout = MagicMock()
+
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_acls.acls(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        self.assertEqual(
+            strip_margin(
+                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                   |"""),
+            self.output(stdout))
+
 
 class TestConductAclsCommandForTcp(CliTestCase):
     default_args = {
         'protocol_family': 'tcp',
         'dcos_mode': False,
         'scheme': 'http',
-        'ip': '127.0.0.1',
+        'host': '127.0.0.1',
         'port': 9005,
         'base_path': '/',
         'api_version': '1',
@@ -262,5 +286,30 @@ class TestConductAclsCommandForTcp(CliTestCase):
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
+                   |"""),
+            self.output(stdout))
+
+    def test_ip(self):
+        args = {}
+        args.update(self.default_args)
+        args.pop('host')
+        args.update({'ip': '10.0.0.1'})
+
+        default_url = 'http://10.0.0.1:9005/bundles'
+
+        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_tcp.json')
+        stdout = MagicMock()
+
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_acls.acls(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        self.assertEqual(
+            strip_margin(
+                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))

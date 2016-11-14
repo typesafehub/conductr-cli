@@ -41,7 +41,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.default_args = {
             'dcos_mode': False,
             'scheme': 'http',
-            'ip': '127.0.0.1',
+            'host': '127.0.0.1',
             'port': 9005,
             'base_path': '/',
             'api_version': '1',
@@ -86,6 +86,12 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
     def test_success_custom_ip_port(self):
         self.base_test_success_custom_ip_port()
+
+    def test_success_custom_host_port(self):
+        self.base_test_success_custom_host_port()
+
+    def test_success_ip(self):
+        self.base_test_success_ip()
 
     def test_success_with_configuration(self):
         tmpdir, config_file = create_temp_bundle_with_contents({

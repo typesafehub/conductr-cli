@@ -18,7 +18,7 @@ class TestConductEventsCommand(CliTestCase):
     default_args = {
         'dcos_mode': False,
         'scheme': 'http',
-        'ip': '127.0.0.1',
+        'host': '127.0.0.1',
         'port': '9005',
         'base_path': '/',
         'api_version': '1',
@@ -95,3 +95,28 @@ class TestConductEventsCommand(CliTestCase):
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
             self.output(stderr))
+
+    def test_ip(self):
+        args = {}
+        args.update(self.default_args)
+        args.pop('host')
+        args.update({'ip': '10.0.0.1'})
+
+        default_url = 'http://10.0.0.1:9005/bundles/{}/events?count=1'.format(self.bundle_id_urlencoded)
+
+        http_method = self.respond_with(text='{}')
+        quote_method = MagicMock(return_value=self.bundle_id_urlencoded)
+        stdout = MagicMock()
+
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method), \
+                patch('urllib.parse.quote', quote_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_events.events(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|TIME  EVENT  DESC
+                            |"""),
+            self.output(stdout))

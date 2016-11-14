@@ -18,10 +18,17 @@ import os
 import sys
 
 
-def add_scheme_ip_port_and_base_path(sub_parser):
+def add_scheme_host_ip_port_and_base_path(sub_parser):
     sub_parser.add_argument('--scheme',
                             help='The optional ConductR scheme, defaults to `http`',
                             default=DEFAULT_SCHEME)
+    sub_parser.add_argument('--host',
+                            help='The optional ConductR IP, defaults to one of the value in this order:'
+                                 '$CONDUCTR_HOST or'
+                                 '$CONDUCTR_IP or'
+                                 'IP address of the docker VM or'
+                                 '`127.0.0.1`',
+                            default=None)  # Default is determined given the Docker environment
     sub_parser.add_argument('-i', '--ip',
                             help='The optional ConductR IP, defaults to one of the value in this order:'
                                  '$CONDUCTR_IP or'
@@ -133,7 +140,7 @@ def add_no_wait(sub_parser):
 
 def add_default_arguments(sub_parser, dcos_mode):
     if not dcos_mode:
-        add_scheme_ip_port_and_base_path(sub_parser)
+        add_scheme_host_ip_port_and_base_path(sub_parser)
     else:
         add_dcos_settings(sub_parser)
     add_verbose(sub_parser)
@@ -286,6 +293,9 @@ def get_cli_parameters(args):
     arg = vars(args).get('scheme')
     if not args.dcos_mode and arg and arg != DEFAULT_SCHEME:
         parameters.append('--scheme {}'.format(args.scheme))
+    arg = vars(args).get('host')
+    if not args.dcos_mode and arg and arg != host.resolve_default_host():
+        parameters.append('--host {}'.format(args.host))
     arg = vars(args).get('ip')
     if not args.dcos_mode and arg and arg != host.resolve_default_ip():
         parameters.append('--ip {}'.format(args.ip))

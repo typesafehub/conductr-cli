@@ -1,5 +1,5 @@
-from conductr_cli import bundle_utils, conduct_request, conduct_url, validation
-from conductr_cli import bundle_scale
+from conductr_cli import bundle_utils, bundle_scale, conduct_request, conduct_url, validation
+from conductr_cli.conduct_url import conductr_host
 import json
 import logging
 
@@ -21,7 +21,7 @@ def run(args):
         path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
 
     url = conduct_url.url(path, args)
-    response = conduct_request.put(args.dcos_mode, args.ip, url)
+    response = conduct_request.put(args.dcos_mode, conductr_host(args), url)
     validation.raise_for_status_inc_3xx(response)
 
     if log.is_verbose_enabled():

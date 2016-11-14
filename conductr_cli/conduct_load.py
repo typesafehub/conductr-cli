@@ -4,6 +4,7 @@ from conductr_cli import bundle_utils, conduct_request, conduct_url, screen_util
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
 from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR
+from conductr_cli.conduct_url import conductr_host
 from functools import partial
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
@@ -68,7 +69,7 @@ def load_v1(args):
 
     log.info('Loading bundle to ConductR...')
     multipart = create_multipart(log, files)
-    response = conduct_request.post(args.dcos_mode, args.ip, url,
+    response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
                                     data=multipart,
                                     headers={'Content-Type': multipart.content_type})
     validation.raise_for_status_inc_3xx(response)
@@ -169,7 +170,7 @@ def load_v2(args):
         log.info('Loading bundle to ConductR...')
         multipart = create_multipart(log, files)
 
-        response = conduct_request.post(args.dcos_mode, args.ip, url,
+        response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
                                         data=multipart,
                                         headers={'Content-Type': multipart.content_type})
         validation.raise_for_status_inc_3xx(response)

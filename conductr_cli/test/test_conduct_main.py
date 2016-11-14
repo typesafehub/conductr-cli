@@ -160,6 +160,9 @@ class TestConduct(TestCase):
         args = Namespace(dcos_mode=False, scheme='http', ip='127.0.1.1', port=9005)
         self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1')
 
+        args = Namespace(dcos_mode=False, scheme='http', host='127.0.1.1', port=9005)
+        self.assertEqual(get_cli_parameters(args), ' --host 127.0.1.1')
+
         args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9006)
         self.assertEqual(get_cli_parameters(args), ' --port 9006')
 

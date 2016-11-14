@@ -14,7 +14,7 @@ class TestConductServiceNamesCommand(CliTestCase):
     default_args = {
         'dcos_mode': False,
         'scheme': 'http',
-        'ip': '127.0.0.1',
+        'host': '127.0.0.1',
         'port': 9005,
         'base_path': '/',
         'api_version': '1',
@@ -188,4 +188,26 @@ class TestConductServiceNamesCommand(CliTestCase):
                    |my-svc1       ga04d64    bundle-with-services-1.0.0  Starting
                    |my-svc2       ga04d64    bundle-with-services-1.0.0  Starting
                    |"""),
+            self.output(stdout))
+
+    def test_ip(self):
+        args = {}
+        args.update(self.default_args)
+        args.pop('host')
+        args.update({'ip': '10.0.0.1'})
+
+        http_method = self.respond_with(200, '[]')
+        stdout = MagicMock()
+
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_service_names.service_names(input_args)
+            self.assertTrue(result)
+
+        default_url = 'http://10.0.0.1:9005/bundles'
+        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS
+                            |"""),
             self.output(stdout))
