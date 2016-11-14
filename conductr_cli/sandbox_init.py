@@ -19,7 +19,7 @@ def init(args):
 
         if not has_sufficient_ram or not has_sufficient_cpu:
             if not has_sufficient_ram:
-                log.warning('Docker has insufficient RAM of {} MiB - please increase to a minimum of {} MiB'
+                log.warning('Docker has insufficient RAM of {} GiB - please increase to a minimum of {} GiB'
                             .format(existing_ram, docker.DEFAULT_DOCKER_RAM_SIZE))
 
             if not has_sufficient_cpu:
@@ -50,8 +50,8 @@ def init(args):
 
         if not has_sufficient_ram or not has_sufficient_cpu:
             if not has_sufficient_ram:
-                log.warning('Docker machine VM {} has insufficient RAM of {} MiB - '
-                            'increasing to the minimum of {} MiB'
+                log.warning('Docker machine VM {} has insufficient RAM of {} MB - '
+                            'increasing to the minimum of {} MB'
                             .format(docker_machine_vm_name,
                                     existing_ram,
                                     docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE))
