@@ -18,7 +18,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.memory = 200
         self.disk_space = 100
         self.roles = ['web-server']
-        self.bundle_name = 'bundle.zip'
+        self.bundle_file_name = 'bundle.zip'
         self.system = 'bundle'
         self.system_version = '2.3'
         self.compatibility_version = '2.0'
@@ -38,7 +38,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                          self.memory,
                                          self.disk_space,
                                          ', '.join(self.roles),
-                                         self.bundle_name,
+                                         self.bundle_file_name,
                                          self.system,
                                          self.system_version,
                                          self.compatibility_version))
@@ -66,7 +66,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         self.default_files = [
             ('bundleConf', ('bundle.conf', 'mock bundle.conf - string i/o')),
-            ('bundle', (self.bundle_name, 1))
+            ('bundle', (self.bundle_file_name, 1))
         ]
 
     def test_success(self):
@@ -147,7 +147,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
+        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_file_name, self.bundle_file), ('config.zip', config_file)])
         conf_mock = MagicMock(side_effect=['mock bundle.conf', 'mock bundle.conf overlay'])
         string_io_mock = MagicMock(side_effect=['mock bundle.conf - string i/o',
                                                 'mock bundle.conf overlay - string i/o'])
@@ -223,7 +223,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
+        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_file_name, self.bundle_file), ('config.zip', config_file)])
         conf_mock = MagicMock(side_effect=['mock bundle.conf', None])
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
@@ -336,7 +336,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.base_test_failure_no_file_url_error()
 
     def test_failure_no_bundle_conf(self):
-        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, self.bundle_file))
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
         conf_mock = MagicMock(return_value=None)
         stderr = MagicMock()
 

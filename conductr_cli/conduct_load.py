@@ -8,11 +8,16 @@ from conductr_cli.conduct_url import conductr_host
 from functools import partial
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
+import glob
 import io
 import os
 import stat
 import json
 import logging
+
+
+# The number of old bundle versions to keep when performing housekeeping, apart from the recently loaded bundle.
+KEEP_BUNDLE_VERSIONS = 1
 
 
 @validation.handle_connection_error
@@ -41,13 +46,13 @@ def load_v1(args):
 
     validate_cache_dir_permissions(resolve_cache_dir, log)
 
-    bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
+    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
 
-    configuration_name, configuration_file = (None, None)
+    configuration_file_name, configuration_file = (None, None)
     if args.configuration is not None:
         log.info('Retrieving configuration...')
-        configuration_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
-                                                                         args.configuration)
+        configuration_file_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
+                                                                              args.configuration)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -56,9 +61,9 @@ def load_v1(args):
     with_bundle_configurations = partial(apply_to_configurations, bundle_conf, overlay_bundle_conf)
 
     url = conduct_url.url('bundles', args)
-    files = get_payload(bundle_name, bundle_file, with_bundle_configurations)
+    files = get_payload(bundle_file_name, bundle_file, with_bundle_configurations)
     if configuration_file is not None:
-        files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
+        files.append(('configuration', (configuration_file_name, open(configuration_file, 'rb'))))
 
     # TODO: Delete the bundle configuration file.
     # Currently, this results into a permission error on Windows.
@@ -82,6 +87,8 @@ def load_v1(args):
 
     if not args.no_wait:
         bundle_installation.wait_for_installation(response_json['bundleId'], args)
+
+    cleanup_old_bundles(resolve_cache_dir, bundle_file_name, excluded=bundle_file)
 
     log.info('Bundle loaded.')
     log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
@@ -138,25 +145,25 @@ def load_v2(args):
 
     validate_cache_dir_permissions(resolve_cache_dir, log)
 
-    bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
+    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
     bundle_conf = bundle_utils.conf(bundle_file)
 
     if bundle_conf is None:
         raise MalformedBundleError('Unable to find bundle.conf within the bundle file')
     else:
-        configuration_name, configuration_file, bundle_conf_overlay = (None, None, None)
+        configuration_file_name, configuration_file, bundle_conf_overlay = (None, None, None)
         if args.configuration is not None:
             log.info('Retrieving configuration...')
-            configuration_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
-                                                                             args.configuration)
+            configuration_file_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
+                                                                                  args.configuration)
             bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
         files = [('bundleConf', ('bundle.conf', string_io(bundle_conf)))]
         if bundle_conf_overlay is not None:
             files.append(('bundleConfOverlay', ('bundle.conf', string_io(bundle_conf_overlay))))
-        files.append(('bundle', (bundle_name, open(bundle_file, 'rb'))))
+        files.append(('bundle', (bundle_file_name, open(bundle_file, 'rb'))))
         if configuration_file is not None:
-            files.append(('configuration', (configuration_name, open(configuration_file, 'rb'))))
+            files.append(('configuration', (configuration_file_name, open(configuration_file, 'rb'))))
 
         # TODO: Delete the bundle configuration file.
         # Currently, this results into a permission error on Windows.
@@ -183,6 +190,8 @@ def load_v2(args):
 
         if not args.no_wait:
             bundle_installation.wait_for_installation(response_json['bundleId'], args)
+
+        cleanup_old_bundles(resolve_cache_dir, bundle_file_name, excluded=bundle_file)
 
         log.info('Bundle loaded.')
         log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
@@ -223,3 +232,28 @@ def conduct_load_progress_monitor(log):
 
 def string_io(input_text):
     return io.StringIO(input_text)
+
+
+def cleanup_old_bundles(cache_dir, bundle_file_name, excluded):
+    bundle_name_parts = bundle_file_name.split('-')
+    # Remove digest, keeping only bundle name and compatible version
+    bundle_name = '-'.join(bundle_name_parts[:-1])
+
+    # List of bundle files having the same name and compatibility version, sorted from oldest to latest.
+    # This list excludes the file specified as `excluded`, and normally the `excluded` file is the recently loaded
+    # bundle.
+    older_bundle_files = sorted([
+        file
+        for file in glob.glob('{}/*.zip'.format(cache_dir))
+        if os.path.isfile(file) and
+        os.path.basename(file).startswith(bundle_name) and
+        not is_same_path(file, excluded)
+    ], key=lambda f: os.path.getmtime(f))
+
+    bundle_files_to_delete = older_bundle_files[:(-1 * KEEP_BUNDLE_VERSIONS)]
+    for file in bundle_files_to_delete:
+        os.remove(file)
+
+
+def is_same_path(a, b):
+    return os.path.abspath(a) == os.path.abspath(b)
