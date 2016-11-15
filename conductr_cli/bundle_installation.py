@@ -33,6 +33,7 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
     start_time = datetime.now()
 
     installed_bundles = count_installations(bundle_id, args)
+    last_log_message = None
     if condition(installed_bundles):
         log.info('Bundle {} is {}'.format(bundle_id, condition_name))
         return
@@ -43,6 +44,8 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
         bundle_events_url = conduct_url.url('bundles/events', args)
         sse_events = sse_client.get_events(args.dcos_mode, conduct_url.conductr_host(args), bundle_events_url)
         for event in sse_events:
+            sse_heartbeat_count_after_event += 1
+
             elapsed = (datetime.now() - start_time).total_seconds()
             if elapsed > args.wait_timeout:
                 raise WaitTimeoutError('Bundle {} waiting to be {}'.format(bundle_id, condition_name))
@@ -51,17 +54,24 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
             if event.event or (sse_heartbeat_count_after_event % 3 == 0):
                 if event.event:
                     sse_heartbeat_count_after_event = 0
-                else:
-                    sse_heartbeat_count_after_event += 1
 
                 installed_bundles = count_installations(bundle_id, args)
                 if condition(installed_bundles):
+                    # Reprint previous message with flush to go to next line
+                    if last_log_message:
+                        log.progress(last_log_message, flush=True)
+
                     log.info('Bundle {} {}'.format(bundle_id, condition_name))
                     return
                 else:
-                    log.info('Bundle {} still waiting to be {}'.format(bundle_id, condition_name))
+                    if last_log_message:
+                        last_log_message = '{}.'.format(last_log_message)
+                    else:
+                        last_log_message = 'Bundle {} still waiting to be {}'.format(bundle_id, condition_name)
 
-        raise WaitTimeoutError('Bundle {} still waiting to be {}'.format(bundle_id, condition_name))
+                    log.progress(last_log_message, flush=False)
+
+        raise WaitTimeoutError('Bundle {} waiting to be {}'.format(bundle_id, condition_name))
 
 
 def is_installed(number_of_installations):

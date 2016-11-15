@@ -38,7 +38,10 @@ def wait_for_scale(bundle_id, expected_scale, args):
         bundle_events_url = conduct_url.url('bundles/events', args)
         sse_events = sse_client.get_events(args.dcos_mode, conduct_url.conductr_host(args), bundle_events_url)
         last_scale = -1
+        last_log_message = None
         for event in sse_events:
+            sse_heartbeat_count_after_event += 1
+
             elapsed = (datetime.now() - start_time).total_seconds()
             if elapsed > args.wait_timeout:
                 raise WaitTimeoutError('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
@@ -47,22 +50,27 @@ def wait_for_scale(bundle_id, expected_scale, args):
             if event.event or (sse_heartbeat_count_after_event % 3 == 0):
                 if event.event:
                     sse_heartbeat_count_after_event = 0
-                else:
-                    sse_heartbeat_count_after_event += 1
 
                 bundle_scale = get_scale(bundle_id, args)
                 if bundle_scale == expected_scale:
-                    if not args.quiet and last_scale > -1:
-                        print('')
+                    # Reprint previous message with flush to go to next line
+                    if last_log_message:
+                        log.progress(last_log_message, flush=True)
+
                     log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))
                     return
-                elif bundle_scale > last_scale:
-                    if not args.quiet:
-                        if last_scale > -1:
-                            print('')
-                        print('Bundle {} has scale {}, expected {}'.format(bundle_id, bundle_scale, expected_scale), end='', flush=True)
-                    last_scale = bundle_scale
-                elif not args.quiet:
-                    print('.', end='', flush=True)
+                else:
+                    if bundle_scale > last_scale:
+                        last_scale = bundle_scale
+
+                        # Reprint previous message with flush to go to next line
+                        if last_log_message:
+                            log.progress(last_log_message, flush=True)
+
+                        last_log_message = 'Bundle {} has scale {}, expected {}'.format(bundle_id, bundle_scale, expected_scale)
+                        log.progress(last_log_message, flush=False)
+                    else:
+                        last_log_message = '{}.'.format(last_log_message)
+                        log.progress(last_log_message, flush=False)
 
         raise WaitTimeoutError('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))

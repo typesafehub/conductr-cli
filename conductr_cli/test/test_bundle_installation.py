@@ -14,6 +14,10 @@ def create_test_event(event_name):
     return sse_mock
 
 
+def create_heartbeat_event():
+    return create_test_event(None)
+
+
 class TestCountInstallationIp(CliTestCase):
 
     def test_return_installation_count(self):
@@ -231,7 +235,7 @@ class TestWaitForInstallation(CliTestCase):
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
         get_events_mock = MagicMock(return_value=[
-            create_test_event(None),
+            create_heartbeat_event(),
             create_test_event('bundleInstallationAdded'),
             create_test_event('otherEvent'),
             create_test_event('bundleInstallationAdded')
@@ -264,22 +268,32 @@ class TestWaitForInstallation(CliTestCase):
 
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
 
-        self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
-                                         |Bundle a101449418187d92c789d1adc240b6d6 installed
-                                         |"""), self.output(stdout))
+        self.assertEqual(stdout.method_calls, [
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
+            call.write('\n'),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed\n'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 installed'),
+            call.write('\n'),
+            call.flush(),
+        ])
 
-    def test_wait_for_installation_periodic_check(self):
+    def test_periodic_check_between_events(self):
         count_installations_mock = MagicMock(side_effect=[0, 0, 1])
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
         get_events_mock = MagicMock(return_value=[
-            create_test_event(None),
+            create_heartbeat_event(),
             create_test_event('bundleInstallationAdded'),
-            create_test_event(None),
-            create_test_event(None),
-            create_test_event(None),
+            create_heartbeat_event(),
+            create_heartbeat_event(),
+            create_heartbeat_event(),
             create_test_event('bundleInstallationAdded')
         ])
 
@@ -310,10 +324,73 @@ class TestWaitForInstallation(CliTestCase):
 
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
 
-        self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
-                                         |Bundle a101449418187d92c789d1adc240b6d6 installed
-                                         |"""), self.output(stdout))
+        self.assertEqual(stdout.method_calls, [
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
+            call.write('\n'),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed\n'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 installed'),
+            call.write('\n'),
+            call.flush(),
+        ])
+
+    def test_no_events(self):
+        count_installations_mock = MagicMock(side_effect=[0, 0, 0])
+        url_mock = MagicMock(return_value='/bundle-events/endpoint')
+        conductr_host = '10.0.0.1'
+        conductr_host_mock = MagicMock(return_value=conductr_host)
+        get_events_mock = MagicMock(return_value=[
+            create_heartbeat_event(),
+            create_heartbeat_event(),
+            create_heartbeat_event(),
+            create_heartbeat_event(),
+            create_heartbeat_event(),
+            create_heartbeat_event()
+        ])
+
+        stdout = MagicMock()
+
+        bundle_id = 'a101449418187d92c789d1adc240b6d6'
+        dcos_mode = True
+        args = MagicMock(**{
+            'dcos_mode': dcos_mode,
+            'wait_timeout': 10
+        })
+        with patch('conductr_cli.conduct_url.url', url_mock), \
+                patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
+                patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.sse_client.get_events', get_events_mock):
+            logging_setup.configure_logging(args, stdout)
+            self.assertRaises(WaitTimeoutError, bundle_installation.wait_for_installation, bundle_id, args)
+
+        self.assertEqual(count_installations_mock.call_args_list, [
+            call(bundle_id, args),
+            call(bundle_id, args),
+            call(bundle_id, args)
+        ])
+
+        url_mock.assert_called_with('bundles/events', args)
+
+        conductr_host_mock.assert_called_with(args)
+
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+
+        self.assertEqual(stdout.method_calls, [
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
+            call.write('\n'),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed.\r'),
+            call.write(''),
+            call.flush(),
+        ])
 
     def test_return_immediately_if_installed(self):
         count_installations_mock = MagicMock(side_effect=[3])
@@ -421,11 +498,20 @@ class TestWaitForInstallation(CliTestCase):
 
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
 
-        self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed
-                                         |"""), self.output(stdout))
+        self.assertEqual(stdout.method_calls, [
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
+            call.write('\n'),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed.\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be installed..\r'),
+            call.write(''),
+            call.flush(),
+        ])
 
 
 class TestWaitForUninstallation(CliTestCase):
@@ -435,7 +521,7 @@ class TestWaitForUninstallation(CliTestCase):
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
         get_events_mock = MagicMock(return_value=[
-            create_test_event(None),
+            create_heartbeat_event(),
             create_test_event('bundleInstallationRemoved'),
             create_test_event('bundleInstallationRemoved')
         ])
@@ -580,8 +666,17 @@ class TestWaitForUninstallation(CliTestCase):
 
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
 
-        self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be uninstalled
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be uninstalled
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be uninstalled
-                                         |Bundle a101449418187d92c789d1adc240b6d6 still waiting to be uninstalled
-                                         |"""), self.output(stdout))
+        self.assertEqual(stdout.method_calls, [
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be uninstalled'),
+            call.write('\n'),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be uninstalled\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be uninstalled.\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Bundle a101449418187d92c789d1adc240b6d6 still waiting to be uninstalled..\r'),
+            call.write(''),
+            call.flush(),
+        ])
