@@ -187,11 +187,9 @@ def stop_nodes(running_containers):
 def wait_for_start(args):
     if not args.no_wait:
         log = logging.getLogger(__name__)
-        print('Waiting for ConductR to start', end='', flush=True)
         retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
         interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
         is_started = wait_for_conductr(args, 0, retries, interval)
-        print('')
         if is_started:
             log.info('ConductR has been started. Check current bundle status with: conduct info')
         else:
@@ -200,9 +198,15 @@ def wait_for_start(args):
 
 
 def wait_for_conductr(args, current_retry, max_retries, interval):
+    log = logging.getLogger(__name__)
+    last_message = 'Waiting for ConductR to start'
+    log.progress(last_message, flush=False)
     for attempt in range(0, max_retries):
         time.sleep(interval)
-        print('.', end='', flush=True)
+
+        last_message = '{}.'.format(last_message)
+        log.progress(last_message, flush=False)
+
         conduct_args = ConductArgs(args.vm_type)
         url = conduct_url.url('members', conduct_args)
         try:
@@ -210,4 +214,7 @@ def wait_for_conductr(args, current_retry, max_retries, interval):
             break
         except ConnectionError:
             current_retry += 1
+
+    # Reprint previous message with flush to go to next line
+    log.progress(last_message, flush=True)
     return True if current_retry < max_retries else False
