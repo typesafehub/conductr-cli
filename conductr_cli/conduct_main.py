@@ -2,7 +2,7 @@ import argcomplete
 import argparse
 from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_service_names,\
-    conduct_stop, conduct_unload, conduct_version, conduct_logs,\
+    conduct_stop, conduct_unload, version, conduct_logs,\
     conduct_events, conduct_acls, conduct_dcos, host, logging_setup,\
     conduct_url
 from conductr_cli.constants import \
@@ -74,7 +74,7 @@ def add_api_version(sub_parser):
                             help='Sets which ConductR api version to be used',
                             default=DEFAULT_API_VERSION,
                             dest='api_version',
-                            choices=conduct_version.supported_api_versions())
+                            choices=version.supported_api_versions())
 
 
 def add_local_connection_flag(sub_parser):
@@ -170,7 +170,7 @@ def build_parser(dcos_mode):
     # Sub-parser for `version` sub-command
     version_parser = subparsers.add_parser('version',
                                            help='print version')
-    version_parser.set_defaults(func=conduct_version.version)
+    version_parser.set_defaults(func=version.version)
 
     # Sub-parser for `info` sub-command
     info_parser = subparsers.add_parser('info',
