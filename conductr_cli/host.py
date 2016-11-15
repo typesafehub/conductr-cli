@@ -5,8 +5,12 @@ from subprocess import CalledProcessError
 from conductr_cli.docker import DockerVmType
 
 
+CONDUCTR_HOST = 'CONDUCTR_HOST'
+CONDUCTR_IP = 'CONDUCTR_HOST'
+
+
 def resolve_default_host():
-    return os.getenv('CONDUCTR_HOST', resolve_default_ip())
+    return os.getenv(CONDUCTR_HOST, resolve_default_ip())
 
 
 def resolve_default_ip():
@@ -14,7 +18,7 @@ def resolve_default_ip():
         vm_type = docker.vm_type()
         return resolve_ip_by_vm_type(vm_type)
 
-    return os.getenv('CONDUCTR_IP', resolve())
+    return os.getenv(CONDUCTR_IP, resolve())
 
 
 def resolve_ip_by_vm_type(vm_type):
