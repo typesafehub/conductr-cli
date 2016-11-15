@@ -8,7 +8,7 @@ from setuptools.command.test import test
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 install_requires = [
-    'requests>=2.6.0',
+    'requests>=2.6.0, <2.12.0',
     'requests-toolbelt>=0.7.0',
     'argcomplete>=0.8.1',
     'pyhocon==0.2.1',
