@@ -6,7 +6,7 @@ from conductr_cli.docker import DockerVmType
 
 
 CONDUCTR_HOST = 'CONDUCTR_HOST'
-CONDUCTR_IP = 'CONDUCTR_HOST'
+CONDUCTR_IP = 'CONDUCTR_IP'
 
 
 def resolve_default_host():
