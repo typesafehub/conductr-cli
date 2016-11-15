@@ -56,6 +56,7 @@ class Tox(test):
         errno = tox.cmdline(args=args)
         sys.exit(errno)
 
+
 setup(
     name='conductr-cli',
     version=__version__,
