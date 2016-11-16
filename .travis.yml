@@ -5,7 +5,9 @@ install:
   - pip install virtualenv
   - pip install tox
 script:
+  - pip list
   - tox
+  - pip list
 deploy:
   provider: pypi
   user: typesafehub
