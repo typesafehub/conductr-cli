@@ -6,6 +6,7 @@ install:
   - pip install tox
 script:
   - tox
+before_deploy: "pip install requests==2.11.1"
 deploy:
   provider: pypi
   user: typesafehub
