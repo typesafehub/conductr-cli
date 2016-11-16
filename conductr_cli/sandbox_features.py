@@ -69,8 +69,8 @@ class MonitoringFeature:
         log.info('Starting monitoring feature...')
         grafana = self.grafana_bundle()
         log.info('Running %s...' % grafana['bundle'])
-        conduct_main.run(['load', grafana['bundle']])
-        conduct_main.run(['run', grafana['name']])
+        conduct_main.run(['load', grafana['bundle']], configure_logging=False)
+        conduct_main.run(['run', grafana['name']], configure_logging=False)
 
     def grafana_bundle(self):
         bundle_name = 'cinnamon-grafana'

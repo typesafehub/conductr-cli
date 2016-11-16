@@ -323,7 +323,7 @@ def get_custom_settings(args):
         return None
 
 
-def run(_args=[]):
+def run(_args=[], configure_logging=True):
     # If we're being invoked via DC/OS then route our http
     # calls via its extension to the requests library. In
     # addition remove the 'conduct-dcos' and 'conduct' arg so that the conduct
@@ -388,7 +388,8 @@ def run(_args=[]):
             args.cli_parameters = get_cli_parameters(args)
             args.custom_settings = get_custom_settings(args)
 
-        logging_setup.configure_logging(args)
+        if configure_logging:
+            logging_setup.configure_logging(args)
 
         is_completed_without_error = args.func(args)
         if not is_completed_without_error:
