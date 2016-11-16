@@ -9,10 +9,10 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 install_requires = [
     'requests>=2.6.0, <2.12.0',
-    'requests-toolbelt==0.7.0',
-    'argcomplete>=0.8.1, <=1.6.0',
+    'requests-toolbelt>=0.7.0',
+    'argcomplete>=0.8.1',
     'pyhocon==0.2.1',
-    'arrow>=0.6.0, <=0.8.0',
+    'arrow>=0.6.0',
 
     # FIXME: Remove the following dependencies when dcos can be depended on
     'jsonschema==2.4',  # pin the exact version, jsonschema 2.5 broke py3
