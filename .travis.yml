@@ -1,11 +1,29 @@
 language: python
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      python: 3.5
+    - os: linux
+      dist: trusty
+      python: 3.4
+    - os: osx
+      osx_image: xcode8
+      python: 3.5
 python:
   - 3.5
 install:
   - pip install virtualenv
   - pip install tox
+  - pip install PyInstaller
 script:
   - tox
+  - pyinstaller -F conductr_cli/conduct.py
+  - pyinstaller conduct.spec
+  - pyinstaller -F conductr_cli/sandbox.py
+  - pyinstaller sandbox.spec
+  - pyinstaller -F conductr_cli/shazar.py
+  - pyinstaller shazar.spec
 deploy:
   provider: pypi
   user: typesafehub
