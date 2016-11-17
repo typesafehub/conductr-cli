@@ -9,5 +9,6 @@ def main_method():
 def run():
     main_handler.run(main_method)
 
+
 if __name__ == '__main__':
     run()

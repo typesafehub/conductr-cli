@@ -2,18 +2,21 @@ import argcomplete
 import argparse
 from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_service_names,\
-    conduct_stop, conduct_unload, conduct_version, conduct_logs,\
-    conduct_events, conduct_acls, conduct_dcos, host, logging_setup
+    conduct_stop, conduct_unload, version, conduct_logs,\
+    conduct_events, conduct_acls, conduct_dcos, host, logging_setup,\
+    conduct_url
 from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR,\
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR,\
     DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT
+from conductr_cli.host import CONDUCTR_HOST
 from dcos import config, constants
 
 from pathlib import Path
 from pyhocon import ConfigFactory
 from urllib.parse import urlparse
+import logging
 import os
 import sys
 
@@ -71,7 +74,7 @@ def add_api_version(sub_parser):
                             help='Sets which ConductR api version to be used',
                             default=DEFAULT_API_VERSION,
                             dest='api_version',
-                            choices=conduct_version.supported_api_versions())
+                            choices=version.supported_api_versions())
 
 
 def add_local_connection_flag(sub_parser):
@@ -167,7 +170,7 @@ def build_parser(dcos_mode):
     # Sub-parser for `version` sub-command
     version_parser = subparsers.add_parser('version',
                                            help='print version')
-    version_parser.set_defaults(func=conduct_version.version)
+    version_parser.set_defaults(func=version.version)
 
     # Sub-parser for `info` sub-command
     info_parser = subparsers.add_parser('info',
@@ -321,22 +324,23 @@ def get_custom_settings(args):
 
 
 def run(_args=[]):
-    if not _args:
-        _args = sys.argv
     # If we're being invoked via DC/OS then route our http
     # calls via its extension to the requests library. In
-    # addition remove the dcos arg so that the conduct
+    # addition remove the 'conduct-dcos' and 'conduct' arg so that the conduct
     # sub-commands are positioned correctly, along with their
     # arguments.
-    if _args and Path(_args[0]).name == constants.DCOS_COMMAND_PREFIX + 'conduct':
-        _args = _args[1:]
+    if sys.argv and Path(sys.argv[0]).name == constants.DCOS_COMMAND_PREFIX + 'conduct':
         dcos_mode = True
+        _args = sys.argv[2:]
     else:
         dcos_mode = False
+        if not _args:
+            # Remove the 'conduct' arg so that we start with the sub command directly
+            _args = sys.argv[1:]
     # Parse arguments
     parser = build_parser(dcos_mode)
     argcomplete.autocomplete(parser)
-    args = parser.parse_args(_args[1:])
+    args = parser.parse_args(_args)
     args.dcos_mode = dcos_mode
     if not vars(args).get('func'):
         if vars(args).get('dcos_info'):
@@ -364,11 +368,19 @@ def run(_args=[]):
             else:
                 args.command = 'conduct'
 
-            # Resolve default ip if the --ip argument hasn't been specified
-            if not vars(args).get('ip'):
-                # Returns None if an error has occurred
-                args.ip = host.resolve_default_ip()
-                if not args.ip:
+            # Ensure ConductR host is not empty
+            host_from_args = conduct_url.conductr_host(args)
+            if not host_from_args:
+                host_from_env = host.resolve_default_host()
+                if host_from_env:
+                    args.host = host_from_env
+                else:
+                    # Configure logging so error message can be logged properly before exiting with failure
+                    logging_setup.configure_logging(args)
+                    log = logging.getLogger(__name__)
+                    log.error('ConductR host address is not specified')
+                    log.error('Please ensure either `{}` environment is specified,'
+                              ' or specify the ConductR host using `--host` argument'.format(CONDUCTR_HOST))
                     exit(1)
             else:
                 args.local_connection = False

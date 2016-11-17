@@ -4,8 +4,13 @@ import os
 import sys
 
 
+# Needs to be Python 3.4 or above
+SUPPORTED_PYTHON_VERSION = (3, 4)
+
+
 def run(callback):
     try:
+        enforce_python_version()
         result = callback()
         return result
     except KeyboardInterrupt:
@@ -39,3 +44,13 @@ def run(callback):
         exception_log.error('Failure running the following command: {}'.format(sys.argv), exc_info=True)
 
         sys.exit(1)
+
+
+def enforce_python_version():
+    if sys.version_info < SUPPORTED_PYTHON_VERSION:
+        major, minor, micro, release_level, serial = sys.version_info
+        supported_major_version, supported_minor_version = SUPPORTED_PYTHON_VERSION
+        sys.exit('Unable to start CLI.\n'
+                 'Current python version is {}.{}.{}\n'
+                 'Please use python version {}.{} and above.'.format(major, minor, micro,
+                                                                     supported_major_version, supported_minor_version))

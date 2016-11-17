@@ -56,6 +56,7 @@ class Tox(test):
         errno = tox.cmdline(args=args)
         sys.exit(errno)
 
+
 setup(
     name='conductr-cli',
     version=__version__,
@@ -76,6 +77,6 @@ setup(
     cmdclass={'test': Tox},
 
     license='Apache 2',
-    description='A CLI client for Typesafe ConductR',
+    description='A CLI client for Lightbend ConductR',
     url='https://github.com/typesafehub/conductr-cli',
 )

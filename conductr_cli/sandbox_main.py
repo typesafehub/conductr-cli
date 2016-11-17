@@ -5,7 +5,7 @@ from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
 from conductr_cli.sandbox_features import feature_names
 from conductr_cli.docker import DockerVmType
 from conductr_cli import sandbox_run, sandbox_stop, sandbox_init, sandbox_common, logging_setup, docker, \
-    docker_machine, terminal
+    docker_machine, terminal, version
 from subprocess import CalledProcessError
 
 
@@ -14,6 +14,11 @@ def build_parser():
     parser = argparse.ArgumentParser('sandbox')
     subparsers = parser.add_subparsers(title='commands',
                                        help='Use one of the following sub commands')
+
+    # Sub-parser for `version` sub-command
+    version_parser = subparsers.add_parser('version',
+                                           help='print version')
+    version_parser.set_defaults(func=version.version)
 
     # Sub-parser for `run` sub-command
     run_parser = subparsers.add_parser('run',
@@ -24,8 +29,8 @@ def build_parser():
     run_parser.add_argument('image_version',
                             nargs='?',
                             help='Version of the ConductR docker image to use.\n'
-                                 'To obtain the current version and additional information, please visit the \n'
-                                 'http://www.typesafe.com/product/conductr/developer page on Typesafe.com.')
+                                 'To obtain the current version and additional information, please visit \n'
+                                 'http://lightbend.com/product/conductr/developer')
     run_parser.add_argument('-r', '--conductr-role',
                             dest='conductr_roles',
                             action='append',
@@ -211,6 +216,9 @@ def run():
                     'Please visit https://www.lightbend.com/product/conductr/developer '
                     'to obtain the current version information.')
     # Call sandbox function
+    elif vars(args).get('func').__name__ == 'version':
+        logging_setup.configure_logging(args)
+        args.func(args)
     else:
         logging_setup.configure_logging(args)
         # Check that all feature arguments are valid

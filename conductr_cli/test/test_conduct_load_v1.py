@@ -20,7 +20,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.memory = 200
         self.disk_space = 100
         self.roles = ['web-server']
-        self.bundle_name = 'bundle.zip'
+        self.bundle_file_name = 'bundle.zip'
         self.system = 'bundle'
         self.custom_settings = Mock()
         self.bundle_resolve_cache_dir = 'bundle-resolve-cache-dir'
@@ -36,7 +36,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                          self.memory,
                                          self.disk_space,
                                          ', '.join(self.roles),
-                                         self.bundle_name,
+                                         self.bundle_file_name,
                                          self.system))
         self.default_args = {
             'dcos_mode': False,
@@ -64,9 +64,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
             ('memory', str(self.memory)),
             ('diskSpace', str(self.disk_space)),
             ('roles', ' '.join(self.roles)),
-            ('bundleName', self.bundle_name),
+            ('bundleName', self.bundle_file_name),
             ('system', self.system),
-            ('bundle', (self.bundle_name, 1))
+            ('bundle', (self.bundle_file_name, 1))
         ]
 
     def test_success(self):
@@ -99,7 +99,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
+        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_file_name, self.bundle_file), ('config.zip', config_file)])
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
@@ -169,7 +169,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |roles      = [{}]
                             |""").format(self.memory, self.disk_space, ', '.join(self.roles)))
 
-        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, bundle_file))
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
@@ -196,7 +196,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |roles      = [{}]
                             |""").format(self.nr_of_cpus, self.disk_space, ', '.join(self.roles)))
 
-        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, bundle_file))
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
@@ -223,7 +223,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |roles      = [{}]
                             |""").format(self.nr_of_cpus, self.memory, ', '.join(self.roles)))
 
-        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, bundle_file))
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
@@ -250,7 +250,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |diskSpace  = {}
                             |""").format(self.nr_of_cpus, self.memory, self.disk_space))
 
-        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, bundle_file))
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
@@ -278,7 +278,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |roles      = {}
                             |""").format(self.nr_of_cpus, self.memory, self.disk_space, '-'.join(self.roles)))
 
-        resolve_bundle_mock = MagicMock(return_value=(self.bundle_name, bundle_file))
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})

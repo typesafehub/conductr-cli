@@ -28,7 +28,7 @@ class TestSandboxInitCommand(CliTestCase):
 
         docker_info_mock.assert_called_with()
         self.assertEqual(
-            as_warn('Warning: Docker has insufficient RAM of 2.0 MiB - please increase to a minimum of 3.8 MiB\n'
+            as_warn('Warning: Docker has insufficient RAM of 2.0 GiB - please increase to a minimum of 3.8 GiB\n'
                     'Sandbox initialization has successfully finished\n'),
             self.output(stdout_mock))
 
