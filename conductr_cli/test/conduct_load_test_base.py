@@ -7,9 +7,9 @@ import logging
 
 
 try:
-    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
+    from unittest.mock import patch, MagicMock  # 3.3 and beyond
 except ImportError:
-    from mock import call, patch, MagicMock
+    from mock import patch, MagicMock
 
 
 class ConductLoadTestBase(CliTestCase):
@@ -482,25 +482,22 @@ class ConductLoadTestBase(CliTestCase):
             self.output(stderr))
 
     def base_test_failure_no_configuration(self):
-        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_file_name, self.bundle_file),
-                                                     BundleResolutionError('some message')])
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
+        resolve_bundle_configuration_mock = MagicMock(side_effect=BundleResolutionError('some message'))
         stdout = MagicMock()
         stderr = MagicMock()
 
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock):
             args = self.default_args.copy()
             args.update({'configuration': 'no_such.conf'})
             logging_setup.configure_logging(MagicMock(**args), stdout, stderr)
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        self.assertEqual(
-            resolve_bundle_mock.call_args_list,
-            [
-                call(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file),
-                call(self.custom_settings, self.bundle_resolve_cache_dir, 'no_such.conf')
-            ]
-        )
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                                             'no_such.conf')
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Bundle not found: some message

@@ -19,38 +19,74 @@ BINTRAY_PROPERTIES_RE = re.compile('^(\S+)\s*=\s*([\S]+)$')
 def resolve_bundle(cache_dir, uri):
     log = logging.getLogger(__name__)
     try:
-        bintray_username, bintray_password = load_bintray_credentials()
-        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse(uri)
+        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Resolving bundle', org, repo, package_name, compatibility_version, digest))
-        bundle_download_url = bintray_download_url(bintray_username, bintray_password, org, repo, package_name,
-                                                   compatibility_version, digest)
-        if bundle_download_url:
-            auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password) if bintray_username else None
-            return uri_resolver.resolve_bundle(cache_dir, bundle_download_url, auth)
-        else:
-            return False, None, None
+        return bintray_download(cache_dir, org, repo, package_name, compatibility_version, digest)
     except MalformedBundleUriError:
         return False, None, None
     except HTTPError:
         return False, None, None
 
 
-def load_from_cache(cache_dir, uri):
+def load_bundle_from_cache(cache_dir, uri):
     log = logging.getLogger(__name__)
     try:
-        bintray_username, bintray_password = load_bintray_credentials()
-        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse(uri)
+        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Loading bundle from cache', org, repo, package_name, compatibility_version, digest))
-        bundle_download_url = bintray_download_url(bintray_username, bintray_password, org, repo, package_name,
-                                                   compatibility_version, digest)
+        bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
         if bundle_download_url:
-            return uri_resolver.load_from_cache(cache_dir, bundle_download_url)
+            return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
         else:
             return False, None, None
     except MalformedBundleUriError:
         return False, None, None
     except HTTPError:
         return False, None, None
+
+
+def resolve_bundle_configuration(cache_dir, uri):
+    log = logging.getLogger(__name__)
+    try:
+        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
+        log.info(log_message('Resolving bundle configuration', org, repo, package_name, compatibility_version, digest))
+        return bintray_download(cache_dir, org, repo, package_name, compatibility_version, digest)
+    except MalformedBundleUriError:
+        return False, None, None
+    except HTTPError:
+        return False, None, None
+
+
+def load_bundle_configuration_from_cache(cache_dir, uri):
+    log = logging.getLogger(__name__)
+    try:
+        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
+        log.info(log_message('Loading bundle configuration from cache',
+                             org, repo, package_name, compatibility_version, digest))
+        bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
+        if bundle_download_url:
+            return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
+        else:
+            return False, None, None
+    except MalformedBundleUriError:
+        return False, None, None
+    except HTTPError:
+        return False, None, None
+
+
+def bintray_download(cache_dir, org, repo, package_name, compatibility_version, digest):
+    bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
+    if bundle_download_url:
+        return uri_resolver.resolve_bundle(cache_dir, bundle_download_url, auth)
+    else:
+        return False, None, None
+
+
+def bintray_download_details(org, repo, package_name, compatibility_version, digest):
+    bintray_username, bintray_password = load_bintray_credentials()
+    bundle_download_url = bintray_download_url(bintray_username, bintray_password, org, repo, package_name,
+                                               compatibility_version, digest)
+    auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password) if bintray_username else None
+    return bundle_download_url, auth
 
 
 def load_bintray_credentials():

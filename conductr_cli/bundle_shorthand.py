@@ -2,12 +2,20 @@ from conductr_cli.exceptions import MalformedBundleUriError
 
 
 DEFAULT_ORG = 'typesafe'
-DEFAULT_REPO = 'bundle'
+DEFAULT_REPO_BUNDLE = 'bundle'
+DEFAULT_REPO_BUNDLE_CONFIGURATION = 'bundle-configuration'
 
 
-def parse(uri):
+def parse_bundle(uri):
     urn, rest = split_to_urn_and_rest(uri)
-    org, repo, package = split_to_org_repo_package(rest)
+    org, repo, package = split_to_org_repo_package(rest, default_repo=DEFAULT_REPO_BUNDLE)
+    package_name, compatiblity_version, digest = split_package_to_parts(package)
+    return urn, org, repo, package_name, compatiblity_version, digest
+
+
+def parse_bundle_configuration(uri):
+    urn, rest = split_to_urn_and_rest(uri)
+    org, repo, package = split_to_org_repo_package(rest, default_repo=DEFAULT_REPO_BUNDLE_CONFIGURATION)
     package_name, compatiblity_version, digest = split_package_to_parts(package)
     return urn, org, repo, package_name, compatiblity_version, digest
 
@@ -22,14 +30,14 @@ def split_to_urn_and_rest(uri):
         return 'urn:x-bundle:', uri
 
 
-def split_to_org_repo_package(uri):
+def split_to_org_repo_package(uri, default_repo):
     parts = uri.split('/')
     if len(parts) == 3:
         return parts
     elif len(parts) == 2:
         return DEFAULT_ORG, parts[0], parts[1]
     elif len(parts) == 1:
-        return DEFAULT_ORG, DEFAULT_REPO, parts[0]
+        return DEFAULT_ORG, default_repo, parts[0]
     else:
         raise MalformedBundleUriError('{} is not a valid bundle uri'.format(uri))
 
