@@ -29,8 +29,8 @@ def build_parser():
     run_parser.add_argument('image_version',
                             nargs='?',
                             help='Version of the ConductR docker image to use.\n'
-                                 'To obtain the current version and additional information, please visit the \n'
-                                 'http://www.typesafe.com/product/conductr/developer page on Typesafe.com.')
+                                 'To obtain the current version and additional information, please visit \n'
+                                 'http://lightbend.com/product/conductr/developer')
     run_parser.add_argument('-r', '--conductr-role',
                             dest='conductr_roles',
                             action='append',
