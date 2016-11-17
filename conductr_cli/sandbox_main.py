@@ -4,8 +4,8 @@ import logging
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
 from conductr_cli.sandbox_features import feature_names
 from conductr_cli.docker import DockerVmType
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_init, sandbox_common, logging_setup, docker, \
-    docker_machine, terminal, version
+from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, logging_setup, docker, \
+    docker_machine, terminal, version, validation
 from subprocess import CalledProcessError
 
 
@@ -101,7 +101,7 @@ def build_parser():
 
     # Sub-parser for `debug` sub-command
     debug_parser = subparsers.add_parser('debug',
-                                         help='Not supported. Use \'sbt-conductr-sandbox\' instead.')
+                                         help='Not supported. Use \'sbt-conductr\' instead.')
     add_resolve_ip(debug_parser, False)
     debug_parser.set_defaults(func='debug')
 
@@ -110,12 +110,6 @@ def build_parser():
                                         help='Stop ConductR sandbox cluster')
     add_default_arguments(stop_parser)
     stop_parser.set_defaults(func=sandbox_stop.stop)
-
-    # Sub-parser for `init` sub-command
-    init_parser = subparsers.add_parser('init',
-                                        help='Initializes ConductR sandbox environment')
-    add_resolve_ip(init_parser, False)
-    init_parser.set_defaults(func=sandbox_init.init)
     return parser
 
 
@@ -134,12 +128,23 @@ def add_resolve_ip(sub_parser, default_value):
                             help=argparse.SUPPRESS)
 
 
-def validate_docker_vm(vm_type, is_init_command):
+@validation.handle_vbox_manage_not_found_error
+def validate_docker_vm(vm_type):
     log = logging.getLogger(__name__)
     if vm_type is DockerVmType.DOCKER_ENGINE:
         try:
-            terminal.docker_info()
-            return True
+            info = terminal.docker_info()
+            existing_ram, has_sufficient_ram = docker.ram_check(info)
+            existing_cpu, has_sufficient_cpu = docker.cpu_check(info)
+
+            if not has_sufficient_ram or not has_sufficient_cpu:
+                if not has_sufficient_ram:
+                    log.warning('Docker has insufficient RAM of {} GiB - please increase to a minimum of {} GiB'
+                                .format(existing_ram, docker.DEFAULT_DOCKER_RAM_SIZE))
+
+                if not has_sufficient_cpu:
+                    log.warning('Docker has an insufficient no. of CPUs {} - please increase to a minimum of {} CPUs'
+                                .format(existing_cpu, docker.DEFAULT_DOCKER_CPU_COUNT))
         except (AttributeError, CalledProcessError):
             log.error('Docker native is installed but not running.')
             log.error('Please start Docker with one of the Docker flavors based on your OS:')
@@ -147,44 +152,71 @@ def validate_docker_vm(vm_type, is_init_command):
             log.error('  MacOS:   Docker for Mac')
             log.error('  Windows: Docker for Windows')
             log.error('A successful Docker startup can be verified with: docker info')
-            return False
-    elif vm_type is DockerVmType.DOCKER_MACHINE and is_init_command:
-        # The docker-machine validation is also performed in the sandbox init command. Therefore we skip the validation.
-        return True
+            exit(1)
+
     elif vm_type is DockerVmType.DOCKER_MACHINE:
         docker_machine_vm_name = docker_machine.vm_name()
 
-        try:
-            output = terminal.docker_machine_status(docker_machine_vm_name)
-            if output != 'Running':
-                log.error('Docker machine VM {} is not started'.format(docker_machine_vm_name))
-                log.error('Please use the following command to start the Docker machine VM: sandbox init')
-                return False
-        except CalledProcessError:
-            log.error('Docker machine VM {} does not exist'.format(docker_machine_vm_name))
-            log.error('Please use the following command to create the Docker machine VM: sandbox init')
-            return False
+        is_docker_machine_vm_installed = docker_machine.vm_install_check(docker_machine_vm_name)
+        if not is_docker_machine_vm_installed:
+            log.info('Creating Docker machine VM {}'.format(docker_machine_vm_name))
+            log.info('This will take a few minutes - please be patient...')
+            terminal.docker_machine_create_vm(docker_machine_vm_name)
 
-        try:
-            terminal.docker_info()
-            return True
-        except (AttributeError, CalledProcessError):
-            print('out of docker info')
-            log.info('It looks like the Docker machine environment variables are not set correctly.')
-            log.info('Let me try to reset the Docker machine environment variables..')
-            docker_machine_vm_name = docker_machine.vm_name()
-            [docker_machine.set_env(env[0], env[1]) for env in docker_machine.envs(docker_machine_vm_name)]
+        is_docker_machine_started = docker_machine.running_check(docker_machine_vm_name)
+        if not is_docker_machine_started:
+            log.info('Starting Docker machine VM {}'.format(docker_machine_vm_name))
+            terminal.docker_machine_start_vm(docker_machine_vm_name)
+
+        existing_ram, has_sufficient_ram = docker_machine.ram_check(docker_machine_vm_name)
+        existing_cpu, has_sufficient_cpu = docker_machine.cpu_check(docker_machine_vm_name)
+
+        if not has_sufficient_ram or not has_sufficient_cpu:
+            if not has_sufficient_ram:
+                log.warning('Docker machine VM {} has insufficient RAM of {} MB - '
+                            'increasing to the minimum of {} MB'
+                            .format(docker_machine_vm_name,
+                                    existing_ram,
+                                    docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE))
+
+            if not has_sufficient_cpu:
+                log.warning('Docker machine VM {} has an insufficient no. of CPUs {} - increasing to the minimum of {} CPU'
+                            .format(docker_machine_vm_name, existing_cpu, docker_machine.DEFAULT_DOCKER_MACHINE_CPU_COUNT))
+
+            log.info('Stopping Docker machine VM {}'.format(docker_machine_vm_name))
+            terminal.docker_machine_stop_vm(docker_machine_vm_name)
+
+            if not has_sufficient_ram:
+                log.info('Increasing Docker machine VM {} RAM to {} MB'
+                         .format(docker_machine_vm_name, docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE))
+                terminal.vbox_manage_increase_ram(docker_machine_vm_name,
+                                                  docker_machine.DEFAULT_DOCKER_MACHINE_RAM_SIZE)
+
+            if not has_sufficient_cpu:
+                log.info('Increasing Docker machine VM {} no. of CPUs to {}'
+                         .format(docker_machine_vm_name, docker_machine.DEFAULT_DOCKER_MACHINE_CPU_COUNT))
+                terminal.vbox_manage_increase_cpu(docker_machine_vm_name,
+                                                  docker_machine.DEFAULT_DOCKER_MACHINE_CPU_COUNT)
+
+            log.info('Starting Docker machine VM {}'.format(docker_machine_vm_name))
+            terminal.docker_machine_start_vm(docker_machine_vm_name)
+
             try:
                 terminal.docker_info()
-                log.warning('To set the environment variables for each terminal session '
-                            'follow the instructions of the command:')
-                log.warning('  docker-machine env {}'.format(docker_machine_vm_name))
-                return True
             except (AttributeError, CalledProcessError):
-                log.error('Docker still cannot connect to the Docker machine VM.')
-                log.error('Please set the docker environment variables.')
-                log.error('Afterwards verify that docker is up and running with: docker info')
-                return False
+                log.info('It looks like the Docker machine environment variables are not set correctly.')
+                log.info('Let me try to reset the Docker machine environment variables..')
+                [docker_machine.set_env(env[0], env[1]) for env in docker_machine.envs(docker_machine_vm_name)]
+                try:
+                    terminal.docker_info()
+                    log.warning('To set the environment variables for each terminal session '
+                                'follow the instructions of the command:')
+                    log.warning('  docker-machine env {}'.format(docker_machine_vm_name))
+                except (AttributeError, CalledProcessError):
+                    log.error('Docker still cannot connect to the Docker machine VM.')
+                    log.error('Please set the docker environment variables.')
+                    log.error('Afterwards verify that docker is up and running with: docker info')
+                    exit(1)
 
     elif vm_type is DockerVmType.NONE:
         log.error('Neither Docker native is installed nor the Docker machine environment variables are set.')
@@ -194,7 +226,7 @@ def validate_docker_vm(vm_type, is_init_command):
         log.error('  Windows 10+ Professional or Enterprise 64-bit: Docker for Windows')
         log.error('  Other Windows:                                 Docker machine via Docker Toolbox')
         log.error('For more information checkout: https://www.docker.com/products/overview')
-        return False
+        exit(1)
 
 
 def run():
@@ -230,9 +262,5 @@ def run():
                              ', '.join("'%s'" % f for f in feature_names)))
         # Docker VM validation
         args.vm_type = docker.vm_type()
-        is_init_command = True if vars(args).get('func').__name__ == 'init' else False
-        docker_vm_validation_successful = validate_docker_vm(args.vm_type, is_init_command)
-        if not args.vm_type or not docker_vm_validation_successful:
-            exit(1)
-        else:
-            args.func(args)
+        validate_docker_vm(args.vm_type)
+        args.func(args)
