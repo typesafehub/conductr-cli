@@ -1,8 +1,7 @@
-from conductr_cli import bundle_utils, conduct_url, validation
-from conductr_cli import bundle_scale
+from conductr_cli import bundle_utils, bundle_scale, conduct_request, conduct_url, validation
+from conductr_cli.conduct_url import conductr_host
 import json
 import logging
-import requests
 
 
 @validation.handle_connection_error
@@ -22,12 +21,7 @@ def run(args):
         path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
 
     url = conduct_url.url(path, args)
-    # At the time when this comment is being written, we need to pass the Host header when making HTTP request due to
-    # a bug with requests python library not working properly when IPv6 address is supplied:
-    # https://github.com/kennethreitz/requests/issues/3002
-    # The workaround for this problem is to explicitly set the Host header when making HTTP request.
-    # This fix is benign and backward compatible as the library would do this when making HTTP request anyway.
-    response = requests.put(url, headers=conduct_url.request_headers(args))
+    response = conduct_request.put(args.dcos_mode, conductr_host(args), url)
     validation.raise_for_status_inc_3xx(response)
 
     if log.is_verbose_enabled():
@@ -41,7 +35,7 @@ def run(args):
     if not args.no_wait:
         bundle_scale.wait_for_scale(response_json['bundleId'], args.scale, args)
 
-    log.info('Stop bundle with: conduct stop{} {}'.format(args.cli_parameters, bundle_id))
-    log.info('Print ConductR info with: conduct info{}'.format(args.cli_parameters))
+    log.info('Stop bundle with: {} stop{} {}'.format(args.command, args.cli_parameters, bundle_id))
+    log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
 
     return True

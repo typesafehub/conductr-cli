@@ -1,29 +1,53 @@
 import argcomplete
 import argparse
 from conductr_cli import \
-    conduct_info, conduct_load, conduct_run, conduct_services,\
+    conduct_info, conduct_load, conduct_run, conduct_service_names,\
     conduct_stop, conduct_unload, conduct_version, conduct_logs,\
-    conduct_events, conduct_acls, host, logging_setup
+    conduct_events, conduct_acls, conduct_dcos, host, logging_setup
 from conductr_cli.constants import \
-    DEFAULT_PORT, DEFAULT_API_VERSION, DEFAULT_CLI_SETTINGS_DIR,\
+    DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
+    DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR,\
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR,\
     DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT
+from dcos import config, constants
+
+from pathlib import Path
 from pyhocon import ConfigFactory
+from urllib.parse import urlparse
 import os
 import sys
 
 
-def add_ip_and_port(sub_parser):
+def add_scheme_host_ip_port_and_base_path(sub_parser):
+    sub_parser.add_argument('--scheme',
+                            help='The optional ConductR scheme, defaults to `http`',
+                            default=DEFAULT_SCHEME)
+    sub_parser.add_argument('--host',
+                            help='The optional ConductR IP, defaults to one of the value in this order:'
+                                 '$CONDUCTR_HOST or'
+                                 '$CONDUCTR_IP or'
+                                 'IP address of the docker VM or'
+                                 '`127.0.0.1`',
+                            default=None)  # Default is determined given the Docker environment
     sub_parser.add_argument('-i', '--ip',
                             help='The optional ConductR IP, defaults to one of the value in this order:'
                                  '$CONDUCTR_IP or'
                                  'IP address of the docker VM or'
                                  '`127.0.0.1`',
-                            default=None)  # Default is set in run() function
+                            default=None)  # Default is determined given the Docker environment
     sub_parser.add_argument('-p', '--port',
                             type=int,
                             help='The optional ConductR port, defaults to $CONDUCTR_PORT or `9005`',
                             default=DEFAULT_PORT)
+    sub_parser.add_argument('--base-path',
+                            help='The optional ConductR base path, defaults to DEFAULT_BASE_PATH or `/`',
+                            default=DEFAULT_BASE_PATH)
+
+
+def add_dcos_settings(sub_parser):
+    sub_parser.add_argument('--service',
+                            help='The ConductR service ID or name to direct requests to. Defaults to `conductr`',
+                            default=DEFAULT_DCOS_SERVICE)
 
 
 def add_verbose(sub_parser):
@@ -114,8 +138,11 @@ def add_no_wait(sub_parser):
                             action='store_true')
 
 
-def add_default_arguments(sub_parser):
-    add_ip_and_port(sub_parser)
+def add_default_arguments(sub_parser, dcos_mode):
+    if not dcos_mode:
+        add_scheme_host_ip_port_and_base_path(sub_parser)
+    else:
+        add_dcos_settings(sub_parser)
     add_verbose(sub_parser)
     add_quiet_flag(sub_parser)
     add_long_ids(sub_parser)
@@ -126,9 +153,14 @@ def add_default_arguments(sub_parser):
     add_custom_plugins_dir(sub_parser)
 
 
-def build_parser():
+def build_parser(dcos_mode):
     # Main argument parser
     parser = argparse.ArgumentParser('conduct')
+    if dcos_mode:
+        parser.add_argument('--info',
+                            action='store_true',
+                            dest='dcos_info')
+
     subparsers = parser.add_subparsers(title='commands',
                                        help='Use one of the following sub commands')
 
@@ -140,14 +172,14 @@ def build_parser():
     # Sub-parser for `info` sub-command
     info_parser = subparsers.add_parser('info',
                                         help='print bundle information')
-    add_default_arguments(info_parser)
+    add_default_arguments(info_parser, dcos_mode)
     info_parser.set_defaults(func=conduct_info.info)
 
-    # Sub-parser for `services` sub-command
-    services_parser = subparsers.add_parser('services',
-                                            help='print service information')
-    add_default_arguments(services_parser)
-    services_parser.set_defaults(func=conduct_services.services)
+    # Sub-parser for `service-names` sub-command
+    service_names_parser = subparsers.add_parser('service-names',
+                                                 help='print the service names available to the service locator')
+    add_default_arguments(service_names_parser, dcos_mode)
+    service_names_parser.set_defaults(func=conduct_service_names.service_names)
 
     # Sub-parser for `acls` sub-command
     acls_parser = subparsers.add_parser('acls',
@@ -155,7 +187,7 @@ def build_parser():
     acls_parser.add_argument('protocol_family',
                              choices=conduct_acls.SUPPORTED_PROTOCOL_FAMILIES,
                              help='The protocol family of the ACL to be displayed, either http or tcp')
-    add_default_arguments(acls_parser)
+    add_default_arguments(acls_parser, dcos_mode)
     acls_parser.set_defaults(func=conduct_acls.acls)
 
     # Sub-parser for `load` sub-command
@@ -167,7 +199,7 @@ def build_parser():
                              nargs='?',
                              default=None,
                              help='The optional configuration for the bundle')
-    add_default_arguments(load_parser)
+    add_default_arguments(load_parser, dcos_mode)
     add_bundle_resolve_cache_dir(load_parser)
     add_wait_timeout(load_parser)
     add_no_wait(load_parser)
@@ -185,7 +217,7 @@ def build_parser():
                             help='The optional ID of the bundle to run alongside with (v1.1 onwards)')
     run_parser.add_argument('bundle',
                             help='The ID of the bundle')
-    add_default_arguments(run_parser)
+    add_default_arguments(run_parser, dcos_mode)
     add_wait_timeout(run_parser)
     add_no_wait(run_parser)
     run_parser.set_defaults(func=conduct_run.run)
@@ -195,7 +227,7 @@ def build_parser():
                                         help='stop a bundle')
     stop_parser.add_argument('bundle',
                              help='The ID of the bundle')
-    add_default_arguments(stop_parser)
+    add_default_arguments(stop_parser, dcos_mode)
     add_wait_timeout(stop_parser)
     add_no_wait(stop_parser)
     stop_parser.set_defaults(func=conduct_stop.stop)
@@ -205,7 +237,7 @@ def build_parser():
                                           help='unload a bundle')
     unload_parser.add_argument('bundle',
                                help='The ID of the bundle')
-    add_default_arguments(unload_parser)
+    add_default_arguments(unload_parser, dcos_mode)
     add_wait_timeout(unload_parser)
     add_no_wait(unload_parser)
     unload_parser.set_defaults(func=conduct_unload.unload)
@@ -213,7 +245,7 @@ def build_parser():
     # Sub-parser for `events` sub-command
     events_parser = subparsers.add_parser('events',
                                           help='show bundle events')
-    add_default_arguments(events_parser)
+    add_default_arguments(events_parser, dcos_mode)
     events_parser.add_argument('-n', '--lines',
                                type=int,
                                default=10,
@@ -231,7 +263,7 @@ def build_parser():
     # Sub-parser for `logs` sub-command
     logs_parser = subparsers.add_parser('logs',
                                         help='show bundle logs')
-    add_default_arguments(logs_parser)
+    add_default_arguments(logs_parser, dcos_mode)
     logs_parser.add_argument('-n', '--lines',
                              type=int,
                              default=10,
@@ -246,16 +278,35 @@ def build_parser():
                              help='The ID or name of the bundle')
     logs_parser.set_defaults(func=conduct_logs.logs)
 
+    # Sub-parser for `setup-dcos` sub-command
+    dcos_parser = subparsers.add_parser('setup-dcos',
+                                        help='setup integration with the DC/OS CLI '
+                                        'so that \'dcos conduct ...\' commands can '
+                                        'be used to access ConductR via DC/OS')
+    dcos_parser.set_defaults(func=conduct_dcos.setup)
+
     return parser
 
 
 def get_cli_parameters(args):
     parameters = ['']
-    if vars(args).get('ip'):
+    arg = vars(args).get('scheme')
+    if not args.dcos_mode and arg and arg != DEFAULT_SCHEME:
+        parameters.append('--scheme {}'.format(args.scheme))
+    arg = vars(args).get('host')
+    if not args.dcos_mode and arg and arg != host.resolve_default_host():
+        parameters.append('--host {}'.format(args.host))
+    arg = vars(args).get('ip')
+    if not args.dcos_mode and arg and arg != host.resolve_default_ip():
         parameters.append('--ip {}'.format(args.ip))
-    if vars(args).get('port', int(DEFAULT_PORT)) != int(DEFAULT_PORT):
+    arg = vars(args).get('port', int(DEFAULT_PORT))
+    if not args.dcos_mode and arg and arg != int(DEFAULT_PORT):
         parameters.append('--port {}'.format(args.port))
-    if vars(args).get('api_version', DEFAULT_API_VERSION) != DEFAULT_API_VERSION:
+    arg = vars(args).get('base_path', DEFAULT_BASE_PATH)
+    if not args.dcos_mode and arg and arg != DEFAULT_BASE_PATH:
+        parameters.append('--base-path {}'.format(args.base_path))
+    arg = vars(args).get('api_version', DEFAULT_API_VERSION)
+    if arg and arg != DEFAULT_API_VERSION:
         parameters.append('--api-version {}'.format(args.api_version))
     return ' '.join(parameters)
 
@@ -270,18 +321,48 @@ def get_custom_settings(args):
 
 
 def run(_args=[]):
+    if not _args:
+        _args = sys.argv
+    # If we're being invoked via DC/OS then route our http
+    # calls via its extension to the requests library. In
+    # addition remove the dcos arg so that the conduct
+    # sub-commands are positioned correctly, along with their
+    # arguments.
+    if _args and Path(_args[0]).name == constants.DCOS_COMMAND_PREFIX + 'conduct':
+        _args = _args[1:]
+        dcos_mode = True
+    else:
+        dcos_mode = False
     # Parse arguments
-    parser = build_parser()
+    parser = build_parser(dcos_mode)
     argcomplete.autocomplete(parser)
-    args = parser.parse_args(_args) if _args else parser.parse_args()
+    args = parser.parse_args(_args[1:])
+    args.dcos_mode = dcos_mode
     if not vars(args).get('func'):
-        parser.print_help()
+        if vars(args).get('dcos_info'):
+            print('Lightbend ConductR sub commands. Type \'dcos conduct\' to see more.')
+            exit(0)
+        else:
+            parser.print_help()
     else:
         if not vars(args).get('func').__name__ == 'version':
             # Add custom plugin dir to import path
             custom_plugins_dir = vars(args).get('custom_plugins_dir')
             if custom_plugins_dir:
                 sys.path.append(custom_plugins_dir)
+
+            # DC/OS provides the location of ConductR...
+            if dcos_mode:
+                args.command = 'dcos conduct'
+                dcos_url = urlparse(config.get_config_val('core.dcos_url'))
+                args.scheme = dcos_url.scheme
+                args.ip = dcos_url.hostname
+                default_http_port = 80 if dcos_url.scheme == 'http' else 443
+                args.port = dcos_url.port if dcos_url.port else default_http_port
+                dcos_url_path = dcos_url.path if dcos_url.path else '/'
+                args.base_path = dcos_url_path + 'service/{}/'.format(DEFAULT_DCOS_SERVICE)
+            else:
+                args.command = 'conduct'
 
             # Resolve default ip if the --ip argument hasn't been specified
             if not vars(args).get('ip'):
@@ -292,8 +373,9 @@ def run(_args=[]):
             else:
                 args.local_connection = False
 
-        args.cli_parameters = get_cli_parameters(args)
-        args.custom_settings = get_custom_settings(args)
+            args.cli_parameters = get_cli_parameters(args)
+            args.custom_settings = get_custom_settings(args)
+
         logging_setup.configure_logging(args)
 
         is_completed_without_error = args.func(args)

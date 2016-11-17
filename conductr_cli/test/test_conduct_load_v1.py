@@ -2,7 +2,6 @@ from conductr_cli.test.conduct_load_test_base import ConductLoadTestBase
 from conductr_cli.test.cli_test_case import create_temp_bundle, strip_margin, as_error, \
     create_temp_bundle_with_contents
 from conductr_cli import conduct_load, logging_setup
-from conductr_cli.conduct_load import LOAD_HTTP_TIMEOUT
 import shutil
 
 try:
@@ -40,13 +39,17 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                          self.bundle_name,
                                          self.system))
         self.default_args = {
-            'ip': '127.0.0.1',
+            'dcos_mode': False,
+            'scheme': 'http',
+            'host': '127.0.0.1',
             'port': 9005,
+            'base_path': '/',
             'api_version': '1',
             'verbose': False,
             'quiet': False,
             'no_wait': False,
             'long_ids': False,
+            'command': 'conduct',
             'cli_parameters': '',
             'custom_settings': self.custom_settings,
             'resolve_cache_dir': self.bundle_resolve_cache_dir,
@@ -69,6 +72,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success(self):
         self.base_test_success()
 
+    def test_success_dcos_mode(self):
+        self.base_test_success_dcos_mode()
+
     def test_success_verbose(self):
         self.base_test_success_verbose()
 
@@ -81,14 +87,20 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_custom_ip_port(self):
         self.base_test_success_custom_ip_port()
 
+    def test_success_custom_host_port(self):
+        self.base_test_success_custom_host_port()
+
+    def test_success_ip(self):
+        self.base_test_success_ip()
+
     def test_success_with_configuration(self):
         tmpdir, config_file = create_temp_bundle_with_contents({
             'bundle.conf': '{name="overlaid-name"}',
             'config.sh': 'echo configuring'
         })
 
-        request_headers_mock = MagicMock(return_value=self.mock_headers)
         resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_name, self.bundle_file), ('config.zip', config_file)])
+        create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
@@ -99,7 +111,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
-                patch('conductr_cli.conduct_url.request_headers', request_headers_mock), \
+                patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
@@ -119,11 +131,12 @@ class TestConductLoadCommand(ConductLoadTestBase):
                 call(self.custom_settings, self.bundle_resolve_cache_dir, config_file)
             ]
         )
-        request_headers_mock.assert_called_with(input_args)
         expected_files = self.default_files + [('configuration', ('config.zip', 1))]
         expected_files[4] = ('bundleName', 'overlaid-name')
-        http_method.assert_called_with(self.default_url, files=expected_files, timeout=LOAD_HTTP_TIMEOUT,
-                                       headers=self.mock_headers)
+        create_multipart_mock.assert_called_with(self.conduct_load_logger, expected_files)
+        http_method.assert_called_with(self.default_url,
+                                       data=self.multipart_mock,
+                                       headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
         self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'),

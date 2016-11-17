@@ -177,6 +177,9 @@ For pointers on command usage run ``shazar -h``.
 Developers
 ~~~~~~~~~~
 
+> Note that we presently package the dcos library as source. When https://github.com/dcos/dcos-cli/pull/823 becomes available then
+we should remove this directory and depend on it directly.
+
 For OS X, you should ensure firstly that you have the latest Xcode command line tools installed.
 
 Now install the latest python3 version on your system, on OS X use:
@@ -207,18 +210,24 @@ Make sure to install the ``virtualenv`` module for python3:
 
   pip3 install virtualenv
 
-Also, make sure to install the necessary dependencies for each environment and to set the python versions for ``conductr-cli``:
+...and ``tox`` for multi-environment testing:
 
 .. code:: bash
 
-  pip3 install -e .
-  pyenv local system 3.4.3
+  pip3 install tox
 
-Be sure to install flake for testing:
+...flake for style conformance:
 
 .. code:: bash
 
   pip3 install flake8
+
+...and finally, make sure to install the necessary dependencies for each environment and to set the python versions for ``conductr-cli``:
+
+.. code:: bash
+
+  pip3 install .
+  pyenv local system 3.4.3
 
 Running
 ^^^^^^^
@@ -227,8 +236,9 @@ If you want to run ``conduct`` or ``sandbox`` locally, i.e. without installation
 
 .. code:: bash
 
-    python3 -m conductr_cli.conduct
-    python3 -m conductr_cli.sandbox
+    pip3 install -e .
+    conduct
+    sandbox
 
 Tests
 ^^^^^
@@ -243,13 +253,7 @@ Execute the following command to run all defined tests:
 
 .. code:: bash
 
-    python3 setup.py test
-
-To run only a specific test case in a test suite:
-
-.. code:: bash
-
-    python3 setup.py test -a "-- -s conductr_cli.test.test_conduct_unload:TestConductUnloadCommand.test_failure_invalid_address"
+    tox
 
 Releasing
 ^^^^^^^^^

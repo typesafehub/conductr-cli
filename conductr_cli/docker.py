@@ -16,12 +16,9 @@ class DockerVmType:
 def vm_type():
     # TODO: Add Docker native check for Windows 10 Professional and Enterprise Edition
     docker_machine_name_env = os.getenv('DOCKER_MACHINE_NAME')
-    docker_host_env = os.getenv('DOCKER_HOST')
-    docker_tls_verify_env = os.getenv('DOCKER_TLS_VERIFY')
-    docker_cert_path_env = os.getenv('DOCKER_CERT_PATH')
 
     def docker_machine_envs_set():
-        if docker_machine_name_env or docker_host_env or docker_tls_verify_env or docker_cert_path_env:
+        if docker_machine_name_env:
             return True
         else:
             return False

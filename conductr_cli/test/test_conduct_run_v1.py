@@ -17,8 +17,12 @@ class TestConductRunCommand(ConductRunTestBase):
         self.bundle_id = '45e0c477d3e5ea92aa8d85c0d8f3e25c'
         self.scale = 3
         self.default_args = {
-            'ip': '127.0.0.1',
+            'dcos_mode': False,
+            'command': 'conduct',
+            'scheme': 'http',
+            'host': '127.0.0.1',
             'port': 9005,
+            'base_path': '/',
             'api_version': '1',
             'verbose': False,
             'quiet': False,
@@ -46,8 +50,14 @@ class TestConductRunCommand(ConductRunTestBase):
     def test_success_long_ids(self):
         self.base_test_success_long_ids()
 
-    def test_success_with_configuration(self):
-        self.base_test_success_with_configuration()
+    def test_success_with_custom_ip_port(self):
+        self.base_test_success_with_custom_ip_port()
+
+    def test_success_with_custom_host_port(self):
+        self.base_test_success_with_custom_host_port()
+
+    def test_success_ip(self):
+        self.base_test_success_ip()
 
     def test_success_no_wait(self):
         self.base_test_success_no_wait()
@@ -63,7 +73,7 @@ class TestConductRunCommand(ConductRunTestBase):
 
     def test_error_with_affinity_switch(self):
         args = {
-            'ip': '127.0.0.1',
+            'host': '127.0.0.1',
             'port': 9005,
             'api_version': '1',
             'verbose': False,
