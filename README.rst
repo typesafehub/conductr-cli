@@ -6,24 +6,82 @@ Command Line Interface (CLI) for Typesafe ConductR
 Installation
 ~~~~~~~~~~~~
 
-Python 3 is required. For OS X users use ``brew install python3``.
+Python 3 is required.
 
-Install using pip
-^^^^^^^^^^^^^^^^^
+**macOS**
 
-You may either install or upgrade to all users:
+Use homebrew to install Python 3:
+
+.. code:: bash
+
+    brew install python3
+
+**Other operation systems**
+
+Install Python 3 with the system package manager or use one of the Python 3 distributions from https://www.python.org/downloads
+
+Install using pip3
+^^^^^^^^^^^^^^^^^^
+
+Install the ``conductr-cli`` with ``pip3``. Depending on your OS the command is:
+
+**macOS**
+
+.. code:: bash
+
+    pip3 install conductr-cli
+
+**Linux**
+
+Install the ``conductr-cli`` package as you have installed other pip3 package. To install the package for all users, use:
 
 .. code:: bash
 
     sudo pip3 install conductr-cli
 
-(use -U with the above if you need to upgrade)
-
-... or, and if you’re not using brew (there’s a problem with user installs as of the time writing this), install to the current user (make sure to have ``~/.local/bin`` in your PATH):
+To install it only for the current user, use:
 
 .. code:: bash
 
-    pip3 install -U --user conductr-cli
+    pip3 install --user conductr-cli
+
+**Windows**
+
+.. code:: bash
+
+    pip install conductr-cli
+
+Upgrade using pip3
+^^^^^^^^^^^^^^^^^^
+
+The ``conductr-cli` can be updated by using the pip3 ``-U` option:
+
+**macOS**
+
+.. code:: bash
+
+pip3 install -U conductr-cli
+
+**Linux**
+
+Install the ``conductr-cli`` package as you have installed other pip3 package. To install the package for all users, use:
+
+.. code:: bash
+
+    sudo pip3 install -U conductr-cli
+
+To install it only for the current user, use:
+
+.. code:: bash
+
+    pip3 install --user -U conductr-cli
+
+**Windows**
+
+.. code:: bash
+
+    pip install -U conductr-cli
+
 
 Install as a deb package
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -96,21 +154,21 @@ e.g.
         debug               Not supported. Use `sbt-conductr-sandbox` instead
         stop                Stop ConductR sandbox cluster
 
-The sandbox is connecting to the running Docker VM to start the ConductR nodes inside Docker containers. The host IP address of the Docker VM is automatically resolved by using either `docker-machine` or `boot2docker`. If none of the Docker commands exist then the IP address is resolved with the command `hostname` or as the last fallback the IP address ``127.0.0.1`` is used. It is also possible to skip this automatic resolving of the Docker host IP by setting the environment variable ``CONDUCTR_IP`` which will be then used instead.
+The sandbox is connecting to the running Docker host to start the ConductR nodes inside Docker containers. The host IP address of the Docker host is automatically resolved. It is also possible to skip this automatic resolving of the Docker host IP by setting the environment variable ``CONDUCTR_HOST`` which will be then used instead.
 
-  In order to use the following features you should ensure that the machine that runs Docker has enough memory, typically at least 2GB. VM configurations such as those provided via docker-machine and Oracle's VirtualBox can be configured like so:
+In order to use the following features you should ensure that the machine that runs Docker has enough memory, typically at least 4 GiB. Use the following command to verify if the Docker VM has sufficient resources:
 
 .. code:: bash
 
-        docker-machine stop default
-        VBoxManage modifyvm default --memory 2048
-        docker-machine start default
+    sandbox init
 
 To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature run:
 
 .. code:: bash
 
-    sandbox run 1.1.9 --nr-of-containers 3 --feature visualization
+    sandbox run <CONDUCTR_VERSION> --nr-of-containers 3 --feature visualization
+
+Pick up the latest ConductR version from https://www.lightbend.com/product/conductr/developer
 
 To stop this cluster run:
 
@@ -146,9 +204,7 @@ e.g.
         events              show bundle events
         logs                show bundle logs
 
-Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--ip`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_IP`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. The IP address will be automatically resolved to the Docker host IP by using either `docker-machine` or `boot2docker`. If none of the Docker commands exist then the IP address is resolved with the command `hostname` or as the last fallback the IP address ``127.0.0.1`` is used.
-
-The commands provided via CLI uses version 1.0 of the ConductR API by default. When working with version 1.1 of ConductR, set the ``CONDUCTR_API_VERSION`` environment variable to ``1.1``. Alternatively you can specify the API version via the ``--api-version`` option.
+Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--host`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_IP`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. By default, the IP address will be automatically resolved to the Docker host IP.
 
 Here’s an example for loading a bundle:
 
@@ -160,7 +216,7 @@ Note that when specifying IPV6 addresses then you must surround them with square
 
 .. code:: bash
 
-    conduct info --ip [fe80:0000:0000:0000:0cb3:e2ff:fe74:902d]
+    conduct info --host [fe80:0000:0000:0000:0cb3:e2ff:fe74:902d]
 
 shazar
 ^^^^^^
@@ -180,17 +236,27 @@ Developers
 > Note that we presently package the dcos library as source. When https://github.com/dcos/dcos-cli/pull/823 becomes available then
 we should remove this directory and depend on it directly.
 
-For OS X, you should ensure firstly that you have the latest Xcode command line tools installed.
+For macOS, you should ensure firstly that you have the latest Xcode command line tools installed:
 
-Now install the latest python3 version on your system, on OS X use:
+.. code:: bash
+
+  xcode-select --install
+
+Now, install the latest python3 version on your system, on macOS use:
 
 .. code:: bash
 
   brew install python3
 
-The tests executing the tests in multiple python versions. For all OS environments, pyenv is used to support multiple installations of python during testing. Refer to https://github.com/yyuu/pyenv for information on how to install pyenv. With pyenv installed you can do things like ``pyenv local 3.4.3`` or ``pyenv local system``. Don't forget to update your login profile to setup pyenv (the doc describes how).
+The tests executing the tests in multiple python versions. For all OS environments, pyenv is used to support multiple installations of python during testing. On macOS, use brew to install pyenv:
 
-Then for OS X, install python 3.4:
+.. code:: bash
+
+  brew install pyenv
+
+Installation instructions for other OS can be found at https://github.com/yyuu/pyenv. With pyenv installed you can do things like ``pyenv local 3.4.3`` or ``pyenv local system``. Don't forget to update your login profile to setup pyenv (the doc describes how).
+
+After pyenv has been installed, add python 3.4. On macOS use:
 
 .. code:: bash
 
@@ -198,31 +264,19 @@ Then for OS X, install python 3.4:
   LDFLAGS="-L$(brew --prefix openssl)/lib" \
   pyenv install -v 3.4.3
 
-For others this is easier:
+For others OS this is easier:
 
 .. code:: bash
 
   pyenv install -v 3.4.3
 
-Make sure to install the ``virtualenv`` module for python3:
-
-.. code:: bash
-
-  pip3 install virtualenv
-
-...and ``tox`` for multi-environment testing:
+Make sure to install the ``tox`` module for multi-environment testing:
 
 .. code:: bash
 
   pip3 install tox
 
-...flake for style conformance:
-
-.. code:: bash
-
-  pip3 install flake8
-
-...and finally, make sure to install the necessary dependencies for each environment and to set the python versions for ``conductr-cli``:
+Afterwards, install the necessary dependencies for each environment and to set the python versions for ``conductr-cli``:
 
 .. code:: bash
 
