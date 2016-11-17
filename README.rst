@@ -54,7 +54,7 @@ To install it only for the current user, use:
 Upgrade using pip3
 ^^^^^^^^^^^^^^^^^^
 
-The ``conductr-cli` can be updated by using the pip3 ``-U` option:
+The ``conductr-cli`` can be updated by using the pip3 ``-U`` option:
 
 **macOS**
 
