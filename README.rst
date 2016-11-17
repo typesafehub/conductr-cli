@@ -156,12 +156,6 @@ e.g.
 
 The sandbox is connecting to the running Docker host to start the ConductR nodes inside Docker containers. The host IP address of the Docker host is automatically resolved. It is also possible to skip this automatic resolving of the Docker host IP by setting the environment variable ``CONDUCTR_HOST`` which will be then used instead.
 
-In order to use the following features you should ensure that the machine that runs Docker has enough memory, typically at least 4 GiB. Use the following command to verify if the Docker VM has sufficient resources:
-
-.. code:: bash
-
-    sandbox init
-
 To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature run:
 
 .. code:: bash

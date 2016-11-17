@@ -2,6 +2,7 @@ import os
 import logging
 
 from conductr_cli import terminal
+from subprocess import CalledProcessError
 from conductr_cli.exceptions import NOT_FOUND_ERROR
 
 DEFAULT_DOCKER_MACHINE_NAME = 'default'
@@ -32,3 +33,35 @@ def set_env(key, value):
     log = logging.getLogger(__name__)
     log.info('Set environment variable: {}="{}"'.format(key, value))
     os.environ[key] = value
+
+
+def vm_install_check(vm_name):
+    try:
+        output = terminal.docker_machine_status(vm_name)
+        if output == 'Error':
+            # Case: VM exists in docker-machine, but not in VirtualBox
+            return False
+        else:
+            return True
+    except CalledProcessError:
+        # Case: VM does not exist in docker-machine
+        return False
+
+
+def running_check(vm_name):
+    output = terminal.docker_machine_status(vm_name)
+    return output == 'Running'
+
+
+def ram_check(vm_name):
+    existing_ram_size = terminal.vbox_manage_get_ram_size(vm_name)
+    minimum_ram_size = int(DEFAULT_DOCKER_MACHINE_RAM_SIZE)
+    has_sufficient_ram = existing_ram_size >= minimum_ram_size
+    return existing_ram_size, has_sufficient_ram
+
+
+def cpu_check(vm_name):
+    existing_cpu_count = terminal.vbox_manage_get_cpu_count(vm_name)
+    minimum_cpu_count = int(DEFAULT_DOCKER_MACHINE_CPU_COUNT)
+    has_sufficient_cpu = existing_cpu_count >= minimum_cpu_count
+    return existing_cpu_count, has_sufficient_cpu
