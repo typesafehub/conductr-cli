@@ -225,10 +225,15 @@ class TestResolveBundleConfiguration(TestCase):
 
 class TestLoadBundleFromCache(TestCase):
     def test_file(self):
-        is_resolved, bundle_name, bundle_file = uri_resolver.load_bundle_from_cache('/cache-dir', '/tmp/bundle.zip')
-        self.assertFalse(is_resolved)
-        self.assertIsNone(bundle_name)
-        self.assertIsNone(bundle_file)
+        exists_mock = MagicMock()
+
+        with patch('os.path.exists', exists_mock):
+            is_resolved, bundle_name, bundle_file = uri_resolver.load_bundle_from_cache('/cache-dir', '/tmp/bundle.zip')
+            self.assertFalse(is_resolved)
+            self.assertIsNone(bundle_name)
+            self.assertIsNone(bundle_file)
+
+        exists_mock.assert_not_called()
 
     def test_uri_found(self):
         exists_mock = MagicMock(return_value=True)
@@ -265,11 +270,16 @@ class TestLoadBundleFromCache(TestCase):
 
 class TestLoadBundleConfigurationFromCache(TestCase):
     def test_file(self):
-        is_resolved, bundle_name, bundle_file = uri_resolver.load_bundle_configuration_from_cache('/cache-dir',
-                                                                                                  '/tmp/bundle.zip')
-        self.assertFalse(is_resolved)
-        self.assertIsNone(bundle_name)
-        self.assertIsNone(bundle_file)
+        exists_mock = MagicMock()
+
+        with patch('os.path.exists', exists_mock):
+            is_resolved, bundle_name, bundle_file = uri_resolver.load_bundle_configuration_from_cache(
+                '/cache-dir', '/tmp/bundle.zip')
+            self.assertFalse(is_resolved)
+            self.assertIsNone(bundle_name)
+            self.assertIsNone(bundle_file)
+
+        exists_mock.assert_not_called()
 
     def test_uri_found(self):
         exists_mock = MagicMock(return_value=True)
