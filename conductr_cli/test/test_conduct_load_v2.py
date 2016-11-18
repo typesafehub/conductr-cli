@@ -147,7 +147,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_file_name, self.bundle_file), ('config.zip', config_file)])
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
+        resolve_bundle_configuration_mock = MagicMock(return_value=('config.zip', config_file))
         conf_mock = MagicMock(side_effect=['mock bundle.conf', 'mock bundle.conf overlay'])
         string_io_mock = MagicMock(side_effect=['mock bundle.conf - string i/o',
                                                 'mock bundle.conf overlay - string i/o'])
@@ -162,6 +163,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock), \
                 patch('conductr_cli.bundle_utils.conf', conf_mock), \
                 patch('conductr_cli.conduct_load.string_io', string_io_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
@@ -172,14 +174,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        self.assertEqual(
-            resolve_bundle_mock.call_args_list,
-            [
-                call(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file),
-                call(self.custom_settings, self.bundle_resolve_cache_dir, config_file)
-            ]
-        )
-
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                                             config_file)
         self.assertEqual(
             conf_mock.call_args_list,
             [
@@ -223,7 +220,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_file_name, self.bundle_file), ('config.zip', config_file)])
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
+        resolve_bundle_configuration_mock = MagicMock(return_value=('config.zip', config_file))
         conf_mock = MagicMock(side_effect=['mock bundle.conf', None])
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
@@ -238,6 +236,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock), \
                 patch('conductr_cli.bundle_utils.conf', conf_mock), \
                 patch('conductr_cli.conduct_load.string_io', string_io_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
@@ -248,13 +247,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        self.assertEqual(
-            resolve_bundle_mock.call_args_list,
-            [
-                call(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file),
-                call(self.custom_settings, self.bundle_resolve_cache_dir, config_file)
-            ]
-        )
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                                             config_file)
 
         self.assertEqual(
             conf_mock.call_args_list,

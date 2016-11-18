@@ -33,7 +33,7 @@ def resolve_bundle(cache_dir, uri, auth=None):
         return False, None, None
 
 
-def load_from_cache(cache_dir, uri):
+def load_bundle_from_cache(cache_dir, uri):
     # When the supplied uri is a local filesystem, don't load from cache so file can be used as is
     parsed = urlparse(uri, scheme='file')
     if parsed.scheme == 'file':
@@ -48,6 +48,14 @@ def load_from_cache(cache_dir, uri):
             return True, bundle_name, cached_file
         else:
             return False, None, None
+
+
+def resolve_bundle_configuration(cache_dir, uri, auth=None):
+    return resolve_bundle(cache_dir, uri, auth)
+
+
+def load_bundle_configuration_from_cache(cache_dir, uri):
+    return load_bundle_from_cache(cache_dir, uri)
 
 
 def get_url(uri):

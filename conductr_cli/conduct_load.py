@@ -51,8 +51,9 @@ def load_v1(args):
     configuration_file_name, configuration_file = (None, None)
     if args.configuration is not None:
         log.info('Retrieving configuration...')
-        configuration_file_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
-                                                                              args.configuration)
+        configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
+                                                                                            resolve_cache_dir,
+                                                                                            args.configuration)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -154,8 +155,9 @@ def load_v2(args):
         configuration_file_name, configuration_file, bundle_conf_overlay = (None, None, None)
         if args.configuration is not None:
             log.info('Retrieving configuration...')
-            configuration_file_name, configuration_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
-                                                                                  args.configuration)
+            configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
+                                                                                                resolve_cache_dir,
+                                                                                                args.configuration)
             bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
         files = [('bundleConf', ('bundle.conf', string_io(bundle_conf)))]

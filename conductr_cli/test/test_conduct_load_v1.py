@@ -99,7 +99,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'config.sh': 'echo configuring'
         })
 
-        resolve_bundle_mock = MagicMock(side_effect=[(self.bundle_file_name, self.bundle_file), ('config.zip', config_file)])
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
+        resolve_bundle_configuration_mock = MagicMock(return_value=('config.zip', config_file))
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
@@ -111,6 +112,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         input_args = MagicMock(**args)
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -124,13 +126,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
-        self.assertEqual(
-            resolve_bundle_mock.call_args_list,
-            [
-                call(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file),
-                call(self.custom_settings, self.bundle_resolve_cache_dir, config_file)
-            ]
-        )
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                                             config_file)
         expected_files = self.default_files + [('configuration', ('config.zip', 1))]
         expected_files[4] = ('bundleName', 'overlaid-name')
         create_multipart_mock.assert_called_with(self.conduct_load_logger, expected_files)
