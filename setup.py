@@ -12,7 +12,7 @@ install_requires = [
     'requests-toolbelt>=0.7.0',
     'argcomplete>=0.8.1',
     'pyhocon==0.2.1',
-    'arrow>=0.6.0'
+    'arrow>=0.6.0',
     'colorama>=0.3.7',
 
     # FIXME: Remove the following dependencies when dcos can be depended on
