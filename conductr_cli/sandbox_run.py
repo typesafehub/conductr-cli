@@ -10,9 +10,9 @@ import os
 import time
 
 
-# Will retry 30 times, every second
+# Will retry 30 times, every two seconds
 DEFAULT_WAIT_RETRIES = 30
-DEFAULT_WAIT_RETRY_INTERVAL = 1.0
+DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 
 
 # Arguments for conduct requests, such as waiting for ConductR to start in the sandbox
