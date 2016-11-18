@@ -60,7 +60,7 @@ The ``conductr-cli`` can be updated by using the pip3 ``-U`` option:
 
 .. code:: bash
 
-pip3 install -U conductr-cli
+    pip3 install -U conductr-cli
 
 **Linux**
 
@@ -198,7 +198,7 @@ e.g.
         events              show bundle events
         logs                show bundle logs
 
-Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--host`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_IP`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. By default, the IP address will be automatically resolved to the Docker host IP.
+Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--host`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_HOST`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. By default, the IP address will be automatically resolved to the Docker host IP.
 
 Here’s an example for loading a bundle:
 
