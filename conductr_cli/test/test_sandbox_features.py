@@ -1,6 +1,11 @@
 from unittest import TestCase
 from conductr_cli.sandbox_features import VisualizationFeature, LoggingFeature, MonitoringFeature, collect_features
 
+try:
+    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
+except ImportError:
+    from mock import call, patch, MagicMock
+
 
 class TestFeatures(TestCase):
     def test_collect_features(self):
@@ -33,7 +38,9 @@ class TestFeatures(TestCase):
         self.assertEqual([(LoggingFeature, []), (MonitoringFeature, ['snapshot', '2.1.0-20161018-43bab24'])],
                          [(type(f), f.args) for f in collect_features([['monitoring', 'snapshot', '2.1.0-20161018-43bab24']])])
 
-    def test_monitoring_grafana_bundle(self):
+
+class TestMonitoringFeature(TestCase):
+    def test_grafana_bundle(self):
         self.assertEqual('cinnamon-grafana', MonitoringFeature([]).grafana_bundle()['name'])
         self.assertEqual('cinnamon-grafana', MonitoringFeature([]).grafana_bundle()['bundle'])
 
@@ -45,3 +52,14 @@ class TestFeatures(TestCase):
 
         self.assertEqual('lightbend/commercial-monitoring/cinnamon-grafana:v2.1.0.20161018.43bab24',
                          MonitoringFeature(['snapshot', '2.1.0-20161018-43bab24']).grafana_bundle()['bundle'])
+
+    def test_start(self):
+        run_mock = MagicMock()
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            MonitoringFeature([]).start()
+
+        self.assertEqual(run_mock.call_args_list, [
+            call(['load', 'cinnamon-grafana'], configure_logging=False),
+            call(['run', 'cinnamon-grafana'], configure_logging=False)
+        ])
