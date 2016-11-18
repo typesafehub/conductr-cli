@@ -1,6 +1,6 @@
 |build_status| |latest_version|
 
-Command Line Interface (CLI) for Typesafe ConductR
+Command Line Interface (CLI) for Lightbend ConductR
 --------------------------------------------------
 
 Installation
