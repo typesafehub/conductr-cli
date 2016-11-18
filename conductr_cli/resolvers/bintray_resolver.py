@@ -2,6 +2,7 @@ from conductr_cli.exceptions import MalformedBundleUriError, BintrayResolutionEr
 from conductr_cli.resolvers import uri_resolver
 from conductr_cli import bundle_shorthand
 from requests.exceptions import HTTPError
+from urllib.parse import urlparse
 import json
 import logging
 import os
@@ -29,19 +30,24 @@ def resolve_bundle(cache_dir, uri):
 
 
 def load_bundle_from_cache(cache_dir, uri):
-    log = logging.getLogger(__name__)
-    try:
-        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
-        log.info(log_message('Loading bundle from cache', org, repo, package_name, compatibility_version, digest))
-        bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
-        if bundle_download_url:
-            return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
-        else:
+    # When the supplied uri points to a local file, don't load from cache so file can be used as is.
+    parsed = urlparse(uri, scheme='file')
+    if parsed.scheme == 'file' and os.path.exists(uri):
+        return False, None, None
+    else:
+        log = logging.getLogger(__name__)
+        try:
+            urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
+            log.info(log_message('Loading bundle from cache', org, repo, package_name, compatibility_version, digest))
+            bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
+            if bundle_download_url:
+                return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
+            else:
+                return False, None, None
+        except MalformedBundleUriError:
             return False, None, None
-    except MalformedBundleUriError:
-        return False, None, None
-    except HTTPError:
-        return False, None, None
+        except HTTPError:
+            return False, None, None
 
 
 def resolve_bundle_configuration(cache_dir, uri):
@@ -57,20 +63,25 @@ def resolve_bundle_configuration(cache_dir, uri):
 
 
 def load_bundle_configuration_from_cache(cache_dir, uri):
-    log = logging.getLogger(__name__)
-    try:
-        urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
-        log.info(log_message('Loading bundle configuration from cache',
-                             org, repo, package_name, compatibility_version, digest))
-        bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
-        if bundle_download_url:
-            return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
-        else:
+    # When the supplied uri points to a local file, don't load from cache so file can be used as is.
+    parsed = urlparse(uri, scheme='file')
+    if parsed.scheme == 'file' and os.path.exists(uri):
+        return False, None, None
+    else:
+        log = logging.getLogger(__name__)
+        try:
+            urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
+            log.info(log_message('Loading bundle configuration from cache',
+                                 org, repo, package_name, compatibility_version, digest))
+            bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
+            if bundle_download_url:
+                return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
+            else:
+                return False, None, None
+        except MalformedBundleUriError:
             return False, None, None
-    except MalformedBundleUriError:
-        return False, None, None
-    except HTTPError:
-        return False, None, None
+        except HTTPError:
+            return False, None, None
 
 
 def bintray_download(cache_dir, org, repo, package_name, compatibility_version, digest):
