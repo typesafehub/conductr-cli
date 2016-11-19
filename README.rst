@@ -1,7 +1,7 @@
 |build_status| |latest_version|
 
 Command Line Interface (CLI) for Lightbend ConductR
---------------------------------------------------
+---------------------------------------------------
 
 Installation
 ~~~~~~~~~~~~
