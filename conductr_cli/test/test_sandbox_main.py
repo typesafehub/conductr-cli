@@ -57,10 +57,9 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.resolve_ip, True)
 
-    def test_parser_debug(self):
-        args = self.parser.parse_args('debug'.split())
-        self.assertEqual(args.func, 'debug')
-        self.assertEqual(args.resolve_ip, False)
+    def test_parser_version(self):
+        args = self.parser.parse_args('version'.split())
+        self.assertEqual(args.func.__name__, 'version')
 
     def test_docker_not_running(self):
         stdout_mock = MagicMock()
