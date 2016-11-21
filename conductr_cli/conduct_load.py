@@ -40,7 +40,7 @@ def load(args):
 def load_v1(args):
     log = logging.getLogger(__name__)
 
-    log.info('Retrieving bundle...')
+    log.info('Retrieving bundle..')
     custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
 
@@ -50,7 +50,7 @@ def load_v1(args):
 
     configuration_file_name, configuration_file = (None, None)
     if args.configuration is not None:
-        log.info('Retrieving configuration...')
+        log.info('Retrieving configuration..')
         configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
                                                                                             resolve_cache_dir,
                                                                                             args.configuration)
@@ -73,7 +73,7 @@ def load_v1(args):
     # if configuration_file and os.path.exists(configuration_file):
     #    os.remove(configuration_file)
 
-    log.info('Loading bundle to ConductR...')
+    log.info('Loading bundle to ConductR..')
     multipart = create_multipart(log, files)
     response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
                                     data=multipart,
@@ -140,7 +140,7 @@ def validate_cache_dir_permissions(cache_dir, log):
 def load_v2(args):
     log = logging.getLogger(__name__)
 
-    log.info('Retrieving bundle...')
+    log.info('Retrieving bundle..')
     custom_settings = args.custom_settings
     resolve_cache_dir = args.resolve_cache_dir
 
@@ -154,7 +154,7 @@ def load_v2(args):
     else:
         configuration_file_name, configuration_file, bundle_conf_overlay = (None, None, None)
         if args.configuration is not None:
-            log.info('Retrieving configuration...')
+            log.info('Retrieving configuration..')
             configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
                                                                                                 resolve_cache_dir,
                                                                                                 args.configuration)
@@ -176,7 +176,7 @@ def load_v2(args):
 
         url = conduct_url.url('bundles', args)
 
-        log.info('Loading bundle to ConductR...')
+        log.info('Loading bundle to ConductR..')
         multipart = create_multipart(log, files)
 
         response = conduct_request.post(args.dcos_mode, conductr_host(args), url,

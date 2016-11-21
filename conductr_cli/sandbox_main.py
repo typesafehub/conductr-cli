@@ -160,7 +160,7 @@ def validate_docker_vm(vm_type):
         is_docker_machine_vm_installed = docker_machine.vm_install_check(docker_machine_vm_name)
         if not is_docker_machine_vm_installed:
             log.info('Creating Docker machine VM {}'.format(docker_machine_vm_name))
-            log.info('This will take a few minutes - please be patient...')
+            log.info('This will take a few minutes - please be patient..')
             terminal.docker_machine_create_vm(docker_machine_vm_name)
 
         is_docker_machine_started = docker_machine.running_check(docker_machine_vm_name)

@@ -137,7 +137,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
-        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'),
+        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration..\n'),
                          self.output(stdout))
 
     def test_success_no_wait(self):

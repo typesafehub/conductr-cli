@@ -284,7 +284,7 @@ def build_parser(dcos_mode):
     # Sub-parser for `setup-dcos` sub-command
     dcos_parser = subparsers.add_parser('setup-dcos',
                                         help='setup integration with the DC/OS CLI '
-                                        'so that \'dcos conduct ...\' commands can '
+                                        'so that \'dcos conduct ..\' commands can '
                                         'be used to access ConductR via DC/OS')
     dcos_parser.set_defaults(func=conduct_dcos.setup)
 

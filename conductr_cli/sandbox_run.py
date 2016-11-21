@@ -36,10 +36,11 @@ def run(args):
     features = collect_features(args.features)
     ports = collect_ports(args, features)
     bootstrap_features = collect_bootstrap_features(features)
-    scale_cluster(args, ports, bootstrap_features)
-    wait_for_start(args)
+    container_names = scale_cluster(args, ports, bootstrap_features)
+    is_started, wait_timeout = wait_for_start(args)
     for feature in features:
         feature.start()
+    print_result(container_names, is_started, args.no_wait, wait_timeout)
 
 
 def pull_image(args):
@@ -67,15 +68,16 @@ def collect_bootstrap_features(features):
 
 def scale_cluster(args, ports, features):
     sandbox_stop.stop(args)
-    start_nodes(args, ports, features)
+    return start_nodes(args, ports, features)
 
 
 def start_nodes(args, ports, features):
+    container_names = []
     log = logging.getLogger(__name__)
-
-    log.info('Starting ConductR nodes..')
+    log.info('Starting ConductR..')
     for i in range(args.nr_of_containers):
         container_name = '{prefix}{nr}'.format(prefix=CONDUCTR_NAME_PREFIX, nr=i)
+        container_names.append(container_name)
         # Display the ports on the command line. Only if the user specifies a certain feature, then
         # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
         if ports:
@@ -101,6 +103,7 @@ def start_nodes(args, ports, features):
             features,
             conductr_container_roles
         )
+    return container_names
 
 
 def map_port(instance, port):
@@ -186,15 +189,11 @@ def stop_nodes(running_containers):
 
 def wait_for_start(args):
     if not args.no_wait:
-        log = logging.getLogger(__name__)
         retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
         interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
-        is_started = wait_for_conductr(args, 0, retries, interval)
-        if is_started:
-            log.info('ConductR has been started. Check current bundle status with: conduct info')
-        else:
-            log.error('ConductR has not been started within {} seconds.'.format(retries * interval))
-            log.error('Try to increase the CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL.')
+        return wait_for_conductr(args, 0, retries, interval), retries * interval
+    else:
+        return True, 0
 
 
 def wait_for_conductr(args, current_retry, max_retries, interval):
@@ -218,3 +217,19 @@ def wait_for_conductr(args, current_retry, max_retries, interval):
     # Reprint previous message with flush to go to next line
     log.progress(last_message, flush=True)
     return True if current_retry < max_retries else False
+
+
+def print_result(container_names, is_started, no_wait, wait_timeout):
+    if not no_wait:
+        log = logging.getLogger(__name__)
+        if is_started:
+            log.info('ConductR has been started')
+            log.info('Check current bundle status with:')
+            log.info('  conduct info')
+            plural_string = 's' if len(container_names) > 1 else ''
+            log.info('Check resource consumption of Docker container{} that run the ConductR node{} with:'
+                     .format(plural_string, plural_string))
+            log.info('  docker stats {}'.format(' '.join(container_names)))
+        else:
+            log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
+            log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
