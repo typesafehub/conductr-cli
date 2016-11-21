@@ -99,12 +99,6 @@ def build_parser():
                             action='store_true')
     run_parser.set_defaults(func=sandbox_run.run)
 
-    # Sub-parser for `debug` sub-command
-    debug_parser = subparsers.add_parser('debug',
-                                         help='Not supported. Use \'sbt-conductr\' instead.')
-    add_resolve_ip(debug_parser, False)
-    debug_parser.set_defaults(func='debug')
-
     # Sub-parser for `stop` sub-command
     stop_parser = subparsers.add_parser('stop',
                                         help='Stop ConductR sandbox cluster')
@@ -238,10 +232,6 @@ def run():
     # Print help or execute subparser function
     if not vars(args).get('func'):
         parser.print_help()
-    # Exit with sandbox debug error message
-    elif vars(args).get('func') == 'debug':
-        parser.exit('Debugging a ConductR cluster is not supported by the \'conductr-cli\'.\n'
-                    'Use the sbt plugin \'sbt-conductr\' instead.')
     # Validate image_version
     elif vars(args).get('func').__name__ == 'run' and not args.image_version:
         parser.exit('The version of the ConductR Docker image must be set.\n'
