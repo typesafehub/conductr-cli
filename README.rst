@@ -143,15 +143,15 @@ e.g.
 .. code:: bash
 
     $ sandbox -h
-    usage: sandbox [-h] {run,debug,stop} ...
+    usage: sandbox [-h] {version,run,stop} ...
 
     optional arguments:
       -h, --help            show this help message and exit
 
     commands:
-      {run,debug,stop}      Use one of the following sub commands
+      {version,run,stop}    Use one of the following sub commands
+        version             print version
         run                 Run ConductR sandbox cluster
-        debug               Not supported. Use `sbt-conductr-sandbox` instead
         stop                Stop ConductR sandbox cluster
 
 The sandbox is connecting to the running Docker host to start the ConductR nodes inside Docker containers. The host IP address of the Docker host is automatically resolved. It is also possible to skip this automatic resolving of the Docker host IP by setting the environment variable ``CONDUCTR_HOST`` which will be then used instead.
@@ -180,23 +180,29 @@ e.g.
 
     $ conduct -h
     usage: conduct [-h]
-                  {version,info,services,load,run,stop,unload,events,logs} ...
+                  {version,info,service-names,acls,load,run,stop,unload,events,logs,setup-dcos} 
+                  ...
 
     optional arguments:
       -h, --help            show this help message and exit
 
     commands:
-      {version,info,services,load,run,stop,unload,events,logs}
+      {version,info,service-names,acls,load,run,stop,unload,events,logs,setup-dcos}
                             Use one of the following sub commands
         version             print version
         info                print bundle information
-        services            print service information
+        service-names       print the service names available to the service
+                            locator
+        acls                print request ACL information
         load                load a bundle
         run                 run a bundle
         stop                stop a bundle
         unload              unload a bundle
         events              show bundle events
         logs                show bundle logs
+        setup-dcos          setup integration with the DC/OS CLI so that 'dcos
+                            conduct ..' commands can be used to access ConductR
+                            via DC/OS
 
 Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--host`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_HOST`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. By default, the IP address will be automatically resolved to the Docker host IP.
 
