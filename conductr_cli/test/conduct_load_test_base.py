@@ -13,8 +13,8 @@ except ImportError:
 
 
 class ConductLoadTestBase(CliTestCase):
-    output_template = """|Retrieving bundle...
-                         |{downloading_configuration}Loading bundle to ConductR...
+    output_template = """|Retrieving bundle..
+                         |{downloading_configuration}Loading bundle to ConductR..
                          |{verbose}Bundle loaded.
                          |Start bundle with: {command} run{params} {bundle_id}
                          |Unload bundle with: {command} unload{params} {bundle_id}

@@ -212,7 +212,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
-        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'),
+        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration..\n'),
                          self.output(stdout))
 
     def test_success_with_configuration_no_bundle_conf(self):
@@ -279,7 +279,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 
-        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration...\n'),
+        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration..\n'),
                          self.output(stdout))
 
     def test_success_no_wait(self):

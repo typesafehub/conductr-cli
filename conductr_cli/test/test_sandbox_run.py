@@ -56,9 +56,13 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(input_args)
 
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          |Starting ConductR nodes..
+                                          |Starting ConductR..
                                           |Starting container cond-0..
-                                          |ConductR has been started. Check current bundle status with: conduct info
+                                          |ConductR has been started
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |Check resource consumption of Docker container that run the ConductR node with:
+                                          |  docker stats cond-0
                                           |""")
         expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
@@ -86,11 +90,15 @@ class TestSandboxRunCommand(CliTestCase):
             logging_setup.configure_logging(input_args, stdout)
             sandbox_run.run(input_args)
 
-        expected_stdout = strip_margin("""|Starting ConductR nodes..
+        expected_stdout = strip_margin("""|Starting ConductR..
                                           |Starting container cond-0..
                                           |Starting container cond-1..
                                           |Starting container cond-2..
-                                          |ConductR has been started. Check current bundle status with: conduct info
+                                          |ConductR has been started
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |Check resource consumption of Docker containers that run the ConductR nodes with:
+                                          |  docker stats cond-0 cond-1 cond-2
                                           |""")
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
 
@@ -159,9 +167,13 @@ class TestSandboxRunCommand(CliTestCase):
             logging_setup.configure_logging(input_args, stdout)
             sandbox_run.run(input_args)
 
-        expected_stdout = strip_margin("""|Starting ConductR nodes..
+        expected_stdout = strip_margin("""|Starting ConductR..
                                           |Starting container cond-0 exposing 127.0.0.1:3000, 127.0.0.1:3001, 127.0.0.1:5601, 127.0.0.1:9200, 127.0.0.1:9999..
-                                          |ConductR has been started. Check current bundle status with: conduct info
+                                          |ConductR has been started
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |Check resource consumption of Docker container that run the ConductR node with:
+                                          |  docker stats cond-0
                                           |""")
 
         self.assertEqual(expected_stdout, self.output(stdout))
@@ -199,11 +211,15 @@ class TestSandboxRunCommand(CliTestCase):
             logging_setup.configure_logging(input_args, stdout)
             sandbox_run.run(input_args)
 
-        expected_stdout = strip_margin("""|Starting ConductR nodes..
+        expected_stdout = strip_margin("""|Starting ConductR..
                                           |Starting container cond-0..
                                           |Starting container cond-1..
                                           |Starting container cond-2..
-                                          |ConductR has been started. Check current bundle status with: conduct info
+                                          |ConductR has been started
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |Check resource consumption of Docker containers that run the ConductR nodes with:
+                                          |  docker stats cond-0 cond-1 cond-2
                                           |""")
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
 
@@ -259,9 +275,13 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(input_args)
 
         expected_stdout = strip_margin("""|Stopping ConductR..
-                                          |Starting ConductR nodes..
+                                          |Starting ConductR..
                                           |Starting container cond-0..
-                                          |ConductR has been started. Check current bundle status with: conduct info
+                                          |ConductR has been started
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |Check resource consumption of Docker container that run the ConductR node with:
+                                          |  docker stats cond-0
                                           |""")
 
         self.assertEqual(expected_stdout, self.output(stdout))
@@ -290,9 +310,13 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(input_args)
 
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          |Starting ConductR nodes..
+                                          |Starting ConductR..
                                           |Starting container cond-0..
-                                          |ConductR has been started. Check current bundle status with: conduct info
+                                          |ConductR has been started
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |Check resource consumption of Docker container that run the ConductR node with:
+                                          |  docker stats cond-0
                                           |""")
         expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
@@ -323,7 +347,7 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(input_args)
 
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          |Starting ConductR nodes..
+                                          |Starting ConductR..
                                           |Starting container cond-0..
                                           |""")
         expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
@@ -361,9 +385,13 @@ class TestSandboxRunCommand(CliTestCase):
             sandbox_run.run(input_args)
 
         expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          |Starting ConductR nodes..
+                                          |Starting ConductR..
                                           |Starting container cond-0..
-                                          |ConductR has been started. Check current bundle status with: conduct info
+                                          |ConductR has been started
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |Check resource consumption of Docker container that run the ConductR node with:
+                                          |  docker stats cond-0
                                           |""")
         expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
         expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
