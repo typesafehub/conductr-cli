@@ -38,8 +38,9 @@ def run(args):
     bootstrap_features = collect_bootstrap_features(features)
     container_names = scale_cluster(args, ports, bootstrap_features)
     is_started, wait_timeout = wait_for_start(args)
-    for feature in features:
-        feature.start()
+    if is_started:
+        for feature in features:
+            feature.start()
     print_result(container_names, is_started, args.no_wait, wait_timeout)
 
 
