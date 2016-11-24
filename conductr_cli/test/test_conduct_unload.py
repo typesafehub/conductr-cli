@@ -17,6 +17,9 @@ class TestConductUnloadCommand(CliTestCase):
                                |}
                                |""")
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     default_args = {
         'dcos_mode': False,
         'command': 'conduct',
@@ -29,7 +32,9 @@ class TestConductUnloadCommand(CliTestCase):
         'no_wait': False,
         'quiet': False,
         'cli_parameters': '',
-        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c'
+        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
+        'conductr_auth': conductr_auth,
+        'server_verification_file': server_verification_file
     }
 
     default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c'
@@ -53,7 +58,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
@@ -73,7 +79,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
 
         self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
@@ -93,7 +100,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
 
         self.assertEqual('45e0c477d3e5ea92aa8d85c0d8f3e25c\n', self.output(stdout))
@@ -114,7 +122,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
 
         self.assertEqual(
@@ -133,7 +142,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
@@ -147,7 +157,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
             as_error(strip_margin("""|Error: 404 Not Found
@@ -164,7 +175,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
@@ -189,7 +201,8 @@ class TestConductUnloadCommand(CliTestCase):
             result = conduct_unload.unload(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        http_method.assert_called_with(default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         wait_for_uninstallation_mock.assert_called_with('45e0c477d3e5ea92aa8d85c0d8f3e25c', input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))

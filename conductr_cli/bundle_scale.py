@@ -8,7 +8,8 @@ import logging
 
 def get_scale(bundle_id, args):
     bundles_url = conduct_url.url('bundles', args)
-    response = conduct_request.get(args.dcos_mode, conduct_url.conductr_host(args), bundles_url)
+    response = conduct_request.get(args.dcos_mode, conduct_url.conductr_host(args), bundles_url,
+                                   auth=args.conductr_auth, verify=args.server_verification_file)
     response.raise_for_status()
     bundles = json.loads(response.text)
     matching_bundles = [bundle for bundle in bundles if bundle['bundleId'] == bundle_id]
@@ -36,7 +37,8 @@ def wait_for_scale(bundle_id, expected_scale, args):
 
         log.info('Bundle {} waiting to reach expected scale {}'.format(bundle_id, expected_scale))
         bundle_events_url = conduct_url.url('bundles/events', args)
-        sse_events = sse_client.get_events(args.dcos_mode, conduct_url.conductr_host(args), bundle_events_url)
+        sse_events = sse_client.get_events(args.dcos_mode, conduct_url.conductr_host(args), bundle_events_url,
+                                           auth=args.conductr_auth, verify=args.server_verification_file)
         last_scale = -1
         last_log_message = None
         for event in sse_events:

@@ -10,6 +10,9 @@ except ImportError:
 
 class TestGetScaleIp(CliTestCase):
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     def test_return_scale_v1(self):
         bundles_endpoint_reply = """
             [{
@@ -47,14 +50,17 @@ class TestGetScaleIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_scale_v2(self):
         bundles_endpoint_reply = """
@@ -93,14 +99,17 @@ class TestGetScaleIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_v1(self):
         bundles_endpoint_reply = '[]'
@@ -113,14 +122,17 @@ class TestGetScaleIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_v2(self):
         bundles_endpoint_reply = '[]'
@@ -133,18 +145,24 @@ class TestGetScaleIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
 
 class TestGetScaleHost(CliTestCase):
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     def test_return_scale_v1(self):
         bundles_endpoint_reply = """
             [{
@@ -182,14 +200,17 @@ class TestGetScaleHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_scale_v2(self):
         bundles_endpoint_reply = """
@@ -228,14 +249,17 @@ class TestGetScaleHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_v1(self):
         bundles_endpoint_reply = '[]'
@@ -248,14 +272,17 @@ class TestGetScaleHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_v2(self):
         bundles_endpoint_reply = '[]'
@@ -268,17 +295,24 @@ class TestGetScaleHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_scale.get_scale(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
 
 class TestWaitForScale(CliTestCase):
+
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     def test_wait_for_scale(self):
         get_scale_mock = MagicMock(side_effect=[0, 1, 2, 2, 3])
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
@@ -298,7 +332,10 @@ class TestWaitForScale(CliTestCase):
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
+
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -319,7 +356,8 @@ class TestWaitForScale(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3'),
@@ -367,7 +405,9 @@ class TestWaitForScale(CliTestCase):
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -389,7 +429,8 @@ class TestWaitForScale(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3'),
@@ -438,7 +479,9 @@ class TestWaitForScale(CliTestCase):
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -457,7 +500,8 @@ class TestWaitForScale(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3'),
@@ -483,7 +527,9 @@ class TestWaitForScale(CliTestCase):
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -520,7 +566,9 @@ class TestWaitForScale(CliTestCase):
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
             # Purposely set no timeout to invoke the error
-            'wait_timeout': -1
+            'wait_timeout': -1,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -537,7 +585,8 @@ class TestWaitForScale(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3
                                          |"""), self.output(stdout))
@@ -559,7 +608,9 @@ class TestWaitForScale(CliTestCase):
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -579,7 +630,8 @@ class TestWaitForScale(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to reach expected scale 3'),

@@ -13,7 +13,8 @@ def events(args):
 
     log = logging.getLogger(__name__)
     request_url = conduct_url.url('bundles/{}/events?count={}'.format(quote_plus(args.bundle), args.lines), args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), request_url, timeout=DEFAULT_HTTP_TIMEOUT)
+    response = conduct_request.get(args.dcos_mode, conductr_host(args), request_url, auth=args.conductr_auth,
+                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
     validation.raise_for_status_inc_3xx(response)
 
     data = [

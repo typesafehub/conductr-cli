@@ -59,19 +59,24 @@ class Client:
     - Parse only for event and data string within SSE
     - No support for retries and last event id
     """
-    def __init__(self, dcos_mode, host, url, headers=None):
+    def __init__(self, dcos_mode, host, url, headers=None, **kwargs):
         self.dcos_mode = dcos_mode
         self.host = host
         self.url = url
         self.headers = headers
         self.responseIter = None
+        self.kwargs = kwargs
 
     def connect(self):
         sse_request_input = dict(SSE_REQUEST_INPUT)
         if self.headers:
             sse_request_input['headers'].update(self.headers)
 
-        response = conduct_request.get(self.dcos_mode, self.host, self.url, stream=True, **sse_request_input)
+        kwargs_all = {}
+        kwargs_all.update(self.kwargs)
+        kwargs_all.update(sse_request_input)
+
+        response = conduct_request.get(self.dcos_mode, self.host, self.url, stream=True, **kwargs_all)
         response.raise_for_status()
         self.responseIter = response.iter_content(decode_unicode=True)
 
@@ -89,7 +94,7 @@ class Client:
         return parse_event(raw_sse)
 
 
-def get_events(dcos_mode, host, url, headers=None):
-    client = Client(dcos_mode, host, url, headers)
+def get_events(dcos_mode, host, url, headers=None, **kwargs):
+    client = Client(dcos_mode, host, url, headers, **kwargs)
     client.connect()
     return client

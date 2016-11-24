@@ -29,7 +29,9 @@ class TestConductRunCommand(ConductRunTestBase):
             'cli_parameters': '',
             'bundle': self.bundle_id,
             'scale': self.scale,
-            'affinity': None
+            'affinity': None,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
 
         self.default_url = 'http://127.0.0.1:9005/v2/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=3'
@@ -85,7 +87,9 @@ class TestConductRunCommand(ConductRunTestBase):
             'cli_parameters': '',
             'bundle': self.bundle_id,
             'scale': self.scale,
-            'affinity': 'other-bundle'
+            'affinity': 'other-bundle',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
 
         expected_url = \
@@ -102,7 +106,8 @@ class TestConductRunCommand(ConductRunTestBase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(expected_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(expected_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))

@@ -31,7 +31,9 @@ class TestConductRunCommand(ConductRunTestBase):
             'cli_parameters': '',
             'bundle': self.bundle_id,
             'scale': self.scale,
-            'affinity': None
+            'affinity': None,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
 
         self.default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=3'

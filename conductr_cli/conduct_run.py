@@ -21,7 +21,8 @@ def run(args):
         path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
 
     url = conduct_url.url(path, args)
-    response = conduct_request.put(args.dcos_mode, conductr_host(args), url)
+    response = conduct_request.put(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth,
+                                   verify=args.server_verification_file)
     validation.raise_for_status_inc_3xx(response)
 
     if log.is_verbose_enabled():

@@ -77,6 +77,8 @@ def load_v1(args):
     multipart = create_multipart(log, files)
     response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
                                     data=multipart,
+                                    auth=args.conductr_auth,
+                                    verify=args.server_verification_file,
                                     headers={'Content-Type': multipart.content_type})
     validation.raise_for_status_inc_3xx(response)
 
@@ -181,6 +183,8 @@ def load_v2(args):
 
         response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
                                         data=multipart,
+                                        auth=args.conductr_auth,
+                                        verify=args.server_verification_file,
                                         headers={'Content-Type': multipart.content_type})
         validation.raise_for_status_inc_3xx(response)
 
