@@ -21,6 +21,9 @@ class TestConductStopCommand(CliTestCase):
 
     bundle_id = '45e0c477d3e5ea92aa8d85c0d8f3e25c'
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     default_args = {
         'dcos_mode': False,
         'command': 'conduct',
@@ -34,7 +37,9 @@ class TestConductStopCommand(CliTestCase):
         'no_wait': False,
         'long_ids': False,
         'cli_parameters': '',
-        'bundle': bundle_id
+        'bundle': bundle_id,
+        'conductr_auth': conductr_auth,
+        'server_verification_file': server_verification_file
     }
 
     default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=0'
@@ -59,7 +64,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, 0, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
@@ -78,7 +84,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, 0, input_args)
 
         self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
@@ -97,7 +104,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, 0, input_args)
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
@@ -118,7 +126,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, 0, input_args)
 
         self.assertEqual(
@@ -135,7 +144,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
             as_error(strip_margin("""|Error: 404 Not Found
@@ -152,7 +162,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
@@ -170,7 +181,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, 0, input_args)
 
         self.assertEqual(
@@ -197,7 +209,8 @@ class TestConductStopCommand(CliTestCase):
             result = conduct_stop.stop(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        http_method.assert_called_with(default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, 0, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))

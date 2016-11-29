@@ -11,6 +11,9 @@ except ImportError:
 
 class TestConductInfoCommand(CliTestCase):
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     default_args = {
         'dcos_mode': False,
         'scheme': 'http',
@@ -20,7 +23,9 @@ class TestConductInfoCommand(CliTestCase):
         'api_version': '1',
         'verbose': False,
         'quiet': False,
-        'long_ids': False
+        'long_ids': False,
+        'conductr_auth': conductr_auth,
+        'server_verification_file': server_verification_file
     }
 
     default_url = 'http://127.0.0.1:9005/bundles'
@@ -35,7 +40,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|ID  NAME  #REP  #STR  #RUN
                             |"""),
@@ -58,7 +64,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|ID       NAME         #REP  #STR  #RUN
                             |45e0c47  test-bundle     1     0     0
@@ -94,7 +101,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|ID               NAME           #REP  #STR  #RUN
                             |45e0c47          test-bundle-1     1     0     1
@@ -129,7 +137,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|[
                             |  {
@@ -192,7 +201,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|ID                                NAME         #REP  #STR  #RUN
                             |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle     1     0     0
@@ -216,7 +226,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|ID       NAME         #REP  #STR  #RUN
                             |45e0c47  test-bundle    10     0     0
@@ -241,7 +252,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|ID         NAME         #REP  #STR  #RUN
                             |! 45e0c47  test-bundle    10     0     0
@@ -259,7 +271,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
             self.output(stderr))
@@ -281,7 +294,8 @@ class TestConductInfoCommand(CliTestCase):
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        http_method.assert_called_with(default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         self.assertEqual(
             strip_margin("""|ID  NAME  #REP  #STR  #RUN
                             |"""),

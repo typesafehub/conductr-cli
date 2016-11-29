@@ -15,6 +15,9 @@ class TestConductEventsCommand(CliTestCase):
 
     bundle_id_urlencoded = 'bundle+id'
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     default_args = {
         'dcos_mode': False,
         'scheme': 'http',
@@ -25,7 +28,9 @@ class TestConductEventsCommand(CliTestCase):
         'bundle': bundle_id,
         'lines': 1,
         'date': True,
-        'utc': True
+        'utc': True,
+        'conductr_auth': conductr_auth,
+        'server_verification_file': server_verification_file
     }
 
     default_url = 'http://127.0.0.1:9005/bundles/{}/events?count=1'.format(bundle_id_urlencoded)
@@ -42,7 +47,8 @@ class TestConductEventsCommand(CliTestCase):
             result = conduct_events.events(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|TIME  EVENT  DESC
                             |"""),
@@ -71,7 +77,8 @@ class TestConductEventsCommand(CliTestCase):
             result = conduct_events.events(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|TIME                  EVENT                                       DESC
                             |2015-08-24T01:16:22Z  conductr.loadScheduler.loadBundleRequested  Load bundle requested: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer
@@ -91,7 +98,8 @@ class TestConductEventsCommand(CliTestCase):
             result = conduct_events.events(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
             self.output(stderr))
@@ -115,7 +123,8 @@ class TestConductEventsCommand(CliTestCase):
             result = conduct_events.events(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        http_method.assert_called_with(default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         self.assertEqual(
             strip_margin("""|TIME  EVENT  DESC
                             |"""),

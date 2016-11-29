@@ -4,8 +4,9 @@ from conductr_cli import \
     conduct_info, conduct_load, conduct_run, conduct_service_names,\
     conduct_stop, conduct_unload, version, conduct_logs,\
     conduct_events, conduct_acls, conduct_dcos, host, logging_setup,\
-    conduct_url
+    conduct_url, custom_settings
 from conductr_cli.constants import \
+    CONDUCTR_SCHEME, \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR,\
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR,\
@@ -14,7 +15,6 @@ from conductr_cli.host import CONDUCTR_HOST
 from dcos import config, constants
 
 from pathlib import Path
-from pyhocon import ConfigFactory
 from urllib.parse import urlparse
 import logging
 import os
@@ -314,13 +314,22 @@ def get_cli_parameters(args):
     return ' '.join(parameters)
 
 
-def get_custom_settings(args):
-    custom_settings_file = vars(args).get('custom_settings_file')
-    if custom_settings_file and os.path.exists(custom_settings_file):
-        print('Loading custom settings {}'.format(custom_settings_file))
-        return ConfigFactory.parse_file(custom_settings_file)
-    else:
-        return None
+def disable_urllib3_warnings():
+    from requests.packages import urllib3
+    from requests.packages.urllib3 import exceptions
+    # Disable urllib3 warning since it's going to break `conduct load` with `-q` flag specified.
+    # The reason of disabling the warning will be explained below.
+
+    # The warning will be raised if the Subject Alt Naming field is not present in the SSL cert.
+    # Subject Alt Naming field is replacement for the Common Name which is deprecated according to RFC 2818:
+    # https://tools.ietf.org/html/rfc2818
+    #
+    # However it seems the deprecation of the Common Name has been a slow progress. For example, OpenSSL 0.9.8 released
+    # in July 2015 does not allow generating Subject Alt Naming field out of the box, instead the user is expected to
+    # modify the machine's openssl.cnf in order to append this field into the generated cert.
+    #
+    # This warning is introduced from to https://github.com/shazow/urllib3/issues/497
+    urllib3.disable_warnings(exceptions.SubjectAltNameWarning)
 
 
 def run(_args=[], configure_logging=True):
@@ -349,7 +358,14 @@ def run(_args=[], configure_logging=True):
         else:
             parser.print_help()
     else:
-        if not vars(args).get('func').__name__ == 'version':
+        # Offline functions are the functions which do not require network to run, e.g. `conduct version` or
+        # `conduct setup-dcos`.
+        offline_functions = ['version', 'setup']
+
+        # Only setup network related args (i.e. host, bundle resolvers, basic auth, etc) for functions which requires
+        # connectivity to ConductR.
+        current_function = vars(args).get('func').__name__
+        if current_function not in offline_functions:
             # Add custom plugin dir to import path
             custom_plugins_dir = vars(args).get('custom_plugins_dir')
             if custom_plugins_dir:
@@ -386,7 +402,32 @@ def run(_args=[], configure_logging=True):
                 args.local_connection = False
 
             args.cli_parameters = get_cli_parameters(args)
-            args.custom_settings = get_custom_settings(args)
+            args.custom_settings = custom_settings.load_from_file(args)
+
+            args.conductr_auth = custom_settings.load_conductr_credentials(args)
+
+            # Ensure HTTPS is used if authentication is configured
+            if args.conductr_auth and not args.scheme == 'https':
+                # Configure logging so error message can be logged properly before exiting with failure
+                logging_setup.configure_logging(args)
+                log = logging.getLogger(__name__)
+                log.error('Unable to use Basic Auth over {}'.format(args.scheme))
+                log.error('Please ensure either `{}` environment is set to `https`,'
+                          ' or specify https using `--scheme https` argument'.format(CONDUCTR_SCHEME))
+                exit(1)
+
+            args.server_verification_file = custom_settings.load_server_ssl_verification_file(args)
+            # Ensure verification file exists if specified
+            if args.server_verification_file \
+                    and not os.path.exists(args.server_verification_file):
+                # Configure logging so error message can be logged properly before exiting with failure
+                logging_setup.configure_logging(args)
+                log = logging.getLogger(__name__)
+                log.error('Ensure server SSL verification file exists: {}'.format(args.server_verification_file))
+                exit(1)
+
+            if not args.dcos_mode and args.scheme == 'https':
+                disable_urllib3_warnings()
 
         if configure_logging:
             logging_setup.configure_logging(args)

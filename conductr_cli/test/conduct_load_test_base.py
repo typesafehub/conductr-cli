@@ -41,6 +41,8 @@ class ConductLoadTestBase(CliTestCase):
         self.multipart_mock = MagicMock()
         self.multipart_mock.content_type = self.multipart_content_type
         self.conduct_load_logger = logging.getLogger('conductr_cli.conduct_load')
+        self.conductr_auth = ('username', 'password')
+        self.server_verification_file = MagicMock(name='server_verification_file')
 
     @property
     def default_response(self):
@@ -82,6 +84,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -117,6 +121,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -152,6 +158,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -187,6 +195,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -222,6 +232,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -258,6 +270,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -296,6 +310,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -335,6 +351,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
@@ -368,6 +386,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
                                                     excluded=self.bundle_file)
@@ -396,6 +416,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
 
         self.assertEqual(
@@ -425,6 +447,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
 
         self.assertEqual(
@@ -453,6 +477,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
 
         self.assertEqual(
@@ -578,6 +604,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 

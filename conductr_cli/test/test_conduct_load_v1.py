@@ -54,7 +54,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'custom_settings': self.custom_settings,
             'resolve_cache_dir': self.bundle_resolve_cache_dir,
             'bundle': self.bundle_file,
-            'configuration': None
+            'configuration': None,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
 
         self.default_url = 'http://127.0.0.1:9005/bundles'
@@ -134,6 +136,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
         create_multipart_mock.assert_called_with(self.conduct_load_logger, expected_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
                                        headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
         wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
 

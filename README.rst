@@ -218,6 +218,24 @@ Note that when specifying IPV6 addresses then you must surround them with square
 
     conduct info --host [fe80:0000:0000:0000:0cb3:e2ff:fe74:902d]
 
+To enable HTTP Basic Authentication, provide the following settings file in the ``~/.conductr/settings.conf``.
+
+.. code::
+
+    conductr {
+      auth {
+        enabled  = true
+        username = "steve"
+        password = "letmein"
+      }
+      server_ssl_verification_file = "/home/user/validate-server.pem"
+    }
+
+When the switch ``enabled`` is set to ``true``, HTTP Basic Authentication is enabled. Set to ``false`` to disable.
+ Set the ``username`` and ``password`` accordingly. The ``server_ssl_verification_file`` points to an absolute path of the file used to validate the SSL cert of the server.
+
+It's important to note the CLI will fail with an error if HTTP Basic Authentication is enabled without HTTPS.
+
 shazar
 ^^^^^^
 

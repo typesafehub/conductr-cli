@@ -20,6 +20,9 @@ def create_heartbeat_event():
 
 class TestCountInstallationIp(CliTestCase):
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     def test_return_installation_count(self):
         bundles_endpoint_reply = """
             [{
@@ -42,14 +45,17 @@ class TestCountInstallationIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_installation_count_v2(self):
         bundles_endpoint_reply = """
@@ -73,14 +79,17 @@ class TestCountInstallationIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_installation_count_v1(self):
         bundles_endpoint_reply = '[]'
@@ -93,14 +102,17 @@ class TestCountInstallationIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_installation_count_v2(self):
         bundles_endpoint_reply = '[]'
@@ -113,18 +125,24 @@ class TestCountInstallationIp(CliTestCase):
             'ip': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
 
 class TestCountInstallationHost(CliTestCase):
 
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     def test_return_installation_count(self):
         bundles_endpoint_reply = """
             [{
@@ -147,14 +165,17 @@ class TestCountInstallationHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_installation_count_v2(self):
         bundles_endpoint_reply = """
@@ -178,14 +199,17 @@ class TestCountInstallationHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_installation_count_v1(self):
         bundles_endpoint_reply = '[]'
@@ -198,14 +222,17 @@ class TestCountInstallationHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '1'
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
     def test_return_zero_installation_count_v2(self):
         bundles_endpoint_reply = '[]'
@@ -218,17 +245,24 @@ class TestCountInstallationHost(CliTestCase):
             'host': '127.0.0.1',
             'port': '9005',
             'base_path': '/',
-            'api_version': '2'
+            'api_version': '2',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
+                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
 
 
 class TestWaitForInstallation(CliTestCase):
+
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     def test_wait_for_installation(self):
         count_installations_mock = MagicMock(side_effect=[0, 0, 1])
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
@@ -247,7 +281,9 @@ class TestWaitForInstallation(CliTestCase):
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -266,7 +302,8 @@ class TestWaitForInstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
@@ -303,7 +340,9 @@ class TestWaitForInstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -322,7 +361,8 @@ class TestWaitForInstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
@@ -359,7 +399,9 @@ class TestWaitForInstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -378,7 +420,8 @@ class TestWaitForInstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
@@ -401,7 +444,9 @@ class TestWaitForInstallation(CliTestCase):
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = MagicMock(**{
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -436,6 +481,8 @@ class TestWaitForInstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file,
             # Purposely set no timeout to invoke the error
             'wait_timeout': -1
         })
@@ -454,7 +501,8 @@ class TestWaitForInstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed
                                          |"""), self.output(stdout))
@@ -476,7 +524,9 @@ class TestWaitForInstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
@@ -496,7 +546,8 @@ class TestWaitForInstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be installed'),
@@ -515,6 +566,10 @@ class TestWaitForInstallation(CliTestCase):
 
 
 class TestWaitForUninstallation(CliTestCase):
+
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
     def test_wait_for_uninstallation(self):
         count_installations_mock = MagicMock(side_effect=[1, 0])
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
@@ -532,7 +587,9 @@ class TestWaitForUninstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
@@ -550,7 +607,8 @@ class TestWaitForUninstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be uninstalled
                                          |Bundle a101449418187d92c789d1adc240b6d6 uninstalled
@@ -568,7 +626,9 @@ class TestWaitForUninstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
@@ -604,6 +664,8 @@ class TestWaitForUninstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file,
             # Purposely set no timeout to invoke the error
             'wait_timeout': -1
         })
@@ -622,7 +684,8 @@ class TestWaitForUninstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(strip_margin("""|Bundle a101449418187d92c789d1adc240b6d6 waiting to be uninstalled
                                          |"""), self.output(stdout))
@@ -644,7 +707,9 @@ class TestWaitForUninstallation(CliTestCase):
         dcos_mode = True
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
-            'wait_timeout': 10
+            'wait_timeout': 10,
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
@@ -664,7 +729,8 @@ class TestWaitForUninstallation(CliTestCase):
 
         conductr_host_mock.assert_called_with(args)
 
-        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint')
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint', auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         self.assertEqual(stdout.method_calls, [
             call.write('Bundle a101449418187d92c789d1adc240b6d6 waiting to be uninstalled'),

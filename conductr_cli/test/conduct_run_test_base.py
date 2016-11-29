@@ -19,6 +19,8 @@ class ConductRunTestBase(CliTestCase):
         self.default_url = None
         self.output_template = None
         self.mock_headers = {'pretend': 'header'}
+        self.conductr_auth = ('username', 'password')
+        self.server_verification_file = MagicMock(name='server_verification_file')
 
     @property
     def default_response(self):
@@ -43,7 +45,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
@@ -63,7 +66,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
@@ -83,7 +87,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
@@ -104,7 +109,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(
@@ -127,7 +133,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(
@@ -152,7 +159,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
@@ -170,7 +178,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
@@ -184,7 +193,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
             as_error(strip_margin("""|Error: 404 Not Found
@@ -201,7 +211,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
@@ -220,7 +231,8 @@ class ConductRunTestBase(CliTestCase):
             result = conduct_run.run(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, headers={'Host': '127.0.0.1'})
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       headers={'Host': '127.0.0.1'})
         wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
 
         self.assertEqual(
