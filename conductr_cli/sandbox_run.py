@@ -1,8 +1,9 @@
-from conductr_cli import conduct_request, conduct_url, terminal, validation, sandbox_stop, host
+from conductr_cli import conduct_main, conduct_request, conduct_url, terminal, validation, sandbox_stop, host
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
-from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS
+from conductr_cli.sandbox_common import CONDUCTR_NAME_PREFIX, CONDUCTR_DEV_IMAGE, CONDUCTR_PORTS, major_version
 from conductr_cli.sandbox_features import collect_features
+from conductr_cli.screen_utils import headline
 from requests.exceptions import ConnectionError
 
 import logging
@@ -33,15 +34,15 @@ def run(args):
     """`sandbox run` command"""
 
     pull_image(args)
-    features = collect_features(args.features)
-    ports = collect_ports(args, features)
-    bootstrap_features = collect_bootstrap_features(features)
-    container_names = scale_cluster(args, ports, bootstrap_features)
+    features = collect_features(args.features, args.image_version)
+    container_names = scale_cluster(args, features)
     is_started, wait_timeout = wait_for_start(args)
     if is_started:
+        if major_version(args.image_version) != 1:
+            start_proxy(args.nr_of_containers)
         for feature in features:
             feature.start()
-    print_result(container_names, is_started, args.no_wait, wait_timeout)
+    print_result(container_names, is_started, args.no_wait, wait_timeout, args.image_version)
 
 
 def pull_image(args):
@@ -55,27 +56,27 @@ def pull_image(args):
 def collect_ports(args, features):
     """Return a Set of ports based on the ports of each enabled feature and the ports specified by the user"""
 
-    all_feature_ports = [feature.ports for feature in features]
-    return set(args.ports + [port for feature_ports in all_feature_ports for port in feature_ports])
+    feature_ports = flatten([feature.ports for feature in features])
+    return set(args.ports + feature_ports)
 
 
-def collect_bootstrap_features(features):
-    """Return features that should be enabled in ConductR bootstrap"""
-
-    return [bootstrap_feature
-            for bootstrap_features in [feature.bootstrap_features for feature in features]
-            for bootstrap_feature in bootstrap_features]
+def flatten(list):
+    return [item for sublist in list for item in sublist]
 
 
-def scale_cluster(args, ports, features):
+def scale_cluster(args, features):
     sandbox_stop.stop(args)
-    return start_nodes(args, ports, features)
+    return start_nodes(args, features)
 
 
-def start_nodes(args, ports, features):
+def start_nodes(args, features):
     container_names = []
     log = logging.getLogger(__name__)
-    log.info('Starting ConductR..')
+    log.info(headline('Starting ConductR'))
+    ports = collect_ports(args, features)
+    conductr_args = flatten([feature.conductr_args() for feature in features])
+    conductr_features = flatten([feature.conductr_feature_envs() for feature in features])
+    feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
     for i in range(args.nr_of_containers):
         container_name = '{prefix}{nr}'.format(prefix=CONDUCTR_NAME_PREFIX, nr=i)
         container_names.append(container_name)
@@ -90,7 +91,7 @@ def start_nodes(args, ports, features):
         log.info('Starting container {container}{port_desc}..'.format(container=container_name,
                                                                       port_desc=ports_desc))
         cond0_ip = inspect_cond0_ip() if i > 0 else None
-        conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, i)
+        conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, feature_conductr_roles, i)
         run_conductr_cmd(
             i,
             args.nr_of_containers,
@@ -101,8 +102,9 @@ def start_nodes(args, ports, features):
             args.log_level,
             ports,
             args.bundle_http_port,
-            features,
-            conductr_container_roles
+            conductr_features,
+            conductr_container_roles,
+            conductr_args
         )
     return container_names
 
@@ -119,25 +121,33 @@ def inspect_cond0_ip():
     return terminal.docker_inspect('{}0'.format(CONDUCTR_NAME_PREFIX), '{{.NetworkSettings.IPAddress}}')
 
 
-def resolve_conductr_roles_by_container(conductr_roles, instance):
-    if not conductr_roles:
-        # No ConductR roles have been specified => Return an empty Set
-        return set()
-    elif instance + 1 <= len(conductr_roles):
-        # Roles have been specified for the current ConductR instance => Get and use these roles.
-        return conductr_roles[instance]
+def resolve_conductr_roles_by_container(user_conductr_roles, feature_conductr_roles, instance):
+    if not user_conductr_roles:
+        # No ConductR roles have been specified => Return an empty list
+        return []
     else:
-        # The current ConductR instance is greater than the length of conductr_roles.
-        # In this case the roles of conductr_roles are subsequently applied to the remaining instances.
-        remainder = (instance + 1) % len(conductr_roles)
-        remaining_instance = len(conductr_roles) if remainder == 0 else remainder
-        return conductr_roles[remaining_instance - 1]
+        if instance + 1 <= len(user_conductr_roles):
+            # Roles have been specified for the current ConductR instance => Get and use these roles.
+            container_conductr_roles = user_conductr_roles[instance]
+        else:
+            # The current ConductR instance is greater than the length of conductr_roles.
+            # In this case the roles of conductr_roles are subsequently applied to the remaining instances.
+            remainder = (instance + 1) % len(user_conductr_roles)
+            remaining_instance = len(user_conductr_roles) if remainder == 0 else remainder
+            container_conductr_roles = user_conductr_roles[remaining_instance - 1]
+
+        # Feature roles are only added to the seed node.
+        if instance == 0:
+            container_conductr_roles = container_conductr_roles + feature_conductr_roles
+
+        return container_conductr_roles
 
 
 def run_conductr_cmd(instance, nr_of_instances, container_name, cond0_ip, envs, image, log_level, ports,
-                     bundle_http_port, feature_names, conductr_roles):
+                     bundle_http_port, conductr_features, conductr_roles, conductr_args):
     general_args = ['-d', '--name', container_name]
-    env_args = resolve_docker_run_envs(instance, nr_of_instances, envs, log_level, cond0_ip, feature_names, conductr_roles)
+    env_args = resolve_docker_run_envs(instance, nr_of_instances, envs, log_level, cond0_ip,
+                                       conductr_features, conductr_roles, conductr_args)
     all_conductr_ports = CONDUCTR_PORTS | {bundle_http_port}
     port_args = resolve_docker_run_port_args(ports | all_conductr_ports, instance)
     optional_args = general_args + env_args + port_args
@@ -146,13 +156,15 @@ def run_conductr_cmd(instance, nr_of_instances, container_name, cond0_ip, envs, 
     terminal.docker_run(optional_args + additional_optional_args, image, positional_args)
 
 
-def resolve_docker_run_envs(instance, nr_of_instances, envs, log_level, cond0_ip, feature_names, conductr_roles):
+def resolve_docker_run_envs(instance, nr_of_instances, envs, log_level, cond0_ip,
+                            feature_names, conductr_roles, conductr_args):
     instance_env = ['CONDUCTR_INSTANCE={}'.format(instance), 'CONDUCTR_NR_OF_INSTANCES={}'.format(nr_of_instances)]
     log_level_env = ['AKKA_LOGLEVEL={}'.format(log_level)]
     syslog_ip_env = ['SYSLOG_IP={}'.format(cond0_ip)] if cond0_ip else []
     conductr_features_env = ['CONDUCTR_FEATURES={}'.format(','.join(feature_names))] if feature_names else []
     conductr_roles_env = ['CONDUCTR_ROLES={}'.format(','.join(conductr_roles))] if conductr_roles else []
-    all_envs = envs + instance_env + log_level_env + syslog_ip_env + conductr_features_env + conductr_roles_env
+    conductr_args_env = ['CONDUCTR_ARGS={}'.format(' '.join(conductr_args))] if conductr_args else []
+    all_envs = envs + instance_env + log_level_env + syslog_ip_env + conductr_features_env + conductr_roles_env + conductr_args_env
     env_args = []
     for env in all_envs:
         env_args.append('-e')
@@ -220,17 +232,32 @@ def wait_for_conductr(args, current_retry, max_retries, interval):
     return True if current_retry < max_retries else False
 
 
-def print_result(container_names, is_started, no_wait, wait_timeout):
+def start_proxy(nr_of_containers):
+    log = logging.getLogger(__name__)
+    bundle_name = 'conductr-haproxy'
+    configuration_name = 'conductr-haproxy-dev-mode'
+    log.info(headline('Starting HAProxy'))
+    log.info('Deploying bundle {} with configuration {}'.format(bundle_name, configuration_name))
+    conduct_main.run(['load', bundle_name, configuration_name, '--disable-instructions'], configure_logging=False)
+    conduct_main.run(['run', bundle_name, '--scale', str(nr_of_containers), '--disable-instructions'], configure_logging=False)
+
+
+def print_result(container_names, is_started, no_wait, wait_timeout, image_version):
     if not no_wait:
         log = logging.getLogger(__name__)
         if is_started:
+            log.info(headline('Summary'))
             log.info('ConductR has been started')
-            log.info('Check current bundle status with:')
-            log.info('  conduct info')
             plural_string = 's' if len(container_names) > 1 else ''
             log.info('Check resource consumption of Docker container{} that run the ConductR node{} with:'
                      .format(plural_string, plural_string))
             log.info('  docker stats {}'.format(' '.join(container_names)))
+            log.info('Check current bundle status with:')
+            log.info('  conduct info')
+            if major_version(image_version) != 1:
+                log.info('Bundle status:')
+                conduct_main.run(['info'], configure_logging=False)
         else:
+            log.info(headline('Summary'))
             log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
             log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')

@@ -8,38 +8,154 @@ Feature attributes:
     name (str): Feature name used for command line argument.
     ports (list of int): Docker port mappings for the feature.
     dependencies (list of str): Names of other features that should also be enabled.
-    bootstrap_features (list of str): Feature names to pass when ConductR is started in Docker.
+    conductr_feature_envs (list of str): Feature names to pass when ConductR is started in Docker.
+    conductr_args (list of str): Args that should be added during ConductR start.
+    conductr_roles (list of str): Roles that should be added during ConductR start.
     start (method): Start the feature as needed. Called after the sandbox has started.
 """
 
 from conductr_cli import conduct_main
+from conductr_cli.sandbox_common import major_version
+from conductr_cli.screen_utils import headline
 import logging
 
 
 class VisualizationFeature:
+    """Visualization feature.
+
+    On start, the visualizer bundle will be run. The version of the visualizer
+    bundle can also be configured using feature arguments. For example:
+
+        `-f visualization`: default latest version of the Visualizer bundle
+        `-f visualization v2`: specify the compatibility version
+    """
+
     name = 'visualization'
     ports = [9999]
     dependencies = []
-    bootstrap_features = [name]
 
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, version_args, image_version):
+        self.version_args = version_args
+        self.image_version = image_version
+
+    def conductr_feature_envs(self):
+        if major_version(self.image_version) == 1:
+            return [self.name]
+        else:
+            return []
+
+    @staticmethod
+    def conductr_args():
+        return []
+
+    @staticmethod
+    def conductr_roles():
+        return []
 
     def start(self):
-        pass
+        if major_version(self.image_version) == 1:
+            pass
+        else:
+            log = logging.getLogger(__name__)
+            log.info(headline('Starting visualization feature'))
+            visualizer = select_bintray_uri('visualizer', self.version_args)
+            log.info('Deploying bundle %s..' % visualizer['bundle'])
+            conduct_main.run(['load', visualizer['bundle'], '--disable-instructions'], configure_logging=False)
+            conduct_main.run(['run', visualizer['name'], '--disable-instructions'], configure_logging=False)
 
 
 class LoggingFeature:
+    """Logging feature.
+
+    On start, the conductr-elasticsearch and conductr-kibana bundles are started.
+    The version of the bundles can also be configured using feature arguments. For example:
+
+        `-f logging`: default latest version of the Visualizer bundle
+        `-f logging v2`: specify the compatibility version
+    """
+
     name = 'logging'
     ports = [5601, 9200]
     dependencies = []
-    bootstrap_features = [name]
 
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, version_args, image_version):
+        self.version_args = version_args
+        self.image_version = image_version
+
+    def conductr_feature_envs(self):
+        if major_version(self.image_version) == 1:
+            return [self.name]
+        else:
+            return []
+
+    def conductr_args(self):
+        if major_version(self.image_version) == 1:
+            return []
+        else:
+            return ['-Dcontrail.syslog.server.port=9200', '-Dcontrail.syslog.server.elasticsearch.enabled=on']
+
+    def conductr_roles(self):
+        if major_version(self.image_version) == 1:
+            return []
+        else:
+            return ['elasticsearch', 'kibana']
 
     def start(self):
-        pass
+        if major_version(self.image_version) == 1:
+            pass
+        else:
+            log = logging.getLogger(__name__)
+            log.info(headline('Starting logging feature based on elasticsearch and kibana'))
+            elasticsearch = select_bintray_uri('conductr-elasticsearch', self.version_args)
+            log.info('Deploying bundle %s..' % elasticsearch['bundle'])
+            conduct_main.run(['load', elasticsearch['bundle'], '--disable-instructions'], configure_logging=False)
+            conduct_main.run(['run', elasticsearch['name'], '--disable-instructions'], configure_logging=False)
+            kibana = select_bintray_uri('conductr-kibana', self.version_args)
+            log.info('Deploying bundle %s..' % kibana['bundle'])
+            conduct_main.run(['load', kibana['bundle'], '--disable-instructions'], configure_logging=False)
+            conduct_main.run(['run', kibana['name'], '--disable-instructions'], configure_logging=False)
+
+
+class LiteLoggingFeature:
+    """Lite logging feature.
+
+    On start, the latest eslite bundle is started
+    """
+
+    name = 'lite-logging'
+    ports = []
+    dependencies = []
+
+    def __init__(self, version_args, image_version):
+        self.version_args = version_args
+        self.image_version = image_version
+
+    @staticmethod
+    def conductr_feature_envs():
+        return []
+
+    def conductr_args(self):
+        if major_version(self.image_version) == 1:
+            return []
+        else:
+            return ['-Dcontrail.syslog.server.port=9200', '-Dcontrail.syslog.server.elasticsearch.enabled=on']
+
+    def conductr_roles(self):
+        if major_version(self.image_version) == 1:
+            return []
+        else:
+            return ['elasticsearch']
+
+    def start(self):
+        if major_version(self.image_version) == 1:
+            pass
+        else:
+            log = logging.getLogger(__name__)
+            log.info(headline('Starting logging feature based on eslite'))
+            eslite = select_bintray_uri('eslite', self.version_args)
+            log.info('Deploying bundle %s..' % eslite['bundle'])
+            conduct_main.run(['load', eslite['bundle'], '--disable-instructions'], configure_logging=False)
+            conduct_main.run(['run', eslite['name'], '--disable-instructions'], configure_logging=False)
 
 
 class MonitoringFeature:
@@ -58,63 +174,61 @@ class MonitoringFeature:
 
     name = 'monitoring'
     ports = [3000]
+    conductr_args = []
+    conductr_roles = []
     dependencies = [LoggingFeature.name]
-    bootstrap_features = []
 
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, version_args, image_version):
+        self.version_args = version_args
+        self.image_version = image_version
+
+    @staticmethod
+    def conductr_feature_envs():
+        return []
+
+    @staticmethod
+    def conductr_args():
+        return []
+
+    @staticmethod
+    def conductr_roles():
+        return []
 
     def start(self):
         log = logging.getLogger(__name__)
-        log.info('Starting monitoring feature..')
-        grafana = self.grafana_bundle()
-        log.info('Running %s..' % grafana['bundle'])
-        conduct_main.run(['load', grafana['bundle']], configure_logging=False)
-        conduct_main.run(['run', grafana['name']], configure_logging=False)
-
-    def grafana_bundle(self):
-        bundle_name = 'cinnamon-grafana'
-        bundle_repo = ''  # default
-        bundle_version = ''  # latest
-        # parse args: [snapshot] [VERSION]
-        if self.args:
-            if self.args[0] == 'snapshot':
-                bundle_repo = 'lightbend/commercial-monitoring/'
-                if self.args[1:]:
-                    bundle_version = self.args[1]
-            else:
-                bundle_version = self.args[0]
-        # reformat version: dashes to dots and ensure 'v' prefix
-        if bundle_version:
-            bundle_version = bundle_version.replace('-', '.')
-            bundle_version = 'v' + bundle_version if not bundle_version.startswith('v') else bundle_version
-            bundle_version = ':' + bundle_version
-        bundle_expression = bundle_repo + bundle_name + bundle_version
-        return {'name': bundle_name, 'bundle': bundle_expression}
+        log.info(headline('Starting monitoring feature'))
+        bundle_repo = ''
+        if self.version_args and self.version_args[0] == 'snapshot':
+            bundle_repo = 'lightbend/commercial-monitoring/'
+        grafana = select_bintray_uri('cinnamon-grafana', self.version_args, bundle_repo)
+        log.info('Deploying bundle %s..' % grafana['bundle'])
+        conduct_main.run(['load', grafana['bundle'], '--disable-instructions'], configure_logging=False)
+        conduct_main.run(['run', grafana['name'], '--disable-instructions'], configure_logging=False)
 
 
-feature_classes = [VisualizationFeature, LoggingFeature, MonitoringFeature]
+feature_classes = [VisualizationFeature, LoggingFeature, LiteLoggingFeature, MonitoringFeature]
 
 feature_names = [feature.name for feature in feature_classes]
 feature_lookup = {feature.name: feature for feature in feature_classes}
 
 
-def collect_features(cli_args):
+def collect_features(feature_args, image_version):
     """Collect all enabled features.
 
     Collect features recursively with topological sort to include all dependencies in order.
 
     Args:
-        cli_args (list of list of str): Command-line arguments for features.
+        feature_args (list of list of str): Command-line arguments for features.
             Note that each feature has a list of arguments, the first is the feature name,
             followed by optional arguments. For example: `[['logging'], ['monitoring', '2.1.0']]`.
+        image_version: Version of the ConductR docker image.
 
     Returns:
         list of obj: All enabled features, initialised with feature arguments, in dependency order.
     """
 
-    feature_names = [name for name, *args in cli_args]
-    feature_args = {name: args for name, *args in cli_args}
+    feature_names = [name for name, *args in feature_args]
+    feature_args = {name: args for name, *args in feature_args}
 
     visited = set()
     features = []
@@ -124,9 +238,35 @@ def collect_features(cli_args):
             if feature_name not in visited:
                 visited.add(feature_name)
                 args = feature_args[feature_name] if feature_name in feature_args else []
-                feature = feature_lookup[feature_name](args)
+                feature = feature_lookup[feature_name](args, image_version)
                 visit(feature.dependencies)
                 features.append(feature)
 
+    def add_logging_lite(features):
+        names = [feature.name for feature in features]
+        if LoggingFeature.name not in names:
+            features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version))
+
     visit(feature_names)
+    add_logging_lite(features)
+
     return features
+
+
+def select_bintray_uri(name, version_args=[], bundle_repo=''):
+    bundle_version = ''  # latest
+    # parse args: [VERSION]
+    if version_args:
+        if version_args[0] == 'snapshot':
+            if version_args[1:]:
+                bundle_version = version_args[1]
+        else:
+            bundle_version = version_args[0]
+
+    # reformat version: dashes to dots and ensure 'v' prefix
+    if bundle_version:
+        bundle_version = bundle_version.replace('-', '.')
+        bundle_version = 'v' + bundle_version if not bundle_version.startswith('v') else bundle_version
+        bundle_version = ':' + bundle_version
+    bundle_expression = bundle_repo + name + bundle_version
+    return {'name': name, 'bundle': bundle_expression}

@@ -94,9 +94,10 @@ def load_v1(args):
     cleanup_old_bundles(resolve_cache_dir, bundle_file_name, excluded=bundle_file)
 
     log.info('Bundle loaded.')
-    log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
-    log.info('Unload bundle with: {} unload{} {}'.format(args.command, args.cli_parameters, bundle_id))
-    log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
+    if not args.disable_instructions:
+        log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
+        log.info('Unload bundle with: {} unload{} {}'.format(args.command, args.cli_parameters, bundle_id))
+        log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
 
     if not log.is_info_enabled() and log.is_quiet_enabled():
         log.quiet(response_json['bundleId'])
@@ -200,9 +201,10 @@ def load_v2(args):
         cleanup_old_bundles(resolve_cache_dir, bundle_file_name, excluded=bundle_file)
 
         log.info('Bundle loaded.')
-        log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
-        log.info('Unload bundle with: {} unload{} {}'.format(args.command, args.cli_parameters, bundle_id))
-        log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
+        if not args.disable_instructions:
+            log.info('Start bundle with: {} run{} {}'.format(args.command, args.cli_parameters, bundle_id))
+            log.info('Unload bundle with: {} unload{} {}'.format(args.command, args.cli_parameters, bundle_id))
+            log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
 
         if not log.is_info_enabled() and log.is_quiet_enabled():
             log.quiet(response_json['bundleId'])

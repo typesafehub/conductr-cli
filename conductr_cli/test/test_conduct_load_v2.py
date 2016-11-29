@@ -50,6 +50,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'port': 9005,
             'base_path': '/',
             'api_version': '2',
+            'disable_instructions': False,
             'verbose': False,
             'quiet': False,
             'no_wait': False,
