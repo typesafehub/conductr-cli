@@ -26,7 +26,8 @@ def unload(args):
     if not args.no_wait:
         bundle_installation.wait_for_uninstallation(response_json['bundleId'], args)
 
-    log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
+    if not args.disable_instructions:
+        log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
 
     if not log.is_info_enabled() and log.is_quiet_enabled():
         log.quiet(response_json['bundleId'])

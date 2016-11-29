@@ -7,7 +7,7 @@ CONDUCTR_PORTS = {9004,  # ConductR internal akka remoting
                   9005,  # ConductR controlServer
                   9006}  # ConductR bundleStreamServer
 CONDUCTR_DEV_IMAGE = 'typesafe-docker-registry-for-subscribers-only.bintray.io/conductr/conductr'
-LATEST_CONDUCTR_VERSION = '1.1.9'
+LATEST_CONDUCTR_VERSION = '1.1.11'
 
 
 def resolve_running_docker_containers():
@@ -21,3 +21,7 @@ def resolve_running_docker_containers():
 def bundle_http_port():
     """Returns ConductR default HAProxy Frontend port for HTTP based ACLs"""
     return int(os.getenv('BUNDLE_HTTP_PORT', 9000))
+
+
+def major_version(version):
+    return int(version[0])

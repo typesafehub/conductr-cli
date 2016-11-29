@@ -1,5 +1,6 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import CliTestCase
 from conductr_cli import sandbox_stop, logging_setup
+from conductr_cli.screen_utils import headline
 
 
 try:
@@ -16,9 +17,6 @@ class TestSandboxStopCommand(CliTestCase):
         'quiet': False
     }
 
-    def expected_output(self):
-        return strip_margin("""Stopping ConductR..""")
-
     def test_success(self):
         stdout = MagicMock()
         containers = ['cond-0', 'cond-1']
@@ -28,5 +26,5 @@ class TestSandboxStopCommand(CliTestCase):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_stop.stop(MagicMock(**self.default_args))
 
-        self.assertEqual('Stopping ConductR..\n', self.output(stdout))
+        self.assertEqual(headline('Stopping ConductR') + '\n', self.output(stdout))
         mock_docker_rm.assert_called_once_with(containers)

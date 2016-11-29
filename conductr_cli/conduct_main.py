@@ -116,6 +116,15 @@ def add_bundle_resolve_cache_dir(sub_parser):
                             dest='resolve_cache_dir')
 
 
+def add_disable_instructions(sub_parser):
+    sub_parser.add_argument('--disable-instructions',
+                            help='Disables further instruction output after the command has been succeeded, '
+                                 'defaults to False',
+                            default=False,
+                            dest='disable_instructions',
+                            action='store_true')
+
+
 def add_quiet_flag(sub_parser):
     sub_parser.add_argument('-q',
                             help='Prints affected bundle id on screen if enabled',
@@ -147,6 +156,7 @@ def add_default_arguments(sub_parser, dcos_mode):
     else:
         add_dcos_settings(sub_parser)
     add_verbose(sub_parser)
+    add_disable_instructions(sub_parser)
     add_quiet_flag(sub_parser)
     add_long_ids(sub_parser)
     add_api_version(sub_parser)
@@ -217,7 +227,7 @@ def build_parser(dcos_mode):
                             help='The optional number of executions, defaults to 1')
     run_parser.add_argument('--affinity',
                             default=None,
-                            help='The optional ID of the bundle to run alongside with (v1.1 onwards)')
+                            help='The optional ID of the bundle to run alongside with (v2.0 onwards)')
     run_parser.add_argument('bundle',
                             help='The ID of the bundle')
     add_default_arguments(run_parser, dcos_mode)
