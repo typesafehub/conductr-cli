@@ -177,6 +177,17 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock.assert_called_with('/tmp/bundle.zip')
         parse_bundle_mock.assert_not_called()
 
+    def test_bundle(self):
+        exists_mock = MagicMock(return_value=False)
+        bintray_download_det_mock = MagicMock(return_value=(None, None))
+
+        with patch('os.path.exists', exists_mock), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_details', bintray_download_det_mock):
+            bintray_resolver.load_bundle_from_cache(
+                '/cache-dir', '/tmp/bundle')
+
+        exists_mock.assert_not_called()
+
     def test_bintray_version_found(self):
         exists_mock = MagicMock(return_value=False)
         load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
