@@ -10,9 +10,49 @@ except ImportError:
 
 
 class TestCustomSettingsLoadCredentials(TestCase):
+    custom_settings = ConfigFactory.parse_string(
+        strip_margin("""|conductr {
+                        |  auth {
+                        |    "10.0.0.1:7777" {
+                        |      enabled = true
+                        |      username = seven
+                        |      password = seven-password
+                        |    }
+                        |    "10.0.0.1:7776" {
+                        |      enabled = true
+                        |      username = six
+                        |    }
+                        |    "10.0.0.1:7775" {
+                        |      enabled = true
+                        |      password = five-password
+                        |    }
+                        |    "10.0.0.1:7774" {
+                        |      enabled = true
+                        |    }
+                        |    "10.0.0.1:7773" {
+                        |      enabled = false
+                        |      username = three
+                        |      password = three-password
+                        |    }
+                        |    "10.0.0.1:7772" {
+                        |      username = three
+                        |      password = three-password
+                        |    }
+                        |    "10.0.0.1" {
+                        |      enabled = true
+                        |      username = one
+                        |      password = one-password
+                        |    }
+                        |  }
+                        |}
+                        |""")
+    )
+
     def test_return_credentials(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings('uid', 'pwd'))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7777,
             'dcos_mode': False
         })
 
@@ -21,11 +61,28 @@ class TestCustomSettingsLoadCredentials(TestCase):
 
         load_from_file_mock.assert_called_with(input_args)
 
-        self.assertEqual(('uid', 'pwd'), result)
+        self.assertEqual(('seven', 'seven-password'), result)
+
+    def test_return_fallback_credentials_from_host(self):
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
+        input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 9005,
+            'dcos_mode': False
+        })
+
+        with patch('conductr_cli.custom_settings.load_from_file', load_from_file_mock):
+            result = custom_settings.load_conductr_credentials(input_args)
+
+        load_from_file_mock.assert_called_with(input_args)
+
+        self.assertEqual(('one', 'one-password'), result)
 
     def test_return_none_if_username_is_none(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings(None, 'pwd'))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7775,
             'dcos_mode': False
         })
 
@@ -37,8 +94,10 @@ class TestCustomSettingsLoadCredentials(TestCase):
         self.assertIsNone(result)
 
     def test_return_none_if_password_is_none(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings('uid', None))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7776,
             'dcos_mode': False
         })
 
@@ -50,8 +109,10 @@ class TestCustomSettingsLoadCredentials(TestCase):
         self.assertIsNone(result)
 
     def test_return_none_if_username_and_password_is_none(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings(None, None))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7774,
             'dcos_mode': False
         })
 
@@ -63,8 +124,10 @@ class TestCustomSettingsLoadCredentials(TestCase):
         self.assertIsNone(result)
 
     def test_return_none_if_auth_disabled(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings('uid', 'pwd', auth_enabled=False))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7773,
             'dcos_mode': False
         })
 
@@ -76,8 +139,10 @@ class TestCustomSettingsLoadCredentials(TestCase):
         self.assertIsNone(result)
 
     def test_return_none_if_auth_enabled_settings_not_defined(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings('uid', 'pwd', auth_enabled=None))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7772,
             'dcos_mode': False
         })
 
@@ -102,7 +167,7 @@ class TestCustomSettingsLoadCredentials(TestCase):
         self.assertIsNone(result)
 
     def test_return_none_if_dcos_mode(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings('uid', 'pwd'))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
             'dcos_mode': True
         })
@@ -113,36 +178,35 @@ class TestCustomSettingsLoadCredentials(TestCase):
         load_from_file_mock.assert_not_called()
 
         self.assertIsNone(result)
-
-    def custom_settings(self, username, password, auth_enabled=True):
-        if username and password and auth_enabled is None:
-            config = strip_margin("""|conductr.auth.username = {}
-                                     |conductr.auth.password = {}
-                                     |""".format(username, password))
-        elif username and password:
-            config = strip_margin("""|conductr.auth.enabled = {}
-                                     |conductr.auth.username = {}
-                                     |conductr.auth.password = {}
-                                     |""".format(auth_enabled, username, password))
-        elif username:
-            config = strip_margin("""|conductr.auth.enabled = {}
-                                     |conductr.auth.username = {}
-                                     |""".format(auth_enabled, username))
-        elif password:
-            config = strip_margin("""|conductr.auth.enabled = {}
-                                     |conductr.auth.password = {}
-                                     |""".format(auth_enabled, password))
-        else:
-            config = strip_margin("""|some.other.config = some-value
-                                     |""")
-
-        return ConfigFactory.parse_string(config)
 
 
 class TestCustomSettingsLoadServerSSLVerificationFile(TestCase):
+    custom_settings = ConfigFactory.parse_string(
+        strip_margin("""|conductr {
+                        |  auth {
+                        |    "10.0.0.1:7777" {
+                        |      server_ssl_verification_file = /path/file.pem
+                        |    }
+                        |    "10.0.0.1:7776" {
+                        |      server_ssl_verification_file = ""
+                        |    }
+                        |    "10.0.0.1:7775" {
+                        |      enabled = true
+                        |      password = five-password
+                        |    }
+                        |    "10.0.0.1" {
+                        |      server_ssl_verification_file = /path/def.pem
+                        |    }
+                        |  }
+                        |}
+                        |""")
+    )
+
     def test_return_file(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings('test.pem'))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7777,
             'dcos_mode': False
         })
 
@@ -151,11 +215,43 @@ class TestCustomSettingsLoadServerSSLVerificationFile(TestCase):
 
         load_from_file_mock.assert_called_with(input_args)
 
-        self.assertEqual('test.pem', result)
+        self.assertEqual('/path/file.pem', result)
+
+    def test_return_fallback_file_from_host(self):
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
+        input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 9005,
+            'dcos_mode': False
+        })
+
+        with patch('conductr_cli.custom_settings.load_from_file', load_from_file_mock):
+            result = custom_settings.load_server_ssl_verification_file(input_args)
+
+        load_from_file_mock.assert_called_with(input_args)
+
+        self.assertEqual('/path/def.pem', result)
 
     def test_return_none_if_server_verification_file_is_none(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings(None))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7775,
+            'dcos_mode': False
+        })
+
+        with patch('conductr_cli.custom_settings.load_from_file', load_from_file_mock):
+            result = custom_settings.load_server_ssl_verification_file(input_args)
+
+        load_from_file_mock.assert_called_with(input_args)
+
+        self.assertIsNone(result)
+
+    def test_return_none_if_server_verification_file_is_empty(self):
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
+        input_args = MagicMock(**{
+            'host': '10.0.0.1',
+            'port': 7776,
             'dcos_mode': False
         })
 
@@ -180,7 +276,7 @@ class TestCustomSettingsLoadServerSSLVerificationFile(TestCase):
         self.assertIsNone(result)
 
     def test_return_none_if_dcos_mode(self):
-        load_from_file_mock = MagicMock(return_value=self.custom_settings('test.pem'))
+        load_from_file_mock = MagicMock(return_value=self.custom_settings)
         input_args = MagicMock(**{
             'dcos_mode': True
         })
@@ -191,13 +287,3 @@ class TestCustomSettingsLoadServerSSLVerificationFile(TestCase):
         load_from_file_mock.assert_not_called()
 
         self.assertIsNone(result)
-
-    def custom_settings(self, file):
-        if file:
-            config = strip_margin("""|conductr.server_ssl_verification_file = {}
-                                     |""".format(file))
-        else:
-            config = strip_margin("""|some.other.config = some-value
-                                     |""")
-
-        return ConfigFactory.parse_string(config)
