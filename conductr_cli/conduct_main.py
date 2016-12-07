@@ -1,7 +1,7 @@
 import argcomplete
 import argparse
 from conductr_cli import \
-    conduct_info, conduct_load, conduct_run, conduct_service_names,\
+    conduct_deploy, conduct_info, conduct_load, conduct_run, conduct_service_names,\
     conduct_stop, conduct_unload, version, conduct_logs,\
     conduct_events, conduct_acls, conduct_dcos, host, logging_setup,\
     conduct_url, custom_settings
@@ -133,12 +133,12 @@ def add_quiet_flag(sub_parser):
                             action='store_true')
 
 
-def add_wait_timeout(sub_parser):
+def add_wait_timeout(sub_parser, wait_timeout=DEFAULT_WAIT_TIMEOUT):
     sub_parser.add_argument('--wait-timeout',
                             help='Timeout in seconds waiting for bundle scale to be achieved in conduct run, '
-                                 'or bundle to be stopped in conduct stop, defaults to {}'.format(DEFAULT_WAIT_TIMEOUT),
+                                 'or bundle to be stopped in conduct stop, defaults to {}'.format(wait_timeout),
                             type=int,
-                            default=DEFAULT_WAIT_TIMEOUT,
+                            default=wait_timeout,
                             dest='wait_timeout')
 
 
@@ -151,11 +151,15 @@ def add_no_wait(sub_parser):
                             action='store_true')
 
 
-def add_default_arguments(sub_parser, dcos_mode):
+def add_dcos_mode_args(sub_parser, dcos_mode):
     if not dcos_mode:
         add_scheme_host_ip_port_and_base_path(sub_parser)
     else:
         add_dcos_settings(sub_parser)
+
+
+def add_default_arguments(sub_parser, dcos_mode):
+    add_dcos_mode_args(sub_parser, dcos_mode)
     add_verbose(sub_parser)
     add_disable_instructions(sub_parser)
     add_quiet_flag(sub_parser)
@@ -298,6 +302,28 @@ def build_parser(dcos_mode):
                                         'so that \'dcos conduct ..\' commands can '
                                         'be used to access ConductR via DC/OS')
     dcos_parser.set_defaults(func=conduct_dcos.setup)
+
+    # Sub-parser for `deploy` sub-command
+    deploy_parser = subparsers.add_parser('deploy',
+                                          help='manual trigger for continuous delivery - '
+                                               'replace a running bundle with a deployed version')
+    deploy_parser.add_argument('bundle',
+                               help='The ID of the bundle')
+    deploy_parser.add_argument('-y',
+                               action='store_true',
+                               default=False,
+                               dest='auto_deploy',
+                               help='If supplied, deployment will proceed without prompt')
+    add_dcos_mode_args(deploy_parser, dcos_mode)
+    add_api_version(deploy_parser)
+    add_local_connection_flag(deploy_parser)
+    add_cli_settings_dir(deploy_parser)
+    add_custom_settings_file(deploy_parser)
+    add_custom_plugins_dir(deploy_parser)
+    add_wait_timeout(deploy_parser, wait_timeout=conduct_deploy.DEFAULT_WAIT_TIMEOUT)
+    add_no_wait(deploy_parser)
+    add_long_ids(deploy_parser)
+    deploy_parser.set_defaults(func=conduct_deploy.deploy)
 
     return parser
 

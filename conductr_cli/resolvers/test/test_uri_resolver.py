@@ -314,6 +314,11 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         exists_mock.assert_called_with('/cache-dir/bundle-file.zip')
 
 
+class TestContinuousDeliveryUri(TestCase):
+    def test_return_none(self):
+        self.assertIsNone(uri_resolver.continuous_delivery_uri({}))
+
+
 class TestGetUrl(TestCase):
     def test_url(self):
         filename, url = uri_resolver.get_url(
@@ -435,6 +440,11 @@ class TestProgressBar(TestCase):
 
         get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
         log_mock.info.assert_called_with('Retrieving http://site.com/bundle-url-resolved')
+
+
+class TestResolveBundleVersion(TestCase):
+    def test_return_none(self):
+        self.assertIsNone(uri_resolver.resolve_bundle_version("bundle"))
 
 
 class TestShowProgress(TestCase):

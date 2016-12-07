@@ -58,6 +58,14 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
     return load_bundle_from_cache(cache_dir, uri)
 
 
+def resolve_bundle_version(uri):
+    return None
+
+
+def continuous_delivery_uri(resolved_version):
+    return None
+
+
 def get_url(uri):
     parsed = urlparse(uri, scheme='file')
     op = Path(uri)

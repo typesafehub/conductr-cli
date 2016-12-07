@@ -1,4 +1,4 @@
-from conductr_cli.exceptions import BundleResolutionError
+from conductr_cli.exceptions import BundleResolutionError, ContinuousDeliveryError
 from conductr_cli.resolvers import bintray_resolver, uri_resolver
 import importlib
 import logging
@@ -40,6 +40,28 @@ def resolve_bundle_configuration(custom_settings, cache_dir, uri):
             return bundle_configuration_file_name, bundle_configuration_file
 
     raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
+
+
+def resolve_bundle_version(custom_settings, uri):
+    all_resolvers = resolver_chain(custom_settings)
+
+    for resolver in all_resolvers:
+        resolved_version = resolver.resolve_bundle_version(uri)
+        if resolved_version:
+            return resolved_version
+
+    raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
+
+
+def continuous_delivery_uri(custom_settings, resolved_version):
+    all_resolvers = resolver_chain(custom_settings)
+
+    for resolver in all_resolvers:
+        uri = resolver.continuous_delivery_uri(resolved_version)
+        if uri:
+            return uri
+
+    raise ContinuousDeliveryError('Unable to form Continuous Delivery uri using {}'.format(resolved_version))
 
 
 def resolver_chain(custom_settings):
