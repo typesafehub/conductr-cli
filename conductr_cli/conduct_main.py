@@ -137,6 +137,7 @@ def add_wait_timeout(sub_parser):
     sub_parser.add_argument('--wait-timeout',
                             help='Timeout in seconds waiting for bundle scale to be achieved in conduct run, '
                                  'or bundle to be stopped in conduct stop, defaults to {}'.format(DEFAULT_WAIT_TIMEOUT),
+                            type=int,
                             default=DEFAULT_WAIT_TIMEOUT,
                             dest='wait_timeout')
 
