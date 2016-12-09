@@ -2,6 +2,8 @@ from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import bundle_installation, logging_setup
 from conductr_cli.exceptions import WaitTimeoutError
 
+import json
+
 try:
     from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
 except ImportError:
@@ -265,6 +267,7 @@ class TestWaitForInstallation(CliTestCase):
 
     def test_wait_for_installation(self):
         count_installations_mock = MagicMock(side_effect=[0, 0, 1])
+        count_required_replications_mock = MagicMock(return_value=1)
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
@@ -288,6 +291,7 @@ class TestWaitForInstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_installation.wait_for_installation(bundle_id, args)
@@ -322,6 +326,7 @@ class TestWaitForInstallation(CliTestCase):
 
     def test_periodic_check_between_events(self):
         count_installations_mock = MagicMock(side_effect=[0, 0, 1])
+        count_required_replications_mock = MagicMock(return_value=1)
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
@@ -347,6 +352,7 @@ class TestWaitForInstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_installation.wait_for_installation(bundle_id, args)
@@ -381,6 +387,7 @@ class TestWaitForInstallation(CliTestCase):
 
     def test_no_events(self):
         count_installations_mock = MagicMock(side_effect=[0, 0, 0])
+        count_required_replications_mock = MagicMock(return_value=1)
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
@@ -406,6 +413,7 @@ class TestWaitForInstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_installation.wait_for_installation, bundle_id, args)
@@ -437,6 +445,7 @@ class TestWaitForInstallation(CliTestCase):
 
     def test_return_immediately_if_installed(self):
         count_installations_mock = MagicMock(side_effect=[3])
+        count_required_replications_mock = MagicMock(return_value=1)
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
         get_events_mock = MagicMock(return_value=[])
@@ -449,6 +458,7 @@ class TestWaitForInstallation(CliTestCase):
             'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
@@ -466,6 +476,7 @@ class TestWaitForInstallation(CliTestCase):
 
     def test_wait_timeout(self):
         count_installations_mock = MagicMock(side_effect=[0, 1, 1])
+        count_required_replications_mock = MagicMock(return_value=1)
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
@@ -488,6 +499,7 @@ class TestWaitForInstallation(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
@@ -509,6 +521,7 @@ class TestWaitForInstallation(CliTestCase):
 
     def test_wait_timeout_all_events(self):
         count_installations_mock = MagicMock(return_value=0)
+        count_required_replications_mock = MagicMock(return_value=1)
         url_mock = MagicMock(return_value='/bundle-events/endpoint')
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
@@ -530,6 +543,7 @@ class TestWaitForInstallation(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
+                patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
@@ -746,3 +760,88 @@ class TestWaitForUninstallation(CliTestCase):
             call.write(''),
             call.flush(),
         ])
+
+
+class TestIsInstalled(CliTestCase):
+    def test_return_true(self):
+        count_required_replications_mock = MagicMock(return_value=3)
+        args = MagicMock(**{})
+
+        with patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock):
+            self.assertTrue(bundle_installation.is_installed(3, args))
+
+        count_required_replications_mock.assert_called_with(args)
+
+    def test_return_false(self):
+        count_required_replications_mock = MagicMock(return_value=3)
+        args = MagicMock(**{})
+
+        with patch('conductr_cli.bundle_installation.count_required_replications', count_required_replications_mock):
+            self.assertFalse(bundle_installation.is_installed(1, args))
+
+        count_required_replications_mock.assert_called_with(args)
+
+
+class TestIsUninstalled(CliTestCase):
+    def test_return_true(self):
+        args = MagicMock(**{})
+        self.assertTrue(bundle_installation.is_uninstalled(0, args))
+
+    def test_return_false(self):
+        args = MagicMock(**{})
+        self.assertFalse(bundle_installation.is_uninstalled(1, args))
+
+
+class TestCountRequiredReplications(CliTestCase):
+    conductr_auth = ('username', 'password')
+    server_verification_file = MagicMock(name='server_verification_file')
+
+    def test_return_count_of_replicator_members(self):
+        members = {
+            'members': [
+                {'roles': ['replicator']},
+                {'roles': ['replicator']},
+                {'roles': ['replicator']}
+            ]
+        }
+        members_json = json.dumps(members)
+        http_mock = self.respond_with(text=members_json)
+
+        args = {
+            'dcos_mode': False,
+            'scheme': 'http',
+            'ip': '127.0.0.1',
+            'port': '9005',
+            'base_path': '/',
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
+        }
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_mock):
+            self.assertEqual(3, bundle_installation.count_required_replications(input_args))
+
+        http_mock.assert_called_with('http://127.0.0.1:9005/members', auth=self.conductr_auth,
+                                     verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+
+    def test_return_at_least_one(self):
+        http_mock = self.respond_with(text='{}')
+
+        args = {
+            'dcos_mode': False,
+            'scheme': 'http',
+            'ip': '127.0.0.1',
+            'port': '9005',
+            'base_path': '/',
+            'api_version': '1',
+            'conductr_auth': self.conductr_auth,
+            'server_verification_file': self.server_verification_file
+        }
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_mock):
+            self.assertEqual(1, bundle_installation.count_required_replications(input_args))
+
+        http_mock.assert_called_with('http://127.0.0.1:9005/members', auth=self.conductr_auth,
+                                     verify=self.server_verification_file, headers={'Host': '127.0.0.1'})

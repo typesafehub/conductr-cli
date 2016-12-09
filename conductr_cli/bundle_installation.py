@@ -35,7 +35,7 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
 
     installed_bundles = count_installations(bundle_id, args)
     last_log_message = None
-    if condition(installed_bundles):
+    if condition(installed_bundles, args):
         log.info('Bundle {} is {}'.format(bundle_id, condition_name))
         return
     else:
@@ -58,7 +58,7 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
                     sse_heartbeat_count_after_event = 0
 
                 installed_bundles = count_installations(bundle_id, args)
-                if condition(installed_bundles):
+                if condition(installed_bundles, args):
                     # Reprint previous message with flush to go to next line
                     if last_log_message:
                         log.progress(last_log_message, flush=True)
@@ -76,9 +76,26 @@ def wait_for_condition(bundle_id, condition, condition_name, args):
         raise WaitTimeoutError('Bundle {} waiting to be {}'.format(bundle_id, condition_name))
 
 
-def is_installed(number_of_installations):
-    return number_of_installations > 0
+def is_installed(number_of_installations, args):
+    number_of_required_replicas = count_required_replications(args)
+    return number_of_installations >= number_of_required_replicas
 
 
-def is_uninstalled(number_of_installations):
+def is_uninstalled(number_of_installations, args):
     return number_of_installations <= 0
+
+
+def count_required_replications(args):
+    members_url = conduct_url.url('members', args)
+    response = conduct_request.get(args.dcos_mode, conduct_url.conductr_host(args), members_url,
+                                   auth=args.conductr_auth, verify=args.server_verification_file)
+    response.raise_for_status()
+    result = json.loads(response.text)
+
+    replicator_member_count = 0
+    if result and 'members' in result:
+        for member in result['members']:
+            if 'roles' in member and 'replicator' in member['roles']:
+                replicator_member_count += 1
+
+    return replicator_member_count if replicator_member_count > 0 else 1
