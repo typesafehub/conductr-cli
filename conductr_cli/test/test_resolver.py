@@ -137,6 +137,41 @@ class TestResolver(TestCase):
         first_resolver_mock.load_bundle_configuration_from_cache('/some-cache-dir', '/some-bundle-path')
 
 
+class TestResolverResolveBundleVersion(TestCase):
+    def test_resolve_bundle_version_success(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=None)
+
+        second_resolver_mock = Mock()
+        resolved_version = {'test': 'only'}
+        second_resolver_mock.resolve_bundle_version = MagicMock(return_value=resolved_version)
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
+
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
+            result = resolver.resolve_bundle_version(custom_settings, 'bundle')
+            self.assertEqual(resolved_version, result)
+
+        resolver_chain_mock.assert_called_with(custom_settings)
+        first_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
+        second_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
+
+    def test_resolve_bundle_version_failure(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=None)
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock])
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
+            self.assertRaises(BundleResolutionError, resolver.resolve_bundle_version, custom_settings, 'bundle')
+
+        resolver_chain_mock.assert_called_with(custom_settings)
+        first_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
+
+
 class TestResolverChain(TestCase):
     def test_custom_resolver_chain(self):
         custom_settings = ConfigFactory.parse_string(

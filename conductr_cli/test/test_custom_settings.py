@@ -287,3 +287,51 @@ class TestCustomSettingsLoadServerSSLVerificationFile(TestCase):
         load_from_file_mock.assert_not_called()
 
         self.assertIsNone(result)
+
+
+class TestLoadBintrayWebhookSecret(TestCase):
+    def test_return_secret(self):
+        test_custom_settings = ConfigFactory.parse_string(
+            strip_margin("""|conductr {
+                            |  continuous-delivery {
+                            |    bintray-webhook-secret = secret
+                            |  }
+                            |}
+                            |""")
+        )
+        load_from_file_mock = MagicMock(return_value=test_custom_settings)
+        input_args = MagicMock(**{})
+
+        with patch('conductr_cli.custom_settings.load_from_file', load_from_file_mock):
+            result = custom_settings.load_bintray_webhook_secret(input_args)
+
+        load_from_file_mock.assert_called_with(input_args)
+
+        self.assertEqual('secret', result)
+
+    def test_return_none_if_custom_settings_not_defined(self):
+        load_from_file_mock = MagicMock(return_value=None)
+        input_args = MagicMock(**{})
+
+        with patch('conductr_cli.custom_settings.load_from_file', load_from_file_mock):
+            result = custom_settings.load_bintray_webhook_secret(input_args)
+
+        load_from_file_mock.assert_called_with(input_args)
+
+        self.assertIsNone(result)
+
+    def test_return_none_if_webhook_not_configured(self):
+        test_custom_settings = ConfigFactory.parse_string(
+            strip_margin("""|abc {
+                            |  def = 123
+                            |}""")
+        )
+        load_from_file_mock = MagicMock(return_value=test_custom_settings)
+        input_args = MagicMock(**{})
+
+        with patch('conductr_cli.custom_settings.load_from_file', load_from_file_mock):
+            result = custom_settings.load_bintray_webhook_secret(input_args)
+
+        load_from_file_mock.assert_called_with(input_args)
+
+        self.assertIsNone(result)

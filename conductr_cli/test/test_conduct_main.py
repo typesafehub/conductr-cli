@@ -139,6 +139,19 @@ class TestConduct(TestCase):
         self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.bundle, 'path-to-bundle')
 
+    def test_parser_deploy(self):
+        args = self.parser.parse_args('deploy cassandra'.split())
+
+        self.assertEqual(args.func.__name__, 'deploy')
+        self.assertEqual(args.ip, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 180)
+        self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.bundle, 'cassandra')
+
     def test_default_with_dcos(self):
         dcos_parser = build_parser(True)
 

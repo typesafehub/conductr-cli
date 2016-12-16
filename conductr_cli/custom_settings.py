@@ -44,6 +44,11 @@ def load_server_ssl_verification_file(args):
     return None
 
 
+def load_bintray_webhook_secret(args):
+    custom_settings = load_from_file(args)
+    return get_config_value(custom_settings, 'conductr.continuous-delivery.bintray-webhook-secret')
+
+
 def get_auth_config(custom_settings, host, port):
     auth_config_host_port = get_config(custom_settings, 'conductr.auth.\"{}:{}\"'.format(host, port))
     auth_config_host = get_config(custom_settings, 'conductr.auth.\"{}\"'.format(host))
