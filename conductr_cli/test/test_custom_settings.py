@@ -1,12 +1,8 @@
 from unittest import TestCase
+from unittest.mock import patch, MagicMock
 from conductr_cli.test.cli_test_case import strip_margin
 from conductr_cli import custom_settings
 from pyhocon import ConfigFactory
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
 
 
 class TestCustomSettingsLoadCredentials(TestCase):

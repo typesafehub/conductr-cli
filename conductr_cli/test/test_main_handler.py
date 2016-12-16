@@ -1,13 +1,8 @@
 from conductr_cli.test.cli_test_case import CliTestCase
 from conductr_cli import main_handler
 from conductr_cli.constants import DEFAULT_CLI_SETTINGS_DIR, DEFAULT_ERROR_LOG_FILE
+from unittest.mock import MagicMock, patch, call
 import sys
-
-
-try:
-    from unittest.mock import MagicMock, patch, call  # 3.3 and beyond
-except ImportError:
-    from mock import MagicMock, patch, call
 
 
 class TestMainHandler(CliTestCase):

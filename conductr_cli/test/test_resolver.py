@@ -1,14 +1,10 @@
 from unittest import TestCase
+from unittest.mock import patch, MagicMock, Mock
 from conductr_cli.test.cli_test_case import strip_margin, create_mock_logger
 from conductr_cli.exceptions import BundleResolutionError
 from conductr_cli import resolver
 from conductr_cli.resolvers import bintray_resolver, uri_resolver
 from pyhocon import ConfigFactory
-
-try:
-    from unittest.mock import patch, MagicMock, Mock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock, Mock
 
 
 class TestResolver(TestCase):

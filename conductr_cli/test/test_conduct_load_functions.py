@@ -1,14 +1,10 @@
 from unittest import TestCase
+from unittest.mock import call, patch, MagicMock
 from conductr_cli import conduct_load
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
 import datetime
 import io
-
-try:
-    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import call, patch, MagicMock
 
 
 class TestCommonFunctions(TestCase):

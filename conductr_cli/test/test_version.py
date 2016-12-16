@@ -1,10 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import version, logging_setup
-
-try:
-    from unittest.mock import MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestConductVersionCommand(CliTestCase):

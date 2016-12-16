@@ -2,12 +2,7 @@ from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import conduct_stop, logging_setup
 from conductr_cli.exceptions import WaitTimeoutError
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
-
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 class TestConductStopCommand(CliTestCase):

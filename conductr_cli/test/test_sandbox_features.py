@@ -1,13 +1,9 @@
 from unittest import TestCase
+from unittest.mock import call, patch, MagicMock
 from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature,\
     LoggingFeature, MonitoringFeature, \
     collect_features, select_bintray_uri
 from conductr_cli.sandbox_common import LATEST_CONDUCTR_VERSION
-
-try:
-    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import call, patch, MagicMock
 
 
 class TestFeatures(TestCase):

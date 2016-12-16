@@ -2,12 +2,8 @@ from conductr_cli.test.conduct_load_test_base import ConductLoadTestBase
 from conductr_cli.test.cli_test_case import create_temp_bundle, strip_margin, as_error, \
     create_temp_bundle_with_contents
 from conductr_cli import conduct_load, logging_setup
+from unittest.mock import call, patch, MagicMock, Mock
 import shutil
-
-try:
-    from unittest.mock import call, patch, MagicMock, Mock  # 3.3 and beyond
-except ImportError:
-    from mock import call, patch, MagicMock, Mock
 
 
 class TestConductLoadCommand(ConductLoadTestBase):

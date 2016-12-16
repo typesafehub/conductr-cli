@@ -1,10 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase
 from conductr_cli import sandbox_common
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 class TestSandboxCommon(CliTestCase):

@@ -1,11 +1,7 @@
 from unittest import TestCase
 from conductr_cli import validation
+from unittest.mock import MagicMock
 import arrow
-
-try:
-    from unittest.mock import MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import MagicMock
 
 
 class TestConductLogsCommand(TestCase):

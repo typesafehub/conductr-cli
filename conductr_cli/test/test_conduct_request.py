@@ -1,11 +1,6 @@
 from unittest import TestCase
-
+from unittest.mock import patch, MagicMock
 from conductr_cli import conduct_request
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
 
 
 class TestRequest(TestCase):

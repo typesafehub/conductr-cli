@@ -1,11 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import bundle_installation, logging_setup
 from conductr_cli.exceptions import WaitTimeoutError
-
-try:
-    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import call, patch, MagicMock
+from unittest.mock import call, patch, MagicMock
 
 
 def create_test_event(event_name):
