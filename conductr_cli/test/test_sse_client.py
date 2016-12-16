@@ -1,11 +1,7 @@
 from unittest import TestCase
 from conductr_cli.test.cli_test_case import strip_margin
 from conductr_cli import sse_client
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 class TestSSEClient(TestCase):

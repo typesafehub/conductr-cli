@@ -1,12 +1,7 @@
 import subprocess
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import terminal
-
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 class TestTerminal(CliTestCase):

@@ -3,13 +3,8 @@ from conductr_cli import conduct_load, logging_setup
 from conductr_cli.exceptions import BundleResolutionError, WaitTimeoutError
 from zipfile import BadZipFile
 from urllib.error import HTTPError, URLError
+from unittest.mock import patch, MagicMock
 import logging
-
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
 
 
 class ConductLoadTestBase(CliTestCase):

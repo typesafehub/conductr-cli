@@ -4,11 +4,7 @@ import tempfile
 from unittest import TestCase
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from conductr_cli.ansi_colors import RED, YELLOW, UNDERLINE, ENDC
-
-try:
-    from unittest.mock import MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class CliTestCase(TestCase):

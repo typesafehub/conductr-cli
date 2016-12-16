@@ -1,10 +1,6 @@
 from conductr_cli.test.conduct_run_test_base import ConductRunTestBase
 from conductr_cli import conduct_run, logging_setup
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 class TestConductRunCommand(ConductRunTestBase):

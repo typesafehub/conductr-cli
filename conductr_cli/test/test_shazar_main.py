@@ -6,11 +6,7 @@ from os import remove
 from conductr_cli import logging_setup
 from conductr_cli.shazar_main import create_digest, build_parser, run
 from conductr_cli.test.cli_test_case import CliTestCase
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 class TestShazar(TestCase):

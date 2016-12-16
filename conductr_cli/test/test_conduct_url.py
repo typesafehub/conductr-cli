@@ -1,10 +1,6 @@
 from unittest import TestCase
 from conductr_cli import conduct_url
-
-try:
-    from unittest.mock import MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestConductUrlIp(TestCase):

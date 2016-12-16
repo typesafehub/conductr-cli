@@ -3,13 +3,9 @@ from conductr_cli import bundle_deploy, logging_setup
 from conductr_cli.exceptions import ContinuousDeliveryError, WaitTimeoutError
 from conductr_cli.resolvers import bintray_resolver
 from unittest import TestCase
+from unittest.mock import call, patch, MagicMock
 
 import json
-
-try:
-    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import call, patch, MagicMock
 
 
 class TestGenerateHmac(TestCase):

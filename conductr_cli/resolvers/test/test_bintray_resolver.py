@@ -5,11 +5,7 @@ from conductr_cli.exceptions import MalformedBundleUriError, BintrayResolutionEr
 from requests.exceptions import HTTPError
 import io
 import os
-
-try:
-    from unittest.mock import call, patch, MagicMock, Mock  # 3.3 and beyond
-except ImportError:
-    from mock import call, patch, MagicMock, Mock
+from unittest.mock import call, patch, MagicMock, Mock
 
 
 class TestResolveBundle(TestCase):

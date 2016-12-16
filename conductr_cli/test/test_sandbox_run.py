@@ -3,13 +3,8 @@ from conductr_cli import sandbox_run, logging_setup
 from conductr_cli.docker import DockerVmType
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION
 from conductr_cli.sandbox_run import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
+from unittest.mock import patch, MagicMock
 import os
-
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
 
 
 class TestSandboxRunCommand(CliTestCase):

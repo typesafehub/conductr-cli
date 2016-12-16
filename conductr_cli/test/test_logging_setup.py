@@ -1,11 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, as_error, as_warn, strip_margin
 from conductr_cli import logging_setup
+from unittest.mock import MagicMock
 import logging
-
-try:
-    from unittest.mock import MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import MagicMock
 
 
 class TestRootLogger(CliTestCase):

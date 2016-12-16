@@ -3,11 +3,7 @@ from conductr_cli import sandbox_main, logging_setup
 from conductr_cli.sandbox_common import LATEST_CONDUCTR_VERSION, CONDUCTR_DEV_IMAGE
 from conductr_cli.docker import DockerVmType
 from subprocess import CalledProcessError
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 
 class TestSandbox(CliTestCase):

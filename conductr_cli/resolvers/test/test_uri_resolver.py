@@ -4,10 +4,7 @@ from conductr_cli.resolvers import uri_resolver
 from conductr_cli.test.cli_test_case import create_mock_logger
 import os
 
-try:
-    from unittest.mock import call, patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import call, patch, MagicMock
+from unittest.mock import call, patch, MagicMock
 
 
 class TestResolveBundle(TestCase):

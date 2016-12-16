@@ -1,12 +1,8 @@
 from unittest import TestCase
+from unittest.mock import patch, MagicMock
 from conductr_cli import host
 from conductr_cli.docker import DockerVmType
 from conductr_cli.exceptions import DockerMachineNotRunningError
-
-try:
-    from unittest.mock import patch, MagicMock  # 3.3 and beyond
-except ImportError:
-    from mock import patch, MagicMock
 
 
 class TestResolveDefaultHost(TestCase):
