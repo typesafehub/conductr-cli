@@ -1,17 +1,16 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from conductr_cli import sandbox_run, logging_setup
+from conductr_cli import logging_setup, sandbox_run
 from conductr_cli.docker import DockerVmType
-from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
 from conductr_cli.sandbox_run import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
-from unittest.mock import patch, MagicMock
-import os
+from unittest.mock import call, patch, MagicMock
+from requests.exceptions import ConnectionError
 
 
 class TestSandboxRunCommand(CliTestCase):
 
     default_args = {
         'vm_type': DockerVmType.DOCKER_ENGINE,
-        'image_version': LATEST_CONDUCTR_VERSION,
         'conductr_roles': [],
         'envs': [],
         'image': CONDUCTR_DEV_IMAGE,
@@ -34,475 +33,181 @@ class TestSandboxRunCommand(CliTestCase):
                          '-p', '9006:9006']
     default_positional_args = ['--discover-host-ip']
 
-    def test_default_args(self):
-        stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
+    container_names = ['cond-0']
 
-        input_args = MagicMock(**self.default_args)
+    def test_docker_sandbox(self):
+        conductr_version = '1.1.11'
+
+        mock_feature = MagicMock()
+        features = [mock_feature]
+        mock_collect_features = MagicMock(return_value=features)
+
+        mock_sandbox_run_docker = MagicMock(return_value=self.container_names)
+        mock_wait_for_conductr = MagicMock(return_value=True)
+        mock_log_run_attempt = MagicMock()
+
+        args = self.default_args
+        args.update({
+            'image_version': conductr_version
+        })
+        input_args = MagicMock(**args)
+
         with \
-                patch('conductr_cli.terminal.docker_images', return_value=''), \
-                patch('conductr_cli.terminal.docker_pull', return_value=''), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
+                patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
+                patch('conductr_cli.sandbox_run_docker.run', mock_sandbox_run_docker), \
+                patch('conductr_cli.sandbox_run_docker.log_run_attempt', mock_log_run_attempt), \
                 patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
-            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_run.run(input_args)
 
-        expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          ||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0..
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker container that run the ConductR node with:
-                                          |  docker stats cond-0
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |""")
-        expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
-        expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
-        expected_positional_args = self.default_positional_args
+        mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_docker_run.assert_called_once_with(expected_optional_args, expected_image, expected_positional_args)
         mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
-    def test_multiple_container(self):
-        stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
-        nr_of_containers = 3
+        mock_log_run_attempt.assert_called_with(input_args, self.container_names, True, 60)
 
+        mock_feature.assert_not_called()
+
+    def test_jvm_sandbox(self):
+        conductr_version = '2.0.0'
+
+        mock_feature = MagicMock()
+        features = [mock_feature]
+        mock_collect_features = MagicMock(return_value=features)
+
+        mock_sandbox_run_docker = MagicMock(return_value=self.container_names)
+        mock_wait_for_conductr = MagicMock(return_value=True)
+        mock_start_proxy = MagicMock(return_value=True)
+        mock_log_run_attempt = MagicMock()
+
+        args = self.default_args
+        args.update({
+            'image_version': conductr_version
+        })
+        input_args = MagicMock(**args)
         with \
-                patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
-            args = self.default_args.copy()
-            args.update({'nr_of_containers': nr_of_containers})
-            input_args = MagicMock(**args)
-            logging_setup.configure_logging(input_args, stdout)
+                patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
+                patch('conductr_cli.sandbox_run_jvm.run', mock_sandbox_run_docker), \
+                patch('conductr_cli.sandbox_run_jvm.log_run_attempt', mock_log_run_attempt), \
+                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
+                patch('conductr_cli.sandbox_run.start_proxy', mock_start_proxy):
             sandbox_run.run(input_args)
 
-        expected_stdout = strip_margin("""||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0..
-                                          |Starting container cond-1..
-                                          |Starting container cond-2..
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker containers that run the ConductR nodes with:
-                                          |  docker stats cond-0 cond-1 cond-2
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |""")
-        expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
+        mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
-        self.assertEqual(expected_stdout, self.output(stdout))
-        # Assert cond-0
-        mock_docker_run.assert_any_call(
-            ['-d', '--name', 'cond-0',
-             '-e', 'CONDUCTR_INSTANCE=0', '-e', 'CONDUCTR_NR_OF_INSTANCES=3',
-             '-e', 'AKKA_LOGLEVEL=info',
-             '-p', '9000:9000', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006'],
-            expected_image,
-            self.default_positional_args
-        )
-        # Assert cond-1
-        mock_docker_run.assert_any_call(
-            ['-d', '--name', 'cond-1',
-             '-e', 'CONDUCTR_INSTANCE=1', '-e', 'CONDUCTR_NR_OF_INSTANCES=3',
-             '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
-             '-p', '9010:9000', '-p', '9014:9004', '-p', '9015:9005', '-p', '9016:9006'],
-            expected_image,
-            self.default_positional_args + ['--seed', '10.10.10.10:9004']
-        )
-        # Assert cond-2
-        mock_docker_run.assert_any_call(
-            ['-d', '--name', 'cond-2',
-             '-e', 'CONDUCTR_INSTANCE=2', '-e', 'CONDUCTR_NR_OF_INSTANCES=3',
-             '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
-             '-p', '9020:9000', '-p', '9024:9004', '-p', '9025:9005', '-p', '9026:9006'],
-            expected_image,
-            self.default_positional_args + ['--seed', '10.10.10.10:9004']
-        )
         mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_start_proxy.assert_called_once_with(1)
 
-    def test_with_custom_args_v1(self):
+        mock_log_run_attempt.assert_called_with(input_args, self.container_names, True, 60)
+
+
+class TestStartProxy(CliTestCase):
+
+    def test_start_proxy(self):
         stdout = MagicMock()
-        image_version = '1.1.0'
-        conductr_roles = [['role1', 'role2']]
-        envs = ['key1=value1', 'key2=value2']
-        image = 'my-image'
-        log_level = 'debug'
-        nr_of_containers = 1
-        ports = [3000, 3001]
-        features = [['visualization'], ['logging']]
+        mock_conduct_run = MagicMock()
 
-        with \
-                patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr') as mock_wait_for_conductr:
-            args = self.default_args.copy()
-            args.update({
-                'image_version': image_version,
-                'conductr_roles': conductr_roles,
-                'envs': envs,
-                'image': image,
-                'log_level': log_level,
-                'nr_of_containers': nr_of_containers,
-                'ports': ports,
-                'bundle_http_port': 7222,
-                'features': features
-            })
-            input_args = MagicMock(**args)
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run.run(input_args)
+        args = MagicMock(**{})
 
-        expected_stdout = strip_margin("""||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0 exposing 127.0.0.1:3000, 127.0.0.1:3001, 127.0.0.1:5601, 127.0.0.1:9200, 127.0.0.1:9999..
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker container that run the ConductR node with:
-                                          |  docker stats cond-0
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |""")
+        with patch('conductr_cli.conduct_main.run', mock_conduct_run):
+            logging_setup.configure_logging(args, stdout)
+            sandbox_run.start_proxy(3)
 
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_docker_run.assert_called_once_with(
-            ['-d', '--name', 'cond-0', '-e', 'key1=value1', '-e', 'key2=value2',
-             '-e', 'CONDUCTR_INSTANCE=0', '-e', 'CONDUCTR_NR_OF_INSTANCES=1', '-e', 'AKKA_LOGLEVEL=debug',
-             '-e', 'CONDUCTR_FEATURES=visualization,logging', '-e', 'CONDUCTR_ROLES=role1,role2',
-             '-p', '5601:5601', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006',
-             '-p', '9999:9999', '-p', '9200:9200', '-p', '7222:7222', '-p', '3000:3000',
-             '-p', '3001:3001'],
-            '{}:{}'.format(image, image_version),
-            self.default_positional_args
-        )
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        self.assertEqual([
+            call(['load', 'conductr-haproxy', 'conductr-haproxy-dev-mode', '--disable-instructions'], configure_logging=False),
+            call(['run', 'conductr-haproxy', '--scale', '3', '--disable-instructions'], configure_logging=False)
+        ], mock_conduct_run.call_args_list)
 
-    def test_with_custom_args_v2(self):
-        stdout = MagicMock()
-        image_version = '2.0.0'
-        conductr_roles = [['role1', 'role2']]
-        envs = ['key1=value1', 'key2=value2']
-        image = 'my-image'
-        log_level = 'debug'
-        nr_of_containers = 1
-        ports = [3000, 3001]
-        features = [['visualization'], ['logging']]
-
-        with \
-                patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr') as mock_wait_for_conductr, \
-                patch('conductr_cli.sandbox_features.VisualizationFeature.start', return_value=''), \
-                patch('conductr_cli.sandbox_features.LoggingFeature.start', return_value=''), \
-                patch('conductr_cli.conduct_main.run', return_value=''):
-
-            args = self.default_args.copy()
-            args.update({
-                'image_version': image_version,
-                'conductr_roles': conductr_roles,
-                'envs': envs,
-                'image': image,
-                'log_level': log_level,
-                'nr_of_containers': nr_of_containers,
-                'ports': ports,
-                'bundle_http_port': 7222,
-                'features': features
-            })
-            input_args = MagicMock(**args)
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run.run(input_args)
-
-        expected_stdout = strip_margin("""||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0 exposing 127.0.0.1:3000, 127.0.0.1:3001, 127.0.0.1:5601, 127.0.0.1:9200, 127.0.0.1:9999..
-                                          ||------------------------------------------------|
+        expected_output = strip_margin("""||------------------------------------------------|
                                           || Starting HAProxy                               |
                                           ||------------------------------------------------|
                                           |Deploying bundle conductr-haproxy with configuration conductr-haproxy-dev-mode
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker container that run the ConductR node with:
-                                          |  docker stats cond-0
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |Bundle status:
                                           |""")
+        self.assertEqual(expected_output, self.output(stdout))
 
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_docker_run.assert_called_once_with(
-            ['-d', '--name', 'cond-0', '-e', 'key1=value1', '-e', 'key2=value2',
-             '-e', 'CONDUCTR_INSTANCE=0', '-e', 'CONDUCTR_NR_OF_INSTANCES=1', '-e', 'AKKA_LOGLEVEL=debug',
-             '-e', 'CONDUCTR_ROLES=role1,role2,elasticsearch,kibana',
-             '-e', 'CONDUCTR_ARGS=-Dcontrail.syslog.server.port=9200 -Dcontrail.syslog.server.elasticsearch.enabled=on',
-             '-p', '5601:5601', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006',
-             '-p', '9999:9999', '-p', '9200:9200', '-p', '7222:7222', '-p', '3000:3000',
-             '-p', '3001:3001'],
-            '{}:{}'.format(image, image_version),
-            self.default_positional_args
-        )
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
-    def test_roles(self):
+class TestWaitForStart(CliTestCase):
+    def test_wait_for_start(self):
         stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
-        nr_of_containers = 3
-        conductr_roles = [['role1', 'role2'], ['role3']]
+        mock_get_env = MagicMock(return_value=1)
+
+        members_url = '/members'
+        mock_url = MagicMock(return_value=members_url)
+
+        mock_http_get = MagicMock(return_value='test only')
 
         with \
-                patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
-            args = self.default_args.copy()
-            args.update({
-                'nr_of_containers': nr_of_containers,
-                'conductr_roles': conductr_roles
+                patch('os.getenv', mock_get_env), \
+                patch('conductr_cli.conduct_url.url', mock_url), \
+                patch('conductr_cli.conduct_request.get', mock_http_get):
+            args = MagicMock(**{
+                'no_wait': False
             })
-            input_args = MagicMock(**args)
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run.run(input_args)
+            logging_setup.configure_logging(args, stdout)
+            result = sandbox_run.wait_for_start(args)
+            self.assertEqual((True, 1.0), result)
 
-        expected_stdout = strip_margin("""||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0..
-                                          |Starting container cond-1..
-                                          |Starting container cond-2..
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker containers that run the ConductR nodes with:
-                                          |  docker stats cond-0 cond-1 cond-2
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |""")
-        expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
+        self.assertEqual([
+            call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),
+            call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
+        ], mock_get_env.call_args_list)
 
-        self.assertEqual(expected_stdout, self.output(stdout))
-        # Assert cond-0
-        mock_docker_run.assert_any_call(
-            ['-d', '--name', 'cond-0',
-             '-e', 'CONDUCTR_INSTANCE=0', '-e', 'CONDUCTR_NR_OF_INSTANCES=3',
-             '-e', 'AKKA_LOGLEVEL=info', '-e', 'CONDUCTR_ROLES=role1,role2',
-             '-p', '9000:9000', '-p', '9004:9004', '-p', '9005:9005', '-p', '9006:9006'],
-            expected_image,
-            self.default_positional_args
-        )
-        # Assert cond-1
-        mock_docker_run.assert_any_call(
-            ['-d', '--name', 'cond-1',
-             '-e', 'CONDUCTR_INSTANCE=1', '-e', 'CONDUCTR_NR_OF_INSTANCES=3',
-             '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
-             '-e', 'CONDUCTR_ROLES=role3',
-             '-p', '9010:9000', '-p', '9014:9004', '-p', '9015:9005', '-p', '9016:9006'],
-            expected_image,
-            self.default_positional_args + ['--seed', '10.10.10.10:9004']
-        )
-        # Assert cond-2
-        mock_docker_run.assert_any_call(
-            ['-d', '--name', 'cond-2',
-             '-e', 'CONDUCTR_INSTANCE=2', '-e', 'CONDUCTR_NR_OF_INSTANCES=3',
-             '-e', 'AKKA_LOGLEVEL=info', '-e', 'SYSLOG_IP=10.10.10.10',
-             '-e', 'CONDUCTR_ROLES=role1,role2',
-             '-p', '9020:9000', '-p', '9024:9004', '-p', '9025:9005', '-p', '9026:9006'],
-            expected_image,
-            self.default_positional_args + ['--seed', '10.10.10.10:9004']
-        )
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_http_get.assert_called_once_with(dcos_mode=False, host=None, timeout=5, url='/members')
 
-    def test_containers_already_running(self):
+        self.assertEqual([
+            call.write('Waiting for ConductR to start\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\n'),
+            call.write(''),
+            call.flush()
+        ], stdout.method_calls)
+
+    def test_wait_for_start_timeout(self):
         stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
+        mock_get_env = MagicMock(return_value=1)
 
-        running_containers = ['cond-0']
+        members_url = '/members'
+        mock_url = MagicMock(return_value=members_url)
 
-        input_args = MagicMock(**self.default_args)
+        mock_http_get = MagicMock(side_effect=[ConnectionError()])
+
         with \
-                patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
-                patch('conductr_cli.terminal.docker_pull', return_value=''), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value=''), \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=running_containers), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
-                patch('conductr_cli.terminal.docker_rm') as mock_docker_rm:
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run.run(input_args)
+                patch('os.getenv', mock_get_env), \
+                patch('conductr_cli.conduct_url.url', mock_url), \
+                patch('conductr_cli.conduct_request.get', mock_http_get):
+            args = MagicMock(**{
+                'no_wait': False
+            })
+            logging_setup.configure_logging(args, stdout)
+            result = sandbox_run.wait_for_start(args)
+            self.assertEqual((False, 1.0), result)
 
-        expected_stdout = strip_margin("""||------------------------------------------------|
-                                          || Stopping ConductR                              |
-                                          ||------------------------------------------------|
-                                          ||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0..
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker container that run the ConductR node with:
-                                          |  docker stats cond-0
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |""")
+        self.assertEqual([
+            call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),
+            call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
+        ], mock_get_env.call_args_list)
 
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_docker_rm.assert_called_once_with(running_containers)
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_http_get.assert_called_once_with(dcos_mode=False, host=None, timeout=5, url='/members')
 
-    def test_run_options(self):
-        stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
-        run_options = {'CONDUCTR_DOCKER_RUN_OPTS': "-v /etc/haproxy:/usr/local/etc/haproxy"}
-
-        def run_env(key, default=None):
-            return run_options[key] if key in run_options else os.environ.get(key, default)
-
-        input_args = MagicMock(**self.default_args)
-        with \
-                patch('conductr_cli.terminal.docker_images', return_value=''), \
-                patch('conductr_cli.terminal.docker_pull', return_value=''), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
-                patch('os.getenv', side_effect=run_env) as mock_get_env:
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run.run(input_args)
-
-        expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          ||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0..
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker container that run the ConductR node with:
-                                          |  docker stats cond-0
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |""")
-        expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
-        expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
-        expected_positional_args = self.default_positional_args
-
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_get_env.assert_any_call('CONDUCTR_DOCKER_RUN_OPTS')
-        mock_docker_run.assert_called_once_with(expected_optional_args + ['-v', '/etc/haproxy:/usr/local/etc/haproxy'],
-                                                expected_image, expected_positional_args)
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        self.assertEqual([
+            call.write('Waiting for ConductR to start\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\n'),
+            call.write(''),
+            call.flush()
+        ], stdout.method_calls)
 
     def test_no_wait(self):
-        stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
+        args = MagicMock(**{
+            'no_wait': True
+        })
 
-        with \
-                patch('conductr_cli.terminal.docker_images', return_value=''), \
-                patch('conductr_cli.terminal.docker_pull', return_value=''), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
-            args = self.default_args.copy()
-            args.update({'no_wait': True})
-            input_args = MagicMock(**args)
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run.run(input_args)
-
-        expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          ||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0..
-                                          |""")
-        expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
-        expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
-        expected_positional_args = self.default_positional_args
-
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_docker_run.assert_called_once_with(expected_optional_args, expected_image, expected_positional_args)
-        mock_wait_for_conductr.assert_not_called()
-
-    def test_wait_options(self):
-        stdout = MagicMock()
-        mock_wait_for_conductr = MagicMock()
-        wait_retries = 3
-        wait_retry_interval = 1.0
-        wait_options = {
-            'CONDUCTR_SANDBOX_WAIT_RETRIES': str(wait_retries),
-            'CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL': str(wait_retry_interval)
-        }
-
-        def wait_env(key, default=None):
-            return wait_options[key] if key in wait_options else os.environ.get(key, default)
-
-        input_args = MagicMock(**self.default_args)
-        with \
-                patch('conductr_cli.terminal.docker_images', return_value=''), \
-                patch('conductr_cli.terminal.docker_pull', return_value=''), \
-                patch('conductr_cli.terminal.docker_ps', return_value=''), \
-                patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
-                patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
-                patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
-                patch('os.getenv', side_effect=wait_env) as mock_getenv:
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run.run(input_args)
-
-        expected_stdout = strip_margin("""|Pulling down the ConductR development image..
-                                          ||------------------------------------------------|
-                                          || Starting ConductR                              |
-                                          ||------------------------------------------------|
-                                          |Starting container cond-0..
-                                          ||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |ConductR has been started
-                                          |Check resource consumption of Docker container that run the ConductR node with:
-                                          |  docker stats cond-0
-                                          |Check current bundle status with:
-                                          |  conduct info
-                                          |""")
-        expected_optional_args = self.default_general_args('cond-0') + self.default_env_args + self.default_port_args
-        expected_image = '{}:{}'.format(CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION)
-        expected_positional_args = self.default_positional_args
-
-        self.assertEqual(expected_stdout, self.output(stdout))
-        mock_getenv.assert_any_call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES)
-        mock_getenv.assert_any_call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
-        mock_docker_run.assert_called_once_with(expected_optional_args, expected_image, expected_positional_args)
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, wait_retries, wait_retry_interval)
+        result = sandbox_run.wait_for_start(args)
+        self.assertEqual((True, 0), result)
