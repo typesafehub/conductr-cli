@@ -1,9 +1,12 @@
 from conductr_cli.test.cli_test_case import CliTestCase, as_warn, as_error, strip_margin
 from conductr_cli import sandbox_main, logging_setup
+from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_SANDBOX_INTERFACE
 from conductr_cli.sandbox_common import LATEST_CONDUCTR_VERSION, CONDUCTR_DEV_IMAGE
 from conductr_cli.docker import DockerVmType
 from subprocess import CalledProcessError
 from unittest.mock import patch, MagicMock
+import argparse
+import ipaddress
 
 
 class TestSandbox(CliTestCase):
@@ -18,11 +21,14 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.envs, [])
         self.assertEqual(args.image, CONDUCTR_DEV_IMAGE)
         self.assertEqual(args.log_level, 'info')
-        self.assertEqual(args.nr_of_containers, 1)
+        self.assertEqual(args.nr_of_containers, '1')
         self.assertEqual(args.ports, [])
         self.assertEqual(args.features, [])
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.resolve_ip, True)
+        self.assertEqual(args.interface, DEFAULT_SANDBOX_INTERFACE)
+        self.assertEqual(args.addr_range, ipaddress.ip_network(DEFAULT_SANDBOX_ADDR_RANGE, strict=True))
+        self.assertEqual(args.image_dir, DEFAULT_SANDBOX_IMAGE_DIR)
 
     def test_parser_run_custom_args(self):
         args = self.parser.parse_args('run 1.1.0 '
@@ -33,6 +39,9 @@ class TestSandbox(CliTestCase):
                                       '--nr-of-containers 5 '
                                       '--port 1000 -p 1001 '
                                       '--bundle-http-port 7111 '
+                                      '--image-dir /foo/bar '
+                                      '--interface ix0 '
+                                      '--addr-range 192.168.10.0/24 '
                                       '--feature visualization -f logging -f monitoring 2.1.0'.split())
         self.assertEqual(args.func.__name__, 'run')
         self.assertEqual(args.image_version, '1.1.0')
@@ -40,7 +49,33 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.envs, ['env1', 'env2'])
         self.assertEqual(args.image, 'my-image')
         self.assertEqual(args.log_level, 'debug')
-        self.assertEqual(args.nr_of_containers, 5)
+        self.assertEqual(args.nr_of_containers, '5')
+        self.assertEqual(args.ports, [1000, 1001])
+        self.assertEqual(args.features, [['visualization'], ['logging'], ['monitoring', '2.1.0']])
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.resolve_ip, True)
+        self.assertEqual(args.bundle_http_port, 7111)
+        self.assertEqual(args.interface, 'ix0')
+        self.assertEqual(args.addr_range, ipaddress.ip_network('192.168.10.0/24', strict=True))
+        self.assertEqual(args.image_dir, '/foo/bar')
+
+    def test_parser_run_multiple_core_agent_instances(self):
+        args = self.parser.parse_args('run 1.1.0 '
+                                      '--conductr-role role1 role2 -r role3 '
+                                      '--env env1 -e env2 '
+                                      '--image my-image '
+                                      '--log-level debug '
+                                      '--nr-of-containers 5:3 '
+                                      '--port 1000 -p 1001 '
+                                      '--bundle-http-port 7111 '
+                                      '--feature visualization -f logging -f monitoring 2.1.0'.split())
+        self.assertEqual(args.func.__name__, 'run')
+        self.assertEqual(args.image_version, '1.1.0')
+        self.assertEqual(args.conductr_roles, [['role1', 'role2'], ['role3']])
+        self.assertEqual(args.envs, ['env1', 'env2'])
+        self.assertEqual(args.image, 'my-image')
+        self.assertEqual(args.log_level, 'debug')
+        self.assertEqual(args.nr_of_containers, '5:3')
         self.assertEqual(args.ports, [1000, 1001])
         self.assertEqual(args.features, [['visualization'], ['logging'], ['monitoring', '2.1.0']])
         self.assertEqual(args.local_connection, True)
@@ -318,3 +353,20 @@ class TestSandbox(CliTestCase):
                    |""")),
             self.output(stdout_mock))
         self.assertEqual(exit.exception.code, 1)
+
+
+class TestValidation(CliTestCase):
+    def test_nr_of_instances_valid_int(self):
+        self.assertEqual('1', sandbox_main.nr_of_containers('1'))
+
+    def test_nr_of_instances_valid_expression(self):
+        self.assertEqual('1:3', sandbox_main.nr_of_containers('1:3'))
+
+    def test_nr_of_instances_invalid(self):
+        self.assertRaises(argparse.ArgumentTypeError, sandbox_main.nr_of_containers, 'FOO')
+
+    def test_addr_range_valid(self):
+        self.assertEqual(ipaddress.ip_network('192.168.1.0/24', strict=True), sandbox_main.addr_range('192.168.1.0/24'))
+
+    def test_addr_range_invalid(self):
+        self.assertRaises(argparse.ArgumentTypeError, sandbox_main.addr_range, 'FOO')

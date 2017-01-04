@@ -3,6 +3,7 @@ from conductr_cli import terminal, validation, docker_machine, docker
 from conductr_cli.exceptions import DockerMachineNotRunningError
 from subprocess import CalledProcessError
 from conductr_cli.docker import DockerVmType
+import platform
 
 
 CONDUCTR_HOST = 'CONDUCTR_HOST'
@@ -39,3 +40,7 @@ def with_docker_machine():
             raise DockerMachineNotRunningError('docker-machine host is not running.')
     except CalledProcessError:
         raise DockerMachineNotRunningError('docker-machine host is not running.')
+
+
+def loopback_device_name():
+    return 'lo' if platform.system().lower() == 'linux' else 'lo0'

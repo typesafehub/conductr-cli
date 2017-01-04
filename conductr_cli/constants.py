@@ -1,3 +1,4 @@
+from conductr_cli import host
 import os
 
 CONDUCTR_SCHEME = 'CONDUCTR_SCHEME'
@@ -14,6 +15,10 @@ DEFAULT_CUSTOM_SETTINGS_FILE = os.getenv('CONDUCTR_CUSTOM_SETTINGS_FILE',
                                          '{}/settings.conf'.format(DEFAULT_CLI_SETTINGS_DIR))
 DEFAULT_CUSTOM_PLUGINS_DIR = os.getenv('CONDUCTR_CUSTOM_PLUGINS_DIR',
                                        '{}/plugins'.format(DEFAULT_CLI_SETTINGS_DIR))
+DEFAULT_SANDBOX_IMAGE_DIR = os.path.abspath(os.getenv('CONDUCTR_SANDBOX_IMAGE_DIR',
+                                                      '{}/images'.format(DEFAULT_CLI_SETTINGS_DIR)))
+DEFAULT_SANDBOX_INTERFACE = os.getenv('CONDUCTR_SANDBOX_INTERFACE', host.loopback_device_name())
+DEFAULT_SANDBOX_ADDR_RANGE = os.getenv('CONDUCTR_SANDBOX_ADDR_RANGE', '192.168.1.0/24')
 DEFAULT_ERROR_LOG_FILE = os.path.abspath(os.getenv('CONDUCTR_CLI_ERROR_LOG',
                                                    '{}/errors.log'.format(DEFAULT_CLI_SETTINGS_DIR)))
 DEFAULT_WAIT_TIMEOUT = 60  # seconds

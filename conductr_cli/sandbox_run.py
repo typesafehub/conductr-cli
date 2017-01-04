@@ -30,6 +30,7 @@ class ConductArgs:
 
 @validation.handle_connection_error
 @validation.handle_http_error
+@validation.handle_instance_count_error
 def run(args):
     """`sandbox run` command"""
 
@@ -52,6 +53,8 @@ def run(args):
         sandbox_run_docker.log_run_attempt(args, run_result, is_started, wait_timeout)
     else:
         sandbox_run_jvm.log_run_attempt(args, run_result, is_started, wait_timeout)
+
+    return True
 
 
 def wait_for_start(args):

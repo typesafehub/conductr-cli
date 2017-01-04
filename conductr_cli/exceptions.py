@@ -88,3 +88,13 @@ class ContinuousDeliveryError(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+
+class InstanceCountError(Exception):
+    def __init__(self, conductr_version, nr_of_containers, message):
+        self.conductr_version = conductr_version
+        self.nr_of_containers = nr_of_containers
+        self.message = message
+
+    def __str(self):
+        return repr(self.message)

@@ -1,4 +1,5 @@
 from conductr_cli import conduct_main, host, sandbox_stop, terminal
+from conductr_cli.exceptions import InstanceCountError
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, CONDUCTR_NAME_PREFIX, CONDUCTR_PORTS, major_version
 from conductr_cli.screen_utils import headline
 
@@ -7,8 +8,9 @@ import os
 
 
 def run(args, features):
+    nr_of_containers = instance_count(args.image_version, args.nr_of_containers)
     pull_image(args)
-    container_names = scale_cluster(args, features)
+    container_names = scale_cluster(args, nr_of_containers, features)
     return container_names
 
 
@@ -33,6 +35,15 @@ def log_run_attempt(args, container_names, is_started, wait_timeout):
             log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
 
 
+def instance_count(image_version, nr_of_containers):
+    try:
+        return int(nr_of_containers)
+    except ValueError:
+        raise InstanceCountError(image_version,
+                                 nr_of_containers,
+                                 'Number of containers must be an integer')
+
+
 def pull_image(args):
     if args.image == CONDUCTR_DEV_IMAGE and not terminal.docker_images(CONDUCTR_DEV_IMAGE):
         log = logging.getLogger(__name__)
@@ -41,12 +52,12 @@ def pull_image(args):
                              .format(image_name=CONDUCTR_DEV_IMAGE, image_version=args.image_version))
 
 
-def scale_cluster(args, features):
+def scale_cluster(args, nr_of_containers, features):
     sandbox_stop.stop(args)
-    return start_nodes(args, features)
+    return start_nodes(args, nr_of_containers, features)
 
 
-def start_nodes(args, features):
+def start_nodes(args, nr_of_containers, features):
     container_names = []
     log = logging.getLogger(__name__)
     log.info(headline('Starting ConductR'))
@@ -54,7 +65,7 @@ def start_nodes(args, features):
     conductr_args = flatten([feature.conductr_args() for feature in features])
     conductr_features = flatten([feature.conductr_feature_envs() for feature in features])
     feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
-    for i in range(args.nr_of_containers):
+    for i in range(nr_of_containers):
         container_name = '{prefix}{nr}'.format(prefix=CONDUCTR_NAME_PREFIX, nr=i)
         container_names.append(container_name)
         # Display the ports on the command line. Only if the user specifies a certain feature, then
@@ -71,7 +82,7 @@ def start_nodes(args, features):
         conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, feature_conductr_roles, i)
         run_conductr_cmd(
             i,
-            args.nr_of_containers,
+            nr_of_containers,
             container_name,
             cond0_ip,
             args.envs,
