@@ -1,6 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase, as_warn, as_error, strip_margin
 from conductr_cli import sandbox_main, logging_setup
-from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_SANDBOX_INTERFACE
+from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR
 from conductr_cli.sandbox_common import LATEST_CONDUCTR_VERSION, CONDUCTR_DEV_IMAGE
 from conductr_cli.docker import DockerVmType
 from subprocess import CalledProcessError
@@ -26,7 +26,6 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.features, [])
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.resolve_ip, True)
-        self.assertEqual(args.interface, DEFAULT_SANDBOX_INTERFACE)
         self.assertEqual(args.addr_range, ipaddress.ip_network(DEFAULT_SANDBOX_ADDR_RANGE, strict=True))
         self.assertEqual(args.image_dir, DEFAULT_SANDBOX_IMAGE_DIR)
 
@@ -40,7 +39,6 @@ class TestSandbox(CliTestCase):
                                       '--port 1000 -p 1001 '
                                       '--bundle-http-port 7111 '
                                       '--image-dir /foo/bar '
-                                      '--interface ix0 '
                                       '--addr-range 192.168.10.0/24 '
                                       '--feature visualization -f logging -f monitoring 2.1.0'.split())
         self.assertEqual(args.func.__name__, 'run')
@@ -55,7 +53,6 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.resolve_ip, True)
         self.assertEqual(args.bundle_http_port, 7111)
-        self.assertEqual(args.interface, 'ix0')
         self.assertEqual(args.addr_range, ipaddress.ip_network('192.168.10.0/24', strict=True))
         self.assertEqual(args.image_dir, '/foo/bar')
 

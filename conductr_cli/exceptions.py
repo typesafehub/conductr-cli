@@ -98,3 +98,11 @@ class InstanceCountError(Exception):
 
     def __str(self):
         return repr(self.message)
+
+
+class BindAddressNotFoundError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str(self):
+        return repr(self.message)

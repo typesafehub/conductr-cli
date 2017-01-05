@@ -1,5 +1,5 @@
-from conductr_cli import sandbox_stop
-from conductr_cli.exceptions import InstanceCountError
+from conductr_cli import host, sandbox_stop
+from conductr_cli.exceptions import InstanceCountError, BindAddressNotFoundError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM
 import logging
@@ -7,6 +7,7 @@ import re
 
 
 NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
+BIND_TEST_PORT = 19991  # The port used for testing if an address can be bound.
 
 
 def run(args, features):
@@ -21,14 +22,14 @@ def run(args, features):
     nr_of_core_instances, nr_of_agent_instances = instance_count(args.image_version, args.nr_of_containers)
 
     validate_jvm_support()
-    validate_address_aliases(max(nr_of_core_instances, nr_of_agent_instances), args.interface, args.addr_range)
+    bind_addrs = find_bind_addrs(max(nr_of_core_instances, nr_of_agent_instances), args.addr_range)
 
     core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version)
 
     sandbox_stop.stop(args)
 
-    core_pids = start_core_instances(core_extracted_dir, nr_of_core_instances, args.addr_range)
-    agent_pids = start_agent_instances(agent_extracted_dir, nr_of_agent_instances, args.addr_range)
+    core_pids = start_core_instances(core_extracted_dir, bind_addrs[0:nr_of_core_instances])
+    agent_pids = start_agent_instances(agent_extracted_dir, bind_addrs[0:nr_of_agent_instances])
 
     return (core_pids, agent_pids)
 
@@ -83,38 +84,46 @@ def validate_jvm_support():
     pass
 
 
-def validate_address_aliases(nr_of_alias, interface, addr_range):
+def find_bind_addrs(nr_of_addrs, addr_range):
     """
-    Validates for the presence of address alias given a specified interface and address range, i.e.
+    Finds for the presence of address which can be bound to the sandbox given an address range, i.e.
     - Let's say 3 address aliases is required.
-    - The interface specified is lo0.
     - The address range is 192.168.128.0/24
 
-    These addresses requires setup using ifconfig as such:
+    These addresses requires setup using ifconfig as such (MacOS example):
 
     sudo ifconfig lo0 alias 192.168.128.1 255.255.255.0
     sudo ifconfig lo0 alias 192.168.128.2 255.255.255.0
     sudo ifconfig lo0 alias 192.168.128.3 255.255.255.0
 
-    This command will parse the ifconfig output of the lo0 to ensure the alias for 192.168.128.1, 192.168.128.2, and
-    192.168.128.3 is present.
+    This command will check if 192.168.128.1, 192.168.128.2, and 192.168.128.3 can be bound. The check is done by
+    binding a socket to each of these address using a test port.
 
-    If these alias is not present, printout an error message and raise an exception to fail the sandbox run.
+    If the number of required address is not present, provide the commands so the end user is able to copy-paste and
+    execute these commands.
 
-    As part of the error message printout, provide the commands so the end user is able to copy-paste and execute these
-    commands.
-
-    :param nr_of_alias: number of address aliases required
-    :param interface: the network interface which will be used to create the address alias to be used by core and agent
-                      as the bind address.
+    :param nr_of_addrs: number of address aliases required
     :param addr_range: the range of address which is available to core and agent to bind to.
                        The address is specified in the CIDR format, i.e. 192.168.128.0/24
     """
-    log = logging.getLogger(__name__)
-    log.info('Checking for {} address aliases on {} interface across {} address range'.format(nr_of_alias,
-                                                                                              interface,
-                                                                                              addr_range))
-    pass
+    addrs_to_bind = []
+    addrs_unavailable = []
+    for ip_addr in addr_range.hosts():
+        if host.can_bind(ip_addr, BIND_TEST_PORT):
+            addrs_to_bind.append(ip_addr)
+        else:
+            addrs_unavailable.append(ip_addr)
+
+        if len(addrs_to_bind) >= nr_of_addrs:
+            break
+
+    if len(addrs_to_bind) < nr_of_addrs:
+        nr_of_addr_setup = nr_of_addrs - len(addrs_to_bind)
+        setup_instructions = host.addr_alias_setup_instructions(addrs_unavailable[0:nr_of_addr_setup],
+                                                                addr_range.netmask)
+        raise BindAddressNotFoundError(setup_instructions)
+    else:
+        return addrs_to_bind
 
 
 def obtain_sandbox_image(image_dir, image_version):
@@ -241,7 +250,7 @@ def obtain_sandbox_image(image_dir, image_version):
     return (core_extracted_dir, agent_extracted_dir)
 
 
-def start_core_instances(core_extracted_dir, nr_of_instances, addr_range):
+def start_core_instances(core_extracted_dir, bind_addrs):
     """
     Starts the ConductR core process.
 
@@ -254,14 +263,17 @@ def start_core_instances(core_extracted_dir, nr_of_instances, addr_range):
     same file.
 
     :param core_extracted_dir: the directory containing the files expanded from core's binary .tar.gz
-    :param nr_of_instances: number of core instances required
-    :param addr_range: the range of address required, i.e. 192.168.128.0/24
+    :param bind_addrs: a list of addresses which the core instances will bind to.
+                       If there are 3 instances of core required, there will be 3 addresses supplied.
     :return: the pids of the core instances.
     """
+    log = logging.getLogger(__name__)
+    log.info('Binding ConductR core to the following address: {}'.format(host.display_addrs(bind_addrs)))
+
     pass
 
 
-def start_agent_instances(agent_extracted_dir, nr_of_instances, addr_range):
+def start_agent_instances(agent_extracted_dir, bind_addrs):
     """
     Starts the ConductR agent process.
 
@@ -274,8 +286,11 @@ def start_agent_instances(agent_extracted_dir, nr_of_instances, addr_range):
     same file.
 
     :param agent_extracted_dir: the directory containing the files expanded from agent's binary .tar.gz
-    :param nr_of_instances: number of agent instances required
-    :param addr_range: the range of address required, i.e. 192.168.128.0/24
+    :param bind_addrs: a list of addresses which the core instances will bind to.
+                       If there are 3 instances of core required, there will be 3 addresses supplied.
     :return: the pids of the agent instances.
     """
+    log = logging.getLogger(__name__)
+    log.info('Binding ConductR agent to the following address: {}'.format(host.display_addrs(bind_addrs)))
+
     pass

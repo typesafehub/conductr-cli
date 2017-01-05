@@ -3,6 +3,9 @@ from unittest.mock import patch, MagicMock
 from conductr_cli import host
 from conductr_cli.docker import DockerVmType
 from conductr_cli.exceptions import DockerMachineNotRunningError
+from conductr_cli.test.cli_test_case import strip_margin
+import ipaddress
+import socket
 
 
 class TestResolveDefaultHost(TestCase):
@@ -98,7 +101,246 @@ class TestLoopbackDeviceName(TestCase):
         with patch('platform.system', mock_system):
             self.assertEqual('lo', host.loopback_device_name())
 
-    def test_osx(self):
+    def test_macos(self):
         mock_system = MagicMock(return_value='Darwin')
         with patch('platform.system', mock_system):
             self.assertEqual('lo0', host.loopback_device_name())
+
+
+class TestOsDetect(TestCase):
+    def test_linux(self):
+        mock_system = MagicMock(return_value='Linux')
+        with patch('platform.system', mock_system):
+            self.assertTrue(host.is_linux())
+            self.assertFalse(host.is_macos())
+
+    def test_macos(self):
+        mock_system = MagicMock(return_value='Darwin')
+        with patch('platform.system', mock_system):
+            self.assertFalse(host.is_linux())
+            self.assertTrue(host.is_macos())
+
+
+class TestDisplayAddresses(TestCase):
+    def test_output(self):
+        addrs = [
+            ipaddress.ip_address('192.168.1.1'),
+            ipaddress.ip_address('192.168.1.2')
+        ]
+        self.assertEqual('192.168.1.1, 192.168.1.2', host.display_addrs(addrs))
+
+
+class TestCanBind(TestCase):
+    addr_ipv4 = ipaddress.ip_address('127.0.0.1')
+    addr_ipv6 = ipaddress.ip_address('::1')
+    port = 16371
+
+    def test_success_ipv4(self):
+        mock_socket = MagicMock()
+
+        mock_bind = MagicMock()
+        mock_socket.bind = mock_bind
+
+        mock_close = MagicMock()
+        mock_socket.close = mock_close
+
+        mock_create_socket = MagicMock(return_value=mock_socket)
+
+        with patch('socket.socket', mock_create_socket):
+            self.assertTrue(host.can_bind(self.addr_ipv4, self.port))
+
+        mock_create_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
+        mock_bind.assert_called_once_with((self.addr_ipv4.exploded, self.port))
+        mock_close.assert_called_once_with()
+
+    def test_success_ipv6(self):
+        mock_socket = MagicMock()
+
+        mock_bind = MagicMock()
+        mock_socket.bind = mock_bind
+
+        mock_close = MagicMock()
+        mock_socket.close = mock_close
+
+        mock_create_socket = MagicMock(return_value=mock_socket)
+
+        with patch('socket.socket', mock_create_socket):
+            self.assertTrue(host.can_bind(self.addr_ipv6, self.port))
+
+        mock_create_socket.assert_called_once_with(socket.AF_INET6, socket.SOCK_STREAM)
+        mock_bind.assert_called_once_with((self.addr_ipv6.exploded, self.port))
+        mock_close.assert_called_once_with()
+
+    def test_failure(self):
+        mock_socket = MagicMock()
+
+        mock_bind = MagicMock(side_effect=OSError())
+        mock_socket.bind = mock_bind
+
+        mock_close = MagicMock()
+        mock_socket.close = mock_close
+
+        mock_create_socket = MagicMock(return_value=mock_socket)
+
+        with patch('socket.socket', mock_create_socket):
+            self.assertFalse(host.can_bind(self.addr_ipv6, self.port))
+
+        mock_create_socket.assert_called_once_with(socket.AF_INET6, socket.SOCK_STREAM)
+        mock_bind.assert_called_once_with((self.addr_ipv6.exploded, self.port))
+        mock_close.assert_called_once_with()
+
+
+class TestAddrAliasSetupInstructions(TestCase):
+    addr_range_ipv4 = ipaddress.ip_network('192.168.1.0/24')
+    subnet_mask_ipv4 = addr_range_ipv4.netmask
+    addrs_ipv4 = [
+        ipaddress.ip_address('192.168.1.1'),
+        ipaddress.ip_address('192.168.1.2')
+    ]
+
+    addr_range_ipv6 = ipaddress.ip_network('0:0:0:0:0:ffff:c0a8:101/128')
+    subnet_mask_ipv6 = addr_range_ipv6.netmask
+    addrs_ipv6 = [
+        ipaddress.ip_address('0:0:0:0:0:ffff:c0a8:101'),
+        ipaddress.ip_address('0:0:0:0:0:ffff:c0a8:102')
+    ]
+
+    loopback_device_name = 'ix0'
+
+    def test_linux_ipv4(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=True)
+        mock_is_macos = MagicMock(return_value=False)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(self.addrs_ipv4, self.subnet_mask_ipv4)
+
+            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+                                              |
+                                              |sudo ifconfig ix0:0 192.168.1.1 netmask 255.255.255.0 up
+                                              |sudo ifconfig ix0:1 192.168.1.2 netmask 255.255.255.0 up
+                                              |""")
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_not_called()
+
+    def test_linux_ipv6(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=True)
+        mock_is_macos = MagicMock(return_value=False)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(self.addrs_ipv6, self.subnet_mask_ipv6)
+
+            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+                                              |
+                                              |sudo ifconfig ix0:0 0000:0000:0000:0000:0000:ffff:c0a8:0101 netmask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff up
+                                              |sudo ifconfig ix0:1 0000:0000:0000:0000:0000:ffff:c0a8:0102 netmask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff up
+                                              |""")
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_not_called()
+
+    def test_macos_ipv4(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=False)
+        mock_is_macos = MagicMock(return_value=True)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(self.addrs_ipv4, self.subnet_mask_ipv4)
+
+            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+                                              |
+                                              |sudo ifconfig ix0 alias 192.168.1.1 255.255.255.0
+                                              |sudo ifconfig ix0 alias 192.168.1.2 255.255.255.0
+                                              |""")
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_called_once_with()
+
+    def test_macos_ipv6(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=False)
+        mock_is_macos = MagicMock(return_value=True)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(self.addrs_ipv6, self.subnet_mask_ipv6)
+
+            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+                                              |
+                                              |sudo ifconfig ix0 alias 0000:0000:0000:0000:0000:ffff:c0a8:0101 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+                                              |sudo ifconfig ix0 alias 0000:0000:0000:0000:0000:ffff:c0a8:0102 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+                                              |""")
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_called_once_with()
+
+    def test_unknown_ipv4(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=False)
+        mock_is_macos = MagicMock(return_value=False)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(self.addrs_ipv4, self.subnet_mask_ipv4)
+
+            expected_result = 'Setup alias for 192.168.1.1, 192.168.1.2 addresses with 255.255.255.0 subnet mask'
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_called_once_with()
+
+    def test_unknown_ipv6(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=False)
+        mock_is_macos = MagicMock(return_value=False)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(self.addrs_ipv6, self.subnet_mask_ipv6)
+
+            expected_result = 'Setup alias for ::ffff:c0a8:101, ::ffff:c0a8:102 addresses with ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff subnet mask'
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_called_once_with()
+
+    def test_single_addr(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=True)
+        mock_is_macos = MagicMock(return_value=False)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions([self.addrs_ipv4[0]], self.subnet_mask_ipv4)
+
+            expected_result = strip_margin("""|Run the following command to create an address alias on your machine:
+                                              |
+                                              |sudo ifconfig ix0:0 192.168.1.1 netmask 255.255.255.0 up
+                                              |""")
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_not_called()
