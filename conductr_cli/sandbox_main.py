@@ -3,9 +3,9 @@ import argparse
 import ipaddress
 import logging
 import re
-from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
-from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_SANDBOX_INTERFACE
+from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR
 from conductr_cli.docker import DockerVmType
 from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, logging_setup, docker, \
     docker_machine, terminal, version, validation
@@ -104,9 +104,6 @@ def build_parser():
                             default=False,
                             dest='no_wait',
                             action='store_true')
-    run_parser.add_argument('--interface',
-                            default=DEFAULT_SANDBOX_INTERFACE,
-                            help='The network interface which will be used by ConductR Sandbox to bind to.')
     run_parser.add_argument('--addr-range',
                             type=addr_range,
                             default=DEFAULT_SANDBOX_ADDR_RANGE,
@@ -272,7 +269,10 @@ def run():
                              ', '.join("'%s'" % f for f in feature_names)))
         # Docker VM validation
         args.vm_type = docker.vm_type()
-        validate_docker_vm(args.vm_type)
+        if vars(args).get('func').__name__ == 'run' \
+                and major_version(args.image_version) == '1':
+            validate_docker_vm(args.vm_type)
+
         result = args.func(args)
         if not result:
             exit(1)

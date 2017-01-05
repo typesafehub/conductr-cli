@@ -31,6 +31,7 @@ class ConductArgs:
 @validation.handle_connection_error
 @validation.handle_http_error
 @validation.handle_instance_count_error
+@validation.handle_bind_address_not_found_error
 def run(args):
     """`sandbox run` command"""
 

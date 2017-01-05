@@ -10,7 +10,7 @@ from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal, docker_machine
-from conductr_cli.exceptions import AmbiguousDockerVmError, DockerMachineNotRunningError, \
+from conductr_cli.exceptions import AmbiguousDockerVmError, BindAddressNotFoundError, DockerMachineNotRunningError, \
     DockerMachineCannotConnectToDockerError, InstanceCountError, MalformedBundleError, BundleResolutionError,  \
     WaitTimeoutError, InsecureFilePermissions, NOT_FOUND_ERROR
 from subprocess import CalledProcessError
@@ -308,6 +308,24 @@ def handle_instance_count_error(func):
             log = get_logger_for_func(func)
             log.error('Invalid number of containers {} '
                       'for ConductR version {}'.format(e.nr_of_containers, e.conductr_version))
+            log.error(e.message)
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_bind_address_not_found_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BindAddressNotFoundError as e:
+            log = get_logger_for_func(func)
+            log.error('Unable to allocate bind address')
             log.error(e.message)
             return False
 
