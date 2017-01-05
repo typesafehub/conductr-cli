@@ -11,7 +11,7 @@ from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal, docker_machine
 from conductr_cli.exceptions import AmbiguousDockerVmError, DockerMachineNotRunningError, \
-    DockerMachineCannotConnectToDockerError, MalformedBundleError, BundleResolutionError,  \
+    DockerMachineCannotConnectToDockerError, InstanceCountError, MalformedBundleError, BundleResolutionError,  \
     WaitTimeoutError, InsecureFilePermissions, NOT_FOUND_ERROR
 from subprocess import CalledProcessError
 
@@ -291,6 +291,25 @@ def handle_vbox_manage_not_found_error(func):
             log.error('VBoxManage command not found')
             log.error('Make sure VirtualBox is installed and VBoxManage is in the path')
             exit(1)
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_instance_count_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except InstanceCountError as e:
+            log = get_logger_for_func(func)
+            log.error('Invalid number of containers {} '
+                      'for ConductR version {}'.format(e.nr_of_containers, e.conductr_version))
+            log.error(e.message)
+            return False
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.

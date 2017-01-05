@@ -1,6 +1,12 @@
 from conductr_cli import sandbox_stop
+from conductr_cli.exceptions import InstanceCountError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM
+import logging
+import re
+
+
+NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
 
 
 def run(args, features):
@@ -12,12 +18,12 @@ def run(args, features):
                      This is only relevant for Docker based sandbox since the features decides what port to expose
     :return: a tuple containing list of core pids and list of agent pids
     """
-    nr_of_core_instances, nr_of_agent_instances = instance_count(args.nr_of_containers)
+    nr_of_core_instances, nr_of_agent_instances = instance_count(args.image_version, args.nr_of_containers)
 
     validate_jvm_support()
     validate_address_aliases(max(nr_of_core_instances, nr_of_agent_instances), args.interface, args.addr_range)
 
-    core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.resolve_cache_dir, args.image_dir, args.image_version)
+    core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version)
 
     sandbox_stop.stop(args)
 
@@ -41,17 +47,33 @@ def log_run_attempt(args, pids, is_started, wait_timeout):
     pass
 
 
-def instance_count(instance_expression):
+def instance_count(image_version, instance_expression):
     """
     Parses the instance expressions into number of core and agent instances, i.e.
 
     The expression `2` translates to 2 core instances and 2 agent instances.
     The expression `2:3` translates to 2 core instances and 3 agent instances.
 
+    :param image_version:
     :param instance_expression:
     :return: a tuple containing number of core instances and number of agent instances.
     """
-    pass
+    try:
+        nr_of_instances = int(instance_expression)
+        return nr_of_instances, nr_of_instances
+    except ValueError:
+        match = re.search(NR_OF_INSTANCE_EXPRESSION, instance_expression)
+        if match:
+            parts = instance_expression.split(':')
+            nr_of_core_instances = int(parts[0])
+            nr_of_agent_instances = int(parts[-1])
+            return nr_of_core_instances, nr_of_agent_instances
+        else:
+            raise InstanceCountError(image_version,
+                                     instance_expression,
+                                     'Number of containers must be an integer or '
+                                     'a valid instance expression, i.e. 2:3 '
+                                     'which translates to 2 core instances and 3 agent instances')
 
 
 def validate_jvm_support():
@@ -88,10 +110,14 @@ def validate_address_aliases(nr_of_alias, interface, addr_range):
     :param addr_range: the range of address which is available to core and agent to bind to.
                        The address is specified in the CIDR format, i.e. 192.168.128.0/24
     """
+    log = logging.getLogger(__name__)
+    log.info('Checking for {} address aliases on {} interface across {} address range'.format(nr_of_alias,
+                                                                                              interface,
+                                                                                              addr_range))
     pass
 
 
-def obtain_sandbox_image(cache_dir, image_dir, image_version):
+def obtain_sandbox_image(image_dir, image_version):
     """
     Obtains the sandbox image.
 
@@ -108,8 +134,8 @@ def obtain_sandbox_image(cache_dir, image_dir, image_version):
     Similarly, the agent binary will be expanded into the `${image_dir}/agent`. The directory `${image_dir}/agent` will
     be emptied before the binary is expanded.
 
-    :param cache_dir: the directory where ConductR core and agent binaries will be cached.
-    :param image_dir: the base directory containing the expanded ConductR core and agent binaries.
+    :param image_dir: the directory where ConductR core and agent binaries will be cached, also the base directory
+                      containing the expanded ConductR core and agent binaries.
     :param image_version: the version of the sandbox to be downloaded.
     :return: the pair containing path to the expanded core directory and path to the expanded agent directory
     """

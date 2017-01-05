@@ -1,6 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase
-from conductr_cli import sandbox_stop, logging_setup
-from conductr_cli.screen_utils import headline
+from conductr_cli import sandbox_stop
 from unittest.mock import patch, MagicMock
 
 
@@ -13,13 +12,10 @@ class TestSandboxStopCommand(CliTestCase):
     }
 
     def test_success(self):
-        stdout = MagicMock()
-        containers = ['cond-0', 'cond-1']
+        mock_sandbox_stop_docker = MagicMock()
 
-        with patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=containers), \
-                patch('conductr_cli.terminal.docker_rm') as mock_docker_rm:
-            logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
-            sandbox_stop.stop(MagicMock(**self.default_args))
+        input_args = MagicMock(**self.default_args)
+        with patch('conductr_cli.sandbox_stop_docker.stop', mock_sandbox_stop_docker):
+            self.assertTrue(sandbox_stop.stop(input_args))
 
-        self.assertEqual(headline('Stopping ConductR') + '\n', self.output(stdout))
-        mock_docker_rm.assert_called_once_with(containers)
+        mock_sandbox_stop_docker.assert_called_once_with(input_args)

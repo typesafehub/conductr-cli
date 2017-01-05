@@ -90,3 +90,15 @@ class TestWithDockerMachine(TestCase):
 
         vm_name_mock.assert_called_with()
         docker_machine_ip_mock.assert_called_with('vm_name')
+
+
+class TestLoopbackDeviceName(TestCase):
+    def test_linux(self):
+        mock_system = MagicMock(return_value='Linux')
+        with patch('platform.system', mock_system):
+            self.assertEqual('lo', host.loopback_device_name())
+
+    def test_osx(self):
+        mock_system = MagicMock(return_value='Darwin')
+        with patch('platform.system', mock_system):
+            self.assertEqual('lo0', host.loopback_device_name())

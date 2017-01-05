@@ -1,6 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import sandbox_run_docker, logging_setup
 from conductr_cli.docker import DockerVmType
+from conductr_cli.exceptions import InstanceCountError
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION
 from conductr_cli.sandbox_features import VisualizationFeature, LoggingFeature
 from unittest.mock import patch, MagicMock
@@ -296,6 +297,16 @@ class TestRun(CliTestCase):
         mock_get_env.assert_any_call('CONDUCTR_DOCKER_RUN_OPTS')
         mock_docker_run.assert_called_once_with(expected_optional_args + ['-v', '/etc/haproxy:/usr/local/etc/haproxy'],
                                                 expected_image, expected_positional_args)
+
+    def test_invalid_nr_of_containers(self):
+        args = self.default_args.copy()
+        args.update({
+            'nr_of_containers': 'FOO'
+        })
+        input_args = MagicMock(**args)
+        features = []
+
+        self.assertRaises(InstanceCountError, sandbox_run_docker.run, input_args, features)
 
 
 class TestLogRunAttempt(CliTestCase):

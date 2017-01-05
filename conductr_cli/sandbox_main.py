@@ -1,11 +1,15 @@
 import argcomplete
 import argparse
+import ipaddress
 import logging
+import re
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
 from conductr_cli.sandbox_features import feature_names
+from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_SANDBOX_INTERFACE
 from conductr_cli.docker import DockerVmType
 from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, logging_setup, docker, \
     docker_machine, terminal, version, validation
+from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
 from subprocess import CalledProcessError
 
 
@@ -67,9 +71,12 @@ def build_parser():
                             choices=log_levels,
                             metavar='')
     run_parser.add_argument('-n', '--nr-of-containers',
-                            type=int,
-                            default=1,
-                            help='Number of ConductR nodes. Defaults to 1.',
+                            type=nr_of_containers,
+                            default='1',
+                            help='Number of ConductR core and agent instances. Defaults to 1.\n'
+                                 'Also accepts `x:y` format: `x` is a number of core instances, '
+                                 'and y is a number of agent instances\n'
+                                 'For ConductR 1, this corresponds to the number of nodes.',
                             metavar='')
     run_parser.add_argument('-p', '--port',
                             dest='ports',
@@ -93,10 +100,21 @@ def build_parser():
                                  'Available features: ' + ', '.join(feature_names),
                             metavar='')
     run_parser.add_argument('--no-wait',
-                            help='Disables waiting for ConductR to be started in the sandbox',
+                            help='Disables waiting for ConductR to be started in the sandbox.',
                             default=False,
                             dest='no_wait',
                             action='store_true')
+    run_parser.add_argument('--interface',
+                            default=DEFAULT_SANDBOX_INTERFACE,
+                            help='The network interface which will be used by ConductR Sandbox to bind to.')
+    run_parser.add_argument('--addr-range',
+                            type=addr_range,
+                            default=DEFAULT_SANDBOX_ADDR_RANGE,
+                            help='Range of address which will be used by ConductR Sandbox to bind to.\n'
+                                 'The address range is specified using CIDR notation, i.e. 192.168.1.0/24')
+    run_parser.add_argument('--image-dir',
+                            default=DEFAULT_SANDBOX_IMAGE_DIR,
+                            help='Default directory where sandbox images is stored.')
     run_parser.set_defaults(func=sandbox_run.run)
 
     # Sub-parser for `stop` sub-command
@@ -255,4 +273,30 @@ def run():
         # Docker VM validation
         args.vm_type = docker.vm_type()
         validate_docker_vm(args.vm_type)
-        args.func(args)
+        result = args.func(args)
+        if not result:
+            exit(1)
+
+
+def nr_of_containers(value):
+    try:
+        # Ensure value can be converted into an integer
+        int(value)
+        return value
+    except ValueError:
+        # Otherwise, ensure value follows the expected pattern
+        match = re.search(NR_OF_INSTANCE_EXPRESSION, value)
+        if match:
+            return value
+        else:
+            raise argparse.ArgumentTypeError('Number of containers has to be an int, or <x>:<y> where '
+                                             '`x` is an int corresponding to the number of core instances, and '
+                                             '`y` is an int corresponding to the number of agent instances')
+
+
+def addr_range(value):
+    try:
+        return ipaddress.ip_network(value, strict=True)
+    except ValueError:
+        raise argparse.ArgumentTypeError('{} is not a valid CIDR address range - '
+                                         '`192.168.1.0/24` is an example of a valid CIDR address range'.format(value))

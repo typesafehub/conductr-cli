@@ -1,6 +1,7 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
 from conductr_cli import logging_setup, sandbox_run
 from conductr_cli.docker import DockerVmType
+from conductr_cli.exceptions import InstanceCountError
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
 from conductr_cli.sandbox_run import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
 from unittest.mock import call, patch, MagicMock
@@ -46,7 +47,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
 
-        args = self.default_args
+        args = self.default_args.copy()
         args.update({
             'image_version': conductr_version
         })
@@ -57,7 +58,7 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.sandbox_run_docker.run', mock_sandbox_run_docker), \
                 patch('conductr_cli.sandbox_run_docker.log_run_attempt', mock_log_run_attempt), \
                 patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
-            sandbox_run.run(input_args)
+            self.assertTrue(sandbox_run.run(input_args))
 
         mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
@@ -79,7 +80,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_start_proxy = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
 
-        args = self.default_args
+        args = self.default_args.copy()
         args.update({
             'image_version': conductr_version
         })
@@ -90,7 +91,7 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.log_run_attempt', mock_log_run_attempt), \
                 patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
                 patch('conductr_cli.sandbox_run.start_proxy', mock_start_proxy):
-            sandbox_run.run(input_args)
+            self.assertTrue(sandbox_run.run(input_args))
 
         mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
@@ -98,6 +99,43 @@ class TestSandboxRunCommand(CliTestCase):
         mock_start_proxy.assert_called_once_with(1)
 
         mock_log_run_attempt.assert_called_with(input_args, self.container_names, True, 60)
+
+    def test_docker_sandbox_instance_count_error(self):
+        conductr_version = '1.1.11'
+
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        mock_feature = MagicMock()
+        features = [mock_feature]
+        mock_collect_features = MagicMock(return_value=features)
+
+        nr_of_containers = '2:3'
+
+        mock_sandbox_run_docker = MagicMock(side_effect=[InstanceCountError(conductr_version, nr_of_containers,
+                                                                            'Test only')])
+
+        args = self.default_args.copy()
+        args.update({
+            'image_version': conductr_version,
+            'nr_of_containers': nr_of_containers
+        })
+        input_args = MagicMock(**args)
+
+        with \
+                patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
+                patch('conductr_cli.sandbox_run_docker.run', mock_sandbox_run_docker):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            self.assertFalse(sandbox_run.run(input_args))
+
+        mock_sandbox_run_docker.assert_called_once_with(input_args, features)
+
+        expected_output = strip_margin(as_error("""|Error: Invalid number of containers 2:3 for ConductR version 1.1.11
+                                                   |Error: Test only
+                                                   |"""))
+        self.assertEqual(expected_output, self.output(stderr))
+
+        mock_feature.assert_not_called()
 
 
 class TestStartProxy(CliTestCase):
