@@ -131,6 +131,14 @@ If you are running zsh, execute the following command to enable autocomplete:
 .. code:: bash
 
     autoload bashcompinit && autoload compinit && bashcompinit && compinit && eval "$(register-python-argcomplete conduct)" && eval "$(register-python-argcomplete sandbox)"
+    
+Setup Bintray credentials
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Bundles and ConductR images are hosted on Bintray. Please ensure that your Bintray credentials that have access to the Lightbend repositories are located at: ``.lightbend/commercial.credentials``.
+
+How to get a Bintray account that has access to the Lightbend repositories is described at: http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html
+
 
 CLI Usage
 ~~~~~~~~~
