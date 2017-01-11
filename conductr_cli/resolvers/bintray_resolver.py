@@ -1,7 +1,8 @@
-from conductr_cli.exceptions import MalformedBundleUriError, BintrayResolutionError
+from conductr_cli.exceptions import MalformedBundleUriError, BintrayResolutionError, \
+    BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError
 from conductr_cli.resolvers import uri_resolver
 from conductr_cli import bundle_shorthand
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, ConnectionError
 from urllib.parse import urlparse
 import json
 import logging
@@ -12,8 +13,12 @@ import requests
 BINTRAY_API_BASE_URL = 'https://api.bintray.com'
 BINTRAY_DOWNLOAD_BASE_URL = 'https://dl.bintray.com'
 BINTRAY_DOWNLOAD_REALM = 'Bintray'
-BINTRAY_CREDENTIAL_FILE_PATH = '{}/.bintray/.credentials'.format(os.path.expanduser('~'))
+BINTRAY_CREDENTIAL_FILE_PATH = '{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~'))
 BINTRAY_PROPERTIES_RE = re.compile('^(\S+)\s*=\s*([\S]+)$')
+BINTRAY_LIGHTBEND_ORG = 'lightbend'
+BINTRAY_CONDUCTR_REPO = 'commercial-releases'
+BINTRAY_CONDUCTR_CORE_PACKAGE_NAME = 'ConductR-Universal'
+BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME = 'ConductR-Agent-Universal'
 
 
 def resolve_bundle(cache_dir, uri):
@@ -21,10 +26,13 @@ def resolve_bundle(cache_dir, uri):
     try:
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Resolving bundle', org, repo, package_name, compatibility_version, digest))
-        return bintray_download(cache_dir, org, repo, package_name, compatibility_version, digest)
+        return bintray_download(cache_dir, org, repo, package_name,
+                                compatibility_version=compatibility_version, digest=digest)
     except MalformedBundleUriError:
         return False, None, None
     except HTTPError:
+        return False, None, None
+    except ConnectionError:
         return False, None, None
 
 
@@ -37,7 +45,9 @@ def load_bundle_from_cache(cache_dir, uri):
         try:
             urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
             log.info(log_message('Loading bundle from cache', org, repo, package_name, compatibility_version, digest))
-            bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
+            bundle_download_url, auth = bintray_download_details(org, repo, package_name,
+                                                                 compatibility_version=compatibility_version,
+                                                                 digest=digest)
             if bundle_download_url:
                 return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
             else:
@@ -46,6 +56,8 @@ def load_bundle_from_cache(cache_dir, uri):
             return False, None, None
         except HTTPError:
             return False, None, None
+        except ConnectionError:
+            return False, None, None
 
 
 def resolve_bundle_configuration(cache_dir, uri):
@@ -53,10 +65,13 @@ def resolve_bundle_configuration(cache_dir, uri):
     try:
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
         log.info(log_message('Resolving bundle configuration', org, repo, package_name, compatibility_version, digest))
-        return bintray_download(cache_dir, org, repo, package_name, compatibility_version, digest)
+        return bintray_download(cache_dir, org, repo, package_name,
+                                compatibility_version=compatibility_version, digest=digest)
     except MalformedBundleUriError:
         return False, None, None
     except HTTPError:
+        return False, None, None
+    except ConnectionError:
         return False, None, None
 
 
@@ -70,7 +85,9 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
             urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
             log.info(log_message('Loading bundle configuration from cache',
                                  org, repo, package_name, compatibility_version, digest))
-            bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
+            bundle_download_url, auth = bintray_download_details(org, repo, package_name,
+                                                                 compatibility_version=compatibility_version,
+                                                                 digest=digest)
             if bundle_download_url:
                 return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
             else:
@@ -78,6 +95,8 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
         except MalformedBundleUriError:
             return False, None, None
         except HTTPError:
+            return False, None, None
+        except ConnectionError:
             return False, None, None
 
 
@@ -88,11 +107,13 @@ def resolve_bundle_version(uri):
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Resolving bundle version', org, repo, package_name, compatibility_version, digest))
         resolved_version = bintray_resolve_version(bintray_username, bintray_password, org, repo, package_name,
-                                                   compatibility_version, digest)
+                                                   compatibility_version=compatibility_version, digest=digest)
         return resolved_version if resolved_version else None
     except MalformedBundleUriError:
         return None
     except HTTPError:
+        return None
+    except ConnectionError:
         return None
 
 
@@ -112,19 +133,24 @@ def is_local_file(uri):
     return parsed.scheme == 'file' and parsed.path.endswith('.zip') and os.path.exists(uri)
 
 
-def bintray_download(cache_dir, org, repo, package_name, compatibility_version, digest):
-    bundle_download_url, auth = bintray_download_details(org, repo, package_name, compatibility_version, digest)
-    if bundle_download_url:
-        return uri_resolver.resolve_bundle(cache_dir, bundle_download_url, auth)
+def bintray_download(cache_dir, org, repo, package_name,
+                     auth=None, version=None, compatibility_version=None, digest=None):
+    download_url, auth = bintray_download_details(org, repo, package_name, auth,
+                                                  version, compatibility_version, digest)
+    if download_url:
+        return uri_resolver.resolve_file(cache_dir, download_url, auth)
     else:
         return False, None, None
 
 
-def bintray_download_details(org, repo, package_name, compatibility_version, digest):
-    bintray_username, bintray_password = load_bintray_credentials()
+def bintray_download_details(org, repo, package_name, auth=None, version=None, compatibility_version=None, digest=None):
+    if auth:
+        bintray_username, bintray_password = (auth[1], auth[2])
+    else:
+        bintray_username, bintray_password = load_bintray_credentials()
+        auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password) if bintray_username else None
     resolved_version = bintray_resolve_version(bintray_username, bintray_password, org, repo, package_name,
-                                               compatibility_version, digest)
-    auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password) if bintray_username else None
+                                               version, compatibility_version, digest)
     if resolved_version and auth:
         bintray_download_url = '{}/{}/{}/{}'.format(BINTRAY_DOWNLOAD_BASE_URL, resolved_version['org'],
                                                     resolved_version['repo'], resolved_version['path'])
@@ -136,8 +162,7 @@ def bintray_download_details(org, repo, package_name, compatibility_version, dig
 def load_bintray_credentials():
     log = logging.getLogger(__name__)
     if not os.path.exists(BINTRAY_CREDENTIAL_FILE_PATH):
-        log.debug('Bintray credentials not found in {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
-        return None, None
+        raise BintrayCredentialsNotFoundError(BINTRAY_CREDENTIAL_FILE_PATH)
     else:
         with open(BINTRAY_CREDENTIAL_FILE_PATH, 'r') as cred_file:
             lines = [line.replace('\n', '') for line in cred_file.readlines()]
@@ -151,14 +176,15 @@ def load_bintray_credentials():
                     except IndexError:
                         pass
 
-            username = None if 'user' not in data else data['user']
-            password = None if 'password' not in data else data['password']
+            if 'user' not in data or 'password' not in data:
+                raise MalformedBintrayCredentialsError(BINTRAY_CREDENTIAL_FILE_PATH)
             log.info('Bintray credentials loaded from {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
-            return username, password
+            return data['user'], data['password']
 
 
-def bintray_resolve_version(bintray_username, bintray_password, org, repo, package_name, compatibility_version, digest):
-    if compatibility_version is None and digest is None:
+def bintray_resolve_version(bintray_username, bintray_password, org, repo, package_name,
+                            version=None, compatibility_version=None, digest=None):
+    if version is None and compatibility_version is None and digest is None:
         # Get latest version
         package_endpoint = '{}/packages/{}/{}/{}'.format(BINTRAY_API_BASE_URL, org, repo, package_name)
         package = get_json(package_endpoint, bintray_username, bintray_password)
@@ -173,7 +199,7 @@ def bintray_resolve_version(bintray_username, bintray_password, org, repo, packa
                 latest_compatibility_version = sorted(compatibility_versions)[-1]
                 return bintray_resolve_version(bintray_username, bintray_password,
                                                org, repo, package_name,
-                                               'v{}'.format(latest_compatibility_version), None)
+                                               compatibility_version='v{}'.format(latest_compatibility_version))
             else:
                 raise BintrayResolutionError(
                     'Unable to find latest version for owner={} repo={} package={}'.format(org, repo, package_name))
@@ -186,9 +212,9 @@ def bintray_resolve_version(bintray_username, bintray_password, org, repo, packa
         else:
             latest_compatibility_version, latest_digest = package['latest_version'].split('-')
             return bintray_resolve_version(bintray_username, bintray_password, org, repo, package_name,
-                                           latest_compatibility_version, latest_digest)
+                                           compatibility_version=latest_compatibility_version, digest=latest_digest)
 
-    elif compatibility_version is not None and digest is None:
+    elif version is None and compatibility_version is not None and digest is None:
         # Get latest of a compatibility version
         latest_compatibility_version = 'latest-{}'.format(compatibility_version)
         attributes_endpoint = '{}/packages/{}/{}/{}/attributes?names={}'.format(BINTRAY_API_BASE_URL, org, repo,
@@ -206,9 +232,13 @@ def bintray_resolve_version(bintray_username, bintray_password, org, repo, packa
             matching_version = matching_versions[0]
             matching_compatibility_version, matching_digest = matching_version.split('-')
             return bintray_resolve_version(bintray_username, bintray_password, org, repo, package_name,
-                                           matching_compatibility_version, matching_digest)
+                                           compatibility_version=matching_compatibility_version, digest=matching_digest)
     else:
-        bintray_version = '{}-{}'.format(compatibility_version, digest)
+        if version:
+            bintray_version = version
+        else:
+            bintray_version = '{}-{}'.format(compatibility_version, digest)
+
         files_endpoint = '{}/packages/{}/{}/{}/versions/{}/files'.format(BINTRAY_API_BASE_URL, org, repo, package_name,
                                                                          bintray_version)
         files = get_json(files_endpoint, bintray_username, bintray_password)
@@ -236,6 +266,7 @@ def bintray_resolve_version(bintray_username, bintray_password, org, repo, packa
                 'package_name': package_name,
                 'compatibility_version': compatibility_version,
                 'digest': digest,
+                'version': bintray_version,
                 'path': path,
                 'resolver': __name__
             }

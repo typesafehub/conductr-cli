@@ -1,6 +1,8 @@
 from conductr_cli.test.cli_test_case import CliTestCase
 from conductr_cli import sandbox_run_jvm
-from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError
+from requests.exceptions import HTTPError, ConnectionError
+from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, \
+    BintrayUnreachableError, SandboxImageNotFoundError
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
 import ipaddress
@@ -166,3 +168,97 @@ class TestFindBindAddresses(CliTestCase):
             [ipaddress.ip_address('192.168.1.2'),
              ipaddress.ip_address('192.168.1.3')],
             self.addr_range.netmask)
+
+
+class TestObtainSandboxImage(CliTestCase):
+    def test_obtain_from_bintray(self):
+        mock_load_bintray_credentials = MagicMock(return_value=('username', 'password'))
+        mock_bintray_download = \
+            MagicMock(side_effect=[(True, 'conductr-1.0.0.tgz', '/cache_dir/conductr-1.0.0.tgz'),
+                                   (True, 'conductr-agent-1.0.0.tgz', '/cache_dir/conductr-agent-1.0.0.tgz')])
+        mock_os_path_exists = MagicMock(side_effect=[False, False, False, False])
+        mock_os_makedirs = MagicMock()
+        mock_os_path_basename = MagicMock()
+        mock_shutil_unpack_archive = MagicMock()
+        mock_os_path_splitext = MagicMock(return_value=('sub_dir', '.tgz'))
+        mock_os_listdir = MagicMock(return_value=['some-file-a', 'some-file-b'])
+        mock_shutil_move = MagicMock()
+        mock_os_rmdir = MagicMock()
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download', mock_bintray_download), \
+                patch('os.path.exists', mock_os_path_exists), \
+                patch('os.makedirs', mock_os_makedirs), \
+                patch('os.path.basename', mock_os_path_basename), \
+                patch('shutil.unpack_archive', mock_shutil_unpack_archive), \
+                patch('os.path.splitext', mock_os_path_splitext), \
+                patch('os.listdir', mock_os_listdir), \
+                patch('shutil.move', mock_shutil_move), \
+                patch('os.rmdir', mock_os_rmdir):
+            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0')
+            self.assertEqual(('/cache_dir/core', '/cache_dir/agent'), result)
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        core_call = call('/cache_dir', 'lightbend', 'commercial-releases', 'ConductR-Universal',
+                         ('Bintray', 'username', 'password'), version='1.0.0')
+        agent_call = call('/cache_dir', 'lightbend', 'commercial-releases', 'ConductR-Agent-Universal',
+                          ('Bintray', 'username', 'password'), version='1.0.0')
+        mock_bintray_download.assert_has_calls([core_call, agent_call])
+        mock_os_rmdir.assert_has_calls([call('/cache_dir/core/sub_dir'), call('/cache_dir/agent/sub_dir')])
+
+    def test_bintray_unreachable(self):
+        mock_os_path_exists = MagicMock(side_effect=[False, False])
+        mock_load_bintray_credentials = MagicMock(side_effect=ConnectionError('test only'))
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
+                patch('os.path.exists', mock_os_path_exists):
+            self.assertRaises(BintrayUnreachableError, sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0')
+
+        mock_load_bintray_credentials.assert_called_once_with()
+
+    def test_sandbox_image_not_found_on_bintray(self):
+        mock_os_path_exists = MagicMock(side_effect=[False, False])
+        mock_load_bintray_credentials = MagicMock(return_value=('username', 'password'))
+        mock_bintray_download = MagicMock(side_effect=HTTPError('test only'))
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download', mock_bintray_download), \
+                patch('os.path.exists', mock_os_path_exists):
+            self.assertRaises(SandboxImageNotFoundError, sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0')
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        mock_bintray_download.assert_called_once_with('/cache_dir', 'lightbend', 'commercial-releases',
+                                                      'ConductR-Universal', ('Bintray', 'username', 'password'),
+                                                      version='1.0.0')
+
+    def test_obtain_from_cache(self):
+        mock_load_bintray_credentials = MagicMock()
+        mock_bintray_download = MagicMock()
+        mock_os_path_exists = MagicMock(side_effect=[True, True, True, True])
+        mock_shutil_rmtree = MagicMock()
+        mock_os_makedirs = MagicMock()
+        mock_os_path_basename = MagicMock()
+        mock_shutil_unpack_archive = MagicMock()
+        mock_os_path_splitext = MagicMock(return_value=('sub_dir', '.tgz'))
+        mock_os_listdir = MagicMock(return_value=['some-file-a', 'some-file-b'])
+        mock_shutil_move = MagicMock()
+        mock_os_rmdir = MagicMock()
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download', mock_bintray_download), \
+                patch('os.path.exists', mock_os_path_exists), \
+                patch('shutil.rmtree', mock_shutil_rmtree), \
+                patch('os.makedirs', mock_os_makedirs), \
+                patch('os.path.basename', mock_os_path_basename), \
+                patch('shutil.unpack_archive', mock_shutil_unpack_archive), \
+                patch('os.path.splitext', mock_os_path_splitext), \
+                patch('os.listdir', mock_os_listdir), \
+                patch('shutil.move', mock_shutil_move), \
+                patch('os.rmdir', mock_os_rmdir):
+            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0')
+            self.assertEqual(('/cache_dir/core', '/cache_dir/agent'), result)
+
+        mock_load_bintray_credentials.assert_not_called()
+        mock_bintray_download.assert_not_called()
+        mock_shutil_rmtree.assert_has_calls([call('/cache_dir/core'), call('/cache_dir/agent')])
+        mock_os_rmdir.assert_has_calls([call('/cache_dir/core/sub_dir'), call('/cache_dir/agent/sub_dir')])

@@ -1,5 +1,11 @@
 from conductr_cli import terminal
 import os
+from enum import Enum
+
+
+class ConductrComponent(Enum):
+    CORE = 1
+    AGENT = 2
 
 
 CONDUCTR_NAME_PREFIX = 'cond-'

@@ -11,8 +11,9 @@ from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli import terminal, docker_machine
 from conductr_cli.exceptions import AmbiguousDockerVmError, BindAddressNotFoundError, DockerMachineNotRunningError, \
-    DockerMachineCannotConnectToDockerError, InstanceCountError, MalformedBundleError, BundleResolutionError,  \
-    WaitTimeoutError, InsecureFilePermissions, NOT_FOUND_ERROR
+    DockerMachineCannotConnectToDockerError, InstanceCountError, MalformedBundleError, \
+    BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError,  \
+    WaitTimeoutError, InsecureFilePermissions, NOT_FOUND_ERROR, SandboxImageNotFoundError
 from subprocess import CalledProcessError
 
 
@@ -331,6 +332,69 @@ def handle_bind_address_not_found_error(func):
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_sandbox_image_not_found_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except SandboxImageNotFoundError as e:
+            log = get_logger_for_func(func)
+            log.error('ConductR {} {} cannot be found on Bintray.'.format(e.component_type, e.image_version))
+            log.error('Please specify a valid ConductR version.')
+            log.error('The latest version can be found on: https://www.lightbend.com/product/conductr/developer')
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_bintray_unreachable_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BintrayUnreachableError as e:
+            log = get_logger_for_func(func)
+            log.error('Artifact can not be resolved from Bintray.')
+            log.error('It seems that Bintray is unreachable.')
+            log.error('Please check your internet connection and try again.')
+            return False
+
+            # Do not change the wrapped function name,
+            # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_bintray_credentials_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BintrayCredentialsNotFoundError as e:
+            log = get_logger_for_func(func)
+            log.error('Bintray credentials not found in {}'.format(e.credential_file_path))
+            log.error('Please follow the instructions to setup the Lightbend Bintray credentials:')
+            log.error('  http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html')
+            return False
+        except MalformedBintrayCredentialsError as e:
+            log = get_logger_for_func(func)
+            log.error('Malformed Bintray credentials in {}'.format(e.credential_file_path))
+            log.error('Please follow the instructions to setup the Lightbend Bintray credentials:')
+            log.error('  http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html')
+            return False
+
+        # Do not change the wrapped function name,
+        # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler

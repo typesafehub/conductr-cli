@@ -66,6 +66,30 @@ class BintrayResolutionError(Exception):
         return repr(self.value)
 
 
+class BintrayUnreachableError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+class BintrayCredentialsNotFoundError(Exception):
+    def __init__(self, credential_file_path):
+        self.credential_file_path = credential_file_path
+
+    def __str__(self):
+        return repr(self.value)
+
+
+class MalformedBintrayCredentialsError(Exception):
+    def __init__(self, credential_file_path):
+        self.credential_file_path = credential_file_path
+
+    def __str__(self):
+        return repr(self.value)
+
+
 class InsecureFilePermissions(Exception):
     def __init__(self, value):
         self.value = value
@@ -103,6 +127,15 @@ class InstanceCountError(Exception):
 class BindAddressNotFoundError(Exception):
     def __init__(self, message):
         self.message = message
+
+    def __str(self):
+        return repr(self.message)
+
+
+class SandboxImageNotFoundError(Exception):
+    def __init__(self, component_type, image_version):
+        self.component_type = component_type
+        self.image_version = image_version
 
     def __str(self):
         return repr(self.message)

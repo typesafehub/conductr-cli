@@ -1,9 +1,16 @@
 from conductr_cli import host, sandbox_stop
-from conductr_cli.exceptions import InstanceCountError, BindAddressNotFoundError
+from conductr_cli.sandbox_common import ConductrComponent
+from requests.exceptions import HTTPError, ConnectionError
+from conductr_cli.exceptions import InstanceCountError, BindAddressNotFoundError, SandboxImageNotFoundError, \
+    BintrayUnreachableError
 from conductr_cli.resolvers import bintray_resolver
-from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM
+from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM, BINTRAY_LIGHTBEND_ORG, \
+    BINTRAY_CONDUCTR_REPO, BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
+
 import logging
 import re
+import os
+import shutil
 
 
 NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
@@ -130,9 +137,9 @@ def obtain_sandbox_image(image_dir, image_version):
     """
     Obtains the sandbox image.
 
-    The sandbox image is the .tar.gz binary of ConductR core and agent which is available as a download from Bintray.
+    The sandbox image is the .tgz binary of ConductR core and agent which is available as a download from Bintray.
 
-    First the local cache is interrogated for the presence of the .tar.gz binary.
+    First the local cache is interrogated for the presence of the .tgz binary.
 
     If the binary is not yet available within the local cache, then it will be downloaded from Bintray. If the binary
     is present within the local cache, they will be used instead.
@@ -148,106 +155,123 @@ def obtain_sandbox_image(image_dir, image_version):
     :param image_version: the version of the sandbox to be downloaded.
     :return: the pair containing path to the expanded core directory and path to the expanded agent directory
     """
-    def resolve_core_binary_from_cache():
+    def resolve_binaries():
         """
-        Checks for the presence of `${cache_dir}/core/${image_version}.tar.gz`.
+        Resolves ConductR binaries given the `${bintray_package_name}` and `${image_version}`.
+        First, the core and agent binaries are resolved from the `${image_dir}` cache directory. If not available,
+        the binaries are downloaded from Bintray.
 
-        :return: If present, return the path to the binary file, else return None.
-        """
-        pass
+        The artifacts are available under the following Bintray repo:
 
-    def resolve_agent_binary_from_cache():
-        """
-        Checks for the presence of `${cache_dir}/agent/${image_version}.tar.gz`.
-
-        :return: If present, return the path to the binary file, else return None.
-        """
-        pass
-
-    def download_core_from_bintray(bintray_auth):
-        """
-        Downloads core from bintray given `${image_version}`.
-
-        The images are expected to be cached in `${cache_dir}/core`.
-
-        If the binary is not yet available within the local cache, then it will be downloaded from Bintray.
-
-        The aftefacts will be available under the following Bintray repo:
-
-        https://bintray.com/lightbend/commercial-releases/ConductR-Universal
+        https://bintray.com/lightbend/commercial-releases/`${bintray_package_name}`
 
         As part of the download:
         - A progress bar will be displayed.
-        - The download will be saved into `${cache_dir}/core/${image_version}.tar.gz.tmp`. Once download is complete,
-          this file will be moved to `${cache_dir}/core/${image_version}.tar.gz`.
+        - The download will be saved into `${image_dir}/${filename}.tgz.tmp`.
+        Once download is complete, this file will be moved to `${image_dir}/${filename}.tgz`.
 
-        :param bintray_auth: a tuple containing Bintray auth information which can be passed into the request library.
-                             This information is loaded from bintray credentials file, which can be None if the
-                             credentials is not specified
-        :return: path to the downloaded file
+        Once downloaded, the binaries are cached in `${image_dir}`.
+
+        :return: tuple of (core_path, agent_path)
         """
-        pass
+        core_path = resolve_binary_from_cache(core_binary_info['cache_path'])
+        agent_path = resolve_binary_from_cache(agent_binary_info['cache_path'])
 
-    def download_agent_from_bintray(bintray_auth):
+        if (not core_path) or (not agent_path):
+            try:
+                bintray_username, bintray_password = bintray_resolver.load_bintray_credentials()
+                bintray_auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password)
+                if not core_path:
+                    _, _, core_path = bintray_resolver.bintray_download(
+                        image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
+                        core_binary_info['bintray_package_name'], bintray_auth, version=image_version)
+
+                if not agent_path:
+                    _, _, agent_path = bintray_resolver.bintray_download(
+                        image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
+                        agent_binary_info['bintray_package_name'], bintray_auth, version=image_version)
+            except ConnectionError:
+                raise BintrayUnreachableError('Bintray is unreachable.')
+            except HTTPError:
+                raise SandboxImageNotFoundError(core_binary_info['type'], image_version)
+
+        return core_path, agent_path
+
+    def resolve_binary_from_cache(binary_cache_path):
         """
-        Downloads agent from bintray given `${image_version}`.
+        Checks for the presence of the ConductR binary in the cache directory.
 
-        The images are expected to be cached in `${cache_dir}/agent`.
-
-        If the binary is not yet available within the local cache, then it will be downloaded from Bintray.
-
-        The aftefacts will be available under the following Bintray repo:
-
-        https://bintray.com/lightbend/commercial-releases/ConductR-Agent-Universal
-
-        As part of the download:
-        - A progress bar will be displayed.
-        - The download will be saved into `${cache_dir}/agent/${image_version}.tar.gz.tmp`. Once download is complete,
-          this file will be moved to `${cache_dir}/agent/${image_version}.tar.gz`.
-
-        :param bintray_auth: a tuple containing Bintray auth information which can be passed into the request library.
-                             This information is loaded from bintray credentials file, which can be None if the
-                             credentials is not specified
-        :return: path to the downloaded file
+        :param binary_cache_path the path of the cached ConductR universal binary.
+        :return: If present, return the path to the binary file, else return None.
         """
-        pass
+        if os.path.exists(binary_cache_path):
+            return binary_cache_path
+        else:
+            return None
 
-    def extract_core(core_binary):
+    def resolve_binary_info(conductr_component):
         """
-        The core binary will be expanded into the `${image_dir}/core`. The directory `${image_dir}/core` will be emptied
-        before the binary is expanded.
+        Provides information of the ConductR universal binary package.
 
-        :param core_binary: the path to the core binary to be expanded.
+        :param conductr_component: the type of the ConductR component
+               Can be either 'ConductrComponent.CORE' or 'ConductrComponent.AGENT'.
+        :return: the following information of the universal binary package:
+                 - type
+                 - extraction_dir
+                 - The path of the cached universal binary package
+                 - Bintray package name
+        """
+        if conductr_component is ConductrComponent.CORE:
+            return {
+                'type': 'core',
+                'extraction_dir': '{}/core'.format(image_dir),
+                'cache_path': '{}/conductr-{}.tgz'.format(image_dir, image_version),
+                'bintray_package_name': BINTRAY_CONDUCTR_CORE_PACKAGE_NAME
+            }
+        elif conductr_component is ConductrComponent.AGENT:
+            return {
+                'type': 'agent',
+                'extraction_dir': '{}/agent'.format(image_dir),
+                'cache_path': '{}/conductr-agent-{}.tgz'.format(image_dir, image_version),
+                'bintray_package_name': BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
+            }
+        else:
+            raise AssertionError('conductr-component {} is invalid. '
+                                 'Need to be either of: ConductrComponent.CORE, ConductRComponent.AGENT'
+                                 .format(conductr_component))
+
+    def extract_binary(path, binary_info):
+        """
+        The binary will be expanded into the `${extraction_dir}`.
+        The directory `${extraction_dir}` will be emptied before the binary is expanded.
+
+        :param path: the path to the core binary to be expanded.
+        :param binary_info: the information of the ConductR universal binary
         :return: path to the directory containing expanded core binary.
         """
-        pass
+        log = logging.getLogger(__name__)
+        extraction_dir = binary_info['extraction_dir']
+        if os.path.exists(extraction_dir):
+            shutil.rmtree(extraction_dir)
+        os.makedirs(extraction_dir, mode=0o700)
+        log.info('Extracting ConductR {} to {}'.format(binary_info['type'], extraction_dir))
+        shutil.unpack_archive(path, extraction_dir)
+        binary_basename = os.path.splitext(os.path.basename(path))[0]
+        extraction_subdir = '{}/{}'.format(extraction_dir, binary_basename)
+        for filename in os.listdir(extraction_subdir):
+            shutil.move('{}/{}'.format(extraction_subdir, filename), '{}/{}'.format(extraction_dir, filename))
+        os.rmdir(extraction_subdir)
+        return extraction_dir
 
-    def extract_agent(agent_binary):
-        """
-        The agent binary will be expanded into the `${image_dir}/agent`. The directory `${image_dir}/agent` will be emptied
-        before the binary is expanded.
+    core_binary_info = resolve_binary_info(ConductrComponent.CORE)
+    agent_binary_info = resolve_binary_info(ConductrComponent.AGENT)
 
-        :param agent_binary: the path to the agent binary to be expanded.
-        :return: path to the directory containing expanded agent binary.
-        """
-        pass
+    core_binary_path, agent_binary_path = resolve_binaries()
 
-    core_binary = resolve_core_binary_from_cache()
-    agent_binary = resolve_agent_binary_from_cache()
+    core_extracted_dir = extract_binary(core_binary_path, core_binary_info)
+    agent_extracted_dir = extract_binary(agent_binary_path, agent_binary_info)
 
-    if (not core_binary) and (not agent_binary):
-        bintray_username, bintray_password = bintray_resolver.load_bintray_credentials()
-        bintray_auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password) if bintray_username else None
-        if not core_binary:
-            core_binary = download_core_from_bintray(bintray_auth)
-
-        if not agent_binary:
-            agent_binary = download_agent_from_bintray(bintray_auth)
-
-    core_extracted_dir = extract_core(core_binary)
-    agent_extracted_dir = extract_agent(agent_binary)
-
-    return (core_extracted_dir, agent_extracted_dir)
+    return core_extracted_dir, agent_extracted_dir
 
 
 def start_core_instances(core_extracted_dir, bind_addrs):
@@ -262,7 +286,7 @@ def start_core_instances(core_extracted_dir, bind_addrs):
     TODO: investigate if each ConductR core process requires its own log files, or all the logs can be sent into the
     same file.
 
-    :param core_extracted_dir: the directory containing the files expanded from core's binary .tar.gz
+    :param core_extracted_dir: the directory containing the files expanded from core's binary .tgz
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :return: the pids of the core instances.
@@ -285,7 +309,7 @@ def start_agent_instances(agent_extracted_dir, bind_addrs):
     TODO: investigate if each ConductR agent process requires its own log files, or all the logs can be sent into the
     same file.
 
-    :param agent_extracted_dir: the directory containing the files expanded from agent's binary .tar.gz
+    :param agent_extracted_dir: the directory containing the files expanded from agent's binary .tgz
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :return: the pids of the agent instances.
