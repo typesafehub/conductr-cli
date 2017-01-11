@@ -1,4 +1,5 @@
-from conductr_cli import host, sandbox_stop
+from conductr_cli import conduct_main, host, sandbox_stop
+from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.sandbox_common import ConductrComponent
 from requests.exceptions import HTTPError, ConnectionError
 from conductr_cli.exceptions import InstanceCountError, BindAddressNotFoundError, SandboxImageNotFoundError, \
@@ -6,15 +7,37 @@ from conductr_cli.exceptions import InstanceCountError, BindAddressNotFoundError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM, BINTRAY_LIGHTBEND_ORG, \
     BINTRAY_CONDUCTR_REPO, BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
+from conductr_cli.screen_utils import headline
 
 import logging
 import re
 import os
 import shutil
+import subprocess
 
 
 NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
 BIND_TEST_PORT = 19991  # The port used for testing if an address can be bound.
+CONDUCTR_AKKA_REMOTING_PORT = 9004  # The port used by ConductR's Akka remoting.
+NR_OF_PROXY_INSTANCE = 1  # Only run 1 instance of ConductR HAProxy since there's only one HAProxy running per machine.
+
+
+class SandboxRunResult:
+    def __init__(self, core_pids, core_addrs, agent_pids, agent_addrs, nr_of_proxy_instances):
+        self.core_pids = core_pids
+        self.core_addrs = core_addrs
+        self.agent_pids = agent_pids
+        self.agent_addrs = agent_addrs
+        self.nr_of_proxy_instances = nr_of_proxy_instances
+        self.host = str(core_addrs[0])
+
+    scheme = DEFAULT_SCHEME
+    port = DEFAULT_PORT
+    base_path = DEFAULT_BASE_PATH
+    api_version = DEFAULT_API_VERSION
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__ if isinstance(other, self.__class__) else False
 
 
 def run(args, features):
@@ -24,7 +47,7 @@ def run(args, features):
     :param args: args parsed from the input arguments
     :param features: list of features which are specified via -f switch.
                      This is only relevant for Docker based sandbox since the features decides what port to expose
-    :return: a tuple containing list of core pids and list of agent pids
+    :return: SandboxRunResult
     """
     nr_of_core_instances, nr_of_agent_instances = instance_count(args.image_version, args.nr_of_containers)
 
@@ -35,24 +58,46 @@ def run(args, features):
 
     sandbox_stop.stop(args)
 
-    core_pids = start_core_instances(core_extracted_dir, bind_addrs[0:nr_of_core_instances])
+    core_addrs = bind_addrs[0:nr_of_core_instances]
+    core_pids = start_core_instances(core_extracted_dir, core_addrs)
+
+    agent_addrs = bind_addrs[0:nr_of_agent_instances]
     agent_pids = start_agent_instances(agent_extracted_dir, bind_addrs[0:nr_of_agent_instances])
 
-    return (core_pids, agent_pids)
+    return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs, nr_of_proxy_instances=NR_OF_PROXY_INSTANCE)
 
 
-def log_run_attempt(args, pids, is_started, wait_timeout):
+def log_run_attempt(args, run_result, is_started, wait_timeout):
     """
     Logs the run attempt. This method will be called after the completion of run method and when all the features has been started.
 
     :param args: args parsed from the input arguments
-    :param pids: a tuple containing list of core pids and list of agent pids
+    :param run_result: the result from calling sandbox_run_jvm.run() - instance of sandbox_run_jvm.SandboxRunResult
     :param is_started: sets to true if sandbox is started
     :param wait_timeout: the amount of timeout waiting for sandbox to be started
     :return:
     """
-    core_pids, agent_pids = pids
-    pass
+    log = logging.getLogger(__name__)
+    if not args.no_wait:
+        if is_started:
+            log.info(headline('Summary'))
+            log.info('ConductR has been started:')
+
+            nr_instance_core = len(run_result.core_pids)
+            plural_core = 's' if nr_instance_core > 1 else ''
+            log.info('  core: {} instance{}'.format(nr_instance_core, plural_core))
+
+            nr_instance_agent = len(run_result.agent_pids)
+            plural_agents = 's' if nr_instance_agent > 1 else ''
+            log.info('  agent: {} instance{}'.format(nr_instance_agent, plural_agents))
+
+            log.info('Check current bundle status with:')
+            log.info('  conduct info')
+            conduct_main.run(['info', '--host', run_result.host], configure_logging=False)
+        else:
+            log.info(headline('Summary'))
+            log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
+            log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
 
 
 def instance_count(image_version, instance_expression):
@@ -283,18 +328,33 @@ def start_core_instances(core_extracted_dir, bind_addrs):
     - Given the address range input of 192.168.128.0/24
     - The instances will be allocated these addresses: 192.168.128.1, 192.168.128.2, 192.168.128.3
 
-    TODO: investigate if each ConductR core process requires its own log files, or all the logs can be sent into the
-    same file.
-
     :param core_extracted_dir: the directory containing the files expanded from core's binary .tgz
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :return: the pids of the core instances.
     """
     log = logging.getLogger(__name__)
-    log.info('Binding ConductR core to the following address: {}'.format(host.display_addrs(bind_addrs)))
+    pids = []
+    for idx, bind_addr in enumerate(bind_addrs):
+        commands = [
+            '{}/bin/conductr'.format(core_extracted_dir),
+            '-Dconductr.ip={}'.format(bind_addr)
+        ]
+        if idx > 0:
+            commands.extend([
+                '--seed',
+                '{}:{}'.format(bind_addrs[0], CONDUCTR_AKKA_REMOTING_PORT)
+            ])
 
-    pass
+        log.info('Staring core {} on {}..'.format(idx, bind_addr))
+        pid = subprocess.Popen(commands,
+                               cwd=core_extracted_dir,
+                               start_new_session=True,
+                               stdout=subprocess.DEVNULL,
+                               stdin=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL).pid
+        pids.append(pid)
+    return pids
 
 
 def start_agent_instances(agent_extracted_dir, bind_addrs):
@@ -306,15 +366,26 @@ def start_agent_instances(agent_extracted_dir, bind_addrs):
     - Given the address range input of 192.168.128.0/24
     - The instances will be allocated these addresses: 192.168.128.1, 192.168.128.2, 192.168.128.3
 
-    TODO: investigate if each ConductR agent process requires its own log files, or all the logs can be sent into the
-    same file.
-
     :param agent_extracted_dir: the directory containing the files expanded from agent's binary .tgz
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :return: the pids of the agent instances.
     """
     log = logging.getLogger(__name__)
-    log.info('Binding ConductR agent to the following address: {}'.format(host.display_addrs(bind_addrs)))
-
-    pass
+    pids = []
+    for idx, bind_addr in enumerate(bind_addrs):
+        commands = [
+            '{}/bin/conductr-agent'.format(agent_extracted_dir),
+            '-Dconductr.agent.ip={}'.format(bind_addr),
+            '--core-node',
+            '{}:{}'.format(bind_addr, CONDUCTR_AKKA_REMOTING_PORT)
+        ]
+        log.info('Staring agent {} on {}..'.format(idx, bind_addr))
+        pid = subprocess.Popen(commands,
+                               cwd=agent_extracted_dir,
+                               start_new_session=True,
+                               stdout=subprocess.DEVNULL,
+                               stdin=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL).pid
+        pids.append(pid)
+    return pids

@@ -1,20 +1,38 @@
-from conductr_cli import conduct_main, host, sandbox_stop, terminal
+from conductr_cli import host, sandbox_stop, terminal
+from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.exceptions import InstanceCountError
-from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, CONDUCTR_NAME_PREFIX, CONDUCTR_PORTS, major_version
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, CONDUCTR_NAME_PREFIX, CONDUCTR_PORTS
 from conductr_cli.screen_utils import headline
 
 import logging
 import os
 
 
+class SandboxRunResult:
+    def __init__(self, container_names, conductr_host, nr_of_proxy_instances):
+        self.container_names = container_names
+        self.host = conductr_host
+        self.nr_of_proxy_instances = nr_of_proxy_instances
+
+    scheme = DEFAULT_SCHEME
+    port = DEFAULT_PORT
+    base_path = DEFAULT_BASE_PATH
+    api_version = DEFAULT_API_VERSION
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__ if isinstance(other, self.__class__) else False
+
+
 def run(args, features):
     nr_of_containers = instance_count(args.image_version, args.nr_of_containers)
     pull_image(args)
     container_names = scale_cluster(args, nr_of_containers, features)
-    return container_names
+    conductr_host = host.resolve_ip_by_vm_type(args.vm_type)
+    return SandboxRunResult(container_names, conductr_host, nr_of_proxy_instances=nr_of_containers)
 
 
-def log_run_attempt(args, container_names, is_started, wait_timeout):
+def log_run_attempt(args, run_result, is_started, wait_timeout):
+    container_names = run_result.container_names
     if not args.no_wait:
         log = logging.getLogger(__name__)
         if is_started:
@@ -26,9 +44,6 @@ def log_run_attempt(args, container_names, is_started, wait_timeout):
             log.info('  docker stats {}'.format(' '.join(container_names)))
             log.info('Check current bundle status with:')
             log.info('  conduct info')
-            if major_version(args.image_version) != 1:
-                log.info('Bundle status:')
-                conduct_main.run(['info'], configure_logging=False)
         else:
             log.info(headline('Summary'))
             log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))

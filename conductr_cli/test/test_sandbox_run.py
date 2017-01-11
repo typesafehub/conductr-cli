@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
-from conductr_cli import logging_setup, sandbox_run
+from conductr_cli import logging_setup, sandbox_run, sandbox_run_docker, sandbox_run_jvm
 from conductr_cli.docker import DockerVmType
 from conductr_cli.exceptions import InstanceCountError
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
@@ -43,7 +43,9 @@ class TestSandboxRunCommand(CliTestCase):
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
 
-        mock_sandbox_run_docker = MagicMock(return_value=self.container_names)
+        sandbox_run_result = sandbox_run_docker.SandboxRunResult(self.container_names, '192.168.99.100',
+                                                                 nr_of_proxy_instances=1)
+        mock_sandbox_run_docker = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
 
@@ -62,9 +64,9 @@ class TestSandboxRunCommand(CliTestCase):
 
         mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
 
-        mock_log_run_attempt.assert_called_with(input_args, self.container_names, True, 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, True, 60)
 
         mock_feature.assert_not_called()
 
@@ -75,7 +77,10 @@ class TestSandboxRunCommand(CliTestCase):
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
 
-        mock_sandbox_run_docker = MagicMock(return_value=self.container_names)
+        sandbox_run_result = sandbox_run_jvm.SandboxRunResult([1001], ['192.168.1.1'],
+                                                              [1002], ['192.168.1.1'],
+                                                              nr_of_proxy_instances=1)
+        mock_sandbox_run_jvm = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_start_proxy = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
@@ -87,18 +92,18 @@ class TestSandboxRunCommand(CliTestCase):
         input_args = MagicMock(**args)
         with \
                 patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
-                patch('conductr_cli.sandbox_run_jvm.run', mock_sandbox_run_docker), \
+                patch('conductr_cli.sandbox_run_jvm.run', mock_sandbox_run_jvm), \
                 patch('conductr_cli.sandbox_run_jvm.log_run_attempt', mock_log_run_attempt), \
                 patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
                 patch('conductr_cli.sandbox_run.start_proxy', mock_start_proxy):
             self.assertTrue(sandbox_run.run(input_args))
 
-        mock_sandbox_run_docker.assert_called_once_with(input_args, features)
+        mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
 
-        mock_wait_for_conductr.assert_called_once_with(input_args, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
         mock_start_proxy.assert_called_once_with(1)
 
-        mock_log_run_attempt.assert_called_with(input_args, self.container_names, True, 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, True, 60)
 
     def test_docker_sandbox_instance_count_error(self):
         conductr_version = '1.1.11'
@@ -181,7 +186,10 @@ class TestWaitForStart(CliTestCase):
                 'no_wait': False
             })
             logging_setup.configure_logging(args, stdout)
-            result = sandbox_run.wait_for_start(args)
+            run_result = MagicMock(**{
+                'host': '10.0.0.1'
+            })
+            result = sandbox_run.wait_for_start(args, run_result)
             self.assertEqual((True, 1.0), result)
 
         self.assertEqual([
@@ -189,7 +197,7 @@ class TestWaitForStart(CliTestCase):
             call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
         ], mock_get_env.call_args_list)
 
-        mock_http_get.assert_called_once_with(dcos_mode=False, host=None, timeout=5, url='/members')
+        mock_http_get.assert_called_once_with(dcos_mode=False, host='10.0.0.1', timeout=5, url='/members')
 
         self.assertEqual([
             call.write('Waiting for ConductR to start\r'),
@@ -220,7 +228,10 @@ class TestWaitForStart(CliTestCase):
                 'no_wait': False
             })
             logging_setup.configure_logging(args, stdout)
-            result = sandbox_run.wait_for_start(args)
+            run_result = MagicMock(**{
+                'host': '10.0.0.1'
+            })
+            result = sandbox_run.wait_for_start(args, run_result)
             self.assertEqual((False, 1.0), result)
 
         self.assertEqual([
@@ -228,7 +239,7 @@ class TestWaitForStart(CliTestCase):
             call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
         ], mock_get_env.call_args_list)
 
-        mock_http_get.assert_called_once_with(dcos_mode=False, host=None, timeout=5, url='/members')
+        mock_http_get.assert_called_once_with(dcos_mode=False, host='10.0.0.1', timeout=5, url='/members')
 
         self.assertEqual([
             call.write('Waiting for ConductR to start\r'),
@@ -246,6 +257,8 @@ class TestWaitForStart(CliTestCase):
         args = MagicMock(**{
             'no_wait': True
         })
-
-        result = sandbox_run.wait_for_start(args)
+        run_result = MagicMock(**{
+            'host': '10.0.0.1'
+        })
+        result = sandbox_run.wait_for_start(args, run_result)
         self.assertEqual((True, 0), result)
