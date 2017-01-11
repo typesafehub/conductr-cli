@@ -118,6 +118,7 @@ If you have installed argcomplete and want to activate Bash completion for the C
 .. code:: bash
 
     eval "$(register-python-argcomplete conduct)"
+    eval "$(register-python-argcomplete sandbox)"
 
 Alternatively, if you have a Bash version 4.2 or later, you can activate global completion once:
 
@@ -129,7 +130,7 @@ If you are running zsh, execute the following command to enable autocomplete:
 
 .. code:: bash
 
-    autoload bashcompinit && autoload compinit && bashcompinit && compinit && eval "$(register-python-argcomplete conduct)"
+    autoload bashcompinit && autoload compinit && bashcompinit && compinit && eval "$(register-python-argcomplete conduct)" && eval "$(register-python-argcomplete sandbox)"
 
 CLI Usage
 ~~~~~~~~~
