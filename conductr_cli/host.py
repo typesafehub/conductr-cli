@@ -1,14 +1,17 @@
 import os
 from conductr_cli import terminal, validation, docker_machine, docker
+from conductr_cli.constants import DEFAULT_PORT, DEFAULT_SANDBOX_ADDR_RANGE
 from conductr_cli.exceptions import DockerMachineNotRunningError
 from subprocess import CalledProcessError
 from conductr_cli.docker import DockerVmType
+import ipaddress
 import socket
 import platform
 
 
 CONDUCTR_HOST = 'CONDUCTR_HOST'
 CONDUCTR_IP = 'CONDUCTR_IP'
+CONDUCTR_LISTEN_CHECK_TIMEOUT = 0.1  # Socket timeout (in seconds) for checking if ConductR is listening on an address.
 
 
 def resolve_default_host():
@@ -16,9 +19,18 @@ def resolve_default_host():
 
 
 def resolve_default_ip():
-    def resolve():
+    def result_from_default_addr_range():
+        addr_range = ipaddress.ip_network(DEFAULT_SANDBOX_ADDR_RANGE, strict=True)
+        addr = list(addr_range.hosts())[0]
+        return addr.exploded if is_listening(addr, int(DEFAULT_PORT)) else None
+
+    def resolve_from_docker():
         vm_type = docker.vm_type()
         return resolve_ip_by_vm_type(vm_type)
+
+    def resolve():
+        from_addr_range = result_from_default_addr_range()
+        return from_addr_range if from_addr_range else resolve_from_docker()
 
     return os.getenv(CONDUCTR_IP, resolve())
 
@@ -62,6 +74,23 @@ def can_bind(ip_addr, port):
     result = False
     try:
         s.bind((ip_addr.exploded, port))
+        result = True
+    except OSError:
+        pass
+    finally:
+        s.close()
+
+    return result
+
+
+def is_listening(ip_addr, port):
+    socket_af = socket.AF_INET if ip_addr.version == 4 else socket.AF_INET6
+    s = socket.socket(socket_af, socket.SOCK_STREAM)
+
+    result = False
+    try:
+        s.settimeout(CONDUCTR_LISTEN_CHECK_TIMEOUT)
+        s.connect((ip_addr.exploded, port))
         result = True
     except OSError:
         pass

@@ -1,11 +1,12 @@
-from conductr_cli.test.cli_test_case import CliTestCase
-from conductr_cli import sandbox_run_jvm
-from requests.exceptions import HTTPError, ConnectionError
-from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, \
-    BintrayUnreachableError, SandboxImageNotFoundError
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli import logging_setup, sandbox_run_jvm
+from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, BintrayUnreachableError, \
+    SandboxImageNotFoundError
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
+from requests.exceptions import HTTPError, ConnectionError
 import ipaddress
+import subprocess
 
 
 class TestRun(CliTestCase):
@@ -48,7 +49,10 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
-            self.assertEqual((mock_core_pids, mock_agent_pids), result)
+            expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
+                                                               mock_agent_pids, bind_addrs,
+                                                               nr_of_proxy_instances=1)
+            self.assertEqual(expected_result, result)
 
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir, bind_addrs)
@@ -89,7 +93,10 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
-            self.assertEqual((mock_core_pids, mock_agent_pids), result)
+            expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
+                                                               mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3],
+                                                               nr_of_proxy_instances=1)
+            self.assertEqual(expected_result, result)
 
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir, [bind_addr1])
@@ -262,3 +269,161 @@ class TestObtainSandboxImage(CliTestCase):
         mock_bintray_download.assert_not_called()
         mock_shutil_rmtree.assert_has_calls([call('/cache_dir/core'), call('/cache_dir/agent')])
         mock_os_rmdir.assert_has_calls([call('/cache_dir/core/sub_dir'), call('/cache_dir/agent/sub_dir')])
+
+
+class TestStartCore(CliTestCase):
+    extract_dir = '/User/tester/.conductr/images/core'
+
+    addrs = [
+        ipaddress.ip_address('192.168.1.1'),
+        ipaddress.ip_address('192.168.1.2'),
+        ipaddress.ip_address('192.168.1.3')
+    ]
+
+    def test_start_instances(self):
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        with patch('subprocess.Popen', mock_popen):
+            result = sandbox_run_jvm.start_core_instances(self.extract_dir, self.addrs)
+            self.assertEqual([1001, 1002, 1003], result)
+
+        self.assertEqual([
+            call(['{}/bin/conductr'.format(self.extract_dir), '-Dconductr.ip={}'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call(['{}/bin/conductr'.format(self.extract_dir), '-Dconductr.ip={}'.format(self.addrs[1]), '--seed', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call(['{}/bin/conductr'.format(self.extract_dir), '-Dconductr.ip={}'.format(self.addrs[2]), '--seed', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+        ], mock_popen.call_args_list)
+
+    def mock_pid(self, pid_value):
+        mock_process = MagicMock()
+        mock_process.pid = pid_value
+        return mock_process
+
+
+class TestStartAgent(CliTestCase):
+    extract_dir = '/User/tester/.conductr/images/agent'
+
+    addrs = [
+        ipaddress.ip_address('192.168.1.1'),
+        ipaddress.ip_address('192.168.1.2'),
+        ipaddress.ip_address('192.168.1.3')
+    ]
+
+    def test_start_instances(self):
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        with patch('subprocess.Popen', mock_popen):
+            result = sandbox_run_jvm.start_agent_instances(self.extract_dir, self.addrs)
+            self.assertEqual([1001, 1002, 1003], result)
+
+        self.assertEqual([
+            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[0]), '--core-node', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[1]), '--core-node', '{}:9004'.format(self.addrs[1])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[2]), '--core-node', '{}:9004'.format(self.addrs[2])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+        ], mock_popen.call_args_list)
+
+    def mock_pid(self, pid_value):
+        mock_process = MagicMock()
+        mock_process.pid = pid_value
+        return mock_process
+
+
+class TestLogRunAttempt(CliTestCase):
+    wait_timeout = 60
+    run_result = sandbox_run_jvm.SandboxRunResult(
+        [1001, 1002, 1003],
+        [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
+        [2001, 2002, 2003],
+        [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
+        nr_of_proxy_instances=1
+    )
+
+    def test_log_output(self):
+        run_mock = MagicMock()
+        stdout = MagicMock()
+        input_args = MagicMock(**{
+            'no_wait': False
+        })
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            sandbox_run_jvm.log_run_attempt(
+                input_args,
+                run_result=self.run_result,
+                is_started=True,
+                wait_timeout=self.wait_timeout
+            )
+
+        run_mock.assert_called_with(['info', '--host', '192.168.1.1'], configure_logging=False)
+
+        expected_stdout = strip_margin("""||------------------------------------------------|
+                                          || Summary                                        |
+                                          ||------------------------------------------------|
+                                          |ConductR has been started:
+                                          |  core: 3 instances
+                                          |  agent: 3 instances
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |""")
+        self.assertEqual(expected_stdout, self.output(stdout))
+
+    def test_log_output_single_core_and_agent(self):
+        run_result = sandbox_run_jvm.SandboxRunResult(
+            [1001],
+            [ipaddress.ip_address('192.168.1.1')],
+            [2001],
+            [ipaddress.ip_address('192.168.1.1')],
+            nr_of_proxy_instances=1
+        )
+
+        run_mock = MagicMock()
+        stdout = MagicMock()
+        input_args = MagicMock(**{
+            'no_wait': False
+        })
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            sandbox_run_jvm.log_run_attempt(
+                input_args,
+                run_result=run_result,
+                is_started=True,
+                wait_timeout=self.wait_timeout
+            )
+
+        expected_stdout = strip_margin("""||------------------------------------------------|
+                                          || Summary                                        |
+                                          ||------------------------------------------------|
+                                          |ConductR has been started:
+                                          |  core: 1 instance
+                                          |  agent: 1 instance
+                                          |Check current bundle status with:
+                                          |  conduct info
+                                          |""")
+        self.assertEqual(expected_stdout, self.output(stdout))
+
+    def test_no_wait(self):
+        run_mock = MagicMock()
+        stdout = MagicMock()
+        input_args = MagicMock(**{
+            'no_wait': True
+        })
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            sandbox_run_jvm.log_run_attempt(
+                input_args,
+                run_result=self.run_result,
+                is_started=True,
+                wait_timeout=self.wait_timeout
+            )
+
+        run_mock.assert_not_called()
+        self.assertEqual('', self.output(stdout))

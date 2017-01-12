@@ -1,6 +1,5 @@
-from conductr_cli import conduct_main, conduct_request, conduct_url, validation, host, \
-    sandbox_features, sandbox_run_docker, sandbox_run_jvm
-from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
+from conductr_cli import conduct_main, conduct_request, conduct_url, validation, sandbox_features, \
+    sandbox_run_docker, sandbox_run_jvm
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import major_version
 from conductr_cli.screen_utils import headline
@@ -14,18 +13,6 @@ import time
 # Will retry 30 times, every two seconds
 DEFAULT_WAIT_RETRIES = 30
 DEFAULT_WAIT_RETRY_INTERVAL = 2.0
-
-
-# Arguments for conduct requests, such as waiting for ConductR to start in the sandbox
-class ConductArgs:
-
-    def __init__(self, vm_type):
-        self.ip = host.resolve_ip_by_vm_type(vm_type)
-
-    scheme = DEFAULT_SCHEME
-    port = DEFAULT_PORT
-    base_path = DEFAULT_BASE_PATH
-    api_version = DEFAULT_API_VERSION
 
 
 @validation.handle_connection_error
@@ -46,10 +33,10 @@ def run(args):
     else:
         run_result = sandbox_run_jvm.run(args, features)
 
-    is_started, wait_timeout = wait_for_start(args)
+    is_started, wait_timeout = wait_for_start(args, run_result)
     if is_started:
         if not is_conductr_v1:
-            start_proxy(args.nr_of_containers)
+            start_proxy(run_result.nr_of_proxy_instances)
         for feature in features:
             feature.start()
 
@@ -61,16 +48,16 @@ def run(args):
     return True
 
 
-def wait_for_start(args):
+def wait_for_start(args, run_result):
     if not args.no_wait:
         retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
         interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
-        return wait_for_conductr(args, 0, retries, interval), retries * interval
+        return wait_for_conductr(args, run_result, 0, retries, interval), retries * interval
     else:
         return True, 0
 
 
-def wait_for_conductr(args, current_retry, max_retries, interval):
+def wait_for_conductr(args, run_result, current_retry, max_retries, interval):
     log = logging.getLogger(__name__)
     last_message = 'Waiting for ConductR to start'
     log.progress(last_message, flush=False)
@@ -80,10 +67,9 @@ def wait_for_conductr(args, current_retry, max_retries, interval):
         last_message = '{}.'.format(last_message)
         log.progress(last_message, flush=False)
 
-        conduct_args = ConductArgs(args.vm_type)
-        url = conduct_url.url('members', conduct_args)
+        url = conduct_url.url('members', run_result)
         try:
-            conduct_request.get(dcos_mode=False, host=conduct_args.ip, url=url, timeout=DEFAULT_HTTP_TIMEOUT)
+            conduct_request.get(dcos_mode=False, host=run_result.host, url=url, timeout=DEFAULT_HTTP_TIMEOUT)
             break
         except ConnectionError:
             current_retry += 1
@@ -93,11 +79,11 @@ def wait_for_conductr(args, current_retry, max_retries, interval):
     return True if current_retry < max_retries else False
 
 
-def start_proxy(nr_of_containers):
+def start_proxy(nr_of_instances):
     log = logging.getLogger(__name__)
     bundle_name = 'conductr-haproxy'
     configuration_name = 'conductr-haproxy-dev-mode'
     log.info(headline('Starting HAProxy'))
     log.info('Deploying bundle {} with configuration {}'.format(bundle_name, configuration_name))
     conduct_main.run(['load', bundle_name, configuration_name, '--disable-instructions'], configure_logging=False)
-    conduct_main.run(['run', bundle_name, '--scale', str(nr_of_containers), '--disable-instructions'], configure_logging=False)
+    conduct_main.run(['run', bundle_name, '--scale', str(nr_of_instances), '--disable-instructions'], configure_logging=False)

@@ -311,6 +311,9 @@ class TestRun(CliTestCase):
 
 class TestLogRunAttempt(CliTestCase):
     wait_timeout = 60
+    container_names = ['cond-0', 'cond-1', 'cond-2']
+    hostname = '10.0.0.1'
+    run_result = sandbox_run_docker.SandboxRunResult(container_names, hostname, nr_of_proxy_instances=1)
 
     def test_log_output(self):
         stdout = MagicMock()
@@ -321,7 +324,7 @@ class TestLogRunAttempt(CliTestCase):
         logging_setup.configure_logging(input_args, stdout)
         sandbox_run_docker.log_run_attempt(
             input_args,
-            container_names=['cond-0', 'cond-1', 'cond-2'],
+            run_result=self.run_result,
             is_started=True,
             wait_timeout=self.wait_timeout
         )
@@ -346,7 +349,7 @@ class TestLogRunAttempt(CliTestCase):
         logging_setup.configure_logging(input_args, stdout)
         sandbox_run_docker.log_run_attempt(
             input_args,
-            container_names=['cond-0'],
+            run_result=sandbox_run_docker.SandboxRunResult(['cond-0'], self.hostname, nr_of_proxy_instances=1),
             is_started=True,
             wait_timeout=self.wait_timeout
         )
@@ -372,7 +375,7 @@ class TestLogRunAttempt(CliTestCase):
         logging_setup.configure_logging(input_args, stdout, stderr)
         sandbox_run_docker.log_run_attempt(
             input_args,
-            container_names=['cond-0'],
+            run_result=self.run_result,
             is_started=False,
             wait_timeout=self.wait_timeout
         )
@@ -397,7 +400,7 @@ class TestLogRunAttempt(CliTestCase):
         logging_setup.configure_logging(input_args, stdout)
         sandbox_run_docker.log_run_attempt(
             input_args,
-            container_names=['cond-0'],
+            run_result=self.run_result,
             is_started=True,
             wait_timeout=self.wait_timeout
         )

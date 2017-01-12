@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 from conductr_cli.conduct_main import build_parser, get_cli_parameters
 from argparse import Namespace
 import os
@@ -167,20 +168,28 @@ class TestConduct(TestCase):
         self.assertEqual(args.dcos_info, True)
 
     def test_get_cli_parameters(self):
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9005, api_version='2')
-        self.assertEqual(get_cli_parameters(args), '')
+        mock_resolve_default_host = MagicMock(return_value='127.0.0.1')
+        mock_resolve_default_ip = MagicMock(return_value='127.0.0.1')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.1.1', port=9005)
-        self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1')
+        with patch('conductr_cli.host.resolve_default_host', mock_resolve_default_host), \
+                patch('conductr_cli.host.resolve_default_ip', mock_resolve_default_ip):
+            args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9005, api_version='2')
+            self.assertEqual(get_cli_parameters(args), '')
 
-        args = Namespace(dcos_mode=False, scheme='http', host='127.0.1.1', port=9005)
-        self.assertEqual(get_cli_parameters(args), ' --host 127.0.1.1')
+            args = Namespace(dcos_mode=False, scheme='http', ip='127.0.1.1', port=9005)
+            self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9006)
-        self.assertEqual(get_cli_parameters(args), ' --port 9006')
+            args = Namespace(dcos_mode=False, scheme='http', host='127.0.1.1', port=9005)
+            self.assertEqual(get_cli_parameters(args), ' --host 127.0.1.1')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9005, api_version='1')
-        self.assertEqual(get_cli_parameters(args), ' --api-version 1')
+            args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9006)
+            self.assertEqual(get_cli_parameters(args), ' --port 9006')
 
-        args = Namespace(dcos_mode=False, scheme='http', ip='127.0.1.1', port=9006, api_version='1')
-        self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1 --port 9006 --api-version 1')
+            args = Namespace(dcos_mode=False, scheme='http', ip='127.0.0.1', port=9005, api_version='1')
+            self.assertEqual(get_cli_parameters(args), ' --api-version 1')
+
+            args = Namespace(dcos_mode=False, scheme='http', ip='127.0.1.1', port=9006, api_version='1')
+            self.assertEqual(get_cli_parameters(args), ' --ip 127.0.1.1 --port 9006 --api-version 1')
+
+        mock_resolve_default_host.assert_called_with()
+        mock_resolve_default_ip.assert_called_with()

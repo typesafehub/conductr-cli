@@ -18,22 +18,34 @@ class TestResolveDefaultHost(TestCase):
             self.assertEqual(result, 'test')
 
         getenv_mock.assert_called_with('CONDUCTR_HOST', 'resolve_result')
+        resolve_default_ip_mock.assert_called_with()
 
 
 class TestResolveDefaultIp(TestCase):
-    def test_resolve(self):
+    def test_resolve_from_docker(self):
         getenv_mock = MagicMock(return_value='test')
+        is_listening_mock = MagicMock(return_value=False)
         vm_type_mock = MagicMock(return_value='vm_type')
         resolve_ip_by_vm_type_mock = MagicMock(return_value='resolve_result')
         with patch('os.getenv', getenv_mock), \
+                patch('conductr_cli.host.is_listening', is_listening_mock), \
                 patch('conductr_cli.docker.vm_type', vm_type_mock), \
                 patch('conductr_cli.host.resolve_ip_by_vm_type', resolve_ip_by_vm_type_mock):
             result = host.resolve_default_ip()
             self.assertEqual(result, 'test')
 
         getenv_mock.assert_called_with('CONDUCTR_IP', 'resolve_result')
+        is_listening_mock.assert_called_with(ipaddress.ip_address('192.168.10.1'), 9005)
         vm_type_mock.assert_called_with()
         resolve_ip_by_vm_type_mock.assert_called_with('vm_type')
+
+    def test_resolve_from_addr_range(self):
+        is_listening_mock = MagicMock(return_value=True)
+        with patch('conductr_cli.host.is_listening', is_listening_mock):
+            result = host.resolve_default_ip()
+            self.assertEqual(result, '192.168.10.1')
+
+        is_listening_mock.assert_called_with(ipaddress.ip_address('192.168.10.1'), 9005)
 
 
 class TestResolveIpByVmType(TestCase):
@@ -187,6 +199,78 @@ class TestCanBind(TestCase):
 
         mock_create_socket.assert_called_once_with(socket.AF_INET6, socket.SOCK_STREAM)
         mock_bind.assert_called_once_with((self.addr_ipv6.exploded, self.port))
+        mock_close.assert_called_once_with()
+
+
+class TestIsListening(TestCase):
+    addr_ipv4 = ipaddress.ip_address('127.0.0.1')
+    addr_ipv6 = ipaddress.ip_address('::1')
+    port = 16371
+
+    def test_listening_ipv4(self):
+        mock_socket = MagicMock()
+
+        mock_settimeout = MagicMock()
+        mock_socket.settimeout = mock_settimeout
+
+        mock_connect = MagicMock()
+        mock_socket.connect = mock_connect
+
+        mock_close = MagicMock()
+        mock_socket.close = mock_close
+
+        mock_create_socket = MagicMock(return_value=mock_socket)
+
+        with patch('socket.socket', mock_create_socket):
+            self.assertTrue(host.is_listening(self.addr_ipv4, self.port))
+
+        mock_create_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
+        mock_settimeout.assert_called_with(0.1)
+        mock_connect.assert_called_once_with((self.addr_ipv4.exploded, self.port))
+        mock_close.assert_called_once_with()
+
+    def test_listening_ipv6(self):
+        mock_socket = MagicMock()
+
+        mock_settimeout = MagicMock()
+        mock_socket.settimeout = mock_settimeout
+
+        mock_connect = MagicMock()
+        mock_socket.connect = mock_connect
+
+        mock_close = MagicMock()
+        mock_socket.close = mock_close
+
+        mock_create_socket = MagicMock(return_value=mock_socket)
+
+        with patch('socket.socket', mock_create_socket):
+            self.assertTrue(host.is_listening(self.addr_ipv6, self.port))
+
+        mock_create_socket.assert_called_once_with(socket.AF_INET6, socket.SOCK_STREAM)
+        mock_settimeout.assert_called_with(0.1)
+        mock_connect.assert_called_once_with((self.addr_ipv6.exploded, self.port))
+        mock_close.assert_called_once_with()
+
+    def test_not_listening(self):
+        mock_socket = MagicMock()
+
+        mock_settimeout = MagicMock()
+        mock_socket.settimeout = mock_settimeout
+
+        mock_connect = MagicMock(side_effect=OSError())
+        mock_socket.connect = mock_connect
+
+        mock_close = MagicMock()
+        mock_socket.close = mock_close
+
+        mock_create_socket = MagicMock(return_value=mock_socket)
+
+        with patch('socket.socket', mock_create_socket):
+            self.assertFalse(host.is_listening(self.addr_ipv4, self.port))
+
+        mock_create_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
+        mock_settimeout.assert_called_with(0.1)
+        mock_connect.assert_called_once_with((self.addr_ipv4.exploded, self.port))
         mock_close.assert_called_once_with()
 
 
