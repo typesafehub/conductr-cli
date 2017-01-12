@@ -1,13 +1,15 @@
 from conductr_cli import conduct_main, host, sandbox_stop
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.sandbox_common import ConductrComponent
-from requests.exceptions import HTTPError, ConnectionError
-from conductr_cli.exceptions import InstanceCountError, BindAddressNotFoundError, SandboxImageNotFoundError, \
-    BintrayUnreachableError
+from conductr_cli.exceptions import BindAddressNotFoundError, BintrayUnreachableError, InstanceCountError, \
+    SandboxImageNotFoundError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
+    JavaVersionParseError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM, BINTRAY_LIGHTBEND_ORG, \
     BINTRAY_CONDUCTR_REPO, BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
 from conductr_cli.screen_utils import headline
+from requests.exceptions import HTTPError, ConnectionError
+from subprocess import CalledProcessError
 
 import logging
 import re
@@ -20,6 +22,8 @@ NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
 BIND_TEST_PORT = 19991  # The port used for testing if an address can be bound.
 CONDUCTR_AKKA_REMOTING_PORT = 9004  # The port used by ConductR's Akka remoting.
 NR_OF_PROXY_INSTANCE = 1  # Only run 1 instance of ConductR HAProxy since there's only one HAProxy running per machine.
+SUPPORTED_JVM_VENDOR = "java"  # Oracle JVM vendor is `java`.
+SUPPORTED_JVM_VERSION = (1, 8)  # Supports JVM version 1.8 and above.
 
 
 class SandboxRunResult:
@@ -133,7 +137,33 @@ def validate_jvm_support():
     """
     Validates for the presence of supported JVM (i.e. Oracle JVM 8), else raise an exception to fail the sandbox run.
     """
-    pass
+    try:
+        raw_output = subprocess.getoutput('java -version')
+        lines = raw_output.split(os.linesep)
+        if lines:
+            first_line = lines[0]
+            parts = first_line.split(' ')
+            if len(parts) == 3:
+                jvm_vendor = parts[0]
+
+                if jvm_vendor == SUPPORTED_JVM_VENDOR:
+                    jvm_version = parts[2].replace('"', '')
+                    jvm_version_parts = jvm_version.split('.')
+                    if len(jvm_version_parts) >= 2:
+                        jvm_version_major = int(jvm_version_parts[0])
+                        jvm_version_minor = int(jvm_version_parts[1])
+                        jvm_version_tuple = (jvm_version_major, jvm_version_minor)
+
+                        if jvm_version_tuple >= SUPPORTED_JVM_VERSION:
+                            return
+                        else:
+                            raise JavaUnsupportedVersionError(jvm_version)
+                else:
+                    raise JavaUnsupportedVendorError(jvm_vendor)
+
+        raise JavaVersionParseError(raw_output)
+    except CalledProcessError:
+        raise JavaCallError('Failure calling `java -version`')
 
 
 def find_bind_addrs(nr_of_addrs, addr_range):

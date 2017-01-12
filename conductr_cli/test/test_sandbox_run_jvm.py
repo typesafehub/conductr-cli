@@ -1,7 +1,8 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_run_jvm
 from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, BintrayUnreachableError, \
-    SandboxImageNotFoundError
+    SandboxImageNotFoundError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
+    JavaVersionParseError
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
 from requests.exceptions import HTTPError, ConnectionError
@@ -427,3 +428,69 @@ class TestLogRunAttempt(CliTestCase):
 
         run_mock.assert_not_called()
         self.assertEqual('', self.output(stdout))
+
+
+class TestValidateJvm(CliTestCase):
+    def test_supported(self):
+        cmd_output = strip_margin("""|java version "1.8.0_72"
+                                     |Java(TM) SE Runtime Environment (build 1.8.0_72-b15)
+                                     |Java HotSpot(TM) 64-Bit Server VM (build 25.72-b15, mixed mode)
+                                     |""")
+        mock_getoutput = MagicMock(return_value=cmd_output)
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            sandbox_run_jvm.validate_jvm_support()
+
+        mock_getoutput.assert_called_once_with('java -version')
+
+    def test_unsupported_vendor(self):
+        cmd_output = strip_margin("""|openjdk version "1.8.0_66-internal"
+                                     |OpenJDK Runtime Environment (build 1.8.0_66-internal-b17)
+                                     |OpenJDK 64-Bit Server VM (build 25.66-b17, mixed mode)
+                                     |""")
+        mock_getoutput = MagicMock(return_value=cmd_output)
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            self.assertRaises(JavaUnsupportedVendorError, sandbox_run_jvm.validate_jvm_support)
+
+        mock_getoutput.assert_called_once_with('java -version')
+
+    def test_unsupported_version(self):
+        cmd_output = strip_margin("""|java version "1.7.0_72"
+                                     |Java(TM) SE Runtime Environment (build 1.8.0_72-b15)
+                                     |Java HotSpot(TM) 64-Bit Server VM (build 25.72-b15, mixed mode)
+                                     |""")
+        mock_getoutput = MagicMock(return_value=cmd_output)
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            self.assertRaises(JavaUnsupportedVersionError, sandbox_run_jvm.validate_jvm_support)
+
+        mock_getoutput.assert_called_once_with('java -version')
+
+    def test_parse_error_from_invalid_output(self):
+        mock_getoutput = MagicMock(return_value="gobbledygook")
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            self.assertRaises(JavaVersionParseError, sandbox_run_jvm.validate_jvm_support)
+
+        mock_getoutput.assert_called_once_with('java -version')
+
+    def test_parse_error_from_unexpected_first_line(self):
+        cmd_output = strip_margin("""|I like to eat
+                                     |Java(TM) SE Runtime Environment (build 1.8.0_72-b15)
+                                     |Java HotSpot(TM) 64-Bit Server VM (build 25.72-b15, mixed mode)
+                                     |""")
+        mock_getoutput = MagicMock(return_value=cmd_output)
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            self.assertRaises(JavaVersionParseError, sandbox_run_jvm.validate_jvm_support)
+
+        mock_getoutput.assert_called_once_with('java -version')
+
+    def test_call_error(self):
+        mock_getoutput = MagicMock(side_effect=subprocess.CalledProcessError(1, 'test'))
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            self.assertRaises(JavaCallError, sandbox_run_jvm.validate_jvm_support)
+
+        mock_getoutput.assert_called_once_with('java -version')
