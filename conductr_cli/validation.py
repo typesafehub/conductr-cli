@@ -12,8 +12,9 @@ from zipfile import BadZipFile
 from conductr_cli import terminal, docker_machine
 from conductr_cli.exceptions import AmbiguousDockerVmError, BindAddressNotFoundError, DockerMachineNotRunningError, \
     DockerMachineCannotConnectToDockerError, InstanceCountError, MalformedBundleError, \
-    BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError,  \
-    WaitTimeoutError, InsecureFilePermissions, NOT_FOUND_ERROR, SandboxImageNotFoundError
+    BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
+    WaitTimeoutError, InsecureFilePermissions, NOT_FOUND_ERROR, SandboxImageNotFoundError, JavaCallError, \
+    JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError
 from subprocess import CalledProcessError
 
 
@@ -391,6 +392,40 @@ def handle_bintray_credentials_error(func):
             log.error('Malformed Bintray credentials in {}'.format(e.credential_file_path))
             log.error('Please follow the instructions to setup the Lightbend Bintray credentials:')
             log.error('  http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html')
+            return False
+
+        # Do not change the wrapped function name,
+        # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_jvm_validation_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except JavaCallError as e:
+            log = get_logger_for_func(func)
+            log.error('Unable to obtain java version.')
+            log.error(e.message)
+            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            return False
+        except JavaUnsupportedVendorError as e:
+            log = get_logger_for_func(func)
+            log.error('Unsupported JVM vendor: {}'.format(e.vendor))
+            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            return False
+        except JavaUnsupportedVersionError as e:
+            log = get_logger_for_func(func)
+            log.error('Unsupported JVM version: {}'.format(e.jvm_version))
+            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            return False
+        except JavaVersionParseError as e:
+            log = get_logger_for_func(func)
+            log.error('Unable to obtain java version from the `java -version` command.')
+            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
             return False
 
         # Do not change the wrapped function name,

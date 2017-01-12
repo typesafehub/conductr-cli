@@ -22,6 +22,7 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 @validation.handle_sandbox_image_not_found_error
 @validation.handle_bintray_credentials_error
 @validation.handle_bintray_unreachable_error
+@validation.handle_jvm_validation_error
 def run(args):
     """`sandbox run` command"""
 

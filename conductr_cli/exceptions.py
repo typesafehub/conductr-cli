@@ -139,3 +139,35 @@ class SandboxImageNotFoundError(Exception):
 
     def __str(self):
         return repr(self.message)
+
+
+class JavaCallError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str(self):
+        return repr(self.message)
+
+
+class JavaVersionParseError(Exception):
+    def __init__(self, java_version_output):
+        self.java_version_output = java_version_output
+
+    def __str(self):
+        return repr(self.java_version_output)
+
+
+class JavaUnsupportedVendorError(Exception):
+    def __init__(self, vendor):
+        self.vendor = vendor
+
+    def __str(self):
+        return repr(self.vendor)
+
+
+class JavaUnsupportedVersionError(Exception):
+    def __init__(self, jvm_version):
+        self.jvm_version = jvm_version
+
+    def __str(self):
+        return repr(self.jvm_version)
