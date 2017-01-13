@@ -3,7 +3,7 @@ from unittest.mock import call, patch, MagicMock
 from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature,\
     LoggingFeature, MonitoringFeature, \
     collect_features, select_bintray_uri
-from conductr_cli.sandbox_common import LATEST_CONDUCTR_VERSION
+from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 
 
 class TestFeatures(TestCase):

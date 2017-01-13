@@ -1,7 +1,8 @@
 from conductr_cli.test.cli_test_case import CliTestCase, as_warn, as_error, strip_margin
 from conductr_cli import sandbox_main, logging_setup
 from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR
-from conductr_cli.sandbox_common import LATEST_CONDUCTR_VERSION, CONDUCTR_DEV_IMAGE
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
+from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 from conductr_cli.docker import DockerVmType
 from subprocess import CalledProcessError
 from unittest.mock import patch, MagicMock

@@ -2,8 +2,9 @@ from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import sandbox_run_docker, logging_setup
 from conductr_cli.docker import DockerVmType
 from conductr_cli.exceptions import InstanceCountError
-from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, LATEST_CONDUCTR_VERSION
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
 from conductr_cli.sandbox_features import VisualizationFeature, LoggingFeature
+from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 from unittest.mock import patch, MagicMock
 import os
 
@@ -254,6 +255,7 @@ class TestRun(CliTestCase):
         expected_stdout = strip_margin("""||------------------------------------------------|
                                           || Stopping ConductR                              |
                                           ||------------------------------------------------|
+                                          |ConductR has been successfully stopped
                                           ||------------------------------------------------|
                                           || Starting ConductR                              |
                                           ||------------------------------------------------|

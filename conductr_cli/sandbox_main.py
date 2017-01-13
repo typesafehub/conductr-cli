@@ -30,6 +30,7 @@ def build_parser():
                                        usage='%(prog)s IMAGE_VERSION [ARGS]',
                                        formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(run_parser)
+    add_image_dir(run_parser)
     run_parser.add_argument('image_version',
                             nargs='?',
                             help='Version of the ConductR docker image to use.\n'
@@ -109,14 +110,12 @@ def build_parser():
                             default=DEFAULT_SANDBOX_ADDR_RANGE,
                             help='Range of address which will be used by ConductR Sandbox to bind to.\n'
                                  'The address range is specified using CIDR notation, i.e. 192.168.1.0/24')
-    run_parser.add_argument('--image-dir',
-                            default=DEFAULT_SANDBOX_IMAGE_DIR,
-                            help='Default directory where sandbox images is stored.')
     run_parser.set_defaults(func=sandbox_run.run)
 
     # Sub-parser for `stop` sub-command
     stop_parser = subparsers.add_parser('stop',
                                         help='Stop ConductR sandbox cluster')
+    add_image_dir(stop_parser)
     add_default_arguments(stop_parser)
     stop_parser.set_defaults(func=sandbox_stop.stop)
     return parser
@@ -135,6 +134,12 @@ def add_resolve_ip(sub_parser, default_value):
                             dest='resolve_ip',
                             action='store_true',
                             help=argparse.SUPPRESS)
+
+
+def add_image_dir(sub_parser):
+    sub_parser.add_argument('--image-dir',
+                            default=DEFAULT_SANDBOX_IMAGE_DIR,
+                            help='Default directory where sandbox images is stored.')
 
 
 @validation.handle_vbox_manage_not_found_error
