@@ -115,7 +115,7 @@ class TestLiteLoggingFeature(TestCase):
 
 
 class TestMonitoringFeature(TestCase):
-    def test_start(self):
+    def test_start_v1(self):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
@@ -124,4 +124,15 @@ class TestMonitoringFeature(TestCase):
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'cinnamon-grafana', '--disable-instructions'], configure_logging=False),
             call(['run', 'cinnamon-grafana', '--disable-instructions'], configure_logging=False)
+        ])
+
+    def test_start_v2(self):
+        run_mock = MagicMock()
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            MonitoringFeature([], '2.0.0').start()
+
+        self.assertEqual(run_mock.call_args_list, [
+            call(['load', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False),
+            call(['run', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False)
         ])
