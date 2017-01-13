@@ -197,10 +197,10 @@ class MonitoringFeature:
     def start(self):
         log = logging.getLogger(__name__)
         log.info(headline('Starting monitoring feature'))
-        bundle_repo = ''
-        if self.version_args and self.version_args[0] == 'snapshot':
-            bundle_repo = 'lightbend/commercial-monitoring/'
-        grafana = select_bintray_uri('cinnamon-grafana', self.version_args, bundle_repo)
+        bundle_repo = 'lightbend/commercial-monitoring/' if self.version_args and self.version_args[0] == 'snapshot' \
+            else ''
+        bundle_name = 'cinnamon-grafana' if major_version(self.image_version) == 1 else 'cinnamon-grafana-docker'
+        grafana = select_bintray_uri(bundle_name, self.version_args, bundle_repo)
         log.info('Deploying bundle %s..' % grafana['bundle'])
         conduct_main.run(['load', grafana['bundle'], '--disable-instructions'], configure_logging=False)
         conduct_main.run(['run', grafana['name'], '--disable-instructions'], configure_logging=False)
