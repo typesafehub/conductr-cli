@@ -376,7 +376,7 @@ def start_core_instances(core_extracted_dir, bind_addrs):
                 '{}:{}'.format(bind_addrs[0], CONDUCTR_AKKA_REMOTING_PORT)
             ])
 
-        log.info('Staring core {} on {}..'.format(idx, bind_addr))
+        log.info('Starting ConductR core instance {} on {}..'.format(idx, bind_addr))
         pid = subprocess.Popen(commands,
                                cwd=core_extracted_dir,
                                start_new_session=True,
@@ -410,7 +410,7 @@ def start_agent_instances(agent_extracted_dir, bind_addrs):
             '--core-node',
             '{}:{}'.format(bind_addr, CONDUCTR_AKKA_REMOTING_PORT)
         ]
-        log.info('Staring agent {} on {}..'.format(idx, bind_addr))
+        log.info('Starting ConductR agent instance {} on {}..'.format(idx, bind_addr))
         pid = subprocess.Popen(commands,
                                cwd=agent_extracted_dir,
                                start_new_session=True,
