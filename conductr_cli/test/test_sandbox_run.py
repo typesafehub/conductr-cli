@@ -44,8 +44,7 @@ class TestSandboxRunCommand(CliTestCase):
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
 
-        sandbox_run_result = sandbox_run_docker.SandboxRunResult(self.container_names, '192.168.99.100',
-                                                                 nr_of_proxy_instances=1)
+        sandbox_run_result = sandbox_run_docker.SandboxRunResult(self.container_names, '192.168.99.100')
         mock_sandbox_run_docker = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
@@ -75,12 +74,11 @@ class TestSandboxRunCommand(CliTestCase):
         conductr_version = '2.0.0'
 
         mock_feature = MagicMock()
+        mock_feature.ports = [10001]
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
 
-        sandbox_run_result = sandbox_run_jvm.SandboxRunResult([1001], ['192.168.1.1'],
-                                                              [1002], ['192.168.1.1'],
-                                                              nr_of_proxy_instances=1)
+        sandbox_run_result = sandbox_run_jvm.SandboxRunResult([1001], ['192.168.1.1'], [1002], ['192.168.1.1'])
         mock_sandbox_run_jvm = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_start_proxy = MagicMock(return_value=True)
@@ -88,7 +86,8 @@ class TestSandboxRunCommand(CliTestCase):
 
         args = self.default_args.copy()
         args.update({
-            'image_version': conductr_version
+            'image_version': conductr_version,
+            'ports': [3553]
         })
         input_args = MagicMock(**args)
         with \
@@ -96,13 +95,15 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.run', mock_sandbox_run_jvm), \
                 patch('conductr_cli.sandbox_run_jvm.log_run_attempt', mock_log_run_attempt), \
                 patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
-                patch('conductr_cli.sandbox_run.start_proxy', mock_start_proxy):
+                patch('conductr_cli.sandbox_proxy.start_proxy', mock_start_proxy):
             self.assertTrue(sandbox_run.run(input_args))
 
         mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
 
-        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
-        mock_start_proxy.assert_called_once_with(1)
+        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0,
+                                                       DEFAULT_WAIT_RETRIES,
+                                                       DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_start_proxy.assert_called_once_with(proxy_bind_addr='192.168.1.1', proxy_ports=[3553, 10001])
 
         mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, True, 60)
 
@@ -259,31 +260,6 @@ class TestSandboxRunCommand(CliTestCase):
                                                    |Error: Please ensure Oracle JVM 1.8 and above is installed.
                                                    |"""))
         self.assertEqual(expected_output, self.output(stderr))
-
-
-class TestStartProxy(CliTestCase):
-
-    def test_start_proxy(self):
-        stdout = MagicMock()
-        mock_conduct_run = MagicMock()
-
-        args = MagicMock(**{})
-
-        with patch('conductr_cli.conduct_main.run', mock_conduct_run):
-            logging_setup.configure_logging(args, stdout)
-            sandbox_run.start_proxy(3)
-
-        self.assertEqual([
-            call(['load', 'conductr-haproxy', 'conductr-haproxy-dev-mode', '--disable-instructions'], configure_logging=False),
-            call(['run', 'conductr-haproxy', '--scale', '3', '--disable-instructions'], configure_logging=False)
-        ], mock_conduct_run.call_args_list)
-
-        expected_output = strip_margin("""||------------------------------------------------|
-                                          || Starting HAProxy                               |
-                                          ||------------------------------------------------|
-                                          |Deploying bundle conductr-haproxy with configuration conductr-haproxy-dev-mode
-                                          |""")
-        self.assertEqual(expected_output, self.output(stdout))
 
 
 class TestWaitForStart(CliTestCase):

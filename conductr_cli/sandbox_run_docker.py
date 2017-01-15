@@ -9,10 +9,9 @@ import os
 
 
 class SandboxRunResult:
-    def __init__(self, container_names, conductr_host, nr_of_proxy_instances):
+    def __init__(self, container_names, conductr_host):
         self.container_names = container_names
         self.host = conductr_host
-        self.nr_of_proxy_instances = nr_of_proxy_instances
 
     scheme = DEFAULT_SCHEME
     port = DEFAULT_PORT
@@ -27,7 +26,7 @@ def run(args, features):
     nr_of_containers = instance_count(args.image_version, args.nr_of_containers)
     pull_image(args)
     container_names = scale_cluster(args, nr_of_containers, features)
-    return SandboxRunResult(container_names, host.DOCKER_IP, nr_of_proxy_instances=nr_of_containers)
+    return SandboxRunResult(container_names, host.DOCKER_IP)
 
 
 def log_run_attempt(args, run_result, is_started, wait_timeout):

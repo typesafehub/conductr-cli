@@ -26,12 +26,11 @@ SUPPORTED_JVM_VERSION = (1, 8)  # Supports JVM version 1.8 and above.
 
 
 class SandboxRunResult:
-    def __init__(self, core_pids, core_addrs, agent_pids, agent_addrs, nr_of_proxy_instances):
+    def __init__(self, core_pids, core_addrs, agent_pids, agent_addrs):
         self.core_pids = core_pids
         self.core_addrs = core_addrs
         self.agent_pids = agent_pids
         self.agent_addrs = agent_addrs
-        self.nr_of_proxy_instances = nr_of_proxy_instances
         self.host = str(core_addrs[0])
 
     scheme = DEFAULT_SCHEME
@@ -69,9 +68,9 @@ def run(args, features):
     core_pids = start_core_instances(core_extracted_dir, core_addrs)
 
     agent_addrs = bind_addrs[0:nr_of_agent_instances]
-    agent_pids = start_agent_instances(agent_extracted_dir, bind_addrs[0:nr_of_agent_instances])
+    agent_pids = start_agent_instances(agent_extracted_dir, agent_addrs, core_addrs)
 
-    return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs, nr_of_proxy_instances=NR_OF_PROXY_INSTANCE)
+    return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs)
 
 
 def log_run_attempt(args, run_result, is_started, wait_timeout):
@@ -360,7 +359,7 @@ def start_core_instances(core_extracted_dir, bind_addrs):
     return pids
 
 
-def start_agent_instances(agent_extracted_dir, bind_addrs):
+def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs):
     """
     Starts the ConductR agent process.
 
@@ -377,13 +376,14 @@ def start_agent_instances(agent_extracted_dir, bind_addrs):
     log = logging.getLogger(__name__)
     pids = []
     for idx, bind_addr in enumerate(bind_addrs):
+        core_addr = core_addrs[idx] if len(core_addrs) > idx else core_addrs[0]
         commands = [
             '{}/bin/conductr-agent'.format(agent_extracted_dir),
             '-Dconductr.agent.ip={}'.format(bind_addr),
             '--core-node',
-            '{}:{}'.format(bind_addr, CONDUCTR_AKKA_REMOTING_PORT)
+            '{}:{}'.format(core_addr, CONDUCTR_AKKA_REMOTING_PORT)
         ]
-        log.info('Starting ConductR agent instance {} on {}..'.format(idx, bind_addr))
+        log.info('Starting ConductR agent instance {} on {} with core node {}..'.format(idx, bind_addr, core_addr))
         pid = subprocess.Popen(commands,
                                cwd=agent_extracted_dir,
                                start_new_session=True,
