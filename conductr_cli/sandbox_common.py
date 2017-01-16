@@ -1,6 +1,7 @@
 from conductr_cli import terminal
 import os
 from enum import Enum
+from subprocess import CalledProcessError
 
 
 class ConductrComponent(Enum):
@@ -19,9 +20,12 @@ LATEST_CONDUCTR_VERSION = '1.1.11'
 def resolve_running_docker_containers():
     """Resolve running docker containers.
        Return the running container names (e.g. cond-0) in ascending order"""
-    container_ids = terminal.docker_ps(ps_filter='name={}'.format(CONDUCTR_NAME_PREFIX))
-    container_names = [terminal.docker_inspect(container_id, '{{.Name}}')[1:] for container_id in container_ids]
-    return sorted(container_names)
+    try:
+        container_ids = terminal.docker_ps(ps_filter='name={}'.format(CONDUCTR_NAME_PREFIX))
+        container_names = [terminal.docker_inspect(container_id, '{{.Name}}')[1:] for container_id in container_ids]
+        return sorted(container_names)
+    except (AttributeError, CalledProcessError):
+        return []
 
 
 def bundle_http_port():

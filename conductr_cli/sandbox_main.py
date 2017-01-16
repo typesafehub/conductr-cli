@@ -269,8 +269,7 @@ def run():
                              ', '.join("'%s'" % f for f in feature_names)))
         # Docker VM validation
         args.vm_type = docker.vm_type()
-        if vars(args).get('func').__name__ == 'run' \
-                and major_version(args.image_version) == '1':
+        if vars(args).get('func').__name__ == 'run' and major_version(args.image_version) == 1:
             validate_docker_vm(args.vm_type)
 
         result = args.func(args)
