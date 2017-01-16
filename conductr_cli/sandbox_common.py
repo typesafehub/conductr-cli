@@ -1,12 +1,8 @@
 from conductr_cli import terminal
+from conductr_cli.resolvers.bintray_resolver import BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, \
+    BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
 import os
-from enum import Enum
 from subprocess import CalledProcessError
-
-
-class ConductrComponent(Enum):
-    CORE = 1
-    AGENT = 2
 
 
 CONDUCTR_NAME_PREFIX = 'cond-'
@@ -14,7 +10,20 @@ CONDUCTR_PORTS = {9004,  # ConductR internal akka remoting
                   9005,  # ConductR controlServer
                   9006}  # ConductR bundleStreamServer
 CONDUCTR_DEV_IMAGE = 'typesafe-docker-registry-for-subscribers-only.bintray.io/conductr/conductr'
-LATEST_CONDUCTR_VERSION = '1.1.11'
+
+
+def resolve_conductr_info(image_dir):
+    core_info = {
+        'type': 'core',
+        'extraction_dir': '{}/core'.format(image_dir),
+        'bintray_package_name': BINTRAY_CONDUCTR_CORE_PACKAGE_NAME
+    }
+    agent_info = {
+        'type': 'agent',
+        'extraction_dir': '{}/agent'.format(image_dir),
+        'bintray_package_name': BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
+    }
+    return core_info, agent_info
 
 
 def resolve_running_docker_containers():

@@ -1,8 +1,8 @@
-from conductr_cli import sandbox_stop_docker
+from conductr_cli import sandbox_stop_docker, sandbox_stop_jvm
 
 
 def stop(args):
     """`sandbox stop` command"""
-
-    sandbox_stop_docker.stop(args)
-    return True
+    is_docker_success = sandbox_stop_docker.stop(args)
+    is_jvm_success = sandbox_stop_jvm.stop(args)
+    return is_docker_success and is_jvm_success

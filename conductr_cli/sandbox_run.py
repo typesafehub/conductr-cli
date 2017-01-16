@@ -25,7 +25,6 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 @validation.handle_jvm_validation_error
 def run(args):
     """`sandbox run` command"""
-
     is_conductr_v1 = major_version(args.image_version) == 1
     features = sandbox_features.collect_features(args.features, args.image_version)
 
