@@ -55,11 +55,15 @@ def run(args, features):
     nr_of_core_instances, nr_of_agent_instances = instance_count(args.image_version, args.nr_of_containers)
 
     validate_jvm_support()
+
+    sandbox_stop.stop(args)
+
+    log = logging.getLogger(__name__)
+    log.info(headline('Starting ConductR'))
+
     bind_addrs = find_bind_addrs(max(nr_of_core_instances, nr_of_agent_instances), args.addr_range)
 
     core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version)
-
-    sandbox_stop.stop(args)
 
     core_addrs = bind_addrs[0:nr_of_core_instances]
     core_pids = start_core_instances(core_extracted_dir, core_addrs)
