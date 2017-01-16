@@ -14,7 +14,7 @@ Feature attributes:
     start (method): Start the feature as needed. Called after the sandbox has started.
 """
 
-from conductr_cli import conduct_main
+from conductr_cli import conduct_main, docker
 from conductr_cli.sandbox_common import major_version
 from conductr_cli.screen_utils import headline
 import logging
@@ -106,6 +106,9 @@ class LoggingFeature:
         else:
             log = logging.getLogger(__name__)
             log.info(headline('Starting logging feature based on elasticsearch and kibana'))
+            log.info('conductr-kibana bundle is packaged as a Docker image. Checking Docker requirements..')
+            docker.validate_docker_vm(docker.vm_type())
+            log.info('Docker is installed and configured correctly.')
             elasticsearch = select_bintray_uri('conductr-elasticsearch', self.version_args)
             log.info('Deploying bundle %s..' % elasticsearch['bundle'])
             conduct_main.run(['load', elasticsearch['bundle'], '--disable-instructions'], configure_logging=False)
