@@ -1,9 +1,5 @@
 import os
-from conductr_cli import terminal, validation, docker_machine, docker
 from conductr_cli.constants import DEFAULT_PORT, DEFAULT_SANDBOX_ADDR_RANGE
-from conductr_cli.exceptions import DockerMachineNotRunningError
-from subprocess import CalledProcessError
-from conductr_cli.docker import DockerVmType
 import ipaddress
 import socket
 import platform
@@ -12,6 +8,7 @@ import platform
 CONDUCTR_HOST = 'CONDUCTR_HOST'
 CONDUCTR_IP = 'CONDUCTR_IP'
 CONDUCTR_LISTEN_CHECK_TIMEOUT = 0.1  # Socket timeout (in seconds) for checking if ConductR is listening on an address.
+DOCKER_IP = '127.0.0.1'
 
 
 def resolve_default_host():
@@ -24,35 +21,11 @@ def resolve_default_ip():
         addr = list(addr_range.hosts())[0]
         return addr.exploded if is_listening(addr, int(DEFAULT_PORT)) else None
 
-    def resolve_from_docker():
-        vm_type = docker.vm_type()
-        return resolve_ip_by_vm_type(vm_type)
-
     def resolve():
         from_addr_range = result_from_default_addr_range()
-        return from_addr_range if from_addr_range else resolve_from_docker()
+        return from_addr_range if from_addr_range else DOCKER_IP
 
     return os.getenv(CONDUCTR_IP, resolve())
-
-
-def resolve_ip_by_vm_type(vm_type):
-    if vm_type is DockerVmType.NONE or vm_type is DockerVmType.DOCKER_ENGINE:
-        return '127.0.0.1'
-    elif vm_type is DockerVmType.DOCKER_MACHINE:
-        return with_docker_machine()
-
-
-@validation.handle_docker_machine_not_running_error
-def with_docker_machine():
-    try:
-        vm_name = docker_machine.vm_name()
-        output = terminal.docker_machine_ip(vm_name)
-        if output:
-            return output
-        else:
-            raise DockerMachineNotRunningError('docker-machine host is not running.')
-    except CalledProcessError:
-        raise DockerMachineNotRunningError('docker-machine host is not running.')
 
 
 def loopback_device_name():
