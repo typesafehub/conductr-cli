@@ -101,7 +101,6 @@ def start_conductr_haproxy():
     log = logging.getLogger(__name__)
     bundle_name = 'conductr-haproxy'
     configuration_name = 'conductr-haproxy-dev-mode'
-    log.info(headline('Starting ConductR HAProxy'))
     log.info('Deploying bundle {} with configuration {}'.format(bundle_name, configuration_name))
     conduct_main.run(['load', bundle_name, configuration_name, '--disable-instructions'], configure_logging=False)
     conduct_main.run(['run', bundle_name, '--disable-instructions'], configure_logging=False)
