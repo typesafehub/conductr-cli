@@ -1,6 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_proxy
 from unittest.mock import call, patch, MagicMock
+from subprocess import CalledProcessError
 import ipaddress
 
 
@@ -48,8 +49,9 @@ class TestStopProxy(CliTestCase):
                 patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
                 patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
             logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.stop_proxy()
+            self.assertTrue(sandbox_proxy.stop_proxy())
 
+        mock_get_running_haproxy.assert_called_once_with()
         mock_validate_docker_present.assert_called_once_with()
         mock_docker_rm.assert_called_once_with(['sandbox-haproxy'])
 
@@ -73,8 +75,51 @@ class TestStopProxy(CliTestCase):
                 patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
                 patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
             logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.stop_proxy()
+            self.assertTrue(sandbox_proxy.stop_proxy())
 
+        mock_get_running_haproxy.assert_called_once_with()
+        mock_validate_docker_present.assert_not_called()
+        mock_docker_rm.assert_not_called()
+
+        self.assertEqual('', self.output(stdout))
+
+    def test_called_process_error(self):
+        stdout = MagicMock()
+
+        mock_get_running_haproxy = MagicMock(side_effect=CalledProcessError(1, 'test'))
+        mock_validate_docker_present = MagicMock()
+        mock_docker_rm = MagicMock()
+
+        args = MagicMock(**{})
+
+        with patch('conductr_cli.sandbox_proxy.validate_docker_present', mock_validate_docker_present), \
+                patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
+                patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
+            logging_setup.configure_logging(args, stdout)
+            self.assertFalse(sandbox_proxy.stop_proxy())
+
+        mock_get_running_haproxy.assert_called_once_with()
+        mock_validate_docker_present.assert_not_called()
+        mock_docker_rm.assert_not_called()
+
+        self.assertEqual('', self.output(stdout))
+
+    def test_attribute_error(self):
+        stdout = MagicMock()
+
+        mock_get_running_haproxy = MagicMock(side_effect=AttributeError('test'))
+        mock_validate_docker_present = MagicMock()
+        mock_docker_rm = MagicMock()
+
+        args = MagicMock(**{})
+
+        with patch('conductr_cli.sandbox_proxy.validate_docker_present', mock_validate_docker_present), \
+                patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
+                patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
+            logging_setup.configure_logging(args, stdout)
+            self.assertFalse(sandbox_proxy.stop_proxy())
+
+        mock_get_running_haproxy.assert_called_once_with()
         mock_validate_docker_present.assert_not_called()
         mock_docker_rm.assert_not_called()
 
