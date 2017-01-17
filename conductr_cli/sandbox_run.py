@@ -37,7 +37,7 @@ def run(args):
             for feature in features:
                 feature_ports.extend(feature.ports)
 
-            proxy_ports = sorted([] + args.ports + feature_ports)
+            proxy_ports = sorted(args.ports + feature_ports)
             sandbox_proxy.start_proxy(proxy_bind_addr=run_result.core_addrs[0],
                                       proxy_ports=proxy_ports)
 
