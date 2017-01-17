@@ -6,7 +6,6 @@ from conductr_cli import \
     conduct_events, conduct_acls, conduct_dcos, host, logging_setup,\
     conduct_url, custom_settings
 from conductr_cli.constants import \
-    CONDUCTR_SCHEME, \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR,\
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR,\
@@ -444,14 +443,8 @@ def run(_args=[], configure_logging=True):
             args.conductr_auth = custom_settings.load_conductr_credentials(args)
 
             # Ensure HTTPS is used if authentication is configured
-            if args.conductr_auth and not args.scheme == 'https':
-                # Configure logging so error message can be logged properly before exiting with failure
-                logging_setup.configure_logging(args)
-                log = logging.getLogger(__name__)
-                log.error('Unable to use Basic Auth over {}'.format(args.scheme))
-                log.error('Please ensure either `{}` environment is set to `https`,'
-                          ' or specify https using `--scheme https` argument'.format(CONDUCTR_SCHEME))
-                exit(1)
+            if args.conductr_auth and args.scheme != 'https':
+                args.scheme = 'https'
 
             args.server_verification_file = custom_settings.load_server_ssl_verification_file(args)
             # Ensure verification file exists if specified
