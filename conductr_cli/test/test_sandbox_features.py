@@ -3,6 +3,7 @@ from unittest.mock import call, patch, MagicMock
 from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature,\
     LoggingFeature, MonitoringFeature, \
     collect_features, select_bintray_uri
+from conductr_cli.docker import DockerVmType
 from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 
 
@@ -79,10 +80,14 @@ class TestLoggingFeature(TestCase):
 
         self.assertEqual(run_mock.call_args_list, [])
 
-    def test_start_v2(self):
+    def test_start_v2_success(self):
         run_mock = MagicMock()
+        vm_type_mock = MagicMock(return_value=DockerVmType.DOCKER_ENGINE)
+        validate_docker_vm_mock = MagicMock()
 
-        with patch('conductr_cli.conduct_main.run', run_mock):
+        with patch('conductr_cli.conduct_main.run', run_mock), \
+                patch('conductr_cli.docker.vm_type', vm_type_mock), \
+                patch('conductr_cli.docker.validate_docker_vm', validate_docker_vm_mock):
             LoggingFeature([], '2.0.0').start()
 
         self.assertEqual(run_mock.call_args_list, [
@@ -91,6 +96,19 @@ class TestLoggingFeature(TestCase):
             call(['load', 'conductr-kibana', '--disable-instructions'], configure_logging=False),
             call(['run', 'conductr-kibana', '--disable-instructions'], configure_logging=False)
         ])
+
+    def test_start_v2_docker_validation_failed(self):
+        run_mock = MagicMock()
+        vm_type_mock = MagicMock(return_value=DockerVmType.DOCKER_ENGINE)
+        validate_docker_vm_mock = MagicMock(side_effect=SystemExit)
+
+        with patch('conductr_cli.conduct_main.run', run_mock), \
+                patch('conductr_cli.docker.vm_type', vm_type_mock), \
+                patch('conductr_cli.docker.validate_docker_vm', validate_docker_vm_mock), \
+                self.assertRaises(SystemExit):
+            LoggingFeature([], '2.0.0').start()
+
+        self.assertEqual(run_mock.call_args_list, [])
 
 
 class TestLiteLoggingFeature(TestCase):
