@@ -6,6 +6,7 @@ from conductr_cli.exceptions import BindAddressNotFoundError, BintrayUnreachable
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM, BINTRAY_LIGHTBEND_ORG, \
     BINTRAY_CONDUCTR_REPO
+from conductr_cli.sandbox_common import flatten
 from conductr_cli.screen_utils import headline
 from requests.exceptions import HTTPError, ConnectionError
 from subprocess import CalledProcessError
@@ -65,10 +66,15 @@ def run(args, features):
     core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version)
 
     core_addrs = bind_addrs[0:nr_of_core_instances]
-    core_pids = start_core_instances(core_extracted_dir, core_addrs)
+    core_pids = start_core_instances(core_extracted_dir, core_addrs, args.conductr_roles, features, args.log_level)
 
     agent_addrs = bind_addrs[0:nr_of_agent_instances]
-    agent_pids = start_agent_instances(agent_extracted_dir, agent_addrs, core_addrs)
+    agent_pids = start_agent_instances(agent_extracted_dir,
+                                       bind_addrs[0:nr_of_agent_instances],
+                                       core_addrs,
+                                       args.conductr_roles,
+                                       features,
+                                       args.log_level)
 
     return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs)
 
@@ -321,7 +327,7 @@ def obtain_sandbox_image(image_dir, image_version):
     return core_extracted_dir, agent_extracted_dir
 
 
-def start_core_instances(core_extracted_dir, bind_addrs):
+def start_core_instances(core_extracted_dir, bind_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR core process.
 
@@ -333,15 +339,34 @@ def start_core_instances(core_extracted_dir, bind_addrs):
     :param core_extracted_dir: the directory containing the files expanded from core's binary .tgz
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
+    :param conductr_roles: list of roles specified by the end user.
+    :param features: list of features which needs to be started.
+                     This method won't start the feature, but will ensure arguments from the feature flags will be
+                     passed to the process accordingly
+    :param log_level: the log level of the ConductR core process.
     :return: the pids of the core instances.
     """
     log = logging.getLogger(__name__)
     pids = []
+
+    feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
+    # Role matching is enabled if there's role present for any of the ConductR agent instances.
+    # We will check the first instance of the ConductR agent since it's where the bundles from feature flags
+    # will be executing from.
+    roles_enabled = len(sandbox_common.resolve_conductr_roles_by_instance(conductr_roles,
+                                                                          feature_conductr_roles, 0)) > 0
+
+    core_args = flatten([feature.conductr_args() for feature in features])
+
     for idx, bind_addr in enumerate(bind_addrs):
         commands = [
             '{}/bin/conductr'.format(core_extracted_dir),
-            '-Dconductr.ip={}'.format(bind_addr)
+            '-Dakka.loglevel={}'.format(log_level),
+            '-Dconductr.ip={}'.format(bind_addr),
+            '-Dconductr.resource-provider.match-offer-roles={}'.format('on' if roles_enabled else 'off')
         ]
+        if core_args:
+            commands.extend(core_args)
         if idx > 0:
             commands.extend([
                 '--seed',
@@ -359,7 +384,7 @@ def start_core_instances(core_extracted_dir, bind_addrs):
     return pids
 
 
-def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs):
+def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR agent process.
 
@@ -371,19 +396,34 @@ def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs):
     :param agent_extracted_dir: the directory containing the files expanded from agent's binary .tgz
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
+    :param conductr_roles: list of roles specified by the end user.
+    :param features: list of features which needs to be started.
+                     This method won't start the feature, but if the roles is enabled (i.e. specified by the end user)
+                     the agent must have correct roles assigned in order for features to be started correctly.
+                     This method will also ensure extra arguments from the features are being passed into the agent
+                     process.
+    :param log_level: the log level of the ConductR agent process
     :return: the pids of the agent instances.
     """
     log = logging.getLogger(__name__)
     pids = []
+    feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
+    agent_args = flatten([feature.conductr_args() for feature in features])
     for idx, bind_addr in enumerate(bind_addrs):
         core_addr = core_addrs[idx] if len(core_addrs) > idx else core_addrs[0]
+        agent_roles = sandbox_common.resolve_conductr_roles_by_instance(conductr_roles,
+                                                                        feature_conductr_roles, idx)
+
         commands = [
             '{}/bin/conductr-agent'.format(agent_extracted_dir),
+            '-Dakka.loglevel={}'.format(log_level),
             '-Dconductr.agent.ip={}'.format(bind_addr),
             '--core-node',
             '{}:{}'.format(core_addr, CONDUCTR_AKKA_REMOTING_PORT)
-        ]
-        log.info('Starting ConductR agent instance {} on {} with core node {}..'.format(idx, bind_addr, core_addr))
+        ] + [
+            '-Dconductr.agent.roles.{}={}'.format(j, role) for j, role in enumerate(agent_roles)
+        ] + agent_args
+        log.info('Starting ConductR agent instance {} on {}..'.format(idx, bind_addr))
         pid = subprocess.Popen(commands,
                                cwd=agent_extracted_dir,
                                start_new_session=True,

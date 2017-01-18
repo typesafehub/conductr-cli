@@ -1,7 +1,7 @@
-from conductr_cli import host, sandbox_stop, terminal
+from conductr_cli import host, sandbox_common, sandbox_stop, terminal
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.exceptions import InstanceCountError
-from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, CONDUCTR_NAME_PREFIX, CONDUCTR_PORTS
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, CONDUCTR_NAME_PREFIX, CONDUCTR_PORTS, flatten
 from conductr_cli.screen_utils import headline
 
 import logging
@@ -92,7 +92,8 @@ def start_nodes(args, nr_of_containers, features):
         log.info('Starting container {container}{port_desc}..'.format(container=container_name,
                                                                       port_desc=ports_desc))
         cond0_ip = inspect_cond0_ip() if i > 0 else None
-        conductr_container_roles = resolve_conductr_roles_by_container(args.conductr_roles, feature_conductr_roles, i)
+        conductr_container_roles = sandbox_common.resolve_conductr_roles_by_instance(args.conductr_roles,
+                                                                                     feature_conductr_roles, i)
         run_conductr_cmd(
             i,
             nr_of_containers,
@@ -117,10 +118,6 @@ def collect_ports(args, features):
     return set(args.ports + feature_ports)
 
 
-def flatten(list):
-    return [item for sublist in list for item in sublist]
-
-
 def map_port(instance, port):
     current_port_str_rev = ''.join(reversed(str(port)))
     current_second_last_nr = int(current_port_str_rev[1])
@@ -131,28 +128,6 @@ def map_port(instance, port):
 
 def inspect_cond0_ip():
     return terminal.docker_inspect('{}0'.format(CONDUCTR_NAME_PREFIX), '{{.NetworkSettings.IPAddress}}')
-
-
-def resolve_conductr_roles_by_container(user_conductr_roles, feature_conductr_roles, instance):
-    if not user_conductr_roles:
-        # No ConductR roles have been specified => Return an empty list
-        return []
-    else:
-        if instance + 1 <= len(user_conductr_roles):
-            # Roles have been specified for the current ConductR instance => Get and use these roles.
-            container_conductr_roles = user_conductr_roles[instance]
-        else:
-            # The current ConductR instance is greater than the length of conductr_roles.
-            # In this case the roles of conductr_roles are subsequently applied to the remaining instances.
-            remainder = (instance + 1) % len(user_conductr_roles)
-            remaining_instance = len(user_conductr_roles) if remainder == 0 else remainder
-            container_conductr_roles = user_conductr_roles[remaining_instance - 1]
-
-        # Feature roles are only added to the seed node.
-        if instance == 0:
-            container_conductr_roles = container_conductr_roles + feature_conductr_roles
-
-        return container_conductr_roles
 
 
 def run_conductr_cmd(instance, nr_of_instances, container_name, cond0_ip, envs, image, log_level, ports,
