@@ -142,7 +142,7 @@ def validate_jvm_support():
     """
     try:
         raw_output = subprocess.getoutput('java -version')
-        lines = raw_output.split(os.linesep)
+        lines = raw_output.splitlines()
         if lines:
             first_line = lines[0]
             parts = first_line.split(' ')
