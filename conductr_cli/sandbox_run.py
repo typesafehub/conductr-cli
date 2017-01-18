@@ -26,7 +26,7 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 def run(args):
     """`sandbox run` command"""
     is_conductr_v1 = major_version(args.image_version) == 1
-    features = sandbox_features.collect_features(args.features, args.image_version)
+    features = sandbox_features.collect_features(args.features, args.image_version, args.offline_mode)
     sandbox = sandbox_run_docker if is_conductr_v1 else sandbox_run_jvm
 
     run_result = sandbox.run(args, features)

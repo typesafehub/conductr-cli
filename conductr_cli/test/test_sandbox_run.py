@@ -18,6 +18,7 @@ class TestSandboxRunCommand(CliTestCase):
         'image': CONDUCTR_DEV_IMAGE,
         'log_level': 'info',
         'nr_of_containers': 1,
+        'offline_mode': False,
         'ports': [],
         'bundle_http_port': 9000,
         'features': [],

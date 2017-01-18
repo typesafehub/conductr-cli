@@ -34,9 +34,10 @@ class VisualizationFeature:
     ports = [9999]
     dependencies = []
 
-    def __init__(self, version_args, image_version):
+    def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
         self.image_version = image_version
+        self.offline_mode = offline_mode
 
     def conductr_feature_envs(self):
         if major_version(self.image_version) == 1:
@@ -60,7 +61,9 @@ class VisualizationFeature:
             log.info(headline('Starting visualization feature'))
             visualizer = select_bintray_uri('visualizer', self.version_args)
             log.info('Deploying bundle %s..' % visualizer['bundle'])
-            conduct_main.run(['load', visualizer['bundle'], '--disable-instructions'], configure_logging=False)
+            load_command = ['load', visualizer['bundle'], '--disable-instructions'] + \
+                parse_offline_mode_arg(self.offline_mode)
+            conduct_main.run(load_command, configure_logging=False)
             conduct_main.run(['run', visualizer['name'], '--disable-instructions'], configure_logging=False)
 
 
@@ -78,9 +81,10 @@ class LoggingFeature:
     ports = [5601, 9200]
     dependencies = []
 
-    def __init__(self, version_args, image_version):
+    def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
         self.image_version = image_version
+        self.offline_mode = offline_mode
 
     def conductr_feature_envs(self):
         if major_version(self.image_version) == 1:
@@ -111,11 +115,15 @@ class LoggingFeature:
             log.info('Docker is installed and configured correctly.')
             elasticsearch = select_bintray_uri('conductr-elasticsearch', self.version_args)
             log.info('Deploying bundle %s..' % elasticsearch['bundle'])
-            conduct_main.run(['load', elasticsearch['bundle'], '--disable-instructions'], configure_logging=False)
+            elasticsearch_load_command = ['load', elasticsearch['bundle'], '--disable-instructions'] + \
+                parse_offline_mode_arg(self.offline_mode)
+            conduct_main.run(elasticsearch_load_command, configure_logging=False)
             conduct_main.run(['run', elasticsearch['name'], '--disable-instructions'], configure_logging=False)
             kibana = select_bintray_uri('conductr-kibana', self.version_args)
             log.info('Deploying bundle %s..' % kibana['bundle'])
-            conduct_main.run(['load', kibana['bundle'], '--disable-instructions'], configure_logging=False)
+            kibana_load_command = ['load', kibana['bundle'], '--disable-instructions'] + \
+                parse_offline_mode_arg(self.offline_mode)
+            conduct_main.run(kibana_load_command, configure_logging=False)
             conduct_main.run(['run', kibana['name'], '--disable-instructions'], configure_logging=False)
 
 
@@ -129,9 +137,10 @@ class LiteLoggingFeature:
     ports = []
     dependencies = []
 
-    def __init__(self, version_args, image_version):
+    def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
         self.image_version = image_version
+        self.offline_mode = offline_mode
 
     @staticmethod
     def conductr_feature_envs():
@@ -157,7 +166,9 @@ class LiteLoggingFeature:
             log.info(headline('Starting logging feature based on eslite'))
             eslite = select_bintray_uri('eslite', self.version_args)
             log.info('Deploying bundle %s..' % eslite['bundle'])
-            conduct_main.run(['load', eslite['bundle'], '--disable-instructions'], configure_logging=False)
+            load_command = ['load', eslite['bundle'], '--disable-instructions'] + \
+                parse_offline_mode_arg(self.offline_mode)
+            conduct_main.run(load_command, configure_logging=False)
             conduct_main.run(['run', eslite['name'], '--disable-instructions'], configure_logging=False)
 
 
@@ -181,9 +192,10 @@ class MonitoringFeature:
     conductr_roles = []
     dependencies = [LoggingFeature.name]
 
-    def __init__(self, version_args, image_version):
+    def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
         self.image_version = image_version
+        self.offline_mode = offline_mode
 
     @staticmethod
     def conductr_feature_envs():
@@ -205,7 +217,9 @@ class MonitoringFeature:
         bundle_name = 'cinnamon-grafana' if major_version(self.image_version) == 1 else 'cinnamon-grafana-docker'
         grafana = select_bintray_uri(bundle_name, self.version_args, bundle_repo)
         log.info('Deploying bundle %s..' % grafana['bundle'])
-        conduct_main.run(['load', grafana['bundle'], '--disable-instructions'], configure_logging=False)
+        load_command = ['load', grafana['bundle'], '--disable-instructions'] + \
+            parse_offline_mode_arg(self.offline_mode)
+        conduct_main.run(load_command, configure_logging=False)
         conduct_main.run(['run', grafana['name'], '--disable-instructions'], configure_logging=False)
 
 
@@ -215,7 +229,7 @@ feature_names = [feature.name for feature in feature_classes]
 feature_lookup = {feature.name: feature for feature in feature_classes}
 
 
-def collect_features(feature_args, image_version):
+def collect_features(feature_args, image_version, offline_mode):
     """Collect all enabled features.
 
     Collect features recursively with topological sort to include all dependencies in order.
@@ -225,6 +239,7 @@ def collect_features(feature_args, image_version):
             Note that each feature has a list of arguments, the first is the feature name,
             followed by optional arguments. For example: `[['logging'], ['monitoring', '2.1.0']]`.
         image_version: Version of the ConductR docker image.
+        offline_mode: The offline mode flag
 
     Returns:
         list of obj: All enabled features, initialised with feature arguments, in dependency order.
@@ -241,14 +256,14 @@ def collect_features(feature_args, image_version):
             if feature_name not in visited:
                 visited.add(feature_name)
                 args = feature_args[feature_name] if feature_name in feature_args else []
-                feature = feature_lookup[feature_name](args, image_version)
+                feature = feature_lookup[feature_name](args, image_version, offline_mode)
                 visit(feature.dependencies)
                 features.append(feature)
 
     def add_logging_lite(features):
         names = [feature.name for feature in features]
         if LoggingFeature.name not in names:
-            features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version))
+            features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version, offline_mode))
 
     visit(feature_names)
     add_logging_lite(features)
@@ -273,3 +288,10 @@ def select_bintray_uri(name, version_args=[], bundle_repo=''):
         bundle_version = ':' + bundle_version
     bundle_expression = bundle_repo + name + bundle_version
     return {'name': name, 'bundle': bundle_expression}
+
+
+def parse_offline_mode_arg(offline_mode):
+    if offline_mode:
+        return ['--offline']
+    else:
+        return []

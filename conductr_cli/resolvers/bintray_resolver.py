@@ -36,7 +36,7 @@ def resolve_bundle(cache_dir, uri):
         return False, None, None
 
 
-def load_bundle_from_cache(cache_dir, uri):
+def load_bundle_from_cache(cache_dir, uri, offline_mode=False):
     # When the supplied uri points to a local file, don't load from cache so file can be used as is.
     if is_local_file(uri):
         return False, None, None
@@ -49,7 +49,7 @@ def load_bundle_from_cache(cache_dir, uri):
                                                                  compatibility_version=compatibility_version,
                                                                  digest=digest)
             if bundle_download_url:
-                return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
+                return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url, offline_mode)
             else:
                 return False, None, None
         except MalformedBundleUriError:
@@ -75,7 +75,7 @@ def resolve_bundle_configuration(cache_dir, uri):
         return False, None, None
 
 
-def load_bundle_configuration_from_cache(cache_dir, uri):
+def load_bundle_configuration_from_cache(cache_dir, uri, offline_mode=False):
     # When the supplied uri points to a local file, don't load from cache so file can be used as is.
     if is_local_file(uri):
         return False, None, None
@@ -89,7 +89,7 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
                                                                  compatibility_version=compatibility_version,
                                                                  digest=digest)
             if bundle_download_url:
-                return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url)
+                return uri_resolver.load_bundle_from_cache(cache_dir, bundle_download_url, offline_mode)
             else:
                 return False, None, None
         except MalformedBundleUriError:

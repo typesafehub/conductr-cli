@@ -271,7 +271,8 @@ class TestLoadBundleFromCache(TestCase):
         bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
                                                         None, 'v1', 'digest')
         load_bundle_from_cache_mock.assert_called_with('/cache-dir',
-                                                       'https://dl.bintray.com/typesafe/bundle/download.zip')
+                                                       'https://dl.bintray.com/typesafe/bundle/download.zip',
+                                                       False)
 
     def test_bintray_version_not_found(self):
         exists_mock = MagicMock(return_value=False)
@@ -404,7 +405,8 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
                                                         'bundle-name', None, 'v1', 'digest')
         load_bundle_from_cache_mock.assert_called_with('/cache-dir',
-                                                       'https://dl.bintray.com/typesafe/bundle-configuration/download.zip')
+                                                       'https://dl.bintray.com/typesafe/bundle-configuration/download.zip',
+                                                       False)
 
     def test_bintray_version_not_found(self):
         exists_mock = MagicMock(return_value=False)

@@ -45,6 +45,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'verbose': False,
             'quiet': False,
             'no_wait': False,
+            'offline_mode': False,
             'long_ids': False,
             'command': 'conduct',
             'cli_parameters': '',
@@ -125,9 +126,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
             [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
         )
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
-                                                             config_file)
+                                                             config_file, self.offline_mode)
         expected_files = self.default_files + [('configuration', ('config.zip', 1))]
         expected_files[4] = ('bundleName', 'overlaid-name')
         create_multipart_mock.assert_called_with(self.conduct_load_logger, expected_files)
@@ -143,6 +145,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
     def test_success_no_wait(self):
         self.base_test_success_no_wait()
+
+    def test_success_offline_mode(self):
+        self.base_test_success_offline_mode()
 
     def test_failure(self):
         self.base_test_failure()
@@ -176,7 +181,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Unable to parse bundle.conf.
@@ -203,7 +209,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Unable to parse bundle.conf.
@@ -230,7 +237,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Unable to parse bundle.conf.
@@ -257,7 +265,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Unable to parse bundle.conf.
@@ -285,7 +294,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Unable to parse bundle.conf.

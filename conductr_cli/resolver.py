@@ -6,13 +6,14 @@ import logging
 
 # Try to resolve from local file system before we attempting resolution using bintray
 DEFAULT_RESOLVERS = [uri_resolver, bintray_resolver]
+OFFLINE_RESOLVERS_EXCLUSION = [bintray_resolver]
 
 
-def resolve_bundle(custom_settings, cache_dir, uri):
-    all_resolvers = resolver_chain(custom_settings)
+def resolve_bundle(custom_settings, cache_dir, uri, offline_mode=False):
+    all_resolvers = resolver_chain(custom_settings, offline_mode)
 
     for resolver in all_resolvers:
-        is_cached, bundle_file_name, cached_bundle = resolver.load_bundle_from_cache(cache_dir, uri)
+        is_cached, bundle_file_name, cached_bundle = resolver.load_bundle_from_cache(cache_dir, uri, offline_mode)
         if is_cached:
             return bundle_file_name, cached_bundle
 
@@ -24,12 +25,12 @@ def resolve_bundle(custom_settings, cache_dir, uri):
     raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
 
 
-def resolve_bundle_configuration(custom_settings, cache_dir, uri):
+def resolve_bundle_configuration(custom_settings, cache_dir, uri, offline_mode=False):
     all_resolvers = resolver_chain(custom_settings)
 
     for resolver in all_resolvers:
         is_cached, bundle_configuration_file_name, cached_bundle = \
-            resolver.load_bundle_configuration_from_cache(cache_dir, uri)
+            resolver.load_bundle_configuration_from_cache(cache_dir, uri, offline_mode)
         if is_cached:
             return bundle_configuration_file_name, cached_bundle
 
@@ -64,7 +65,7 @@ def continuous_delivery_uri(custom_settings, resolved_version):
     raise ContinuousDeliveryError('Unable to form Continuous Delivery uri using {}'.format(resolved_version))
 
 
-def resolver_chain(custom_settings):
+def resolver_chain(custom_settings, offline_mode):
     log = logging.getLogger(__name__)
     if custom_settings is not None and 'resolvers' in custom_settings:
         resolver_names = custom_settings.get_list('resolvers')
@@ -72,5 +73,8 @@ def resolver_chain(custom_settings):
             log.info('Using custom bundle resolver chain {}'.format(resolver_names))
             custom_resolver_chain = [importlib.import_module(resolver_name) for resolver_name in resolver_names]
             return custom_resolver_chain
-
-    return DEFAULT_RESOLVERS
+    else:
+        if offline_mode:
+            return list(set(DEFAULT_RESOLVERS) - set(OFFLINE_RESOLVERS_EXCLUSION))
+        else:
+            return DEFAULT_RESOLVERS
