@@ -4,7 +4,7 @@ import ipaddress
 import re
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
-from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR
+from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_OFFLINE_MODE
 from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_ps, logging_setup, docker, version
 from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
 
@@ -75,6 +75,14 @@ def build_parser():
                                  'and y is a number of agent instances\n'
                                  'For ConductR 1, this corresponds to the number of nodes.',
                             metavar='')
+    run_parser.add_argument('--offline',
+                            default=DEFAULT_OFFLINE_MODE,
+                            dest='offline_mode',
+                            action='store_true',
+                            help='Enables offline mode to resolve bundles only locally '
+                                 'either by file uri or from the cache directory. '
+                                 'Defaults to environment variable CONDUCTR_OFFLINE_MODE. '
+                                 'If not set the default is False.')
     run_parser.add_argument('-p', '--port',
                             dest='ports',
                             action='append',

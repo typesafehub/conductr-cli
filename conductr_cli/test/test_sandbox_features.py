@@ -10,30 +10,30 @@ from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 class TestFeatures(TestCase):
     def test_collect_features(self):
         self.assertEqual([LiteLoggingFeature],
-                         [type(f) for f in collect_features([], LATEST_CONDUCTR_VERSION)])
+                         [type(f) for f in collect_features([], LATEST_CONDUCTR_VERSION, False)])
 
         self.assertEqual([LiteLoggingFeature, VisualizationFeature],
-                         [type(f) for f in collect_features([['visualization']], LATEST_CONDUCTR_VERSION)])
+                         [type(f) for f in collect_features([['visualization']], LATEST_CONDUCTR_VERSION, False)])
 
         self.assertEqual([LoggingFeature],
-                         [type(f) for f in collect_features([['logging']], LATEST_CONDUCTR_VERSION)])
+                         [type(f) for f in collect_features([['logging']], LATEST_CONDUCTR_VERSION, False)])
 
         # enable dependencies
         self.assertEqual([LoggingFeature, MonitoringFeature],
-                         [type(f) for f in collect_features([['monitoring']], LATEST_CONDUCTR_VERSION)])
+                         [type(f) for f in collect_features([['monitoring']], LATEST_CONDUCTR_VERSION, False)])
 
         # allow explicit listing of dependencies
         self.assertEqual([LoggingFeature, MonitoringFeature],
-                         [type(f) for f in collect_features([['logging'], ['monitoring']], LATEST_CONDUCTR_VERSION)])
+                         [type(f) for f in collect_features([['logging'], ['monitoring']], LATEST_CONDUCTR_VERSION, False)])
 
         # topological ordering for dependencies
         self.assertEqual([LoggingFeature, MonitoringFeature],
-                         [type(f) for f in collect_features([['monitoring'], ['logging']], LATEST_CONDUCTR_VERSION)])
+                         [type(f) for f in collect_features([['monitoring'], ['logging']], LATEST_CONDUCTR_VERSION, False)])
 
         # topological ordering and ignore duplicates
         self.assertEqual([LoggingFeature, MonitoringFeature, VisualizationFeature],
                          [type(f) for f in collect_features([['monitoring'], ['visualization'], ['logging'], ['monitoring']],
-                                                            LATEST_CONDUCTR_VERSION)])
+                                                            LATEST_CONDUCTR_VERSION, False)])
 
     def test_select_bintray_uri(self):
         self.assertEqual('cinnamon-grafana', select_bintray_uri('cinnamon-grafana')['name'])
@@ -55,7 +55,7 @@ class TestVisualizationFeature(TestCase):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
-            VisualizationFeature([], LATEST_CONDUCTR_VERSION).start()
+            VisualizationFeature([], LATEST_CONDUCTR_VERSION, False).start()
 
         self.assertEqual(run_mock.call_args_list, [])
 
@@ -63,10 +63,21 @@ class TestVisualizationFeature(TestCase):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
-            VisualizationFeature([], '2.0.0').start()
+            VisualizationFeature([], '2.0.0', False).start()
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'visualizer', '--disable-instructions'], configure_logging=False),
+            call(['run', 'visualizer', '--disable-instructions'], configure_logging=False)
+        ])
+
+    def test_offline_mode(self):
+        run_mock = MagicMock()
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            VisualizationFeature([], '2.0.0', True).start()
+
+        self.assertEqual(run_mock.call_args_list, [
+            call(['load', 'visualizer', '--disable-instructions', '--offline'], configure_logging=False),
             call(['run', 'visualizer', '--disable-instructions'], configure_logging=False)
         ])
 
@@ -76,7 +87,7 @@ class TestLoggingFeature(TestCase):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
-            LoggingFeature([], LATEST_CONDUCTR_VERSION).start()
+            LoggingFeature([], LATEST_CONDUCTR_VERSION, False).start()
 
         self.assertEqual(run_mock.call_args_list, [])
 
@@ -88,7 +99,7 @@ class TestLoggingFeature(TestCase):
         with patch('conductr_cli.conduct_main.run', run_mock), \
                 patch('conductr_cli.docker.vm_type', vm_type_mock), \
                 patch('conductr_cli.docker.validate_docker_vm', validate_docker_vm_mock):
-            LoggingFeature([], '2.0.0').start()
+            LoggingFeature([], '2.0.0', False).start()
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'conductr-elasticsearch', '--disable-instructions'], configure_logging=False),
@@ -106,9 +117,26 @@ class TestLoggingFeature(TestCase):
                 patch('conductr_cli.docker.vm_type', vm_type_mock), \
                 patch('conductr_cli.docker.validate_docker_vm', validate_docker_vm_mock), \
                 self.assertRaises(SystemExit):
-            LoggingFeature([], '2.0.0').start()
+            LoggingFeature([], '2.0.0', False).start()
 
         self.assertEqual(run_mock.call_args_list, [])
+
+    def test_offline_mode(self):
+        run_mock = MagicMock()
+        vm_type_mock = MagicMock(return_value=DockerVmType.DOCKER_ENGINE)
+        validate_docker_vm_mock = MagicMock()
+
+        with patch('conductr_cli.conduct_main.run', run_mock), \
+                patch('conductr_cli.docker.vm_type', vm_type_mock), \
+                patch('conductr_cli.docker.validate_docker_vm', validate_docker_vm_mock):
+            LoggingFeature([], '2.0.0', True).start()
+
+        self.assertEqual(run_mock.call_args_list, [
+            call(['load', 'conductr-elasticsearch', '--disable-instructions', '--offline'], configure_logging=False),
+            call(['run', 'conductr-elasticsearch', '--disable-instructions'], configure_logging=False),
+            call(['load', 'conductr-kibana', '--disable-instructions', '--offline'], configure_logging=False),
+            call(['run', 'conductr-kibana', '--disable-instructions'], configure_logging=False)
+        ])
 
 
 class TestLiteLoggingFeature(TestCase):
@@ -116,7 +144,7 @@ class TestLiteLoggingFeature(TestCase):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
-            LiteLoggingFeature([], LATEST_CONDUCTR_VERSION).start()
+            LiteLoggingFeature([], LATEST_CONDUCTR_VERSION, False).start()
 
         self.assertEqual(run_mock.call_args_list, [])
 
@@ -124,10 +152,21 @@ class TestLiteLoggingFeature(TestCase):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
-            LiteLoggingFeature([], '2.0.0').start()
+            LiteLoggingFeature([], '2.0.0', False).start()
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'eslite', '--disable-instructions'], configure_logging=False),
+            call(['run', 'eslite', '--disable-instructions'], configure_logging=False)
+        ])
+
+    def test_offline_mode(self):
+        run_mock = MagicMock()
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            LiteLoggingFeature([], '2.0.0', True).start()
+
+        self.assertEqual(run_mock.call_args_list, [
+            call(['load', 'eslite', '--disable-instructions', '--offline'], configure_logging=False),
             call(['run', 'eslite', '--disable-instructions'], configure_logging=False)
         ])
 
@@ -137,7 +176,7 @@ class TestMonitoringFeature(TestCase):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
-            MonitoringFeature([], LATEST_CONDUCTR_VERSION).start()
+            MonitoringFeature([], LATEST_CONDUCTR_VERSION, False).start()
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'cinnamon-grafana', '--disable-instructions'], configure_logging=False),
@@ -148,9 +187,20 @@ class TestMonitoringFeature(TestCase):
         run_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
-            MonitoringFeature([], '2.0.0').start()
+            MonitoringFeature([], '2.0.0', False).start()
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False),
+            call(['run', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False)
+        ])
+
+    def test_start_offline_mode(self):
+        run_mock = MagicMock()
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            MonitoringFeature([], '2.0.0', True).start()
+
+        self.assertEqual(run_mock.call_args_list, [
+            call(['load', 'cinnamon-grafana-docker', '--disable-instructions', '--offline'], configure_logging=False),
             call(['run', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False)
         ])

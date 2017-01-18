@@ -14,6 +14,7 @@ DEFAULT_CUSTOM_SETTINGS_FILE = os.getenv('CONDUCTR_CUSTOM_SETTINGS_FILE',
                                          '{}/settings.conf'.format(DEFAULT_CLI_SETTINGS_DIR))
 DEFAULT_CUSTOM_PLUGINS_DIR = os.getenv('CONDUCTR_CUSTOM_PLUGINS_DIR',
                                        '{}/plugins'.format(DEFAULT_CLI_SETTINGS_DIR))
+DEFAULT_OFFLINE_MODE = os.getenv('CONDUCTR_OFFLINE_MODE', False)
 DEFAULT_SANDBOX_IMAGE_DIR = os.path.abspath(os.getenv('CONDUCTR_SANDBOX_IMAGE_DIR',
                                                       '{}/images'.format(DEFAULT_CLI_SETTINGS_DIR)))
 DEFAULT_SANDBOX_ADDR_RANGE = os.getenv('CONDUCTR_SANDBOX_ADDR_RANGE', '192.168.10.0/24')

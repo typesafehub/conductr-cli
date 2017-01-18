@@ -1,15 +1,15 @@
 import argcomplete
 import argparse
 from conductr_cli import \
-    conduct_deploy, conduct_info, conduct_load, conduct_run, conduct_service_names,\
-    conduct_stop, conduct_unload, version, conduct_logs,\
-    conduct_events, conduct_acls, conduct_dcos, host, logging_setup,\
+    conduct_deploy, conduct_info, conduct_load, conduct_run, conduct_service_names, \
+    conduct_stop, conduct_unload, version, conduct_logs, \
+    conduct_events, conduct_acls, conduct_dcos, host, logging_setup, \
     conduct_url, custom_settings
 from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
-    DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR,\
-    DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR,\
-    DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT
+    DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
+    DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR, \
+    DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT, DEFAULT_OFFLINE_MODE
 from dcos import config, constants
 
 from pathlib import Path
@@ -24,15 +24,15 @@ def add_scheme_host_ip_port_and_base_path(sub_parser):
                             help='The optional ConductR scheme, defaults to `http`',
                             default=DEFAULT_SCHEME)
     sub_parser.add_argument('--host',
-                            help='The optional ConductR IP, defaults to one of the value in this order:'
+                            help='The optional ConductR IP, defaults to one of the value in this order: '
                                  '$CONDUCTR_HOST or'
                                  '$CONDUCTR_IP or'
                                  'IP address of the docker VM or'
                                  '`127.0.0.1`',
                             default=None)  # Default is determined given the Docker environment
     sub_parser.add_argument('-i', '--ip',
-                            help='The optional ConductR IP, defaults to one of the value in this order:'
-                                 '$CONDUCTR_IP or'
+                            help='The optional ConductR IP, defaults to one of the value in this order: '
+                                 '$CONDUCTR_IP or '
                                  'IP address of the docker VM or'
                                  '`127.0.0.1`',
                             default=None)  # Default is determined given the Docker environment
@@ -93,7 +93,7 @@ def add_cli_settings_dir(sub_parser):
 def add_custom_settings_file(sub_parser):
     sub_parser.add_argument('--custom-settings-file',
                             help='Configuration where custom settings for ConductR CLI are stored in HOCON format,'
-                            'defaults to {}'.format(DEFAULT_CUSTOM_SETTINGS_FILE),
+                                 'defaults to {}'.format(DEFAULT_CUSTOM_SETTINGS_FILE),
                             default=DEFAULT_CUSTOM_SETTINGS_FILE,
                             dest='custom_settings_file')
 
@@ -143,7 +143,7 @@ def add_wait_timeout(sub_parser, wait_timeout=DEFAULT_WAIT_TIMEOUT):
 def add_no_wait(sub_parser):
     sub_parser.add_argument('--no-wait',
                             help='Disables waiting for bundle scale to be achieved in conduct run, or bundle to be '
-                                 'stopped in conduct stop, defaults to',
+                                 'stopped in conduct stop, defaults to False.',
                             default=False,
                             dest='no_wait',
                             action='store_true')
@@ -215,6 +215,14 @@ def build_parser(dcos_mode):
                              nargs='?',
                              default=None,
                              help='The optional configuration for the bundle')
+    load_parser.add_argument('--offline',
+                             default=DEFAULT_OFFLINE_MODE,
+                             dest='offline_mode',
+                             action='store_true',
+                             help='Enables offline mode to resolve bundles only locally '
+                                  'either by file uri or from the cache directory. '
+                                  'Defaults to environment variable CONDUCTR_OFFLINE_MODE. '
+                                  'If not set the default is False.')
     add_default_arguments(load_parser, dcos_mode)
     add_bundle_resolve_cache_dir(load_parser)
     add_wait_timeout(load_parser)
@@ -297,8 +305,8 @@ def build_parser(dcos_mode):
     # Sub-parser for `setup-dcos` sub-command
     dcos_parser = subparsers.add_parser('setup-dcos',
                                         help='setup integration with the DC/OS CLI '
-                                        'so that \'dcos conduct ..\' commands can '
-                                        'be used to access ConductR via DC/OS')
+                                             'so that \'dcos conduct ..\' commands can '
+                                             'be used to access ConductR via DC/OS')
     dcos_parser.set_defaults(func=conduct_dcos.setup)
 
     # Sub-parser for `deploy` sub-command
