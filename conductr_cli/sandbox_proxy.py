@@ -1,4 +1,4 @@
-from conductr_cli import conduct_main, terminal
+from conductr_cli import conduct_main, docker, terminal
 from conductr_cli.constants import DEFAULT_SANDBOX_PROXY_DIR, DEFAULT_SANDBOX_PROXY_CONTAINER_NAME
 from conductr_cli.screen_utils import headline
 from subprocess import CalledProcessError
@@ -58,8 +58,8 @@ def stop_proxy():
 
 
 def validate_docker_present():
-    # TODO: implement docker installation validation
-    pass
+    vm_type = docker.vm_type()
+    docker.validate_docker_vm(vm_type)
 
 
 def setup_haproxy_dirs():

@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from conductr_cli import logging_setup, sandbox_proxy
+from conductr_cli import docker, logging_setup, sandbox_proxy
 from unittest.mock import call, patch, MagicMock
 from subprocess import CalledProcessError
 import ipaddress
@@ -124,6 +124,19 @@ class TestStopProxy(CliTestCase):
         mock_docker_rm.assert_not_called()
 
         self.assertEqual('', self.output(stdout))
+
+
+class TestValidateDockerVm(CliTestCase):
+    def test_validate(self):
+        mock_vm_type = MagicMock(return_value=docker.DockerVmType.DOCKER_ENGINE)
+        mock_validate_docker_vm = MagicMock()
+
+        with patch('conductr_cli.docker.vm_type', mock_vm_type), \
+                patch('conductr_cli.docker.validate_docker_vm', mock_validate_docker_vm):
+            sandbox_proxy.validate_docker_present()
+
+        mock_vm_type.assert_called_once_with()
+        mock_validate_docker_vm.assert_called_once_with(docker.DockerVmType.DOCKER_ENGINE)
 
 
 class TestSetupHAProxyDirs(CliTestCase):
