@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 from conductr_cli import host
 from conductr_cli.test.cli_test_case import strip_margin
 import ipaddress
@@ -8,29 +8,23 @@ import socket
 
 class TestResolveDefaultHost(TestCase):
     def test_resolve(self):
-        getenv_mock = MagicMock(return_value='test')
         resolve_default_ip_mock = MagicMock(return_value='resolve_result')
-        with patch('os.getenv', getenv_mock), \
-                patch('conductr_cli.host.resolve_default_ip', resolve_default_ip_mock):
+        with patch('conductr_cli.host.resolve_default_ip', resolve_default_ip_mock):
             result = host.resolve_default_host()
-            self.assertEqual(result, 'test')
+            self.assertEqual(result, 'resolve_result')
 
-        getenv_mock.assert_called_with('CONDUCTR_HOST', 'resolve_result')
         resolve_default_ip_mock.assert_called_with()
 
 
 class TestResolveDefaultIp(TestCase):
     def test_resolve_from_docker(self):
-        getenv_mock = MagicMock(return_value='test')
         is_listening_mock = MagicMock(return_value=False)
         vm_type_mock = MagicMock(return_value='vm_type')
-        with patch('os.getenv', getenv_mock), \
-                patch('conductr_cli.host.is_listening', is_listening_mock), \
+        with patch('conductr_cli.host.is_listening', is_listening_mock), \
                 patch('conductr_cli.docker.vm_type', vm_type_mock):
             result = host.resolve_default_ip()
-            self.assertEqual(result, 'test')
+            self.assertEqual(result, '127.0.0.1')
 
-        getenv_mock.assert_called_with('CONDUCTR_IP', '127.0.0.1')
         is_listening_mock.assert_called_with(ipaddress.ip_address('192.168.10.1'), 9005)
 
     def test_resolve_from_addr_range(self):
@@ -40,6 +34,32 @@ class TestResolveDefaultIp(TestCase):
             self.assertEqual(result, '192.168.10.1')
 
         is_listening_mock.assert_called_with(ipaddress.ip_address('192.168.10.1'), 9005)
+
+
+class TestResolveHostFromEnv(TestCase):
+    def test_conductr_host_env_set(self):
+        os_getenv_mock = MagicMock(return_value='conductr_host_env')
+        with patch('os.getenv', os_getenv_mock):
+            result = host.resolve_host_from_env()
+            self.assertEqual(result, 'conductr_host_env')
+
+        os_getenv_mock.assert_called_with('CONDUCTR_HOST', 'conductr_host_env')
+
+    def test_conductr_ip_env_set(self):
+        os_getenv_mock = MagicMock(side_effect=[None, 'conductr_ip_env'])
+        with patch('os.getenv', os_getenv_mock):
+            result = host.resolve_host_from_env()
+            self.assertEqual(result, 'conductr_ip_env')
+
+        os_getenv_mock.assert_has_calls([call('CONDUCTR_IP', None), call('CONDUCTR_HOST', None)])
+
+    def test_no_env_set(self):
+        os_getenv_mock = MagicMock(side_effect=[None, None])
+        with patch('os.getenv', os_getenv_mock):
+            result = host.resolve_host_from_env()
+            self.assertEqual(result, None)
+
+        os_getenv_mock.assert_has_calls([call('CONDUCTR_IP', None), call('CONDUCTR_HOST', None)])
 
 
 class TestLoopbackDeviceName(TestCase):

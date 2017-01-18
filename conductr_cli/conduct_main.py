@@ -10,7 +10,6 @@ from conductr_cli.constants import \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR,\
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR,\
     DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT
-from conductr_cli.host import CONDUCTR_HOST
 from dcos import config, constants
 
 from pathlib import Path
@@ -420,20 +419,16 @@ def run(_args=[], configure_logging=True):
             else:
                 args.command = 'conduct'
 
-            # Ensure ConductR host is not empty
+            # Set ConductR host is --host or --ip argument not set
+            # Also set the local_connection argument accordingly
             host_from_args = conduct_url.conductr_host(args)
             if not host_from_args:
-                host_from_env = host.resolve_default_host()
+                host_from_env = host.resolve_host_from_env()
                 if host_from_env:
                     args.host = host_from_env
+                    args.local_connection = False
                 else:
-                    # Configure logging so error message can be logged properly before exiting with failure
-                    logging_setup.configure_logging(args)
-                    log = logging.getLogger(__name__)
-                    log.error('ConductR host address is not specified')
-                    log.error('Please ensure either `{}` environment is specified,'
-                              ' or specify the ConductR host using `--host` argument'.format(CONDUCTR_HOST))
-                    exit(1)
+                    args.host = host.resolve_default_host()
             else:
                 args.local_connection = False
 

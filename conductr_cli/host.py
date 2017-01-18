@@ -12,7 +12,7 @@ DOCKER_IP = '127.0.0.1'
 
 
 def resolve_default_host():
-    return os.getenv(CONDUCTR_HOST, resolve_default_ip())
+    return resolve_default_ip()
 
 
 def resolve_default_ip():
@@ -21,11 +21,12 @@ def resolve_default_ip():
         addr = list(addr_range.hosts())[0]
         return addr.exploded if is_listening(addr, int(DEFAULT_PORT)) else None
 
-    def resolve():
-        from_addr_range = result_from_default_addr_range()
-        return from_addr_range if from_addr_range else DOCKER_IP
+    from_addr_range = result_from_default_addr_range()
+    return from_addr_range if from_addr_range else DOCKER_IP
 
-    return os.getenv(CONDUCTR_IP, resolve())
+
+def resolve_host_from_env():
+    return os.getenv(CONDUCTR_HOST, os.getenv(CONDUCTR_IP, None))
 
 
 def loopback_device_name():
