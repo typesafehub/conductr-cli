@@ -2,38 +2,6 @@
 NOT_FOUND_ERROR = getattr(__builtins__, 'FileNotFoundError', OSError)
 
 
-class AmbiguousDockerVmError(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class DockerMachineNotRunningError(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class DockerMachineCannotConnectToDockerError(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class VBoxManageNotFoundError(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
 class MalformedBundleError(Exception):
     def __init__(self, value):
         self.value = value

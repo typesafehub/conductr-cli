@@ -27,8 +27,7 @@ def run(args, features):
     nr_of_containers = instance_count(args.image_version, args.nr_of_containers)
     pull_image(args)
     container_names = scale_cluster(args, nr_of_containers, features)
-    conductr_host = host.resolve_ip_by_vm_type(args.vm_type)
-    return SandboxRunResult(container_names, conductr_host, nr_of_proxy_instances=nr_of_containers)
+    return SandboxRunResult(container_names, host.DOCKER_IP, nr_of_proxy_instances=nr_of_containers)
 
 
 def log_run_attempt(args, run_result, is_started, wait_timeout):
@@ -86,7 +85,7 @@ def start_nodes(args, nr_of_containers, features):
         # Display the ports on the command line. Only if the user specifies a certain feature, then
         # the corresponding port will be displayed when running 'sandbox run' or 'sandbox debug'
         if ports:
-            host_ip = host.resolve_ip_by_vm_type(args.vm_type)
+            host_ip = host.DOCKER_IP
             ports_desc = ' exposing ' + ', '.join(['{}:{}'.format(host_ip, map_port(i, port))
                                                    for port in sorted(ports)])
         else:
