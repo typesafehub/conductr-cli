@@ -1,7 +1,8 @@
 from unittest.mock import patch, MagicMock
 from subprocess import CalledProcessError
 from conductr_cli import logging_setup, docker
-from conductr_cli.test.cli_test_case import CliTestCase, as_error, as_warn, strip_margin
+from conductr_cli.exceptions import DockerValidationError
+from conductr_cli.test.cli_test_case import CliTestCase, as_warn
 from conductr_cli.docker import DockerVmType
 
 
@@ -14,20 +15,17 @@ class TestDocker(CliTestCase):
 
         with \
                 patch('conductr_cli.terminal.docker_info', docker_info_mock), \
-                self.assertRaises(SystemExit) as system_exit:
+                self.assertRaises(DockerValidationError) as error:
             docker.validate_docker_vm(DockerVmType.DOCKER_ENGINE)
 
         docker_info_mock.assert_called_with()
-        self.assertEqual(
-            as_error(strip_margin(
-                """|Error: Docker is installed but not running.
-                   |Error: Please start Docker with one of the Docker flavors based on your OS:
-                   |Error:   Linux:   Docker service
-                   |Error:   MacOS:   Docker for Mac
-                   |Error: A successful Docker startup can be verified with: docker info
-                   |""")),
-            self.output(stdout_mock))
-        self.assertEqual(system_exit.exception.code, 1)
+        self.assertEqual([
+            'Docker is installed but not running.',
+            'Please start Docker with one of the Docker flavors based on your OS:',
+            '  Linux:   Docker service',
+            '  MacOS:   Docker for Mac',
+            'A successful Docker startup can be verified with: docker info',
+        ], error.exception.messages)
 
     def test_docker_insufficient_ram(self):
         stdout_mock = MagicMock()
@@ -70,34 +68,28 @@ class TestDocker(CliTestCase):
         stdout_mock = MagicMock()
         logging_setup.configure_logging(MagicMock(), err_output=stdout_mock)
 
-        with self.assertRaises(SystemExit) as system_exit:
+        with self.assertRaises(DockerValidationError) as error:
             docker.validate_docker_vm(DockerVmType.DOCKER_MACHINE)
 
-        self.assertEqual(
-            as_error(strip_margin(
-                """|Error: Docker machine envs are set but Docker machine is not supported by the conductr-cli.
-                   |Error: We recommend to use one of following the Docker distributions depending on your OS:
-                   |Error:   Linux:                                         Docker Engine
-                   |Error:   MacOS:                                         Docker for Mac
-                   |Error: For more information checkout: https://www.docker.com/products/overview
-                   |""")),
-            self.output(stdout_mock))
-        self.assertEqual(system_exit.exception.code, 1)
+        self.assertEqual([
+            'Docker machine envs are set but Docker machine is not supported by the conductr-cli.',
+            'We recommend to use one of following the Docker distributions depending on your OS:',
+            '  Linux:                                         Docker Engine',
+            '  MacOS:                                         Docker for Mac',
+            'For more information checkout: https://www.docker.com/products/overview'
+        ], error.exception.messages)
 
     def test_no_vm_found(self):
         stdout_mock = MagicMock()
         logging_setup.configure_logging(MagicMock(), err_output=stdout_mock)
 
-        with self.assertRaises(SystemExit) as system_exit:
+        with self.assertRaises(DockerValidationError) as error:
             docker.validate_docker_vm(DockerVmType.NONE)
 
-        self.assertEqual(
-            as_error(strip_margin(
-                """|Error: Docker is not installed.
-                   |Error: We recommend to use one of following the Docker distributions depending on your OS:
-                   |Error:   Linux:                                         Docker Engine
-                   |Error:   MacOS:                                         Docker for Mac
-                   |Error: For more information checkout: https://www.docker.com/products/overview
-                   |""")),
-            self.output(stdout_mock))
-        self.assertEqual(system_exit.exception.code, 1)
+        self.assertEqual([
+            'Docker is not installed.',
+            'We recommend to use one of following the Docker distributions depending on your OS:',
+            '  Linux:                                         Docker Engine',
+            '  MacOS:                                         Docker for Mac',
+            'For more information checkout: https://www.docker.com/products/overview'
+        ], error.exception.messages)

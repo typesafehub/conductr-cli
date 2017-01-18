@@ -1,3 +1,5 @@
+import os
+
 # FileNotFoundError is only available on > python 3.3
 NOT_FOUND_ERROR = getattr(__builtins__, 'FileNotFoundError', OSError)
 
@@ -139,3 +141,11 @@ class JavaUnsupportedVersionError(Exception):
 
     def __str(self):
         return repr(self.jvm_version)
+
+
+class DockerValidationError(Exception):
+    def __init__(self, messages):
+        self.messages = messages
+
+    def __str(self):
+        return repr(os.linesep.join(self.messages))

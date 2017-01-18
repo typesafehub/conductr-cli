@@ -1,5 +1,6 @@
 from conductr_cli import conduct_main, docker, terminal
 from conductr_cli.constants import DEFAULT_SANDBOX_PROXY_DIR, DEFAULT_SANDBOX_PROXY_CONTAINER_NAME
+from conductr_cli.exceptions import DockerValidationError
 from conductr_cli.screen_utils import headline
 from subprocess import CalledProcessError
 import logging
@@ -32,11 +33,11 @@ DEFAULT_HAPROXY_CFG_ENTRIES = 'defaults\n' \
 
 
 def start_proxy(proxy_bind_addr, proxy_ports):
-    validate_docker_present()
-    setup_haproxy_dirs()
-    stop_proxy()
-    start_docker_instance(proxy_bind_addr, proxy_ports)
-    start_conductr_haproxy()
+    if is_docker_present():
+        setup_haproxy_dirs()
+        stop_proxy()
+        start_docker_instance(proxy_bind_addr, proxy_ports)
+        start_conductr_haproxy()
 
 
 def stop_proxy():
@@ -46,7 +47,7 @@ def stop_proxy():
         running_container = get_running_haproxy()
         if running_container:
             log.info(headline('Stopping HAProxy'))
-            validate_docker_present()
+            is_docker_present()
             terminal.docker_rm([DEFAULT_SANDBOX_PROXY_CONTAINER_NAME])
             log.info('HAProxy has been successfully stopped')
 
@@ -57,9 +58,13 @@ def stop_proxy():
         return False
 
 
-def validate_docker_present():
-    vm_type = docker.vm_type()
-    docker.validate_docker_vm(vm_type)
+def is_docker_present():
+    try:
+        vm_type = docker.vm_type()
+        docker.validate_docker_vm(vm_type)
+        return True
+    except DockerValidationError:
+        return False
 
 
 def setup_haproxy_dirs():
