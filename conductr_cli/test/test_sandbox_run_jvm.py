@@ -51,13 +51,12 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
-                                                               mock_agent_pids, bind_addrs,
-                                                               nr_of_proxy_instances=1)
+                                                               mock_agent_pids, bind_addrs)
             self.assertEqual(expected_result, result)
 
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir, bind_addrs)
-        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir, bind_addrs)
+        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir, bind_addrs, bind_addrs)
 
     def test_nr_of_core_agent_instances(self):
         mock_validate_jvm_support = MagicMock()
@@ -95,13 +94,14 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
-                                                               mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3],
-                                                               nr_of_proxy_instances=1)
+                                                               mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3])
             self.assertEqual(expected_result, result)
 
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir, [bind_addr1])
-        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir, [bind_addr1, bind_addr2, bind_addr3])
+        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
+                                                      [bind_addr1, bind_addr2, bind_addr3],
+                                                      [bind_addr1])
 
     def test_invalid_nr_of_containers(self):
         args = self.default_args.copy()
@@ -321,13 +321,30 @@ class TestStartAgent(CliTestCase):
         ])
 
         with patch('subprocess.Popen', mock_popen):
-            result = sandbox_run_jvm.start_agent_instances(self.extract_dir, self.addrs)
+            result = sandbox_run_jvm.start_agent_instances(self.extract_dir, self.addrs, self.addrs)
             self.assertEqual([1001, 1002, 1003], result)
 
         self.assertEqual([
             call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[0]), '--core-node', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[1]), '--core-node', '{}:9004'.format(self.addrs[1])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[2]), '--core-node', '{}:9004'.format(self.addrs[2])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+        ], mock_popen.call_args_list)
+
+    def test_start_instances_with_less_number_of_core_nodes(self):
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        with patch('subprocess.Popen', mock_popen):
+            result = sandbox_run_jvm.start_agent_instances(self.extract_dir, self.addrs, self.addrs[0:2])
+            self.assertEqual([1001, 1002, 1003], result)
+
+        self.assertEqual([
+            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[0]), '--core-node', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[1]), '--core-node', '{}:9004'.format(self.addrs[1])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[2]), '--core-node', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
         ], mock_popen.call_args_list)
 
     def mock_pid(self, pid_value):
@@ -342,8 +359,7 @@ class TestLogRunAttempt(CliTestCase):
         [1001, 1002, 1003],
         [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
         [2001, 2002, 2003],
-        [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
-        nr_of_proxy_instances=1
+        [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')]
     )
 
     def test_log_output(self):
@@ -380,8 +396,7 @@ class TestLogRunAttempt(CliTestCase):
             [1001],
             [ipaddress.ip_address('192.168.1.1')],
             [2001],
-            [ipaddress.ip_address('192.168.1.1')],
-            nr_of_proxy_instances=1
+            [ipaddress.ip_address('192.168.1.1')]
         )
 
         run_mock = MagicMock()

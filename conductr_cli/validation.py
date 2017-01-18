@@ -13,7 +13,7 @@ from conductr_cli.exceptions import BindAddressNotFoundError, \
     InstanceCountError, MalformedBundleError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
     WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
-    JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError
+    JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError
 
 
 def connection_error(log, err, args):
@@ -335,6 +335,24 @@ def handle_jvm_validation_error(func):
             log = get_logger_for_func(func)
             log.error('Unable to obtain java version from the `java -version` command.')
             log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            return False
+
+        # Do not change the wrapped function name,
+        # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_docker_validation_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except DockerValidationError as e:
+            log = get_logger_for_func(func)
+            for message in e.messages:
+                log.error(message)
             return False
 
         # Do not change the wrapped function name,

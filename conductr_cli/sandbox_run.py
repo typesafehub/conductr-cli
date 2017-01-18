@@ -1,8 +1,7 @@
-from conductr_cli import conduct_main, conduct_request, conduct_url, validation, sandbox_features, \
+from conductr_cli import conduct_request, conduct_url, validation, sandbox_features, sandbox_proxy, \
     sandbox_run_docker, sandbox_run_jvm
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import major_version
-from conductr_cli.screen_utils import headline
 from requests.exceptions import ConnectionError
 
 import logging
@@ -23,27 +22,30 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 @validation.handle_bintray_credentials_error
 @validation.handle_bintray_unreachable_error
 @validation.handle_jvm_validation_error
+@validation.handle_docker_validation_error
 def run(args):
     """`sandbox run` command"""
     is_conductr_v1 = major_version(args.image_version) == 1
     features = sandbox_features.collect_features(args.features, args.image_version)
+    sandbox = sandbox_run_docker if is_conductr_v1 else sandbox_run_jvm
 
-    if is_conductr_v1:
-        run_result = sandbox_run_docker.run(args, features)
-    else:
-        run_result = sandbox_run_jvm.run(args, features)
+    run_result = sandbox.run(args, features)
 
     is_started, wait_timeout = wait_for_start(args, run_result)
     if is_started:
         if not is_conductr_v1:
-            start_proxy(run_result.nr_of_proxy_instances)
+            feature_ports = []
+            for feature in features:
+                feature_ports.extend(feature.ports)
+
+            proxy_ports = sorted(args.ports + feature_ports)
+            sandbox_proxy.start_proxy(proxy_bind_addr=run_result.core_addrs[0],
+                                      proxy_ports=proxy_ports)
+
         for feature in features:
             feature.start()
 
-    if is_conductr_v1:
-        sandbox_run_docker.log_run_attempt(args, run_result, is_started, wait_timeout)
-    else:
-        sandbox_run_jvm.log_run_attempt(args, run_result, is_started, wait_timeout)
+    sandbox.log_run_attempt(args, run_result, is_started, wait_timeout)
 
     return True
 
@@ -77,13 +79,3 @@ def wait_for_conductr(args, run_result, current_retry, max_retries, interval):
     # Reprint previous message with flush to go to next line
     log.progress(last_message, flush=True)
     return True if current_retry < max_retries else False
-
-
-def start_proxy(nr_of_instances):
-    log = logging.getLogger(__name__)
-    bundle_name = 'conductr-haproxy'
-    configuration_name = 'conductr-haproxy-dev-mode'
-    log.info(headline('Starting HAProxy'))
-    log.info('Deploying bundle {} with configuration {}'.format(bundle_name, configuration_name))
-    conduct_main.run(['load', bundle_name, configuration_name, '--disable-instructions'], configure_logging=False)
-    conduct_main.run(['run', bundle_name, '--scale', str(nr_of_instances), '--disable-instructions'], configure_logging=False)

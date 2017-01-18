@@ -2,6 +2,7 @@ import os.path
 import re
 import logging
 from conductr_cli import terminal
+from conductr_cli.exceptions import DockerValidationError
 from subprocess import CalledProcessError
 
 DEFAULT_DOCKER_RAM_SIZE = 3.8
@@ -60,25 +61,28 @@ def validate_docker_vm(vm_type):
                     log.warning('Docker has an insufficient no. of CPUs {} - please increase to a minimum of {} CPUs'
                                 .format(existing_cpu, DEFAULT_DOCKER_CPU_COUNT))
         except (AttributeError, CalledProcessError):
-            log.error('Docker is installed but not running.')
-            log.error('Please start Docker with one of the Docker flavors based on your OS:')
-            log.error('  Linux:   Docker service')
-            log.error('  MacOS:   Docker for Mac')
-            log.error('A successful Docker startup can be verified with: docker info')
-            exit(1)
+            raise DockerValidationError([
+                'Docker is installed but not running.',
+                'Please start Docker with one of the Docker flavors based on your OS:',
+                '  Linux:   Docker service',
+                '  MacOS:   Docker for Mac',
+                'A successful Docker startup can be verified with: docker info'
+            ])
 
     elif vm_type is DockerVmType.DOCKER_MACHINE:
-        log.error('Docker machine envs are set but Docker machine is not supported by the conductr-cli.')
-        log.error('We recommend to use one of following the Docker distributions depending on your OS:')
-        log.error('  Linux:                                         Docker Engine')
-        log.error('  MacOS:                                         Docker for Mac')
-        log.error('For more information checkout: https://www.docker.com/products/overview')
-        exit(1)
+        raise DockerValidationError([
+            'Docker machine envs are set but Docker machine is not supported by the conductr-cli.',
+            'We recommend to use one of following the Docker distributions depending on your OS:',
+            '  Linux:                                         Docker Engine',
+            '  MacOS:                                         Docker for Mac',
+            'For more information checkout: https://www.docker.com/products/overview'
+        ])
 
     elif vm_type is DockerVmType.NONE:
-        log.error('Docker is not installed.')
-        log.error('We recommend to use one of following the Docker distributions depending on your OS:')
-        log.error('  Linux:                                         Docker Engine')
-        log.error('  MacOS:                                         Docker for Mac')
-        log.error('For more information checkout: https://www.docker.com/products/overview')
-        exit(1)
+        raise DockerValidationError([
+            'Docker is not installed.',
+            'We recommend to use one of following the Docker distributions depending on your OS:',
+            '  Linux:                                         Docker Engine',
+            '  MacOS:                                         Docker for Mac',
+            'For more information checkout: https://www.docker.com/products/overview'
+        ])

@@ -47,6 +47,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.terminal.docker_ps', return_value=''), \
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
+                patch('conductr_cli.sandbox_proxy.stop_proxy') as mock_stop_proxy, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_run_docker.run(input_args, features)
@@ -64,6 +65,8 @@ class TestRun(CliTestCase):
         self.assertEqual(expected_stdout, self.output(stdout))
         mock_docker_run.assert_called_once_with(expected_optional_args, expected_image, expected_positional_args)
 
+        mock_stop_proxy.assert_called_once_with()
+
     def test_multiple_container(self):
         stdout = MagicMock()
         nr_of_containers = 3
@@ -73,6 +76,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.terminal.docker_ps', return_value=''), \
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
+                patch('conductr_cli.sandbox_proxy.stop_proxy') as mock_stop_proxy, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]):
             args = self.default_args.copy()
             args.update({'nr_of_containers': nr_of_containers})
@@ -119,6 +123,8 @@ class TestRun(CliTestCase):
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )
 
+        mock_stop_proxy.assert_called_once_with()
+
     def test_with_custom_args(self):
         stdout = MagicMock()
         image_version = '1.1.0'
@@ -138,6 +144,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.terminal.docker_ps', return_value=''), \
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
+                patch('conductr_cli.sandbox_proxy.stop_proxy') as mock_stop_proxy, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]):
             args = self.default_args.copy()
             args.update({
@@ -173,6 +180,8 @@ class TestRun(CliTestCase):
             self.default_positional_args
         )
 
+        mock_stop_proxy.assert_called_once_with()
+
     def test_roles(self):
         stdout = MagicMock()
         nr_of_containers = 3
@@ -184,6 +193,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.terminal.docker_ps', return_value=''), \
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
+                patch('conductr_cli.sandbox_proxy.stop_proxy') as mock_stop_proxy, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]):
             args = self.default_args.copy()
             args.update({
@@ -234,6 +244,8 @@ class TestRun(CliTestCase):
             self.default_positional_args + ['--seed', '10.10.10.10:9004']
         )
 
+        mock_stop_proxy.assert_called_once_with()
+
     def test_containers_already_running(self):
         stdout = MagicMock()
 
@@ -248,6 +260,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value=''), \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=running_containers), \
+                patch('conductr_cli.sandbox_proxy.stop_proxy') as mock_stop_proxy, \
                 patch('conductr_cli.terminal.docker_rm') as mock_docker_rm:
             logging_setup.configure_logging(input_args, stdout)
             sandbox_run_docker.run(input_args, features)
@@ -263,6 +276,7 @@ class TestRun(CliTestCase):
                                           |""")
 
         self.assertEqual(expected_stdout, self.output(stdout))
+        mock_stop_proxy.assert_called_once_with()
         mock_docker_rm.assert_called_once_with(running_containers)
 
     def test_run_options(self):
@@ -280,6 +294,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.terminal.docker_ps', return_value=''), \
                 patch('conductr_cli.terminal.docker_inspect', return_value='10.10.10.10'), \
                 patch('conductr_cli.terminal.docker_run', return_value='') as mock_docker_run, \
+                patch('conductr_cli.sandbox_proxy.stop_proxy') as mock_stop_proxy, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]), \
                 patch('os.getenv', side_effect=run_env) as mock_get_env:
             logging_setup.configure_logging(input_args, stdout)
@@ -299,6 +314,7 @@ class TestRun(CliTestCase):
         mock_get_env.assert_any_call('CONDUCTR_DOCKER_RUN_OPTS')
         mock_docker_run.assert_called_once_with(expected_optional_args + ['-v', '/etc/haproxy:/usr/local/etc/haproxy'],
                                                 expected_image, expected_positional_args)
+        mock_stop_proxy.assert_called_once_with()
 
     def test_invalid_nr_of_containers(self):
         args = self.default_args.copy()
@@ -315,7 +331,7 @@ class TestLogRunAttempt(CliTestCase):
     wait_timeout = 60
     container_names = ['cond-0', 'cond-1', 'cond-2']
     hostname = '10.0.0.1'
-    run_result = sandbox_run_docker.SandboxRunResult(container_names, hostname, nr_of_proxy_instances=1)
+    run_result = sandbox_run_docker.SandboxRunResult(container_names, hostname)
 
     def test_log_output(self):
         stdout = MagicMock()
@@ -351,7 +367,7 @@ class TestLogRunAttempt(CliTestCase):
         logging_setup.configure_logging(input_args, stdout)
         sandbox_run_docker.log_run_attempt(
             input_args,
-            run_result=sandbox_run_docker.SandboxRunResult(['cond-0'], self.hostname, nr_of_proxy_instances=1),
+            run_result=sandbox_run_docker.SandboxRunResult(['cond-0'], self.hostname),
             is_started=True,
             wait_timeout=self.wait_timeout
         )
