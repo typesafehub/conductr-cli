@@ -15,26 +15,24 @@ class TestStop(CliTestCase):
     }
 
     def test_stop_processes_with_first_attempt(self):
-        ps_output_first = '58001   ??  Ss     0:36.97 /sbin/launchd\n' \
-                          '58002   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.1 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                          '58003   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.1 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.1:9004\n' \
-                          '58004   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.2 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                          '58005   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.2 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.2:9004\n' \
-                          '58006   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.3 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                          '58007   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.3 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.3:9004\n' \
-                          '58008   ??  Ss     0:36.97 /usr/libexec/logd'
-        ps_output_second = '58001   ??  Ss     0:36.97 /sbin/launchd\n' \
-                           '58008   ??  Ss     0:36.97 /usr/libexec/logd'
+        ps_output_first = [
+            {'id': 58002, 'type': 'core'},
+            {'id': 58003, 'type': 'agent'},
+            {'id': 58004, 'type': 'core'},
+            {'id': 58005, 'type': 'agent'},
+            {'id': 58006, 'type': 'core'},
+            {'id': 58007, 'type': 'agent'}
+        ]
+        ps_output_second = []
 
         stdout = MagicMock()
         mock_os_kill = MagicMock()
         mock_time_sleep = MagicMock()
-        mock_subprocess_getoutput = MagicMock(side_effect=[ps_output_first, ps_output_second])
+        mock_find_pids = MagicMock(side_effect=[ps_output_first, ps_output_second])
 
         with patch('os.kill', mock_os_kill), \
                 patch('time.sleep', mock_time_sleep), \
-                patch('subprocess.getoutput', mock_subprocess_getoutput), \
-                patch('conductr_cli.sandbox_stop_jvm', mock_subprocess_getoutput):
+                patch('conductr_cli.sandbox_common.find_pids', mock_find_pids):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_stop_jvm.stop(MagicMock(**self.default_args))
 
@@ -57,30 +55,28 @@ class TestStop(CliTestCase):
                                        call(58007, signal.SIGTERM)])
 
     def test_stop_processes_with_second_attempt(self):
-        ps_output_first = '58001   ??  Ss     0:36.97 /sbin/launchd\n' \
-                          '58002   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.1 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                          '58003   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.1 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.1:9004\n' \
-                          '58004   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.2 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                          '58005   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.2 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.2:9004\n' \
-                          '58006   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.3 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                          '58007   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.3 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.3:9004\n' \
-                          '58008   ??  Ss     0:36.97 /usr/libexec/logd'
-        ps_output_second = '58001   ??  Ss     0:36.97 /sbin/launchd\n' \
-                           '58002   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.1 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                           '58003   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.1 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.1:9004\n' \
-                           '58008   ??  Ss     0:36.97 /usr/libexec/logd'
-        ps_output_third = '58001   ??  Ss     0:36.97 /sbin/launchd\n' \
-                          '58008   ??  Ss     0:36.97 /usr/libexec/logd'
+        ps_output_first = [
+            {'id': 58002, 'type': 'core'},
+            {'id': 58003, 'type': 'agent'},
+            {'id': 58004, 'type': 'core'},
+            {'id': 58005, 'type': 'agent'},
+            {'id': 58006, 'type': 'core'},
+            {'id': 58007, 'type': 'agent'}
+        ]
+        ps_output_second = [
+            {'id': 58002, 'type': 'core'},
+            {'id': 58003, 'type': 'agent'}
+        ]
+        ps_output_third = []
 
         stdout = MagicMock()
         mock_os_kill = MagicMock()
         mock_time_sleep = MagicMock()
-        mock_subprocess_getoutput = MagicMock(side_effect=[ps_output_first, ps_output_second, ps_output_third])
+        mock_find_pids = MagicMock(side_effect=[ps_output_first, ps_output_second, ps_output_third])
 
         with patch('os.kill', mock_os_kill), \
                 patch('time.sleep', mock_time_sleep), \
-                patch('subprocess.getoutput', mock_subprocess_getoutput), \
-                patch('conductr_cli.sandbox_stop_jvm', mock_subprocess_getoutput):
+                patch('conductr_cli.sandbox_common.find_pids', mock_find_pids):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_stop_jvm.stop(MagicMock(**self.default_args))
 
@@ -103,21 +99,20 @@ class TestStop(CliTestCase):
                                        call(58007, signal.SIGTERM)])
 
     def test_hung_processes(self):
-        ps_output = '58001   ??  Ss     0:36.97 /sbin/launchd\n' \
-                    '58002   ??  Ss     0:30.48 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.ip=192.168.10.1 -cp /Users/mj/.conductr/images/core/lib/com.typesafe.conductr.conductr-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.ConductR\n' \
-                    '58003   ??  Ss     1:17.36 /Library/Java/JavaVirtualMachines/jdk1.8.0_112.jdk/Contents/Home/bin/java -Dconductr.agent.ip=192.168.10.1 -cp /Users/mj/.conductr/images/agent/lib/com.typesafe.conductr.conductr-agent-2.0.0-rc.2.jar:/dependent-libs com.typesafe.conductr.agent.ConductRAgent --core-node 192.168.10.1:9004\n' \
-                    '58008   ??  Ss     0:36.97 /usr/libexec/logd'
+        ps_output = [
+            {'id': 58002, 'type': 'core'},
+            {'id': 58003, 'type': 'agent'}
+        ]
 
         stdout = MagicMock()
         stderr = MagicMock()
         mock_os_kill = MagicMock()
         mock_time_sleep = MagicMock()
-        mock_subprocess_getoutput = MagicMock(return_value=ps_output)
+        mock_find_pids = MagicMock(return_value=ps_output)
 
         with patch('os.kill', mock_os_kill), \
                 patch('time.sleep', mock_time_sleep), \
-                patch('subprocess.getoutput', mock_subprocess_getoutput), \
-                patch('conductr_cli.sandbox_stop_jvm', mock_subprocess_getoutput):
+                patch('conductr_cli.sandbox_common.find_pids', mock_find_pids):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout, stderr)
             sandbox_stop_jvm.stop(MagicMock(**self.default_args))
 

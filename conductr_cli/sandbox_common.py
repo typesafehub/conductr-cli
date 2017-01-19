@@ -2,6 +2,7 @@ from conductr_cli import terminal
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, \
     BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
 import os
+import subprocess
 from subprocess import CalledProcessError
 
 
@@ -24,6 +25,31 @@ def resolve_conductr_info(image_dir):
         'bintray_package_name': BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
     }
     return core_info, agent_info
+
+
+def find_pids(core_run_dir, agent_run_dir):
+    """
+    Finds the PIDs of ConductR core and agent from the output of the ps process, looking for java process
+    which is running of the sandbox image.
+    :param core_run_dir: directory of where ConductR core is running from.
+    :param agent_run_dir: directory of where ConductR agent is running from.
+    :return: the list of the ConductR core and agent pids.
+    """
+    pids_info = []
+    ps_output = subprocess.getoutput('ps ax')
+    for line in ps_output.split('\n'):
+        pid = line.split()[0]
+        if core_run_dir in line:
+            pids_info.append({
+                'type': 'core',
+                'id': int(pid)
+            })
+        if agent_run_dir in line:
+            pids_info.append({
+                'type': 'agent',
+                'id': int(pid)
+            })
+    return pids_info
 
 
 def resolve_running_docker_containers():

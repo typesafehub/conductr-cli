@@ -83,6 +83,31 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.resolve_ip, True)
 
+    def test_parser_ps(self):
+        args = self.parser.parse_args('ps'.split())
+        self.assertEqual(args.func.__name__, 'ps')
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.resolve_ip, True)
+        self.assertEqual(args.is_filter_core, False)
+        self.assertEqual(args.is_filter_agent, False)
+        self.assertEqual(args.is_quiet, False)
+
+    def test_parser_ps_core(self):
+        args = self.parser.parse_args('ps --core --quiet'.split())
+        self.assertEqual(args.func.__name__, 'ps')
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.is_filter_core, True)
+        self.assertEqual(args.is_filter_agent, False)
+        self.assertEqual(args.is_quiet, True)
+
+    def test_parser_ps_agent(self):
+        args = self.parser.parse_args('ps --agent --quiet'.split())
+        self.assertEqual(args.func.__name__, 'ps')
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.is_filter_core, False)
+        self.assertEqual(args.is_filter_agent, True)
+        self.assertEqual(args.is_quiet, True)
+
     def test_parser_version(self):
         args = self.parser.parse_args('version'.split())
         self.assertEqual(args.func.__name__, 'version')
