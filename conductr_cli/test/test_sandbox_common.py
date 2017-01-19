@@ -51,3 +51,47 @@ class TestFindPids(CliTestCase):
         with patch('subprocess.getoutput', mock_getoutput):
             result = sandbox_common.find_pids(self.core_run_dir, self.agent_run_dir)
             self.assertEqual([], result)
+
+
+class TestResolveConductRRolesByInstance(CliTestCase):
+    user_roles = [['role1', 'role2'], ['role3']]
+    feature_roles = ['elasticsearch', 'kibana']
+
+    def test_user_and_feature_roles(self):
+        self.assertEqual(
+            ['role1', 'role2', 'elasticsearch', 'kibana'],
+            sandbox_common.resolve_conductr_roles_by_instance(self.user_roles, self.feature_roles, instance=0))
+
+        self.assertEqual(
+            ['role3'],
+            sandbox_common.resolve_conductr_roles_by_instance(self.user_roles, self.feature_roles, instance=1))
+
+        self.assertEqual(
+            ['role1', 'role2'],
+            sandbox_common.resolve_conductr_roles_by_instance(self.user_roles, self.feature_roles, instance=2))
+
+    def test_empty_user_roles(self):
+        self.assertEqual(
+            [],
+            sandbox_common.resolve_conductr_roles_by_instance([], self.feature_roles, instance=0))
+
+        self.assertEqual(
+            [],
+            sandbox_common.resolve_conductr_roles_by_instance([], self.feature_roles, instance=1))
+
+        self.assertEqual(
+            [],
+            sandbox_common.resolve_conductr_roles_by_instance([], self.feature_roles, instance=2))
+
+    def test_empty_feature_roles(self):
+        self.assertEqual(
+            ['role1', 'role2'],
+            sandbox_common.resolve_conductr_roles_by_instance(self.user_roles, [], instance=0))
+
+        self.assertEqual(
+            ['role3'],
+            sandbox_common.resolve_conductr_roles_by_instance(self.user_roles, [], instance=1))
+
+        self.assertEqual(
+            ['role1', 'role2'],
+            sandbox_common.resolve_conductr_roles_by_instance(self.user_roles, [], instance=2))

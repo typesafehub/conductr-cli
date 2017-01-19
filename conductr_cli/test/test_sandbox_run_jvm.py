@@ -3,6 +3,7 @@ from conductr_cli import logging_setup, sandbox_run_jvm
 from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, BintrayUnreachableError, \
     SandboxImageNotFoundError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
     JavaVersionParseError
+from conductr_cli.sandbox_features import LoggingFeature
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
 from requests.exceptions import HTTPError, ConnectionError
@@ -55,8 +56,9 @@ class TestRun(CliTestCase):
             self.assertEqual(expected_result, result)
 
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
-        mock_start_core_instances.assert_called_with(mock_core_extracted_dir, bind_addrs)
-        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir, bind_addrs, bind_addrs)
+        mock_start_core_instances.assert_called_with(mock_core_extracted_dir, bind_addrs, [], features, 'info')
+        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir, bind_addrs, bind_addrs,
+                                                      [], features, 'info')
 
     def test_nr_of_core_agent_instances(self):
         mock_validate_jvm_support = MagicMock()
@@ -98,10 +100,65 @@ class TestRun(CliTestCase):
             self.assertEqual(expected_result, result)
 
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
-        mock_start_core_instances.assert_called_with(mock_core_extracted_dir, [bind_addr1])
+        mock_start_core_instances.assert_called_with(mock_core_extracted_dir, [bind_addr1], [], features, 'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       [bind_addr1, bind_addr2, bind_addr3],
-                                                      [bind_addr1])
+                                                      [bind_addr1],
+                                                      [],
+                                                      features,
+                                                      'info')
+
+    def test_roles(self):
+        mock_validate_jvm_support = MagicMock()
+
+        bind_addr = MagicMock()
+        bind_addrs = [bind_addr]
+        mock_find_bind_addrs = MagicMock(return_value=bind_addrs)
+
+        mock_core_extracted_dir = MagicMock()
+        mock_agent_extracted_dir = MagicMock()
+        mock_obtain_sandbox_image = MagicMock(return_value=(mock_core_extracted_dir, mock_agent_extracted_dir))
+
+        mock_sandbox_stop = MagicMock()
+
+        mock_core_pids = MagicMock()
+        mock_start_core_instances = MagicMock(return_value=mock_core_pids)
+
+        mock_agent_pids = MagicMock()
+        mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
+
+        args = self.default_args.copy()
+        args.update({
+            'conductr_roles': [['role1', 'role2'], ['role3']]
+        })
+        input_args = MagicMock(**args)
+
+        mock_feature = MagicMock()
+        features = [mock_feature]
+
+        with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
+                patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
+                patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
+                patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
+            result = sandbox_run_jvm.run(input_args, features)
+            expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
+                                                               mock_agent_pids, bind_addrs)
+            self.assertEqual(expected_result, result)
+
+        mock_find_bind_addrs.assert_called_with(1, self.addr_range)
+        mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
+                                                     bind_addrs,
+                                                     [['role1', 'role2'], ['role3']],
+                                                     features,
+                                                     'info')
+        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
+                                                      bind_addrs,
+                                                      bind_addrs,
+                                                      [['role1', 'role2'], ['role3']],
+                                                      features,
+                                                      'info')
 
     def test_invalid_nr_of_containers(self):
         args = self.default_args.copy()
@@ -281,7 +338,12 @@ class TestStartCore(CliTestCase):
         ipaddress.ip_address('192.168.1.3')
     ]
 
+    log_level = 'info'
+
     def test_start_instances(self):
+        conductr_roles = []
+        features = []
+
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
             self.mock_pid(1002),
@@ -289,13 +351,75 @@ class TestStartCore(CliTestCase):
         ])
 
         with patch('subprocess.Popen', mock_popen):
-            result = sandbox_run_jvm.start_core_instances(self.extract_dir, self.addrs)
+            result = sandbox_run_jvm.start_core_instances(self.extract_dir, self.addrs, conductr_roles, features,
+                                                          self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
         self.assertEqual([
-            call(['{}/bin/conductr'.format(self.extract_dir), '-Dconductr.ip={}'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
-            call(['{}/bin/conductr'.format(self.extract_dir), '-Dconductr.ip={}'.format(self.addrs[1]), '--seed', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
-            call(['{}/bin/conductr'.format(self.extract_dir), '-Dconductr.ip={}'.format(self.addrs[2]), '--seed', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.ip={}'.format(self.addrs[0]),
+                '-Dconductr.resource-provider.match-offer-roles=off'
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.ip={}'.format(self.addrs[1]),
+                '-Dconductr.resource-provider.match-offer-roles=off',
+                '--seed', '{}:9004'.format(self.addrs[0])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.ip={}'.format(self.addrs[2]),
+                '-Dconductr.resource-provider.match-offer-roles=off',
+                '--seed', '{}:9004'.format(self.addrs[0])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+        ], mock_popen.call_args_list)
+
+    def test_roles_and_features(self):
+        conductr_roles = [['role1', 'role2'], ['role3']]
+        features = [LoggingFeature("v1", "2.0.0")]
+
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        with patch('subprocess.Popen', mock_popen):
+            result = sandbox_run_jvm.start_core_instances(self.extract_dir, self.addrs, conductr_roles, features,
+                                                          self.log_level)
+            self.assertEqual([1001, 1002, 1003], result)
+
+        self.assertEqual([
+            call([
+                '{}/bin/conductr'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.ip={}'.format(self.addrs[0]),
+                '-Dconductr.resource-provider.match-offer-roles=on',
+                '-Dcontrail.syslog.server.port=9200',
+                '-Dcontrail.syslog.server.elasticsearch.enabled=on'
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.ip={}'.format(self.addrs[1]),
+                '-Dconductr.resource-provider.match-offer-roles=on',
+                '-Dcontrail.syslog.server.port=9200',
+                '-Dcontrail.syslog.server.elasticsearch.enabled=on',
+                '--seed', '{}:9004'.format(self.addrs[0])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.ip={}'.format(self.addrs[2]),
+                '-Dconductr.resource-provider.match-offer-roles=on',
+                '-Dcontrail.syslog.server.port=9200',
+                '-Dcontrail.syslog.server.elasticsearch.enabled=on',
+                '--seed', '{}:9004'.format(self.addrs[0])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
         ], mock_popen.call_args_list)
 
     def mock_pid(self, pid_value):
@@ -313,6 +437,8 @@ class TestStartAgent(CliTestCase):
         ipaddress.ip_address('192.168.1.3')
     ]
 
+    log_level = 'info'
+
     def test_start_instances(self):
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
@@ -321,13 +447,86 @@ class TestStartAgent(CliTestCase):
         ])
 
         with patch('subprocess.Popen', mock_popen):
-            result = sandbox_run_jvm.start_agent_instances(self.extract_dir, self.addrs, self.addrs)
+            result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                           self.addrs,
+                                                           self.addrs,
+                                                           conductr_roles=[],
+                                                           features=[],
+                                                           log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
         self.assertEqual([
-            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[0]), '--core-node', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
-            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[1]), '--core-node', '{}:9004'.format(self.addrs[1])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
-            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[2]), '--core-node', '{}:9004'.format(self.addrs[2])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[0]),
+                '--core-node', '{}:9004'.format(self.addrs[0])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[1]),
+                '--core-node', '{}:9004'.format(self.addrs[1])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[2]),
+                '--core-node', '{}:9004'.format(self.addrs[2])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+        ], mock_popen.call_args_list)
+
+    def test_roles_and_features(self):
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        conductr_roles = [['role1', 'role2'], ['role3']]
+        features = [LoggingFeature('v2', '2.0.0')]
+
+        with patch('subprocess.Popen', mock_popen):
+            result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                           self.addrs,
+                                                           self.addrs,
+                                                           conductr_roles=conductr_roles,
+                                                           features=features,
+                                                           log_level=self.log_level)
+            self.assertEqual([1001, 1002, 1003], result)
+
+        self.assertEqual([
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[0]),
+                '--core-node', '{}:9004'.format(self.addrs[0]),
+                '-Dconductr.agent.roles.0=role1',
+                '-Dconductr.agent.roles.1=role2',
+                '-Dconductr.agent.roles.2=elasticsearch',
+                '-Dconductr.agent.roles.3=kibana',
+                '-Dcontrail.syslog.server.port=9200',
+                '-Dcontrail.syslog.server.elasticsearch.enabled=on'
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[1]),
+                '--core-node', '{}:9004'.format(self.addrs[1]),
+                '-Dconductr.agent.roles.0=role3',
+                '-Dcontrail.syslog.server.port=9200',
+                '-Dcontrail.syslog.server.elasticsearch.enabled=on'
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[2]),
+                '--core-node', '{}:9004'.format(self.addrs[2]),
+                '-Dconductr.agent.roles.0=role1',
+                '-Dconductr.agent.roles.1=role2',
+                '-Dcontrail.syslog.server.port=9200',
+                '-Dcontrail.syslog.server.elasticsearch.enabled=on'
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
         ], mock_popen.call_args_list)
 
     def test_start_instances_with_less_number_of_core_nodes(self):
@@ -337,14 +536,37 @@ class TestStartAgent(CliTestCase):
             self.mock_pid(1003)
         ])
 
+        conductr_roles = []
+        features = []
+
         with patch('subprocess.Popen', mock_popen):
-            result = sandbox_run_jvm.start_agent_instances(self.extract_dir, self.addrs, self.addrs[0:2])
+            result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                           self.addrs,
+                                                           self.addrs[0:2],
+                                                           conductr_roles=conductr_roles,
+                                                           features=features,
+                                                           log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
         self.assertEqual([
-            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[0]), '--core-node', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
-            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[1]), '--core-node', '{}:9004'.format(self.addrs[1])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
-            call(['{}/bin/conductr-agent'.format(self.extract_dir), '-Dconductr.agent.ip={}'.format(self.addrs[2]), '--core-node', '{}:9004'.format(self.addrs[0])], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[0]),
+                '--core-node', '{}:9004'.format(self.addrs[0])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[1]),
+                '--core-node', '{}:9004'.format(self.addrs[1])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            call([
+                '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Dakka.loglevel={}'.format(self.log_level),
+                '-Dconductr.agent.ip={}'.format(self.addrs[2]),
+                '--core-node', '{}:9004'.format(self.addrs[0])
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
         ], mock_popen.call_args_list)
 
     def mock_pid(self, pid_value):

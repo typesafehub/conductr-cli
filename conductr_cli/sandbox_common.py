@@ -70,3 +70,29 @@ def bundle_http_port():
 
 def major_version(version):
     return int(version[0])
+
+
+def resolve_conductr_roles_by_instance(user_conductr_roles, feature_conductr_roles, instance):
+    if not user_conductr_roles:
+        # No ConductR roles have been specified => Return an empty list
+        return []
+    else:
+        if instance + 1 <= len(user_conductr_roles):
+            # Roles have been specified for the current ConductR instance => Get and use these roles.
+            container_conductr_roles = user_conductr_roles[instance]
+        else:
+            # The current ConductR instance is greater than the length of conductr_roles.
+            # In this case the roles of conductr_roles are subsequently applied to the remaining instances.
+            remainder = (instance + 1) % len(user_conductr_roles)
+            remaining_instance = len(user_conductr_roles) if remainder == 0 else remainder
+            container_conductr_roles = user_conductr_roles[remaining_instance - 1]
+
+        # Feature roles are only added to the seed node.
+        if instance == 0:
+            container_conductr_roles = container_conductr_roles + feature_conductr_roles
+
+        return container_conductr_roles
+
+
+def flatten(list):
+    return [item for sublist in list for item in sublist]
