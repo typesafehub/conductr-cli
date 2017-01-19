@@ -1,6 +1,5 @@
 from conductr_cli import sandbox_common
 from conductr_cli.screen_utils import headline
-import subprocess
 import os
 import signal
 import logging
@@ -18,7 +17,7 @@ def stop(args):
     log = logging.getLogger(__name__)
     core_info, agent_info = sandbox_common.resolve_conductr_info(args.image_dir)
 
-    pids_info = find_pids(core_info['extraction_dir'], agent_info['extraction_dir'])
+    pids_info = sandbox_common.find_pids(core_info['extraction_dir'], agent_info['extraction_dir'])
     if pids_info:
         log.info(headline('Stopping ConductR'))
         killed_pids_info, hung_pids_info = kill_processes(core_info, agent_info, pids_info)
@@ -34,31 +33,6 @@ def stop(args):
         return True
 
 
-def find_pids(core_run_dir, agent_run_dir):
-    """
-    Finds the PIDs of ConductR core and agent from the output of the ps process, looking for java process
-    which is running of the sandbox image.
-    :param core_run_dir: directory of where ConductR core is running from.
-    :param agent_run_dir: directory of where ConductR agent is running from.
-    :return: the list of the ConductR core and agent pids.
-    """
-    pids_info = []
-    ps_output = subprocess.getoutput('ps ax')
-    for line in ps_output.split('\n'):
-        pid = line.split()[0]
-        if core_run_dir in line:
-            pids_info.append({
-                'type': 'core',
-                'id': int(pid)
-            })
-        if agent_run_dir in line:
-            pids_info.append({
-                'type': 'agent',
-                'id': int(pid)
-            })
-    return pids_info
-
-
 def kill_processes(core_info, agent_info, pids_info):
     """
     Kills the processes given the pids by sending SIGTERM.
@@ -72,7 +46,7 @@ def kill_processes(core_info, agent_info, pids_info):
 
     def wait_for_processes(remaining_pids_info, killed_pids_info=[], attempt=1, max_attempts=5):
         time.sleep(1)
-        new_remaining_pids_info = find_pids(core_info['extraction_dir'], agent_info['extraction_dir'])
+        new_remaining_pids_info = sandbox_common.find_pids(core_info['extraction_dir'], agent_info['extraction_dir'])
         new_killed_pids_info = [info for info in remaining_pids_info if info not in new_remaining_pids_info]
         for killed_pid_info in new_killed_pids_info:
             log.info('ConductR {} pid {} stopped'.format(killed_pid_info['type'], killed_pid_info['id']))

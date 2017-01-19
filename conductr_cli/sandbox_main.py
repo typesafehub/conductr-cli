@@ -5,7 +5,7 @@ import re
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
 from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, logging_setup, docker, version
+from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_ps, logging_setup, docker, version
 from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
 
 
@@ -114,6 +114,29 @@ def build_parser():
     add_image_dir(stop_parser)
     add_default_arguments(stop_parser)
     stop_parser.set_defaults(func=sandbox_stop.stop)
+
+    # Sub-parser for `ps` sub-command
+    ps_parser = subparsers.add_parser('ps',
+                                      help='List the pids for ConductR core and agent sandbox processes')
+    add_image_dir(ps_parser)
+    add_default_arguments(ps_parser)
+    ps_parser.add_argument('--core',
+                           help='Displays ConductR core sandbox process only.',
+                           default=False,
+                           dest='is_filter_core',
+                           action='store_true')
+    ps_parser.add_argument('--agent',
+                           help='Displays ConductR agent sandbox process only.',
+                           default=False,
+                           dest='is_filter_agent',
+                           action='store_true')
+    ps_parser.add_argument('-q', '--quiet',
+                           help='Displays only the pids without the column headers.',
+                           default=False,
+                           dest='is_quiet',
+                           action='store_true')
+    ps_parser.set_defaults(func=sandbox_ps.ps)
+
     return parser
 
 
