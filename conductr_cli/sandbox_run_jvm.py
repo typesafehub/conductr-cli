@@ -22,7 +22,7 @@ NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
 BIND_TEST_PORT = 19991  # The port used for testing if an address can be bound.
 CONDUCTR_AKKA_REMOTING_PORT = 9004  # The port used by ConductR's Akka remoting.
 NR_OF_PROXY_INSTANCE = 1  # Only run 1 instance of ConductR HAProxy since there's only one HAProxy running per machine.
-SUPPORTED_JVM_VENDOR = "java"  # Oracle JVM vendor is `java`.
+SUPPORTED_JVM_VENDOR = ["java", "openjdk"]  # Oracle JVM vendor is `java`, OpenJDK is `openjdk`
 SUPPORTED_JVM_VERSION = (1, 8)  # Supports JVM version 1.8 and above.
 
 
@@ -143,7 +143,8 @@ def instance_count(image_version, instance_expression):
 
 def validate_jvm_support():
     """
-    Validates for the presence of supported JVM (i.e. Oracle JVM 8), else raise an exception to fail the sandbox run.
+    Validates for the presence of supported JVM (i.e. Oracle or OpenJDK JVM 8),
+    else raise an exception to fail the sandbox run.
     """
     try:
         raw_output = subprocess.getoutput('java -version')
@@ -154,7 +155,7 @@ def validate_jvm_support():
             if len(parts) == 3:
                 jvm_vendor = parts[0]
 
-                if jvm_vendor == SUPPORTED_JVM_VENDOR:
+                if jvm_vendor in SUPPORTED_JVM_VENDOR:
                     jvm_version = parts[2].replace('"', '')
                     jvm_version_parts = jvm_version.split('.')
                     if len(jvm_version_parts) >= 2:
