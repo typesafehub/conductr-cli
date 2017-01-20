@@ -271,22 +271,6 @@ class TestLoadBundleFromCache(TestCase):
 
         exists_mock.assert_not_called()
 
-    def test_offline_mode(self):
-        glob_mock = MagicMock(return_value=['/cache_dir/bundle-old.zip', '/cache_dir/bundle-new.zip'])
-        os_path_getctime_mock = MagicMock(side_effect=[1484822907.0, 1484822908.0])
-
-        with patch('glob.glob', glob_mock), \
-                patch('os.path.getctime', os_path_getctime_mock):
-            is_resolved, bundle_name, bundle_file = uri_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                        'bundle',
-                                                                                        True)
-            self.assertTrue(is_resolved)
-            self.assertEqual(bundle_name, 'bundle-new.zip')
-            self.assertEqual(bundle_file, '/cache_dir/bundle-new.zip')
-
-        glob_mock.assert_called_once_with('/cache-dir/bundle*')
-        os_path_getctime_mock.assert_has_calls([call('/cache_dir/bundle-old.zip'), call('/cache_dir/bundle-new.zip')])
-
     def test_uri_found(self):
         exists_mock = MagicMock(return_value=True)
 
@@ -332,23 +316,6 @@ class TestLoadBundleConfigurationFromCache(TestCase):
             self.assertIsNone(bundle_file)
 
         exists_mock.assert_not_called()
-
-    def test_offline_mode(self):
-        glob_mock = MagicMock(return_value=['/cache_dir/bundle-config-old.zip', '/cache_dir/bundle-config-new.zip'])
-        os_path_getctime_mock = MagicMock(side_effect=[1484822907.0, 1484822908.0])
-
-        with patch('glob.glob', glob_mock), \
-                patch('os.path.getctime', os_path_getctime_mock):
-            is_resolved, bundle_name, bundle_file = uri_resolver.load_bundle_configuration_from_cache('/cache-dir',
-                                                                                                      'bundle-config',
-                                                                                                      True)
-            self.assertTrue(is_resolved)
-            self.assertEqual(bundle_name, 'bundle-config-new.zip')
-            self.assertEqual(bundle_file, '/cache_dir/bundle-config-new.zip')
-
-        glob_mock.assert_called_once_with('/cache-dir/bundle-config*')
-        os_path_getctime_mock.assert_has_calls([call('/cache_dir/bundle-config-old.zip'),
-                                                call('/cache_dir/bundle-config-new.zip')])
 
     def test_uri_found(self):
         exists_mock = MagicMock(return_value=True)

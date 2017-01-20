@@ -1,19 +1,19 @@
 from conductr_cli.exceptions import BundleResolutionError, ContinuousDeliveryError
-from conductr_cli.resolvers import bintray_resolver, uri_resolver
+from conductr_cli.resolvers import bintray_resolver, uri_resolver, offline_resolver
 import importlib
 import logging
 
 
 # Try to resolve from local file system before we attempting resolution using bintray
 DEFAULT_RESOLVERS = [uri_resolver, bintray_resolver]
-OFFLINE_RESOLVERS_EXCLUSION = [bintray_resolver]
+OFFLINE_RESOLVERS = [offline_resolver]
 
 
 def resolve_bundle(custom_settings, cache_dir, uri, offline_mode=False):
     all_resolvers = resolver_chain(custom_settings, offline_mode)
 
     for resolver in all_resolvers:
-        is_cached, bundle_file_name, cached_bundle = resolver.load_bundle_from_cache(cache_dir, uri, offline_mode)
+        is_cached, bundle_file_name, cached_bundle = resolver.load_bundle_from_cache(cache_dir, uri)
         if is_cached:
             return bundle_file_name, cached_bundle
 
@@ -74,7 +74,4 @@ def resolver_chain(custom_settings, offline_mode):
             custom_resolver_chain = [importlib.import_module(resolver_name) for resolver_name in resolver_names]
             return custom_resolver_chain
     else:
-        if offline_mode:
-            return list(set(DEFAULT_RESOLVERS) - set(OFFLINE_RESOLVERS_EXCLUSION))
-        else:
-            return DEFAULT_RESOLVERS
+        return OFFLINE_RESOLVERS if offline_mode else DEFAULT_RESOLVERS

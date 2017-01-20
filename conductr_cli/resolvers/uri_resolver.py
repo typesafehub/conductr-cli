@@ -4,7 +4,6 @@ from urllib.error import URLError
 from pathlib import Path
 from conductr_cli import screen_utils
 import os
-import glob
 import logging
 import shutil
 import urllib
@@ -38,31 +37,10 @@ def resolve_file(cache_dir, uri, auth=None):
         return False, None, None
 
 
-def load_bundle_from_cache(cache_dir, uri, offline_mode=False):
-    """
-    Tries to load a bundle from the cache directory.
-    If offline mode is enabled and the given uri equals a bundle name without slashes, e.g. 'visualizer'
-    then it tries to resolve the last modified bundle from the cache directory by the given uri.
-    Otherwise, when the supplied uri is a local filesystem, the file is not loaded from cache so that the
-    local file can be loaded directly.
-    :param cache_dir: the cache directory
-    :param uri: the bundle uri. Can be either a bundle name, e.g. 'visualizer, an http or file uri
-    :param offline_mode: the offline mode flag
-    :return: a tuple of (is_cached, bundle_name, bundle_uri)
-    """
+def load_bundle_from_cache(cache_dir, uri):
     # When the supplied uri is a local filesystem, don't load from cache so file can be used as is
     parsed = urlparse(uri, scheme='file')
-    if offline_mode and is_bundle_name(uri):
-        cached_bundles = glob.glob('{}/{}*'.format(cache_dir, uri))
-        if cached_bundles:
-            log = logging.getLogger(__name__)
-            last_modified_cached_bundle_uri = max(cached_bundles, key=os.path.getctime)
-            bundle_name = os.path.basename(last_modified_cached_bundle_uri)
-            log.info('Retrieving from cache {}'.format(last_modified_cached_bundle_uri))
-            return True, bundle_name, last_modified_cached_bundle_uri
-        else:
-            return False, None, None
-    elif parsed.scheme == 'file':
+    if parsed.scheme == 'file':
         return False, None, None
     else:
         log = logging.getLogger(__name__)
@@ -80,8 +58,8 @@ def resolve_bundle_configuration(cache_dir, uri, auth=None):
     return resolve_bundle(cache_dir, uri, auth)
 
 
-def load_bundle_configuration_from_cache(cache_dir, uri, offline_mode=False):
-    return load_bundle_from_cache(cache_dir, uri, offline_mode)
+def load_bundle_configuration_from_cache(cache_dir, uri):
+    return load_bundle_from_cache(cache_dir, uri)
 
 
 def resolve_bundle_version(uri):
@@ -140,10 +118,3 @@ def show_progress(log):
         log.progress(progress_bar_text, flush=is_download_complete)
 
     return continue_logging
-
-
-def is_bundle_name(uri):
-    if uri.count('/') == 0:
-        return True
-    else:
-        False

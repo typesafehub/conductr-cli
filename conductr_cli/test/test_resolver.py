@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock, Mock
 from conductr_cli.test.cli_test_case import strip_margin, create_mock_logger
 from conductr_cli.exceptions import BundleResolutionError
 from conductr_cli import resolver
-from conductr_cli.resolvers import bintray_resolver, uri_resolver
+from conductr_cli.resolvers import bintray_resolver, uri_resolver, offline_resolver
 from pyhocon import ConfigFactory
 
 
@@ -203,5 +203,5 @@ class TestResolverChain(TestCase):
 
     def test_offline_mode(self):
         result = resolver.resolver_chain(None, True)
-        expected_result = [uri_resolver]
+        expected_result = [offline_resolver]
         self.assertEqual(expected_result, result)
