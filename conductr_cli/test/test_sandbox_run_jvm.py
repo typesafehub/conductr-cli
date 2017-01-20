@@ -668,7 +668,7 @@ class TestLogRunAttempt(CliTestCase):
 
 
 class TestValidateJvm(CliTestCase):
-    def test_supported(self):
+    def test_supported_oracle(self):
         cmd_output = strip_margin("""|java version "1.8.0_72"
                                      |Java(TM) SE Runtime Environment (build 1.8.0_72-b15)
                                      |Java HotSpot(TM) 64-Bit Server VM (build 25.72-b15, mixed mode)
@@ -680,10 +680,22 @@ class TestValidateJvm(CliTestCase):
 
         mock_getoutput.assert_called_once_with('java -version')
 
+    def test_supported_open_jdk(self):
+        cmd_output = strip_margin("""|openjdk version "1.8.0_111"
+                                     |OpenJDK Runtime Environment (build 1.8.0_111-8u111-b14-3-b14)
+                                     |OpenJDK 64-Bit Server VM (build 25.111-b14, mixed mode)
+                                     |""")
+        mock_getoutput = MagicMock(return_value=cmd_output)
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            sandbox_run_jvm.validate_jvm_support()
+
+        mock_getoutput.assert_called_once_with('java -version')
+
     def test_unsupported_vendor(self):
-        cmd_output = strip_margin("""|openjdk version "1.8.0_66-internal"
-                                     |OpenJDK Runtime Environment (build 1.8.0_66-internal-b17)
-                                     |OpenJDK 64-Bit Server VM (build 25.66-b17, mixed mode)
+        cmd_output = strip_margin("""|unsupported version "1.2.3.4"
+                                     |UnsupportedJDK Runtime Environment (build 1.2.3.4)
+                                     |UnsupportedJDK 64-Bit Server VM (build 1.2.3.4, mixed mode)
                                      |""")
         mock_getoutput = MagicMock(return_value=cmd_output)
 
