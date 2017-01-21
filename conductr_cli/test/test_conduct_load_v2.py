@@ -50,6 +50,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'verbose': False,
             'quiet': False,
             'no_wait': False,
+            'offline_mode': False,
             'long_ids': False,
             'command': 'conduct',
             'cli_parameters': '',
@@ -173,9 +174,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
-                                                             config_file)
+                                                             config_file, self.offline_mode)
         self.assertEqual(
             conf_mock.call_args_list,
             [
@@ -248,9 +250,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
-                                                             config_file)
+                                                             config_file, self.offline_mode)
 
         self.assertEqual(
             conf_mock.call_args_list,
@@ -291,6 +294,15 @@ class TestConductLoadCommand(ConductLoadTestBase):
         with patch('conductr_cli.bundle_utils.conf', conf_mock), \
                 patch('conductr_cli.conduct_load.string_io', string_io_mock):
             self.base_test_success_no_wait()
+        conf_mock.assert_called_with(self.bundle_file)
+        string_io_mock.assert_called_with('mock bundle.conf')
+
+    def test_success_offline_mode(self):
+        conf_mock = MagicMock(return_value='mock bundle.conf')
+        string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
+        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+            self.base_test_success_offline_mode()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
 
@@ -345,7 +357,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Problem with the bundle: Unable to find bundle.conf within the bundle file

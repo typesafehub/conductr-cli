@@ -135,8 +135,8 @@ class TestRun(CliTestCase):
         nr_of_containers = 1
         ports = [3000, 3001]
         features = [
-            VisualizationFeature(version_args=[], image_version=image_version),
-            LoggingFeature(version_args=[], image_version=image_version)
+            VisualizationFeature(version_args=[], image_version=image_version, offline_mode=False),
+            LoggingFeature(version_args=[], image_version=image_version, offline_mode=False)
         ]
 
         with \
