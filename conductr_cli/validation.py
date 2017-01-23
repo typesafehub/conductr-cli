@@ -13,7 +13,8 @@ from conductr_cli.exceptions import BindAddressNotFoundError, \
     InstanceCountError, MalformedBundleError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
     WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
-    JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError
+    JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, \
+    SandboxImageNotAvailableOfflineError
 
 
 def connection_error(log, err, args):
@@ -257,6 +258,24 @@ def handle_sandbox_image_not_found_error(func):
             log.error('ConductR {} {} cannot be found on Bintray.'.format(e.component_type, e.image_version))
             log.error('Please specify a valid ConductR version.')
             log.error('The latest version can be found on: https://www.lightbend.com/product/conductr/developer')
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_sandbox_image_not_available_offline_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except SandboxImageNotAvailableOfflineError as e:
+            log = get_logger_for_func(func)
+            log.error('ConductR {} is not available locally.'.format(e.image_version))
+            log.error('Please run sandbox without --offline option to obtain the ConductR artefacts.')
             return False
 
     # Do not change the wrapped function name,

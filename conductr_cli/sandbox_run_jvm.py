@@ -1,8 +1,8 @@
 from conductr_cli import conduct_main, host, sandbox_stop, sandbox_common
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.exceptions import BindAddressNotFoundError, BintrayUnreachableError, InstanceCountError, \
-    SandboxImageNotFoundError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError
+    SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, JavaCallError, JavaUnsupportedVendorError, \
+    JavaUnsupportedVersionError, JavaVersionParseError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM, BINTRAY_LIGHTBEND_ORG, \
     BINTRAY_CONDUCTR_REPO
@@ -63,7 +63,8 @@ def run(args, features):
 
     bind_addrs = find_bind_addrs(max(nr_of_core_instances, nr_of_agent_instances), args.addr_range)
 
-    core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version)
+    core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version,
+                                                                   args.offline_mode)
 
     core_addrs = bind_addrs[0:nr_of_core_instances]
     core_pids = start_core_instances(core_extracted_dir, core_addrs, args.conductr_roles, features, args.log_level)
@@ -217,7 +218,7 @@ def find_bind_addrs(nr_of_addrs, addr_range):
         return addrs_to_bind
 
 
-def obtain_sandbox_image(image_dir, image_version):
+def obtain_sandbox_image(image_dir, image_version, offline_mode):
     """
     Obtains the sandbox image.
 
@@ -264,22 +265,25 @@ def obtain_sandbox_image(image_dir, image_version):
                                                .format(image_dir, image_version))
 
         if (not core_path) or (not agent_path):
-            try:
-                bintray_username, bintray_password = bintray_resolver.load_bintray_credentials()
-                bintray_auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password)
-                if not core_path:
-                    _, _, core_path = bintray_resolver.bintray_download(
-                        image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
-                        core_info['bintray_package_name'], bintray_auth, version=image_version)
+            if offline_mode:
+                raise SandboxImageNotAvailableOfflineError(image_version)
+            else:
+                try:
+                    bintray_username, bintray_password = bintray_resolver.load_bintray_credentials()
+                    bintray_auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password)
+                    if not core_path:
+                        _, _, core_path = bintray_resolver.bintray_download(
+                            image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
+                            core_info['bintray_package_name'], bintray_auth, version=image_version)
 
-                if not agent_path:
-                    _, _, agent_path = bintray_resolver.bintray_download(
-                        image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
-                        agent_info['bintray_package_name'], bintray_auth, version=image_version)
-            except ConnectionError:
-                raise BintrayUnreachableError('Bintray is unreachable.')
-            except HTTPError:
-                raise SandboxImageNotFoundError(core_info['type'], image_version)
+                    if not agent_path:
+                        _, _, agent_path = bintray_resolver.bintray_download(
+                            image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
+                            agent_info['bintray_package_name'], bintray_auth, version=image_version)
+                except ConnectionError:
+                    raise BintrayUnreachableError('Bintray is unreachable.')
+                except HTTPError:
+                    raise SandboxImageNotFoundError(core_info['type'], image_version)
 
         return core_path, agent_path
 
