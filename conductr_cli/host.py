@@ -3,6 +3,7 @@ from conductr_cli.constants import DEFAULT_PORT, DEFAULT_SANDBOX_ADDR_RANGE
 import ipaddress
 import socket
 import platform
+import sys
 
 
 CONDUCTR_HOST = 'CONDUCTR_HOST'
@@ -39,6 +40,10 @@ def is_linux():
 
 def is_macos():
     return platform.system().lower() == 'darwin'
+
+
+def is_64bit():
+    return sys.maxsize > 2**32
 
 
 def can_bind(ip_addr, port):

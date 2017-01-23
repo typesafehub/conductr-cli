@@ -10,8 +10,10 @@ from unittest.mock import call, patch, MagicMock, Mock
 
 
 class TestResolveBundle(TestCase):
+    bintray_auth = ('realm', 'username', 'password')
+
     def test_bintray_version_found(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value={
             'org': 'typesafe',
@@ -20,7 +22,8 @@ class TestResolveBundle(TestCase):
             'compatibility_version': 'v1',
             'digest': 'digest',
             'version': 'v1-digest',
-            'path': 'download.zip'
+            'path': 'download.zip',
+            'download_url': 'https://dl.bintray.com/typesafe/bundle/download.zip'
         })
         resolve_bundle_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
 
@@ -35,13 +38,13 @@ class TestResolveBundle(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
         resolve_bundle_mock.assert_called_with('/cache-dir', 'https://dl.bintray.com/typesafe/bundle/download.zip',
-                                               ('Bintray', 'username', 'password'))
+                                               self.bintray_auth)
 
     def test_bintray_version_not_found(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value=None)
 
@@ -55,8 +58,8 @@ class TestResolveBundle(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
 
     def test_failure_malformed_bundle_uri(self):
         parse_bundle_mock = MagicMock(side_effect=MalformedBundleUriError('test only'))
@@ -70,7 +73,7 @@ class TestResolveBundle(TestCase):
         parse_bundle_mock.assert_called_with('bundle-name:v1')
 
     def test_failure_http_error(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=HTTPError('test only'))
 
@@ -84,11 +87,11 @@ class TestResolveBundle(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
 
     def test_connection_error(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
 
@@ -102,13 +105,15 @@ class TestResolveBundle(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
 
 
 class TestResolveBundleConfiguration(TestCase):
+    bintray_auth = ('realm', 'username', 'password')
+
     def test_bintray_version_found(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value={
@@ -117,7 +122,8 @@ class TestResolveBundleConfiguration(TestCase):
             'package_name': 'bundle-name',
             'compatibility_version': 'v1',
             'digest': 'digest',
-            'path': 'download.zip'
+            'path': 'download.zip',
+            'download_url': 'https://dl.bintray.com/typesafe/bundle-configuration/download.zip'
         })
         resolve_bundle_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
 
@@ -133,14 +139,14 @@ class TestResolveBundleConfiguration(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
         resolve_bundle_mock.assert_called_with('/cache-dir',
                                                'https://dl.bintray.com/typesafe/bundle-configuration/download.zip',
-                                               ('Bintray', 'username', 'password'))
+                                               self.bintray_auth)
 
     def test_bintray_version_not_found(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value=None)
@@ -156,8 +162,8 @@ class TestResolveBundleConfiguration(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
 
     def test_failure_malformed_bundle_uri(self):
         parse_bundle_configuration_mock = MagicMock(side_effect=MalformedBundleUriError('test only'))
@@ -172,7 +178,7 @@ class TestResolveBundleConfiguration(TestCase):
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
 
     def test_failure_http_error(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=HTTPError('test only'))
@@ -188,11 +194,11 @@ class TestResolveBundleConfiguration(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
 
     def test_failure_connection_error(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=(self.bintray_auth))
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
@@ -208,11 +214,13 @@ class TestResolveBundleConfiguration(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
 
 
 class TestLoadBundleFromCache(TestCase):
+    bintray_auth = ('realm', 'username', 'password')
+
     def test_file(self):
         exists_mock = MagicMock(return_value=True)
         parse_bundle_mock = MagicMock()
@@ -230,10 +238,12 @@ class TestLoadBundleFromCache(TestCase):
 
     def test_bundle(self):
         exists_mock = MagicMock(return_value=False)
-        bintray_download_det_mock = MagicMock(return_value=(None, None))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
+        bintray_resolve_version_mock = MagicMock(return_value=None)
 
         with patch('os.path.exists', exists_mock), \
-                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_details', bintray_download_det_mock):
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
             bintray_resolver.load_bundle_from_cache(
                 '/cache-dir', '/tmp/bundle')
 
@@ -241,7 +251,7 @@ class TestLoadBundleFromCache(TestCase):
 
     def test_bintray_version_found(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value={
             'org': 'typesafe',
@@ -249,7 +259,8 @@ class TestLoadBundleFromCache(TestCase):
             'package_name': 'bundle-name',
             'compatibility_version': 'v1',
             'digest': 'digest',
-            'path': 'download.zip'
+            'path': 'download.zip',
+            'download_url': 'https://dl.bintray.com/typesafe/bundle/download.zip'
         })
         load_bundle_from_cache_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
 
@@ -268,14 +279,14 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
         load_bundle_from_cache_mock.assert_called_with('/cache-dir',
                                                        'https://dl.bintray.com/typesafe/bundle/download.zip')
 
     def test_bintray_version_not_found(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value=None)
 
@@ -292,8 +303,8 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
 
     def test_failure_malformed_bundle_uri(self):
         exists_mock = MagicMock(return_value=False)
@@ -312,7 +323,7 @@ class TestLoadBundleFromCache(TestCase):
 
     def test_failure_http_error(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=HTTPError('test only'))
 
@@ -329,12 +340,12 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
 
     def test_failure_connection_error(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
 
@@ -351,11 +362,13 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
-                                                        None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        'v1', 'digest')
 
 
 class TestLoadBundleConfigurationFromCache(TestCase):
+    bintray_auth = ('realm', 'username', 'password')
+
     def test_file(self):
         exists_mock = MagicMock(return_value=True)
         parse_bundle_configuration_mock = MagicMock()
@@ -373,7 +386,7 @@ class TestLoadBundleConfigurationFromCache(TestCase):
 
     def test_bintray_version_found(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value={
@@ -382,7 +395,8 @@ class TestLoadBundleConfigurationFromCache(TestCase):
             'package_name': 'bundle-name',
             'compatibility_version': 'v1',
             'digest': 'digest',
-            'path': 'download.zip'
+            'path': 'download.zip',
+            'download_url': 'https://dl.bintray.com/typesafe/bundle-configuration/download.zip'
         })
         load_bundle_from_cache_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
 
@@ -401,14 +415,14 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
         load_bundle_from_cache_mock.assert_called_with('/cache-dir',
                                                        'https://dl.bintray.com/typesafe/bundle-configuration/download.zip')
 
     def test_bintray_version_not_found(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value=None)
@@ -426,8 +440,8 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
 
     def test_failure_malformed_bundle_uri(self):
         exists_mock = MagicMock(return_value=False)
@@ -446,7 +460,7 @@ class TestLoadBundleConfigurationFromCache(TestCase):
 
     def test_failure_http_error(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                     'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=HTTPError('test only'))
@@ -464,12 +478,12 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
 
     def test_failure_connection_error(self):
         exists_mock = MagicMock(return_value=False)
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
@@ -487,75 +501,13 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle-configuration',
-                                                        'bundle-name', None, 'v1', 'digest')
-
-
-class TestResolveConductrBinary(TestCase):
-    def test_binary_found(self):
-        bintray_resolve_version_mock = MagicMock(return_value={
-            'org': 'org',
-            'repo': 'repo',
-            'package_name': 'package-name',
-            'compatibility_version': None,
-            'digest': None,
-            'version': '1.0.0',
-            'path': 'conductr-1.0.0.tgz'
-        })
-        resolve_file_mock = MagicMock(return_value=(True, 'conductr-1.0.0.tgz', '/cache-dir/conductr-1.0.0.tgz'))
-
-        with patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock), \
-                patch('conductr_cli.resolvers.bintray_resolver.uri_resolver.resolve_file', resolve_file_mock):
-            auth = 'Bintray', 'username', 'password'
-            is_resolved, file_name, file_uri = bintray_resolver.bintray_download('/cache-dir', 'org', 'repo',
-                                                                                 'package-name', auth, '1.0.0')
-            self.assertTrue(is_resolved)
-            self.assertEqual('conductr-1.0.0.tgz', file_name)
-            self.assertEqual('/cache-dir/conductr-1.0.0.tgz', file_uri)
-
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'org', 'repo', 'package-name',
-                                                        '1.0.0', None, None)
-        resolve_file_mock.assert_called_with('/cache-dir', 'https://dl.bintray.com/org/repo/conductr-1.0.0.tgz',
-                                             ('Bintray', 'username', 'password'))
-
-    def test_binary_not_found(self):
-        bintray_resolve_version_mock = MagicMock(return_value=None)
-
-        with patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            auth = 'Bintray', 'username', 'password'
-            is_resolved, file_name, file_uri = bintray_resolver.bintray_download('/cache-dir', 'org', 'repo',
-                                                                                 'package-name', auth, '100.0.0')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(file_name)
-            self.assertIsNone(file_uri)
-
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'org', 'repo', 'package-name',
-                                                        '100.0.0', None, None)
-
-    def test_failure_http_error(self):
-        bintray_resolve_version_mock = MagicMock(side_effect=HTTPError('test only'))
-
-        with patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            auth = 'Bintray', 'username', 'password'
-            self.assertRaises(HTTPError, bintray_resolver.bintray_download,
-                              '/cache-dir', 'org', 'repo', 'package-name', auth, '1.0.0')
-
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'org', 'repo', 'package-name',
-                                                        '1.0.0', None, None)
-
-    def test_failure_connection_error(self):
-        bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
-
-        with patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            auth = 'Bintray', 'username', 'password'
-            self.assertRaises(ConnectionError, bintray_resolver.bintray_download,
-                              '/cache-dir', 'org', 'repo', 'package-name', auth, '1.0.0')
-
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'org', 'repo', 'package-name',
-                                                        '1.0.0', None, None)
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle-configuration',
+                                                        'bundle-name', 'v1', 'digest')
 
 
 class TestBintrayResolveVersion(TestCase):
+    bintray_auth = ('Bintray', 'username', 'password')
+
     def test_success(self):
         bintray_files_endpoint_response = [
             {
@@ -569,9 +521,9 @@ class TestBintrayResolveVersion(TestCase):
         get_json_mock = MagicMock(return_value=bintray_files_endpoint_response)
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            result = bintray_resolver.bintray_resolve_version('username', 'password',
+            result = bintray_resolver.bintray_resolve_version(self.bintray_auth,
                                                               'typesafe', 'bundle', 'reactive-maps-frontend',
-                                                              None, 'v1', '023f9da22')
+                                                              'v1', '023f9da22')
             self.assertEqual(result, {
                 'org': 'typesafe',
                 'repo': 'bundle',
@@ -580,12 +532,13 @@ class TestBintrayResolveVersion(TestCase):
                 'digest': '023f9da22',
                 'version': 'v1-023f9da22',
                 'path': 'download/path.zip',
+                'download_url': 'https://dl.bintray.com/typesafe/bundle/download/path.zip',
                 'resolver': bintray_resolver.__name__
             })
 
         get_json_mock.assert_called_with(
-            'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files',
-            'username', 'password')
+            self.bintray_auth,
+            'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files')
 
     def test_failure_version_not_found(self):
         bintray_files_endpoint_response = [
@@ -600,12 +553,12 @@ class TestBintrayResolveVersion(TestCase):
         get_json_mock = MagicMock(return_value=bintray_files_endpoint_response)
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, 'username', 'password',
-                              'typesafe', 'bundle', 'reactive-maps-frontend', None, 'v1', '023f9da22')
+            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, self.bintray_auth,
+                              'typesafe', 'bundle', 'reactive-maps-frontend', 'v1', '023f9da22')
 
         get_json_mock.assert_called_with(
-            'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files',
-            'username', 'password')
+            self.bintray_auth,
+            'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files')
 
     def test_failure_multiple_versions_found(self):
         bintray_files_endpoint_response = [
@@ -627,15 +580,17 @@ class TestBintrayResolveVersion(TestCase):
         get_json_mock = MagicMock(return_value=bintray_files_endpoint_response)
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, 'username', 'password',
-                              'typesafe', 'bundle', 'reactive-maps-frontend', None, 'v1', '023f9da22')
+            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, self.bintray_auth,
+                              'typesafe', 'bundle', 'reactive-maps-frontend', 'v1', '023f9da22')
 
         get_json_mock.assert_called_with(
-            'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files',
-            'username', 'password')
+            self.bintray_auth,
+            'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files')
 
 
 class TestBintrayResolveVersionLatest(TestCase):
+    bintray_auth = ('Bintray', 'username', 'password')
+
     def test_success(self):
         package_endpoint_response = {
             'latest_version': 'v1-023f9da22'
@@ -652,9 +607,9 @@ class TestBintrayResolveVersionLatest(TestCase):
         get_json_mock = MagicMock(side_effect=[package_endpoint_response, bintray_files_endpoint_response])
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            result = bintray_resolver.bintray_resolve_version('username', 'password',
+            result = bintray_resolver.bintray_resolve_version(self.bintray_auth,
                                                               'typesafe', 'bundle', 'reactive-maps-frontend',
-                                                              None, None, None)
+                                                              None, None)
             self.assertEqual(result, {
                 'org': 'typesafe',
                 'repo': 'bundle',
@@ -663,15 +618,17 @@ class TestBintrayResolveVersionLatest(TestCase):
                 'digest': '023f9da22',
                 'version': 'v1-023f9da22',
                 'path': 'download/path.zip',
+                'download_url': 'https://dl.bintray.com/typesafe/bundle/download/path.zip',
                 'resolver': bintray_resolver.__name__
             })
 
         self.assertEqual(
             get_json_mock.call_args_list,
             [
-                call('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend', 'username', 'password'),
-                call('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files',
-                     'username', 'password')
+                call(self.bintray_auth,
+                     'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend'),
+                call(self.bintray_auth,
+                     'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files')
             ]
         )
 
@@ -705,9 +662,9 @@ class TestBintrayResolveVersionLatest(TestCase):
                                                bintray_files_v10_endpoint_response])
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            result = bintray_resolver.bintray_resolve_version('username', 'password',
+            result = bintray_resolver.bintray_resolve_version(self.bintray_auth,
                                                               'typesafe', 'bundle', 'reactive-maps-frontend',
-                                                              None, None, None)
+                                                              None, None)
             self.assertEqual(result, {
                 'org': 'typesafe',
                 'repo': 'bundle',
@@ -716,17 +673,19 @@ class TestBintrayResolveVersionLatest(TestCase):
                 'digest': '023f9da22',
                 'version': 'v10-023f9da22',
                 'path': 'download/path.zip',
+                'download_url': 'https://dl.bintray.com/typesafe/bundle/download/path.zip',
                 'resolver': bintray_resolver.__name__
             })
 
         self.assertEqual(
             get_json_mock.call_args_list,
             [
-                call('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend', 'username', 'password'),
-                call('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/attributes?names=latest-v10',
-                     'username', 'password'),
-                call('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v10-023f9da22/files',
-                     'username', 'password')
+                call(self.bintray_auth,
+                     'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend'),
+                call(self.bintray_auth,
+                     'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/attributes?names=latest-v10'),
+                call(self.bintray_auth,
+                     'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v10-023f9da22/files')
             ]
         )
 
@@ -740,11 +699,11 @@ class TestBintrayResolveVersionLatest(TestCase):
         get_json_mock = MagicMock(return_value=package_endpoint_response)
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, 'username', 'password',
-                              'typesafe', 'bundle', 'reactive-maps-frontend', None, None, None)
+            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, self.bintray_auth,
+                              'typesafe', 'bundle', 'reactive-maps-frontend', None, None)
 
-        get_json_mock.assert_called_with('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend',
-                                         'username', 'password')
+        get_json_mock.assert_called_with(self.bintray_auth,
+                                         'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend')
 
     def test_failure_latest_version_malformed(self):
         package_endpoint_response = {
@@ -753,14 +712,16 @@ class TestBintrayResolveVersionLatest(TestCase):
         get_json_mock = MagicMock(return_value=package_endpoint_response)
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, 'username', 'password',
-                              'typesafe', 'bundle', 'reactive-maps-frontend', None, None, None)
+            self.assertRaises(BintrayResolutionError, bintray_resolver.bintray_resolve_version, self.bintray_auth,
+                              'typesafe', 'bundle', 'reactive-maps-frontend', None, None)
 
-        get_json_mock.assert_called_with('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend',
-                                         'username', 'password')
+        get_json_mock.assert_called_with(self.bintray_auth,
+                                         'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend')
 
 
 class TestBintrayResolveVersionLatestCompatibilityVersion(TestCase):
+    bintray_auth = ('Bintray', 'username', 'password')
+
     def test_success(self):
         bintray_attributes_endpoint_response = [
             {
@@ -783,8 +744,8 @@ class TestBintrayResolveVersionLatestCompatibilityVersion(TestCase):
         get_json_mock = MagicMock(side_effect=[bintray_attributes_endpoint_response, bintray_files_endpoint_response])
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            result = bintray_resolver.bintray_resolve_version('username', 'password', 'typesafe', 'bundle',
-                                                              'reactive-maps-frontend', None, 'v1', None)
+            result = bintray_resolver.bintray_resolve_version(self.bintray_auth, 'typesafe', 'bundle',
+                                                              'reactive-maps-frontend', 'v1')
             self.assertEqual(result, {
                 'org': 'typesafe',
                 'repo': 'bundle',
@@ -793,16 +754,17 @@ class TestBintrayResolveVersionLatestCompatibilityVersion(TestCase):
                 'digest': '023f9da22',
                 'version': 'v1-023f9da22',
                 'path': 'download/path.zip',
+                'download_url': 'https://dl.bintray.com/typesafe/bundle/download/path.zip',
                 'resolver': bintray_resolver.__name__
             })
 
         self.assertEqual(
             get_json_mock.call_args_list,
             [
-                call('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/attributes?names=latest-v1',
-                     'username', 'password'),
-                call('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files',
-                     'username', 'password')
+                call(self.bintray_auth,
+                     'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/attributes?names=latest-v1'),
+                call(self.bintray_auth,
+                     'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/versions/v1-023f9da22/files')
             ]
         )
 
@@ -812,17 +774,20 @@ class TestBintrayResolveVersionLatestCompatibilityVersion(TestCase):
         get_json_mock = MagicMock(return_value=bintray_attributes_endpoint_response)
 
         with patch('conductr_cli.resolvers.bintray_resolver.get_json', get_json_mock):
-            result = bintray_resolver.bintray_resolve_version('username', 'password', 'typesafe', 'bundle',
-                                                              'reactive-maps-frontend', None, 'v1', None)
+            result = bintray_resolver.bintray_resolve_version(self.bintray_auth, 'typesafe', 'bundle',
+                                                              'reactive-maps-frontend', 'v1')
             self.assertIsNone(result)
 
-        get_json_mock.assert_called_with('https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/attributes?names=latest-v1',
-                                         'username', 'password')
+        get_json_mock.assert_called_with(
+            self.bintray_auth,
+            'https://api.bintray.com/packages/typesafe/bundle/reactive-maps-frontend/attributes?names=latest-v1')
 
 
 class TestResolveBundleVersion(TestCase):
+    bintray_auth = ('realm', 'username', 'password')
+
     def test_resolved_version_found(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         resolved_version = {
             'org': 'typesafe',
@@ -843,11 +808,11 @@ class TestResolveBundleVersion(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
                                                         compatibility_version='v1', digest='digest')
 
     def test_resolved_version_not_found(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(return_value=None)
 
@@ -859,11 +824,11 @@ class TestResolveBundleVersion(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
                                                         compatibility_version='v1', digest='digest')
 
     def test_malformed_bundle_uri_error(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=MalformedBundleUriError('test'))
 
@@ -875,11 +840,11 @@ class TestResolveBundleVersion(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
                                                         compatibility_version='v1', digest='digest')
 
     def test_http_error(self):
-        load_bintray_credentials_mock = MagicMock(return_value=('username', 'password'))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
         bintray_resolve_version_mock = MagicMock(side_effect=HTTPError('test'))
 
@@ -891,7 +856,7 @@ class TestResolveBundleVersion(TestCase):
 
         load_bintray_credentials_mock.assert_called_with()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
-        bintray_resolve_version_mock.assert_called_with('username', 'password', 'typesafe', 'bundle', 'bundle-name',
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
                                                         compatibility_version='v1', digest='digest')
 
 
@@ -950,7 +915,8 @@ class TestLoadBintrayCredentials(TestCase):
 
         with patch('os.path.exists', exists_mock), \
                 patch('builtins.open', open_mock):
-            username, password = bintray_resolver.load_bintray_credentials()
+            realm, username, password = bintray_resolver.load_bintray_credentials()
+            self.assertEqual('Bintray', realm)
             self.assertEqual('user1', username)
             self.assertEqual('sec=ret', password)
 
@@ -982,6 +948,8 @@ class TestLoadBintrayCredentials(TestCase):
 
 
 class TestGetJson(TestCase):
+    auth = ('realm', 'username', 'password')
+
     def test_get_json(self):
         response_mock = Mock()
         response_raise_for_status_mock = MagicMock()
@@ -990,7 +958,7 @@ class TestGetJson(TestCase):
 
         requests_get_mock = MagicMock(return_value=response_mock)
         with patch('requests.get', requests_get_mock):
-            result = bintray_resolver.get_json('http://site.com', 'username', 'password')
+            result = bintray_resolver.get_json(self.auth, 'http://site.com')
             self.assertEqual([1, 2, 3], result)
 
         requests_get_mock.assert_called_with('http://site.com', auth=('username', 'password'))
@@ -1004,7 +972,35 @@ class TestGetJson(TestCase):
 
         requests_get_mock = MagicMock(return_value=response_mock)
         with patch('requests.get', requests_get_mock):
-            result = bintray_resolver.get_json('http://site.com', None, None)
+            result = bintray_resolver.get_json(None, 'http://site.com')
+            self.assertEqual([1, 2, 3], result)
+
+        requests_get_mock.assert_called_with('http://site.com')
+        response_raise_for_status_mock.assert_called_with()
+
+    def test_get_json_missing_username(self):
+        response_mock = Mock()
+        response_raise_for_status_mock = MagicMock()
+        response_mock.raise_for_status = response_raise_for_status_mock
+        response_mock.text = '[1,2,3]'
+
+        requests_get_mock = MagicMock(return_value=response_mock)
+        with patch('requests.get', requests_get_mock):
+            result = bintray_resolver.get_json(('realm', None, 'password'), 'http://site.com')
+            self.assertEqual([1, 2, 3], result)
+
+        requests_get_mock.assert_called_with('http://site.com')
+        response_raise_for_status_mock.assert_called_with()
+
+    def test_get_json_missing_password(self):
+        response_mock = Mock()
+        response_raise_for_status_mock = MagicMock()
+        response_mock.raise_for_status = response_raise_for_status_mock
+        response_mock.text = '[1,2,3]'
+
+        requests_get_mock = MagicMock(return_value=response_mock)
+        with patch('requests.get', requests_get_mock):
+            result = bintray_resolver.get_json(('realm', 'username', None), 'http://site.com')
             self.assertEqual([1, 2, 3], result)
 
         requests_get_mock.assert_called_with('http://site.com')

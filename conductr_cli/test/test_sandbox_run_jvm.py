@@ -1,8 +1,9 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_run_jvm
 from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, BintrayUnreachableError, \
-    SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, JavaCallError, JavaUnsupportedVendorError, \
-    JavaUnsupportedVersionError, JavaVersionParseError
+    SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, \
+    SandboxUnsupportedOsArchError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
+    JavaVersionParseError
 from conductr_cli.sandbox_features import LoggingFeature
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
@@ -25,6 +26,7 @@ class TestRun(CliTestCase):
 
     def test_default_args(self):
         mock_validate_jvm_support = MagicMock()
+        mock_validate_64bit_support = MagicMock()
 
         bind_addr = MagicMock()
         bind_addrs = [bind_addr]
@@ -46,6 +48,7 @@ class TestRun(CliTestCase):
         features = []
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
@@ -56,6 +59,8 @@ class TestRun(CliTestCase):
                                                                mock_agent_pids, bind_addrs)
             self.assertEqual(expected_result, result)
 
+        mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_64bit_support.assert_called_once_with()
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir, bind_addrs, [], features, 'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir, bind_addrs, bind_addrs,
@@ -63,6 +68,7 @@ class TestRun(CliTestCase):
 
     def test_nr_of_core_agent_instances(self):
         mock_validate_jvm_support = MagicMock()
+        mock_validate_64bit_support = MagicMock()
 
         bind_addr1 = MagicMock()
         bind_addr2 = MagicMock()
@@ -90,6 +96,7 @@ class TestRun(CliTestCase):
         features = []
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
@@ -100,6 +107,8 @@ class TestRun(CliTestCase):
                                                                mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3])
             self.assertEqual(expected_result, result)
 
+        mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_64bit_support.assert_called_once_with()
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir, [bind_addr1], [], features, 'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
@@ -111,6 +120,7 @@ class TestRun(CliTestCase):
 
     def test_roles(self):
         mock_validate_jvm_support = MagicMock()
+        mock_validate_64bit_support = MagicMock()
 
         bind_addr = MagicMock()
         bind_addrs = [bind_addr]
@@ -138,6 +148,7 @@ class TestRun(CliTestCase):
         features = [mock_feature]
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
@@ -148,6 +159,8 @@ class TestRun(CliTestCase):
                                                                mock_agent_pids, bind_addrs)
             self.assertEqual(expected_result, result)
 
+        mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_64bit_support.assert_called_once_with()
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
                                                      bind_addrs,
@@ -237,67 +250,135 @@ class TestFindBindAddresses(CliTestCase):
 
 
 class TestObtainSandboxImage(CliTestCase):
-    def test_obtain_from_bintray(self):
-        mock_load_bintray_credentials = MagicMock(return_value=('username', 'password'))
-        mock_bintray_download = \
-            MagicMock(side_effect=[(True, 'conductr-1.0.0.tgz', '/cache_dir/conductr-1.0.0.tgz'),
-                                   (True, 'conductr-agent-1.0.0.tgz', '/cache_dir/conductr-agent-1.0.0.tgz')])
-        mock_os_path_exists = MagicMock(side_effect=[False, False, False, False])
+    def test_obtain_macos_artefact_from_bintray(self):
+        mock_is_macos = MagicMock(return_value=True)
+        mock_is_64bit = MagicMock(return_value=True)
+        mock_download_sandbox_image = \
+            MagicMock(side_effect=[
+                '/cache_dir/conductr-2.0.0-Mac_OS_X-x86_64.tgz',
+                '/cache_dir/conductr-agent-2.0.0-Mac_OS_X-x86_64.tgz'
+            ])
+        mock_glob = MagicMock(side_effect=[[], []])
+        mock_os_path_exists = MagicMock(side_effect=[False, False])
         mock_os_makedirs = MagicMock()
         mock_os_path_basename = MagicMock()
         mock_shutil_unpack_archive = MagicMock()
-        mock_os_path_splitext = MagicMock(return_value=('sub_dir', '.tgz'))
-        mock_os_listdir = MagicMock(return_value=['some-file-a', 'some-file-b'])
+        mock_os_listdir = MagicMock(side_effect=[
+            ['conductr-2.0.0'],  # Top level directory inside the core archive
+            ['core-some-file-a', 'core-some-file-b'],  # Extracted files from core archive
+            ['conductr-agent-2.0.0'],  # Top level directory inside the agent archive
+            ['agent-some-file-a', 'agent-some-file-b'],  # Extracted files from agent archive
+        ])
         mock_shutil_move = MagicMock()
         mock_os_rmdir = MagicMock()
 
-        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
-                patch('conductr_cli.resolvers.bintray_resolver.bintray_download', mock_bintray_download), \
+        with patch('conductr_cli.host.is_macos', mock_is_macos), \
+                patch('conductr_cli.host.is_64bit', mock_is_64bit), \
+                patch('conductr_cli.sandbox_run_jvm.download_sandbox_image', mock_download_sandbox_image), \
+                patch('glob.glob', mock_glob), \
                 patch('os.path.exists', mock_os_path_exists), \
                 patch('os.makedirs', mock_os_makedirs), \
                 patch('os.path.basename', mock_os_path_basename), \
                 patch('shutil.unpack_archive', mock_shutil_unpack_archive), \
-                patch('os.path.splitext', mock_os_path_splitext), \
                 patch('os.listdir', mock_os_listdir), \
                 patch('shutil.move', mock_shutil_move), \
                 patch('os.rmdir', mock_os_rmdir):
-            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0', offline_mode=False)
+            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '2.0.0', offline_mode=False)
             self.assertEqual(('/cache_dir/core', '/cache_dir/agent'), result)
 
-        mock_load_bintray_credentials.assert_called_once_with()
-        core_call = call('/cache_dir', 'lightbend', 'commercial-releases', 'ConductR-Universal',
-                         ('Bintray', 'username', 'password'), version='1.0.0')
-        agent_call = call('/cache_dir', 'lightbend', 'commercial-releases', 'ConductR-Agent-Universal',
-                          ('Bintray', 'username', 'password'), version='1.0.0')
-        mock_bintray_download.assert_has_calls([core_call, agent_call])
-        mock_os_rmdir.assert_has_calls([call('/cache_dir/core/sub_dir'), call('/cache_dir/agent/sub_dir')])
+        mock_glob.assert_has_calls([
+            call('/cache_dir/conductr-2.0.0-Mac_OS_X-*64.tgz'),
+            call('/cache_dir/conductr-agent-2.0.0-Mac_OS_X-*64.tgz')
+        ])
 
-    def test_bintray_unreachable(self):
+        mock_download_sandbox_image.assert_has_calls([
+            call('/cache_dir',
+                 package_name='ConductR-Universal',
+                 artefact_type='core',
+                 image_version='2.0.0'),
+            call('/cache_dir',
+                 package_name='ConductR-Agent-Universal',
+                 artefact_type='agent',
+                 image_version='2.0.0')
+        ])
+
+        mock_shutil_move.assert_has_calls([
+            call('/cache_dir/core/conductr-2.0.0/core-some-file-a', '/cache_dir/core/core-some-file-a'),
+            call('/cache_dir/core/conductr-2.0.0/core-some-file-b', '/cache_dir/core/core-some-file-b'),
+            call('/cache_dir/agent/conductr-agent-2.0.0/agent-some-file-a', '/cache_dir/agent/agent-some-file-a'),
+            call('/cache_dir/agent/conductr-agent-2.0.0/agent-some-file-b', '/cache_dir/agent/agent-some-file-b')
+        ])
+
+        mock_os_rmdir.assert_has_calls([
+            call('/cache_dir/core/conductr-2.0.0'),
+            call('/cache_dir/agent/conductr-agent-2.0.0')
+        ])
+
+    def test_obtain_linux_artefact_from_bintray(self):
+        mock_is_macos = MagicMock(return_value=False)
+        mock_is_linux = MagicMock(return_value=True)
+        mock_is_64bit = MagicMock(return_value=True)
+        mock_download_sandbox_image = \
+            MagicMock(side_effect=[
+                '/cache_dir/conductr-2.0.0-Linux-x86_64.tgz',
+                '/cache_dir/conductr-agent-2.0.0-Linux-x86_64.tgz'
+            ])
+        mock_glob = MagicMock(side_effect=[[], []])
         mock_os_path_exists = MagicMock(side_effect=[False, False])
-        mock_load_bintray_credentials = MagicMock(side_effect=ConnectionError('test only'))
+        mock_os_makedirs = MagicMock()
+        mock_os_path_basename = MagicMock()
+        mock_shutil_unpack_archive = MagicMock()
+        mock_os_listdir = MagicMock(side_effect=[
+            ['conductr-2.0.0'],  # Top level directory inside the core archive
+            ['core-some-file-a', 'core-some-file-b'],  # Extracted files from core archive
+            ['conductr-agent-2.0.0'],  # Top level directory inside the agent archive
+            ['agent-some-file-a', 'agent-some-file-b'],  # Extracted files from agent archive
+        ])
+        mock_shutil_move = MagicMock()
+        mock_os_rmdir = MagicMock()
 
-        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
-                patch('os.path.exists', mock_os_path_exists):
-            self.assertRaises(BintrayUnreachableError,
-                              sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0', False)
+        with patch('conductr_cli.host.is_macos', mock_is_macos), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_64bit', mock_is_64bit), \
+                patch('conductr_cli.sandbox_run_jvm.download_sandbox_image', mock_download_sandbox_image), \
+                patch('glob.glob', mock_glob), \
+                patch('os.path.exists', mock_os_path_exists), \
+                patch('os.makedirs', mock_os_makedirs), \
+                patch('os.path.basename', mock_os_path_basename), \
+                patch('shutil.unpack_archive', mock_shutil_unpack_archive), \
+                patch('os.listdir', mock_os_listdir), \
+                patch('shutil.move', mock_shutil_move), \
+                patch('os.rmdir', mock_os_rmdir):
+            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '2.0.0', offline_mode=False)
+            self.assertEqual(('/cache_dir/core', '/cache_dir/agent'), result)
 
-        mock_load_bintray_credentials.assert_called_once_with()
+        mock_glob.assert_has_calls([
+            call('/cache_dir/conductr-2.0.0-Linux-*64.tgz'),
+            call('/cache_dir/conductr-agent-2.0.0-Linux-*64.tgz')
+        ])
 
-    def test_sandbox_image_not_found_on_bintray(self):
-        mock_os_path_exists = MagicMock(side_effect=[False, False])
-        mock_load_bintray_credentials = MagicMock(return_value=('username', 'password'))
-        mock_bintray_download = MagicMock(side_effect=HTTPError('test only'))
+        mock_download_sandbox_image.assert_has_calls([
+            call('/cache_dir',
+                 package_name='ConductR-Universal',
+                 image_version='2.0.0',
+                 artefact_type='core'),
+            call('/cache_dir',
+                 package_name='ConductR-Agent-Universal',
+                 image_version='2.0.0',
+                 artefact_type='agent')
+        ])
 
-        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
-                patch('conductr_cli.resolvers.bintray_resolver.bintray_download', mock_bintray_download), \
-                patch('os.path.exists', mock_os_path_exists):
-            self.assertRaises(SandboxImageNotFoundError,
-                              sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0', False)
+        mock_shutil_move.assert_has_calls([
+            call('/cache_dir/core/conductr-2.0.0/core-some-file-a', '/cache_dir/core/core-some-file-a'),
+            call('/cache_dir/core/conductr-2.0.0/core-some-file-b', '/cache_dir/core/core-some-file-b'),
+            call('/cache_dir/agent/conductr-agent-2.0.0/agent-some-file-a', '/cache_dir/agent/agent-some-file-a'),
+            call('/cache_dir/agent/conductr-agent-2.0.0/agent-some-file-b', '/cache_dir/agent/agent-some-file-b')
+        ])
 
-        mock_load_bintray_credentials.assert_called_once_with()
-        mock_bintray_download.assert_called_once_with('/cache_dir', 'lightbend', 'commercial-releases',
-                                                      'ConductR-Universal', ('Bintray', 'username', 'password'),
-                                                      version='1.0.0')
+        mock_os_rmdir.assert_has_calls([
+            call('/cache_dir/core/conductr-2.0.0'),
+            call('/cache_dir/agent/conductr-agent-2.0.0')
+        ])
 
     def test_sandbox_image_not_available_offline(self):
         mock_os_path_exists = MagicMock(side_effect=[False, False])
@@ -307,36 +388,63 @@ class TestObtainSandboxImage(CliTestCase):
                               sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0', True)
 
     def test_obtain_from_cache(self):
-        mock_load_bintray_credentials = MagicMock()
-        mock_bintray_download = MagicMock()
-        mock_os_path_exists = MagicMock(side_effect=[True, True, True, True])
+        mock_download_sandbox_image = MagicMock()
+        mock_glob = MagicMock(side_effect=[
+            ['~/.conductr/images/conductr-2.0.0-Mac_OS_X-*64.tgz'],
+            ['~/.conductr/images/conductr-agent-2.0.0-Mac_OS_X-*64.tgz']
+        ])
+        mock_os_path_exists = MagicMock(side_effect=[True, True])
         mock_shutil_rmtree = MagicMock()
         mock_os_makedirs = MagicMock()
         mock_os_path_basename = MagicMock()
         mock_shutil_unpack_archive = MagicMock()
-        mock_os_path_splitext = MagicMock(return_value=('sub_dir', '.tgz'))
-        mock_os_listdir = MagicMock(return_value=['some-file-a', 'some-file-b'])
+        mock_os_listdir = MagicMock(side_effect=[
+            ['conductr-2.0.0'],  # Top level directory inside the core archive
+            ['core-some-file-a', 'core-some-file-b'],  # Extracted files from core archive
+            ['conductr-agent-2.0.0'],  # Top level directory inside the agent archive
+            ['agent-some-file-a', 'agent-some-file-b'],  # Extracted files from agent archive
+        ])
         mock_shutil_move = MagicMock()
         mock_os_rmdir = MagicMock()
 
-        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
-                patch('conductr_cli.resolvers.bintray_resolver.bintray_download', mock_bintray_download), \
+        with patch('conductr_cli.sandbox_run_jvm.download_sandbox_image', mock_download_sandbox_image), \
+                patch('glob.glob', mock_glob), \
                 patch('os.path.exists', mock_os_path_exists), \
                 patch('shutil.rmtree', mock_shutil_rmtree), \
                 patch('os.makedirs', mock_os_makedirs), \
                 patch('os.path.basename', mock_os_path_basename), \
                 patch('shutil.unpack_archive', mock_shutil_unpack_archive), \
-                patch('os.path.splitext', mock_os_path_splitext), \
                 patch('os.listdir', mock_os_listdir), \
                 patch('shutil.move', mock_shutil_move), \
                 patch('os.rmdir', mock_os_rmdir):
             result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0', offline_mode=False)
             self.assertEqual(('/cache_dir/core', '/cache_dir/agent'), result)
 
-        mock_load_bintray_credentials.assert_not_called()
-        mock_bintray_download.assert_not_called()
-        mock_shutil_rmtree.assert_has_calls([call('/cache_dir/core'), call('/cache_dir/agent')])
-        mock_os_rmdir.assert_has_calls([call('/cache_dir/core/sub_dir'), call('/cache_dir/agent/sub_dir')])
+        mock_download_sandbox_image.assert_not_called()
+
+        mock_shutil_rmtree.assert_has_calls([
+            call('/cache_dir/core'),
+            call('/cache_dir/agent')
+        ])
+
+        mock_os_rmdir.assert_has_calls([
+            call('/cache_dir/core/conductr-2.0.0'),
+            call('/cache_dir/agent/conductr-agent-2.0.0')
+        ])
+
+    def test_unsupported_os(self):
+        mock_is_macos = MagicMock(return_value=False)
+        mock_is_linux = MagicMock(return_value=False)
+        mock_os_path_exists = MagicMock(side_effect=[False, False, False, False])
+
+        with patch('conductr_cli.host.is_macos', mock_is_macos), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('os.path.exists', mock_os_path_exists):
+            self.assertRaises(SandboxUnsupportedOsError,
+                              sandbox_run_jvm.obtain_sandbox_image,
+                              '/cache_dir',
+                              '2.0.0',
+                              offline_mode=False)
 
 
 class TestStartCore(CliTestCase):
@@ -753,3 +861,277 @@ class TestValidateJvm(CliTestCase):
             self.assertRaises(JavaCallError, sandbox_run_jvm.validate_jvm_support)
 
         mock_getoutput.assert_called_once_with('java -version')
+
+
+class TestValidate64BitSupport(CliTestCase):
+    def test_64bit(self):
+        mock_is_64bit = MagicMock(return_value=True)
+
+        with patch('conductr_cli.host.is_64bit', mock_is_64bit):
+            sandbox_run_jvm.validate_64bit_support()
+
+    def test_non_64bit(self):
+        mock_is_64bit = MagicMock(return_value=False)
+
+        with patch('conductr_cli.host.is_64bit', mock_is_64bit):
+            self.assertRaises(SandboxUnsupportedOsArchError,
+                              sandbox_run_jvm.validate_64bit_support)
+
+
+class TestDownloadSandboxImage(CliTestCase):
+    bintray_auth = ('Bintray', 'username', 'password')
+
+    image_dir = '~/.conductr/images'
+
+    image_version = '2.0.0-rc.2'
+
+    core_package_name = 'ConductR-Universal'
+
+    core_artefact_type = 'core'
+
+    core_artefact_file_name = 'conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+
+    core_artefact_mac_os = {
+        'package_name': 'ConductR-Universal',
+        'resolver': 'conductr_cli.resolvers.bintray_resolver',
+        'org': 'lightbend',
+        'repo': 'commercial-releases',
+        'version': '2.0.0-rc.2',
+        'path': 'conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+    }
+
+    core_artefact_linux = {
+        'package_name': 'ConductR-Universal',
+        'resolver': 'conductr_cli.resolvers.bintray_resolver',
+        'org': 'lightbend',
+        'repo': 'commercial-releases',
+        'version': '2.0.0-rc.2',
+        'path': 'conductr-2.0.0-rc.2-Linux-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.0.0-rc.2-Linux-x86_64.tgz'
+    }
+
+    agent_package_name = 'ConductR-Agent-Universal'
+
+    agent_artefact_type = 'agent'
+
+    agent_artefact_file_name = 'conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+
+    agent_artefact_mac_os = {
+        'package_name': 'ConductR-Agent-Universal',
+        'resolver': 'conductr_cli.resolvers.bintray_resolver',
+        'org': 'lightbend',
+        'repo': 'commercial-releases',
+        'version': '2.0.0-rc.2',
+        'path': 'conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+    }
+
+    agent_artefact_linux = {
+        'package_name': 'ConductR-Agent-Universal',
+        'resolver': 'conductr_cli.resolvers.bintray_resolver',
+        'org': 'lightbend',
+        'repo': 'commercial-releases',
+        'version': '2.0.0-rc.2',
+        'path': 'conductr-agent-2.0.0-rc.2-Linux-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.0.0-rc.2-Linux-x86_64.tgz'
+    }
+
+    def test_download_core(self):
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        artefacts = [self.core_artefact_mac_os, self.core_artefact_linux]
+        mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
+
+        mock_bintray_download_artefact = MagicMock(return_value=(True,
+                                                                 'conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'))
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
+                      mock_bintray_download_artefact):
+            self.assertEqual('~/.conductr/images/conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+                             sandbox_run_jvm.download_sandbox_image(self.image_dir,
+                                                                    self.core_package_name,
+                                                                    self.core_artefact_type,
+                                                                    self.image_version))
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.core_package_name,
+                                                                  self.image_version)
+        mock_bintray_download_artefact.assert_called_once_with(self.image_dir,
+                                                               self.core_artefact_mac_os,
+                                                               self.bintray_auth)
+
+    def test_download_agent(self):
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        artefacts = [self.agent_artefact_mac_os, self.agent_artefact_linux]
+        mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
+
+        mock_bintray_download_artefact = MagicMock(return_value=(True,
+                                                                 'conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'))
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
+                      mock_bintray_download_artefact):
+            self.assertEqual('~/.conductr/images/conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+                             sandbox_run_jvm.download_sandbox_image(self.image_dir,
+                                                                    self.agent_package_name,
+                                                                    self.agent_artefact_type,
+                                                                    self.image_version))
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.agent_package_name,
+                                                                  self.image_version)
+        mock_bintray_download_artefact.assert_called_once_with(self.image_dir,
+                                                               self.agent_artefact_mac_os,
+                                                               self.bintray_auth)
+
+    def test_bintray_unreachable(self):
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        mock_bintray_artefacts_by_version = MagicMock(side_effect=ConnectionError('test'))
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version):
+            self.assertRaises(BintrayUnreachableError,
+                              sandbox_run_jvm.download_sandbox_image,
+                              self.image_dir,
+                              self.core_package_name,
+                              self.core_artefact_type,
+                              self.image_version)
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.core_package_name,
+                                                                  self.image_version)
+
+    def test_http_error(self):
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        mock_bintray_artefacts_by_version = MagicMock(side_effect=HTTPError('test'))
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version):
+            self.assertRaises(SandboxImageNotFoundError,
+                              sandbox_run_jvm.download_sandbox_image,
+                              self.image_dir,
+                              self.core_package_name,
+                              self.core_artefact_type,
+                              self.image_version)
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.core_package_name,
+                                                                  self.image_version)
+
+    def test_artefact_not_found(self):
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        mock_bintray_artefacts_by_version = MagicMock(return_value=[])
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version):
+            self.assertRaises(SandboxImageNotFoundError,
+                              sandbox_run_jvm.download_sandbox_image,
+                              self.image_dir,
+                              self.core_package_name,
+                              self.core_artefact_type,
+                              self.image_version)
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.core_package_name,
+                                                                  self.image_version)
+
+    def test_artefact_multiple_found(self):
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        mock_bintray_artefacts_by_version = MagicMock(return_value=[
+            self.core_artefact_mac_os,
+            self.core_artefact_linux,
+            self.core_artefact_mac_os
+        ])
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version):
+            self.assertRaises(SandboxImageNotFoundError,
+                              sandbox_run_jvm.download_sandbox_image,
+                              self.image_dir,
+                              self.core_package_name,
+                              self.core_artefact_type,
+                              self.image_version)
+
+        mock_load_bintray_credentials.assert_called_once_with()
+        mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.core_package_name,
+                                                                  self.image_version)
+
+
+class TestArtefactOsName(CliTestCase):
+    def test_mac_os(self):
+        mock_is_macos = MagicMock(return_value=True)
+        mock_is_linux = MagicMock(return_value=False)
+        with patch('conductr_cli.host.is_macos', mock_is_macos), \
+                patch('conductr_cli.host.is_linux', mock_is_linux):
+            self.assertEqual('Mac_OS_X', sandbox_run_jvm.artefact_os_name())
+
+        mock_is_macos.assert_called_once_with()
+        mock_is_linux.assert_not_called()
+
+    def test_linux(self):
+        mock_is_macos = MagicMock(return_value=False)
+        mock_is_linux = MagicMock(return_value=True)
+        with patch('conductr_cli.host.is_macos', mock_is_macos), \
+                patch('conductr_cli.host.is_linux', mock_is_linux):
+            self.assertEqual('Linux', sandbox_run_jvm.artefact_os_name())
+
+        mock_is_macos.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+
+    def test_unsupported_os(self):
+        mock_is_macos = MagicMock(return_value=False)
+        mock_is_linux = MagicMock(return_value=False)
+        with patch('conductr_cli.host.is_macos', mock_is_macos), \
+                patch('conductr_cli.host.is_linux', mock_is_linux):
+            self.assertRaises(SandboxUnsupportedOsError,
+                              sandbox_run_jvm.artefact_os_name)
+
+        mock_is_macos.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()

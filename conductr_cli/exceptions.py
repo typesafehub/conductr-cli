@@ -157,3 +157,19 @@ class DockerValidationError(Exception):
 
     def __str(self):
         return repr(os.linesep.join(self.messages))
+
+
+class SandboxUnsupportedOsError(Exception):
+    def __init__(self):
+        pass
+
+    def __str(self):
+        return repr(self)
+
+
+class SandboxUnsupportedOsArchError(Exception):
+    def __init__(self):
+        pass
+
+    def __str(self):
+        return repr(self)

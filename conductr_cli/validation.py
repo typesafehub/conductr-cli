@@ -3,6 +3,7 @@ import json
 import logging
 import urllib
 import arrow
+import platform
 
 from pyhocon.exceptions import ConfigException
 from requests import status_codes
@@ -14,7 +15,7 @@ from conductr_cli.exceptions import BindAddressNotFoundError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
     WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
     JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, \
-    SandboxImageNotAvailableOfflineError
+    SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, SandboxUnsupportedOsArchError
 
 
 def connection_error(log, err, args):
@@ -255,7 +256,7 @@ def handle_sandbox_image_not_found_error(func):
             return func(*args, **kwargs)
         except SandboxImageNotFoundError as e:
             log = get_logger_for_func(func)
-            log.error('ConductR {} {} cannot be found on Bintray.'.format(e.component_type, e.image_version))
+            log.error('ConductR {} artefact {} cannot be found on Bintray.'.format(e.component_type, e.artefact_name))
             log.error('Please specify a valid ConductR version.')
             log.error('The latest version can be found on: https://www.lightbend.com/product/conductr/developer')
             return False
@@ -276,6 +277,41 @@ def handle_sandbox_image_not_available_offline_error(func):
             log = get_logger_for_func(func)
             log.error('ConductR {} is not available locally.'.format(e.image_version))
             log.error('Please run sandbox without --offline option to obtain the ConductR artefacts.')
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_sandbox_unsupported_os_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except SandboxUnsupportedOsError:
+            log = get_logger_for_func(func)
+            log.error('ConductR does not support {} operating system.'.format(platform.system()))
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_sandbox_unsupported_os_arch_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except SandboxUnsupportedOsArchError:
+            log = get_logger_for_func(func)
+            log.error('ConductR does not support {} architecture.'.format(platform.architecture()))
+            log.error('Only 64-bit architecture is supported.')
             return False
 
     # Do not change the wrapped function name,
