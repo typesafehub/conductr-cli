@@ -89,7 +89,7 @@ class TestResolver(TestCase):
             self.assertEqual('bundle_name', bundle_name)
             self.assertEqual('mock bundle_file', bundle_file)
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
 
         first_resolver_mock.load_bundle_configuration_from_cache('/some-cache-dir', '/some-bundle-path')
         first_resolver_mock.resolve_bundle_configuration.assert_called_with('/some-cache-dir', '/some-bundle-path')
@@ -109,7 +109,7 @@ class TestResolver(TestCase):
             self.assertRaises(BundleResolutionError, resolver.resolve_bundle_configuration, custom_settings,
                               '/some-cache-dir', '/some-bundle-path')
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
 
         first_resolver_mock.load_bundle_configuration_from_cache('/some-cache-dir', '/some-bundle-path')
         first_resolver_mock.resolve_bundle_configuration.assert_called_with('/some-cache-dir', '/some-bundle-path')
@@ -128,7 +128,7 @@ class TestResolver(TestCase):
             self.assertEqual('bundle_name', bundle_name)
             self.assertEqual('mock bundle_file', bundle_file)
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
 
         first_resolver_mock.load_bundle_configuration_from_cache('/some-cache-dir', '/some-bundle-path')
 

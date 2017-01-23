@@ -26,11 +26,11 @@ def resolve_bundle(custom_settings, cache_dir, uri, offline_mode=False):
 
 
 def resolve_bundle_configuration(custom_settings, cache_dir, uri, offline_mode=False):
-    all_resolvers = resolver_chain(custom_settings)
+    all_resolvers = resolver_chain(custom_settings, offline_mode)
 
     for resolver in all_resolvers:
         is_cached, bundle_configuration_file_name, cached_bundle = \
-            resolver.load_bundle_configuration_from_cache(cache_dir, uri, offline_mode)
+            resolver.load_bundle_configuration_from_cache(cache_dir, uri)
         if is_cached:
             return bundle_configuration_file_name, cached_bundle
 
