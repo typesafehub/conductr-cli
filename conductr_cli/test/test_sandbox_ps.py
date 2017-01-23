@@ -19,8 +19,8 @@ class TestSandboxPs(CliTestCase):
     }
 
     pid_infos = [
-        {'id': 58002, 'type': 'core'},
-        {'id': 58003, 'type': 'agent'}
+        {'id': 58002, 'type': 'core', 'ip': '192.168.10.1'},
+        {'id': 58003, 'type': 'agent', 'ip': '192.168.10.1'}
     ]
 
     default_args = {
@@ -46,9 +46,9 @@ class TestSandboxPs(CliTestCase):
         mock_resolve_conductr_info.assert_called_once_with(self.image_dir)
         mock_find_pids.assert_called_once_with(self.core_extraction_dir, self.agent_extraction_dir)
 
-        expected_output = strip_margin("""|PID     TYPE
-                                          |58002   core
-                                          |58003  agent
+        expected_output = strip_margin("""|PID     TYPE            IP
+                                          |58002   core  192.168.10.1
+                                          |58003  agent  192.168.10.1
                                           |""")
         self.assertEqual(expected_output, self.output(stdout))
 
@@ -97,8 +97,8 @@ class TestSandboxPs(CliTestCase):
         mock_resolve_conductr_info.assert_called_once_with(self.image_dir)
         mock_find_pids.assert_called_once_with(self.core_extraction_dir, self.agent_extraction_dir)
 
-        expected_output = strip_margin("""|PID    TYPE
-                                          |58002  core
+        expected_output = strip_margin("""|PID    TYPE            IP
+                                          |58002  core  192.168.10.1
                                           |""")
         self.assertEqual(expected_output, self.output(stdout))
 
@@ -147,8 +147,8 @@ class TestSandboxPs(CliTestCase):
         mock_resolve_conductr_info.assert_called_once_with(self.image_dir)
         mock_find_pids.assert_called_once_with(self.core_extraction_dir, self.agent_extraction_dir)
 
-        expected_output = strip_margin("""|PID     TYPE
-                                          |58003  agent
+        expected_output = strip_margin("""|PID     TYPE            IP
+                                          |58003  agent  192.168.10.1
                                           |""")
         self.assertEqual(expected_output, self.output(stdout))
 

@@ -34,12 +34,12 @@ class TestFindPids(CliTestCase):
         with patch('subprocess.getoutput', mock_getoutput):
             result = sandbox_common.find_pids(self.core_run_dir, self.agent_run_dir)
             self.assertEqual([
-                {'id': 58002, 'type': 'core'},
-                {'id': 58003, 'type': 'agent'},
-                {'id': 58004, 'type': 'core'},
-                {'id': 58005, 'type': 'agent'},
-                {'id': 58006, 'type': 'core'},
-                {'id': 58007, 'type': 'agent'}
+                {'id': 58002, 'type': 'core', 'ip': '192.168.10.1'},
+                {'id': 58003, 'type': 'agent', 'ip': '192.168.10.1'},
+                {'id': 58004, 'type': 'core', 'ip': '192.168.10.2'},
+                {'id': 58005, 'type': 'agent', 'ip': '192.168.10.2'},
+                {'id': 58006, 'type': 'core', 'ip': '192.168.10.3'},
+                {'id': 58007, 'type': 'agent', 'ip': '192.168.10.3'}
             ], result)
 
     def test_no_pids(self):

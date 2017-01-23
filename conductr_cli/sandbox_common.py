@@ -2,6 +2,7 @@ from conductr_cli import terminal
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, \
     BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
 import os
+import re
 import subprocess
 from subprocess import CalledProcessError
 
@@ -38,16 +39,24 @@ def find_pids(core_run_dir, agent_run_dir):
     pids_info = []
     ps_output = subprocess.getoutput('ps ax')
     for line in ps_output.split('\n'):
+        def extract_param(regex, default):
+            try:
+                return re.search(regex, line).group(1)
+            except AttributeError:
+                return default
+
         pid = line.split()[0]
         if core_run_dir in line:
             pids_info.append({
                 'type': 'core',
-                'id': int(pid)
+                'id': int(pid),
+                'ip': extract_param('-Dconductr.ip=(\S+)', '')
             })
         if agent_run_dir in line:
             pids_info.append({
                 'type': 'agent',
-                'id': int(pid)
+                'id': int(pid),
+                'ip': extract_param('-Dconductr.agent.ip=(\S+)', '')
             })
     return pids_info
 
