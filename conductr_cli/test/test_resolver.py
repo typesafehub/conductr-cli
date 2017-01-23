@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock, Mock
 from conductr_cli.test.cli_test_case import strip_margin, create_mock_logger
 from conductr_cli.exceptions import BundleResolutionError
 from conductr_cli import resolver
-from conductr_cli.resolvers import bintray_resolver, uri_resolver
+from conductr_cli.resolvers import bintray_resolver, uri_resolver, offline_resolver
 from pyhocon import ConfigFactory
 
 
@@ -27,7 +27,7 @@ class TestResolver(TestCase):
             self.assertEqual('bundle_name', bundle_name)
             self.assertEqual('mock bundle_file', bundle_file)
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
 
         first_resolver_mock.load_from_cache('/some-cache-dir', '/some-bundle-path')
         first_resolver_mock.resolve_bundle.assert_called_with('/some-cache-dir', '/some-bundle-path')
@@ -47,7 +47,7 @@ class TestResolver(TestCase):
             self.assertRaises(BundleResolutionError, resolver.resolve_bundle, custom_settings, '/some-cache-dir',
                               '/some-bundle-path')
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
 
         first_resolver_mock.load_from_cache('/some-cache-dir', '/some-bundle-path')
         first_resolver_mock.resolve_bundle.assert_called_with('/some-cache-dir', '/some-bundle-path')
@@ -65,7 +65,7 @@ class TestResolver(TestCase):
             self.assertEqual('bundle_name', bundle_name)
             self.assertEqual('mock bundle_file', bundle_file)
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
 
         first_resolver_mock.load_from_cache('/some-cache-dir', '/some-bundle-path')
 
@@ -180,7 +180,7 @@ class TestResolverChain(TestCase):
         get_logger_mock, log_mock = create_mock_logger()
 
         with patch('logging.getLogger', get_logger_mock):
-            result = resolver.resolver_chain(custom_settings)
+            result = resolver.resolver_chain(custom_settings, False)
             expected_result = [uri_resolver]
             self.assertEqual(expected_result, result)
 
@@ -188,7 +188,7 @@ class TestResolverChain(TestCase):
         log_mock.info.assert_called_with('Using custom bundle resolver chain [\'conductr_cli.resolvers.uri_resolver\']')
 
     def test_none_input(self):
-        result = resolver.resolver_chain(None)
+        result = resolver.resolver_chain(None, False)
         expected_result = [uri_resolver, bintray_resolver]
         self.assertEqual(expected_result, result)
 
@@ -197,6 +197,11 @@ class TestResolverChain(TestCase):
             strip_margin("""|dummy = foo
                             |""")
         )
-        result = resolver.resolver_chain(custom_settings)
+        result = resolver.resolver_chain(custom_settings, False)
         expected_result = [uri_resolver, bintray_resolver]
+        self.assertEqual(expected_result, result)
+
+    def test_offline_mode(self):
+        result = resolver.resolver_chain(None, True)
+        expected_result = [offline_resolver]
         self.assertEqual(expected_result, result)

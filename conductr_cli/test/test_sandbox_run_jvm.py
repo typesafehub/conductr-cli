@@ -1,8 +1,8 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_run_jvm
 from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, BintrayUnreachableError, \
-    SandboxImageNotFoundError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError
+    SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, JavaCallError, JavaUnsupportedVendorError, \
+    JavaUnsupportedVersionError, JavaVersionParseError
 from conductr_cli.sandbox_features import LoggingFeature
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
@@ -19,6 +19,7 @@ class TestRun(CliTestCase):
         'log_level': 'info',
         'nr_of_containers': 1,
         'addr_range': addr_range,
+        'offline_mode': False,
         'no_wait': False
     }
 
@@ -260,7 +261,7 @@ class TestObtainSandboxImage(CliTestCase):
                 patch('os.listdir', mock_os_listdir), \
                 patch('shutil.move', mock_shutil_move), \
                 patch('os.rmdir', mock_os_rmdir):
-            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0')
+            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0', offline_mode=False)
             self.assertEqual(('/cache_dir/core', '/cache_dir/agent'), result)
 
         mock_load_bintray_credentials.assert_called_once_with()
@@ -277,7 +278,8 @@ class TestObtainSandboxImage(CliTestCase):
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
                 patch('os.path.exists', mock_os_path_exists):
-            self.assertRaises(BintrayUnreachableError, sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0')
+            self.assertRaises(BintrayUnreachableError,
+                              sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0', False)
 
         mock_load_bintray_credentials.assert_called_once_with()
 
@@ -289,12 +291,20 @@ class TestObtainSandboxImage(CliTestCase):
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_download', mock_bintray_download), \
                 patch('os.path.exists', mock_os_path_exists):
-            self.assertRaises(SandboxImageNotFoundError, sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0')
+            self.assertRaises(SandboxImageNotFoundError,
+                              sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0', False)
 
         mock_load_bintray_credentials.assert_called_once_with()
         mock_bintray_download.assert_called_once_with('/cache_dir', 'lightbend', 'commercial-releases',
                                                       'ConductR-Universal', ('Bintray', 'username', 'password'),
                                                       version='1.0.0')
+
+    def test_sandbox_image_not_available_offline(self):
+        mock_os_path_exists = MagicMock(side_effect=[False, False])
+
+        with patch('os.path.exists', mock_os_path_exists):
+            self.assertRaises(SandboxImageNotAvailableOfflineError,
+                              sandbox_run_jvm.obtain_sandbox_image, '/cache_dir', '1.0.0', True)
 
     def test_obtain_from_cache(self):
         mock_load_bintray_credentials = MagicMock()
@@ -320,7 +330,7 @@ class TestObtainSandboxImage(CliTestCase):
                 patch('os.listdir', mock_os_listdir), \
                 patch('shutil.move', mock_shutil_move), \
                 patch('os.rmdir', mock_os_rmdir):
-            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0')
+            result = sandbox_run_jvm.obtain_sandbox_image('/cache_dir', '1.0.0', offline_mode=False)
             self.assertEqual(('/cache_dir/core', '/cache_dir/agent'), result)
 
         mock_load_bintray_credentials.assert_not_called()
@@ -380,7 +390,7 @@ class TestStartCore(CliTestCase):
 
     def test_roles_and_features(self):
         conductr_roles = [['role1', 'role2'], ['role3']]
-        features = [LoggingFeature("v1", "2.0.0")]
+        features = [LoggingFeature("v1", "2.0.0", offline_mode=False)]
 
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
@@ -484,7 +494,7 @@ class TestStartAgent(CliTestCase):
         ])
 
         conductr_roles = [['role1', 'role2'], ['role3']]
-        features = [LoggingFeature('v2', '2.0.0')]
+        features = [LoggingFeature('v2', '2.0.0', offline_mode=False)]
 
         with patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,

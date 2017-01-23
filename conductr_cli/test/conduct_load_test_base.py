@@ -30,6 +30,7 @@ class ConductLoadTestBase(CliTestCase):
         self.nr_of_cpus = None
         self.roles = []
         self.custom_settings = None
+        self.offline_mode = False
         self.bundle_resolve_cache_dir = None
         self.mock_headers = {'pretend': 'header'}
         self.multipart_content_type = "multipart/form-data"
@@ -75,7 +76,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -112,7 +114,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -149,7 +152,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -186,7 +190,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -223,7 +228,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -261,7 +267,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -301,7 +308,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -342,7 +350,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -377,7 +386,45 @@ class ConductLoadTestBase(CliTestCase):
             self.assertTrue(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
+        create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
+        http_method.assert_called_with(self.default_url,
+                                       data=self.multipart_mock,
+                                       auth=self.conductr_auth,
+                                       verify=self.server_verification_file,
+                                       headers={'Content-Type': self.multipart_content_type, 'Host': '127.0.0.1'})
+        cleanup_old_bundles_mock.assert_called_with(self.bundle_resolve_cache_dir, self.bundle_file_name,
+                                                    excluded=self.bundle_file)
+
+        self.assertEqual(self.default_output(), self.output(stdout))
+
+    def base_test_success_offline_mode(self):
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
+        create_multipart_mock = MagicMock(return_value=self.multipart_mock)
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        open_mock = MagicMock(return_value=1)
+        cleanup_old_bundles_mock = MagicMock()
+        wait_for_installation_mock = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'offline_mode': True})
+        input_args = MagicMock(**args)
+
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
+                patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
+                patch('requests.post', http_method), \
+                patch('builtins.open', open_mock), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
+            self.assertTrue(result)
+
+        open_mock.assert_called_with(self.bundle_file, 'rb')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, True)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -407,7 +454,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertFalse(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -438,7 +486,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertFalse(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -468,7 +517,8 @@ class ConductLoadTestBase(CliTestCase):
             self.assertFalse(result)
 
         open_mock.assert_called_with(self.bundle_file, 'rb')
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
@@ -495,7 +545,8 @@ class ConductLoadTestBase(CliTestCase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, 'no_such.bundle')
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               'no_such.bundle', self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Bundle not found: some message
@@ -516,9 +567,10 @@ class ConductLoadTestBase(CliTestCase):
             result = conduct_load.load(MagicMock(**args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
-                                                             'no_such.conf')
+                                                             'no_such.conf', self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Bundle not found: some message
@@ -536,7 +588,8 @@ class ConductLoadTestBase(CliTestCase):
             result = conduct_load.load(MagicMock(**self.default_args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
         open_mock.assert_called_with(self.bundle_file, 'rb')
 
         self.assertEqual(
@@ -554,7 +607,8 @@ class ConductLoadTestBase(CliTestCase):
             result = conduct_load.load(MagicMock(**self.default_args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Resource not found: url
@@ -570,7 +624,8 @@ class ConductLoadTestBase(CliTestCase):
             result = conduct_load.load(MagicMock(**self.default_args))
             self.assertFalse(result)
 
-        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir, self.bundle_file)
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: File not found: reason

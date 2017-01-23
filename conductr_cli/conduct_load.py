@@ -47,14 +47,16 @@ def load_v1(args):
 
     validate_cache_dir_permissions(resolve_cache_dir, log)
 
-    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
+    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
+                                                            args.bundle, args.offline_mode)
 
     configuration_file_name, configuration_file = (None, None)
     if args.configuration is not None:
         log.info('Retrieving configuration..')
         configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
                                                                                             resolve_cache_dir,
-                                                                                            args.configuration)
+                                                                                            args.configuration,
+                                                                                            args.offline_mode)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -150,7 +152,8 @@ def load_v2(args):
 
     validate_cache_dir_permissions(resolve_cache_dir, log)
 
-    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir, args.bundle)
+    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
+                                                            args.bundle, args.offline_mode)
     bundle_conf = bundle_utils.conf(bundle_file)
 
     if bundle_conf is None:
@@ -161,7 +164,8 @@ def load_v2(args):
             log.info('Retrieving configuration..')
             configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
                                                                                                 resolve_cache_dir,
-                                                                                                args.configuration)
+                                                                                                args.configuration,
+                                                                                                args.offline_mode)
             bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
         files = [('bundleConf', ('bundle.conf', string_io(bundle_conf)))]

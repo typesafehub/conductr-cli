@@ -108,7 +108,15 @@ class SandboxImageNotFoundError(Exception):
         self.image_version = image_version
 
     def __str(self):
-        return repr(self.message)
+        return repr('{} {}'.format(self.component_type, self.image_version))
+
+
+class SandboxImageNotAvailableOfflineError(Exception):
+    def __init__(self, image_version):
+        self.image_version = image_version
+
+    def __str(self):
+        return repr(self.image_version)
 
 
 class JavaCallError(Exception):

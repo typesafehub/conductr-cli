@@ -19,6 +19,7 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 @validation.handle_instance_count_error
 @validation.handle_bind_address_not_found_error
 @validation.handle_sandbox_image_not_found_error
+@validation.handle_sandbox_image_not_available_offline_error
 @validation.handle_bintray_credentials_error
 @validation.handle_bintray_unreachable_error
 @validation.handle_jvm_validation_error
@@ -26,7 +27,7 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 def run(args):
     """`sandbox run` command"""
     is_conductr_v1 = major_version(args.image_version) == 1
-    features = sandbox_features.collect_features(args.features, args.image_version)
+    features = sandbox_features.collect_features(args.features, args.image_version, args.offline_mode)
     sandbox = sandbox_run_docker if is_conductr_v1 else sandbox_run_jvm
 
     run_result = sandbox.run(args, features)
