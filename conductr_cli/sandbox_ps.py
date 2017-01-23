@@ -18,12 +18,13 @@ def ps(args):
         for row in data:
             log.info(row['id'])
     else:
-        data.insert(0, {'id': 'PID', 'type': 'TYPE'})
+        data.insert(0, {'id': 'PID', 'type': 'TYPE', 'ip': 'IP'})
         padding = 2
         column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
         for row in data:
             log.screen('''\
 {id: <{id_width}}{padding}\
-{type: >{type_width}}'''.format(**dict(row, **column_widths)).rstrip())
+{type: >{type_width}}{padding}\
+{ip: >{ip_width}}'''.format(**dict(row, **column_widths)).rstrip())
 
     return True
