@@ -69,7 +69,7 @@ class TestRun(CliTestCase):
 
     def test_multiple_container(self):
         stdout = MagicMock()
-        nr_of_containers = 3
+        nr_of_instances = 3
 
         with \
                 patch('conductr_cli.terminal.docker_images', return_value='some-image'), \
@@ -79,7 +79,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_proxy.stop_proxy') as mock_stop_proxy, \
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]):
             args = self.default_args.copy()
-            args.update({'nr_of_containers': nr_of_containers})
+            args.update({'nr_of_instances': nr_of_instances})
             input_args = MagicMock(**args)
             logging_setup.configure_logging(input_args, stdout)
             features = []
@@ -184,7 +184,7 @@ class TestRun(CliTestCase):
 
     def test_roles(self):
         stdout = MagicMock()
-        nr_of_containers = 3
+        nr_of_instances = 3
         conductr_roles = [['role1', 'role2'], ['role3']]
         features = []
 
@@ -197,7 +197,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_common.resolve_running_docker_containers', return_value=[]):
             args = self.default_args.copy()
             args.update({
-                'nr_of_containers': nr_of_containers,
+                'nr_of_instances': nr_of_instances,
                 'conductr_roles': conductr_roles
             })
             input_args = MagicMock(**args)
@@ -316,10 +316,10 @@ class TestRun(CliTestCase):
                                                 expected_image, expected_positional_args)
         mock_stop_proxy.assert_called_once_with()
 
-    def test_invalid_nr_of_containers(self):
+    def test_invalid_nr_of_instances(self):
         args = self.default_args.copy()
         args.update({
-            'nr_of_containers': 'FOO'
+            'nr_of_instances': 'FOO'
         })
         input_args = MagicMock(**args)
         features = []
