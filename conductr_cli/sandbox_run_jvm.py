@@ -1,16 +1,17 @@
 from conductr_cli import conduct_main, host, sandbox_stop, sandbox_common
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.exceptions import BindAddressNotFoundError, BintrayUnreachableError, InstanceCountError, \
-    SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, JavaCallError, JavaUnsupportedVendorError, \
-    JavaUnsupportedVersionError, JavaVersionParseError
+    SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
+    SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
+    JavaVersionParseError
 from conductr_cli.resolvers import bintray_resolver
-from conductr_cli.resolvers.bintray_resolver import BINTRAY_DOWNLOAD_REALM, BINTRAY_LIGHTBEND_ORG, \
-    BINTRAY_CONDUCTR_REPO
+from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
 from conductr_cli.sandbox_common import flatten
 from conductr_cli.screen_utils import headline
 from requests.exceptions import HTTPError, ConnectionError
 from subprocess import CalledProcessError
 
+import glob
 import logging
 import re
 import os
@@ -56,6 +57,8 @@ def run(args, features):
 
     validate_jvm_support()
 
+    validate_64bit_support()
+
     sandbox_stop.stop(args)
 
     log = logging.getLogger(__name__)
@@ -82,7 +85,8 @@ def run(args, features):
 
 def log_run_attempt(args, run_result, is_started, wait_timeout):
     """
-    Logs the run attempt. This method will be called after the completion of run method and when all the features has been started.
+    Logs the run attempt. This method will be called after the completion of run method and when all the features has
+    been started.
 
     :param args: args parsed from the input arguments
     :param run_result: the result from calling sandbox_run_jvm.run() - instance of sandbox_run_jvm.SandboxRunResult
@@ -176,6 +180,15 @@ def validate_jvm_support():
         raise JavaCallError('Failure calling `java -version`')
 
 
+def validate_64bit_support():
+    """
+    Validates if current machine that's running the Sandbox is 64-bit,
+    else raise an exception to fail the sandbox run.
+    """
+    if not host.is_64bit():
+        raise SandboxUnsupportedOsArchError()
+
+
 def find_bind_addrs(nr_of_addrs, addr_range):
     """
     Finds for the presence of address which can be bound to the sandbox given an address range, i.e.
@@ -238,6 +251,9 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
     :param image_dir: the directory where ConductR core and agent binaries will be cached, also the base directory
                       containing the expanded ConductR core and agent binaries.
     :param image_version: the version of the sandbox to be downloaded.
+    :param offline_mode: sets to `True` if sandbox is operating in the offline mode.
+                         The offline mode means no network, and hence attempt to download new sandbox image will result
+                         in an error being raised.
     :return: the pair containing path to the expanded core directory and path to the expanded agent directory
     """
     def resolve_binaries():
@@ -259,45 +275,39 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
 
         :return: tuple of (core_path, agent_path)
         """
-        core_path = resolve_binary_from_cache('{}/conductr-{}.tgz'
-                                              .format(image_dir, image_version))
-        agent_path = resolve_binary_from_cache('{}/conductr-agent-{}.tgz'
-                                               .format(image_dir, image_version))
+        core_path = resolve_binary_from_cache(image_dir, 'conductr', image_version)
+        agent_path = resolve_binary_from_cache(image_dir, 'conductr-agent', image_version)
 
         if (not core_path) or (not agent_path):
             if offline_mode:
                 raise SandboxImageNotAvailableOfflineError(image_version)
             else:
-                try:
-                    bintray_username, bintray_password = bintray_resolver.load_bintray_credentials()
-                    bintray_auth = (BINTRAY_DOWNLOAD_REALM, bintray_username, bintray_password)
-                    if not core_path:
-                        _, _, core_path = bintray_resolver.bintray_download(
-                            image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
-                            core_info['bintray_package_name'], bintray_auth, version=image_version)
+                if not core_path:
+                    core_path = download_sandbox_image(image_dir,
+                                                       package_name=core_info['bintray_package_name'],
+                                                       artefact_type=core_info['type'],
+                                                       image_version=image_version)
 
-                    if not agent_path:
-                        _, _, agent_path = bintray_resolver.bintray_download(
-                            image_dir, BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO,
-                            agent_info['bintray_package_name'], bintray_auth, version=image_version)
-                except ConnectionError:
-                    raise BintrayUnreachableError('Bintray is unreachable.')
-                except HTTPError:
-                    raise SandboxImageNotFoundError(core_info['type'], image_version)
+                if not agent_path:
+                    agent_path = download_sandbox_image(image_dir,
+                                                        package_name=agent_info['bintray_package_name'],
+                                                        artefact_type=agent_info['type'],
+                                                        image_version=image_version)
 
         return core_path, agent_path
 
-    def resolve_binary_from_cache(binary_cache_path):
+    def resolve_binary_from_cache(image_dir, file_prefix, image_version):
         """
         Checks for the presence of the ConductR binary in the cache directory.
 
-        :param binary_cache_path the path of the cached ConductR universal binary.
+        :param image_dir: the directory where image will be stored.
+        :param file_prefix: either `conductr` or `conductr-agent`.
+        :param image_version: the version of the ConductR to be checked.
         :return: If present, return the path to the binary file, else return None.
         """
-        if os.path.exists(binary_cache_path):
-            return binary_cache_path
-        else:
-            return None
+
+        binaries = glob.glob('{}/{}-{}-{}-*64.tgz'.format(image_dir, file_prefix, image_version, artefact_os_name()))
+        return binaries[0] if binaries and len(binaries) > 0 else None
 
     def extract_binary(path, conductr_info):
         """
@@ -315,8 +325,8 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
         os.makedirs(extraction_dir, mode=0o700)
         log.info('Extracting ConductR {} to {}'.format(conductr_info['type'], extraction_dir))
         shutil.unpack_archive(path, extraction_dir)
-        binary_basename = os.path.splitext(os.path.basename(path))[0]
-        extraction_subdir = '{}/{}'.format(extraction_dir, binary_basename)
+        top_level_archive_dir = os.listdir(extraction_dir)[0]
+        extraction_subdir = '{}/{}'.format(extraction_dir, top_level_archive_dir)
         for filename in os.listdir(extraction_subdir):
             shutil.move('{}/{}'.format(extraction_subdir, filename), '{}/{}'.format(extraction_dir, filename))
         os.rmdir(extraction_subdir)
@@ -330,6 +340,43 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
     agent_extracted_dir = extract_binary(agent_binary_path, agent_info)
 
     return core_extracted_dir, agent_extracted_dir
+
+
+def download_sandbox_image(image_dir, package_name, artefact_type, image_version):
+    try:
+        bintray_auth = bintray_resolver.load_bintray_credentials()
+
+        if artefact_type == 'core':
+            file_prefix = 'conductr-{}-{}'.format(image_version, artefact_os_name())
+        else:
+            file_prefix = 'conductr-agent-{}-{}'.format(image_version, artefact_os_name())
+
+        def is_matching_artefact(download_url):
+            artefact_file_name = os.path.basename(download_url)
+            return artefact_file_name.startswith(file_prefix) and artefact_file_name.endswith('64.tgz')
+
+        artefacts = [
+            artefact
+            for artefact in bintray_resolver.bintray_artefacts_by_version(bintray_auth,
+                                                                          BINTRAY_LIGHTBEND_ORG,
+                                                                          BINTRAY_CONDUCTR_REPO,
+                                                                          package_name,
+                                                                          image_version)
+            if is_matching_artefact(artefact['download_url'])
+        ]
+        if len(artefacts) == 1:
+            is_success, _, download_path = bintray_resolver.bintray_download_artefact(image_dir,
+                                                                                      artefacts[0],
+                                                                                      bintray_auth)
+            if is_success:
+                return download_path
+
+        raise SandboxImageNotFoundError(artefact_type, image_version)
+    except ConnectionError:
+        raise BintrayUnreachableError('Bintray is unreachable.')
+
+    except HTTPError:
+        raise SandboxImageNotFoundError(artefact_type, image_version)
 
 
 def start_core_instances(core_extracted_dir, bind_addrs, conductr_roles, features, log_level):
@@ -437,3 +484,12 @@ def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs, conductr_
                                stderr=subprocess.DEVNULL).pid
         pids.append(pid)
     return pids
+
+
+def artefact_os_name():
+    if host.is_macos():
+        return 'Mac_OS_X'
+    elif host.is_linux():
+        return 'Linux'
+    else:
+        raise SandboxUnsupportedOsError()
