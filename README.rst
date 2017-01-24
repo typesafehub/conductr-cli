@@ -169,7 +169,7 @@ To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature
 
 .. code:: bash
 
-    sandbox run <CONDUCTR_VERSION> --nr-of-containers 3 --feature visualization
+    sandbox run <CONDUCTR_VERSION> --nr-of-instances 3 --feature visualization
 
 Pick up the latest ConductR version from https://www.lightbend.com/product/conductr/developer
 
