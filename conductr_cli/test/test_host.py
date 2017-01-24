@@ -256,7 +256,9 @@ class TestAddrAliasSetupInstructions(TestCase):
                 patch('conductr_cli.host.is_macos', mock_is_macos):
             result = host.addr_alias_setup_instructions(self.addrs_ipv4, self.subnet_mask_ipv4)
 
-            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+            expected_result = strip_margin("""|Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines.
+                                              |
+                                              |Please run the following and then try your command again:
                                               |
                                               |sudo ifconfig ix0:0 192.168.1.1 netmask 255.255.255.0 up
                                               |sudo ifconfig ix0:1 192.168.1.2 netmask 255.255.255.0 up
@@ -277,7 +279,9 @@ class TestAddrAliasSetupInstructions(TestCase):
                 patch('conductr_cli.host.is_macos', mock_is_macos):
             result = host.addr_alias_setup_instructions(self.addrs_ipv6, self.subnet_mask_ipv6)
 
-            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+            expected_result = strip_margin("""|Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines.
+                                              |
+                                              |Please run the following and then try your command again:
                                               |
                                               |sudo ifconfig ix0:0 0000:0000:0000:0000:0000:ffff:c0a8:0101 netmask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff up
                                               |sudo ifconfig ix0:1 0000:0000:0000:0000:0000:ffff:c0a8:0102 netmask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff up
@@ -298,7 +302,9 @@ class TestAddrAliasSetupInstructions(TestCase):
                 patch('conductr_cli.host.is_macos', mock_is_macos):
             result = host.addr_alias_setup_instructions(self.addrs_ipv4, self.subnet_mask_ipv4)
 
-            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+            expected_result = strip_margin("""|Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines.
+                                              |
+                                              |Please run the following and then try your command again:
                                               |
                                               |sudo ifconfig ix0 alias 192.168.1.1 255.255.255.0
                                               |sudo ifconfig ix0 alias 192.168.1.2 255.255.255.0
@@ -319,7 +325,9 @@ class TestAddrAliasSetupInstructions(TestCase):
                 patch('conductr_cli.host.is_macos', mock_is_macos):
             result = host.addr_alias_setup_instructions(self.addrs_ipv6, self.subnet_mask_ipv6)
 
-            expected_result = strip_margin("""|Run the following commands to create the address aliases on your machine:
+            expected_result = strip_margin("""|Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines.
+                                              |
+                                              |Please run the following and then try your command again:
                                               |
                                               |sudo ifconfig ix0 alias 0000:0000:0000:0000:0000:ffff:c0a8:0101 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
                                               |sudo ifconfig ix0 alias 0000:0000:0000:0000:0000:ffff:c0a8:0102 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
@@ -340,7 +348,7 @@ class TestAddrAliasSetupInstructions(TestCase):
                 patch('conductr_cli.host.is_macos', mock_is_macos):
             result = host.addr_alias_setup_instructions(self.addrs_ipv4, self.subnet_mask_ipv4)
 
-            expected_result = 'Setup alias for 192.168.1.1, 192.168.1.2 addresses with 255.255.255.0 subnet mask'
+            expected_result = 'Setup aliases for 192.168.1.1, 192.168.1.2 addresses with 255.255.255.0 subnet mask'
             self.assertEqual(expected_result, result)
 
         mock_loopback_device_name.assert_called_once_with()
@@ -357,7 +365,7 @@ class TestAddrAliasSetupInstructions(TestCase):
                 patch('conductr_cli.host.is_macos', mock_is_macos):
             result = host.addr_alias_setup_instructions(self.addrs_ipv6, self.subnet_mask_ipv6)
 
-            expected_result = 'Setup alias for ::ffff:c0a8:101, ::ffff:c0a8:102 addresses with ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff subnet mask'
+            expected_result = 'Setup aliases for ::ffff:c0a8:101, ::ffff:c0a8:102 addresses with ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff subnet mask'
             self.assertEqual(expected_result, result)
 
         mock_loopback_device_name.assert_called_once_with()
@@ -374,7 +382,9 @@ class TestAddrAliasSetupInstructions(TestCase):
                 patch('conductr_cli.host.is_macos', mock_is_macos):
             result = host.addr_alias_setup_instructions([self.addrs_ipv4[0]], self.subnet_mask_ipv4)
 
-            expected_result = strip_margin("""|Run the following command to create an address alias on your machine:
+            expected_result = strip_margin("""|Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines.
+                                              |
+                                              |Please run the following and then try your command again:
                                               |
                                               |sudo ifconfig ix0:0 192.168.1.1 netmask 255.255.255.0 up
                                               |""")

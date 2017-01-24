@@ -1,6 +1,5 @@
 import os
 from conductr_cli.constants import DEFAULT_PORT, DEFAULT_SANDBOX_ADDR_RANGE
-from conductr_cli.screen_utils import headline
 import ipaddress
 import socket
 import platform
@@ -81,10 +80,9 @@ def is_listening(ip_addr, port):
 
 
 def addr_alias_setup_instructions(addrs, subnet_mask):
-    def info_text(commands):
-        return headline(
-            'Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines') + \
-            '\n\nPlease run the following and then try your command again:'
+    info_text = 'Whoops. Network address aliases are required ' \
+                'so that the sandbox can operate as a cluster of machines.' + \
+                '\n\nPlease run the following and then try your command again:'
 
     if_name = loopback_device_name()
 
@@ -95,14 +93,14 @@ def addr_alias_setup_instructions(addrs, subnet_mask):
         return '{}\n' \
                '\n' \
                '{}\n' \
-               ''.format(info_text(commands), '\n'.join(commands))
+               ''.format(info_text, '\n'.join(commands))
 
     elif is_macos():
         commands = ['sudo ifconfig {} alias {} {}'.format(if_name, addr.exploded, subnet_mask) for addr in addrs]
         return '{}\n' \
                '\n' \
                '{}\n' \
-               ''.format(info_text(commands), '\n'.join(commands))
+               ''.format(info_text, '\n'.join(commands))
     else:
         return 'Setup aliases for {} addresses with {} subnet mask'.format(display_addrs(addrs), subnet_mask)
 
