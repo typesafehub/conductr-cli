@@ -5,8 +5,8 @@ from conductr_cli import terminal
 from conductr_cli.exceptions import DockerValidationError
 from subprocess import CalledProcessError
 
-DEFAULT_DOCKER_RAM_SIZE = 3.8
-DEFAULT_DOCKER_CPU_COUNT = 4
+DEFAULT_DOCKER_RAM_SIZE = 1.9
+DEFAULT_DOCKER_CPU_COUNT = 2
 
 
 class DockerVmType:
