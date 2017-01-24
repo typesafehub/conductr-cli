@@ -180,7 +180,7 @@ def run():
         parser.print_help()
     # Validate image_version
     elif vars(args).get('func').__name__ == 'run' and not args.image_version:
-        parser.exit('The version of the ConductR Docker image must be set.\n'
+        parser.exit('The version of ConductR need to be set.\n'
                     'Please visit https://www.lightbend.com/product/conductr/developer '
                     'to obtain the current version information.')
     # Call sandbox function
