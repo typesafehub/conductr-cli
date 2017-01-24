@@ -94,7 +94,7 @@ class InstanceCountError(Exception):
         return repr(self.message)
 
 
-class BindAddressNotFoundError(Exception):
+class BindAddressNotFound(Exception):
     def __init__(self, message):
         self.message = message
 

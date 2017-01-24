@@ -1,5 +1,6 @@
 import os
 from conductr_cli.constants import DEFAULT_PORT, DEFAULT_SANDBOX_ADDR_RANGE
+from conductr_cli.screen_utils import headline
 import ipaddress
 import socket
 import platform
@@ -81,10 +82,9 @@ def is_listening(ip_addr, port):
 
 def addr_alias_setup_instructions(addrs, subnet_mask):
     def info_text(commands):
-        if len(commands) > 1:
-            return 'Run the following commands to create the address aliases on your machine:'
-        else:
-            return 'Run the following command to create an address alias on your machine:'
+        return headline(
+            'Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines') + \
+            '\n\nPlease run the following and then try your command again:'
 
     if_name = loopback_device_name()
 
@@ -104,7 +104,7 @@ def addr_alias_setup_instructions(addrs, subnet_mask):
                '{}\n' \
                ''.format(info_text(commands), '\n'.join(commands))
     else:
-        return 'Setup alias for {} addresses with {} subnet mask'.format(display_addrs(addrs), subnet_mask)
+        return 'Setup aliases for {} addresses with {} subnet mask'.format(display_addrs(addrs), subnet_mask)
 
 
 def display_addrs(addrs, separator=', '):
