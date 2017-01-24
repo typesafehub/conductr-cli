@@ -19,7 +19,7 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.envs, [])
         self.assertEqual(args.image, CONDUCTR_DEV_IMAGE)
         self.assertEqual(args.log_level, 'info')
-        self.assertEqual(args.nr_of_containers, '1')
+        self.assertEqual(args.nr_of_instances, '1')
         self.assertEqual(args.ports, [])
         self.assertEqual(args.features, [])
         self.assertEqual(args.local_connection, True)
@@ -45,7 +45,7 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.envs, ['env1', 'env2'])
         self.assertEqual(args.image, 'my-image')
         self.assertEqual(args.log_level, 'debug')
-        self.assertEqual(args.nr_of_containers, '5')
+        self.assertEqual(args.nr_of_instances, '5')
         self.assertEqual(args.ports, [1000, 1001])
         self.assertEqual(args.features, [['visualization'], ['logging'], ['monitoring', '2.1.0']])
         self.assertEqual(args.local_connection, True)
@@ -70,7 +70,7 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.envs, ['env1', 'env2'])
         self.assertEqual(args.image, 'my-image')
         self.assertEqual(args.log_level, 'debug')
-        self.assertEqual(args.nr_of_containers, '5:3')
+        self.assertEqual(args.nr_of_instances, '5:3')
         self.assertEqual(args.ports, [1000, 1001])
         self.assertEqual(args.features, [['visualization'], ['logging'], ['monitoring', '2.1.0']])
         self.assertEqual(args.local_connection, True)
@@ -115,13 +115,13 @@ class TestSandbox(CliTestCase):
 
 class TestValidation(CliTestCase):
     def test_nr_of_instances_valid_int(self):
-        self.assertEqual('1', sandbox_main.nr_of_containers('1'))
+        self.assertEqual('1', sandbox_main.nr_of_instances('1'))
 
     def test_nr_of_instances_valid_expression(self):
-        self.assertEqual('1:3', sandbox_main.nr_of_containers('1:3'))
+        self.assertEqual('1:3', sandbox_main.nr_of_instances('1:3'))
 
     def test_nr_of_instances_invalid(self):
-        self.assertRaises(argparse.ArgumentTypeError, sandbox_main.nr_of_containers, 'FOO')
+        self.assertRaises(argparse.ArgumentTypeError, sandbox_main.nr_of_instances, 'FOO')
 
     def test_addr_range_valid(self):
         self.assertEqual(ipaddress.ip_network('192.168.1.0/24', strict=True), sandbox_main.addr_range('192.168.1.0/24'))

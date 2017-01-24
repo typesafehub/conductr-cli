@@ -23,7 +23,7 @@ class SandboxRunResult:
 
 
 def run(args, features):
-    nr_of_containers = instance_count(args.image_version, args.nr_of_containers)
+    nr_of_containers = instance_count(args.image_version, args.nr_of_instances)
     pull_image(args)
     container_names = scale_cluster(args, nr_of_containers, features)
     return SandboxRunResult(container_names, host.DOCKER_IP)

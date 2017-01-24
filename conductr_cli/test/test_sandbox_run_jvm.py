@@ -90,7 +90,7 @@ class TestRun(CliTestCase):
 
         args = self.default_args.copy()
         args.update({
-            'nr_of_containers': '1:3'
+            'nr_of_instances': '1:3'
         })
         input_args = MagicMock(**args)
         features = []
@@ -174,15 +174,20 @@ class TestRun(CliTestCase):
                                                       features,
                                                       'info')
 
-    def test_invalid_nr_of_containers(self):
-        args = self.default_args.copy()
-        args.update({
-            'nr_of_containers': 'FOO'
-        })
-        input_args = MagicMock(**args)
-        features = []
 
-        self.assertRaises(InstanceCountError, sandbox_run_jvm.run, input_args, features)
+class TestInstanceCount(CliTestCase):
+    def test_x_y_format(self):
+        nr_of_core_instances, nr_of_agent_instances = sandbox_run_jvm.instance_count(2, '2:3')
+        self.assertEqual(nr_of_core_instances, 2)
+        self.assertEqual(nr_of_agent_instances, 3)
+
+    def test_number_format(self):
+        nr_of_core_instances, nr_of_agent_instances = sandbox_run_jvm.instance_count(2, '5')
+        self.assertEqual(nr_of_core_instances, 1)
+        self.assertEqual(nr_of_agent_instances, 5)
+
+    def test_invalid_format(self):
+        self.assertRaises(InstanceCountError, sandbox_run_jvm.instance_count, 2, 'FOO')
 
 
 class TestFindBindAddresses(CliTestCase):

@@ -67,13 +67,18 @@ def build_parser():
                                  'Available log levels: ' + ', '.join(log_levels),
                             choices=log_levels,
                             metavar='')
-    run_parser.add_argument('-n', '--nr-of-containers',
-                            type=nr_of_containers,
+    run_parser.add_argument('-n', '--nr-of-containers', '--nr-of-instances',
+                            type=nr_of_instances,
                             default='1',
+                            dest='nr_of_instances',
                             help='Number of ConductR core and agent instances. Defaults to 1.\n'
                                  'Also accepts `x:y` format: `x` is a number of core instances, '
                                  'and y is a number of agent instances\n'
-                                 'For ConductR 1, this corresponds to the number of nodes.',
+                                 'If a number instead of the `x:y` format is specified, then the value correlates '
+                                 'to the number of agent instances.\n'
+                                 'The core instance will then be 1.\n'
+                                 'Example: -n 3 converts to -n 1:3\n'
+                                 'For ConductR 1.x, this corresponds to the number of nodes.',
                             metavar='')
     run_parser.add_argument('--offline',
                             default=DEFAULT_OFFLINE_MODE,
@@ -208,7 +213,7 @@ def run():
             exit(1)
 
 
-def nr_of_containers(value):
+def nr_of_instances(value):
     try:
         # Ensure value can be converted into an integer
         int(value)

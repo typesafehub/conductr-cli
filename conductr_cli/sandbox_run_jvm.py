@@ -53,7 +53,7 @@ def run(args, features):
                      This is only relevant for Docker based sandbox since the features decides what port to expose
     :return: SandboxRunResult
     """
-    nr_of_core_instances, nr_of_agent_instances = instance_count(args.image_version, args.nr_of_containers)
+    nr_of_core_instances, nr_of_agent_instances = instance_count(args.image_version, args.nr_of_instances)
 
     validate_jvm_support()
 
@@ -121,7 +121,7 @@ def instance_count(image_version, instance_expression):
     """
     Parses the instance expressions into number of core and agent instances, i.e.
 
-    The expression `2` translates to 2 core instances and 2 agent instances.
+    The expression `2` translates to 1 core instance and 2 agent instances.
     The expression `2:3` translates to 2 core instances and 3 agent instances.
 
     :param image_version:
@@ -130,7 +130,7 @@ def instance_count(image_version, instance_expression):
     """
     try:
         nr_of_instances = int(instance_expression)
-        return nr_of_instances, nr_of_instances
+        return 1, nr_of_instances
     except ValueError:
         match = re.search(NR_OF_INSTANCE_EXPRESSION, instance_expression)
         if match:
