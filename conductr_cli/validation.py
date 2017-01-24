@@ -255,7 +255,7 @@ def handle_sandbox_image_not_found_error(func):
             return func(*args, **kwargs)
         except SandboxImageNotFoundError as e:
             log = get_logger_for_func(func)
-            log.error('ConductR {} artefact {} cannot be found on Bintray.'.format(e.component_type, e.artefact_name))
+            log.error('ConductR {} artifact {} cannot be found on Bintray.'.format(e.component_type, e.image_version))
             log.error('Please specify a valid ConductR version.')
             log.error('The latest version can be found on: https://www.lightbend.com/product/conductr/developer')
             return False
