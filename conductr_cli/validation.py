@@ -346,8 +346,10 @@ def handle_bintray_credentials_error(func):
             return func(*args, **kwargs)
         except BintrayCredentialsNotFoundError as e:
             log = get_logger_for_func(func)
-            log.error('Bintray credentials not found in {}'.format(e.credential_file_path))
-            log.error('Please follow the instructions to setup the Lightbend Bintray credentials:')
+            log.error('Nearly there! The ConductR artifacts and bundles are hosted on Bintray.')
+            log.error('It is therefore necessary to create a Bintray credentials file at {}'
+                      .format(e.credential_file_path))
+            log.error('For more information how to setup the Lightbend Bintray credentials please follow:')
             log.error('  http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html')
             return False
         except MalformedBintrayCredentialsError as e:
