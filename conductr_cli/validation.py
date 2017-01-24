@@ -10,7 +10,7 @@ from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
-from conductr_cli.exceptions import BindAddressNotFoundError, \
+from conductr_cli.exceptions import BindAddressNotFound, \
     InstanceCountError, MalformedBundleError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
     WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
@@ -231,15 +231,14 @@ def handle_instance_count_error(func):
     return handler
 
 
-def handle_bind_address_not_found_error(func):
+def handle_bind_address_not_found(func):
 
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except BindAddressNotFoundError as e:
+        except BindAddressNotFound as e:
             log = get_logger_for_func(func)
-            log.error('Unable to allocate bind address')
-            log.error(e.message)
+            log.info(e.message)
             return False
 
     # Do not change the wrapped function name,

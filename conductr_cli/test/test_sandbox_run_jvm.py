@@ -1,6 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_run_jvm
-from conductr_cli.exceptions import BindAddressNotFoundError, InstanceCountError, BintrayUnreachableError, \
+from conductr_cli.exceptions import BindAddressNotFound, InstanceCountError, BintrayUnreachableError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, \
     SandboxUnsupportedOsArchError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
     JavaVersionParseError
@@ -216,7 +216,7 @@ class TestFindBindAddresses(CliTestCase):
 
         with patch('conductr_cli.host.can_bind', mock_can_bind), \
                 patch('conductr_cli.host.addr_alias_setup_instructions', mock_addr_alias_setup_instructions):
-            self.assertRaises(BindAddressNotFoundError, sandbox_run_jvm.find_bind_addrs, 3, self.addr_range)
+            self.assertRaises(BindAddressNotFound, sandbox_run_jvm.find_bind_addrs, 3, self.addr_range)
 
         self.assertEqual([
             call(addr, BIND_TEST_PORT) for addr in self.addr_range.hosts()
@@ -237,7 +237,7 @@ class TestFindBindAddresses(CliTestCase):
 
         with patch('conductr_cli.host.can_bind', mock_can_bind), \
                 patch('conductr_cli.host.addr_alias_setup_instructions', mock_addr_alias_setup_instructions):
-            self.assertRaises(BindAddressNotFoundError, sandbox_run_jvm.find_bind_addrs, 3, self.addr_range)
+            self.assertRaises(BindAddressNotFound, sandbox_run_jvm.find_bind_addrs, 3, self.addr_range)
 
         self.assertEqual([
             call(addr, BIND_TEST_PORT) for addr in self.addr_range.hosts()

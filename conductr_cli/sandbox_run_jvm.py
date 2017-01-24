@@ -1,6 +1,6 @@
 from conductr_cli import conduct_main, host, sandbox_stop, sandbox_common
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
-from conductr_cli.exceptions import BindAddressNotFoundError, BintrayUnreachableError, InstanceCountError, \
+from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
     SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
     JavaVersionParseError
@@ -226,7 +226,7 @@ def find_bind_addrs(nr_of_addrs, addr_range):
         nr_of_addr_setup = nr_of_addrs - len(addrs_to_bind)
         setup_instructions = host.addr_alias_setup_instructions(addrs_unavailable[0:nr_of_addr_setup],
                                                                 addr_range.netmask)
-        raise BindAddressNotFoundError(setup_instructions)
+        raise BindAddressNotFound(setup_instructions)
     else:
         return addrs_to_bind
 
