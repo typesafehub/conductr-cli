@@ -105,7 +105,7 @@ class TestLoggingFeature(TestCase):
             call(['load', 'conductr-elasticsearch', '--disable-instructions'], configure_logging=False),
             call(['run', 'conductr-elasticsearch', '--disable-instructions'], configure_logging=False),
             call(['load', 'conductr-kibana', '--disable-instructions'], configure_logging=False),
-            call(['run', 'conductr-kibana', '--disable-instructions'], configure_logging=False)
+            call(['run', 'conductr-kibana', '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
         ])
 
     def test_start_v2_docker_validation_failed(self):
@@ -135,7 +135,7 @@ class TestLoggingFeature(TestCase):
             call(['load', 'conductr-elasticsearch', '--disable-instructions', '--offline'], configure_logging=False),
             call(['run', 'conductr-elasticsearch', '--disable-instructions'], configure_logging=False),
             call(['load', 'conductr-kibana', '--disable-instructions', '--offline'], configure_logging=False),
-            call(['run', 'conductr-kibana', '--disable-instructions'], configure_logging=False)
+            call(['run', 'conductr-kibana', '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
         ])
 
 
@@ -180,7 +180,7 @@ class TestMonitoringFeature(TestCase):
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'cinnamon-grafana', '--disable-instructions'], configure_logging=False),
-            call(['run', 'cinnamon-grafana', '--disable-instructions'], configure_logging=False)
+            call(['run', 'cinnamon-grafana', '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
         ])
 
     def test_start_v2(self):
@@ -191,7 +191,7 @@ class TestMonitoringFeature(TestCase):
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False),
-            call(['run', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False)
+            call(['run', 'cinnamon-grafana-docker', '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
         ])
 
     def test_start_offline_mode(self):
@@ -202,5 +202,5 @@ class TestMonitoringFeature(TestCase):
 
         self.assertEqual(run_mock.call_args_list, [
             call(['load', 'cinnamon-grafana-docker', '--disable-instructions', '--offline'], configure_logging=False),
-            call(['run', 'cinnamon-grafana-docker', '--disable-instructions'], configure_logging=False)
+            call(['run', 'cinnamon-grafana-docker', '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
         ])

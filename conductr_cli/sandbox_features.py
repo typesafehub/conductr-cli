@@ -124,7 +124,7 @@ class LoggingFeature:
             kibana_load_command = ['load', kibana['bundle'], '--disable-instructions'] + \
                 parse_offline_mode_arg(self.offline_mode)
             conduct_main.run(kibana_load_command, configure_logging=False)
-            conduct_main.run(['run', kibana['name'], '--disable-instructions'], configure_logging=False)
+            conduct_main.run(['run', kibana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
 
 
 class LiteLoggingFeature:
@@ -220,7 +220,7 @@ class MonitoringFeature:
         load_command = ['load', grafana['bundle'], '--disable-instructions'] + \
             parse_offline_mode_arg(self.offline_mode)
         conduct_main.run(load_command, configure_logging=False)
-        conduct_main.run(['run', grafana['name'], '--disable-instructions'], configure_logging=False)
+        conduct_main.run(['run', grafana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
 
 
 feature_classes = [VisualizationFeature, LoggingFeature, LiteLoggingFeature, MonitoringFeature]
