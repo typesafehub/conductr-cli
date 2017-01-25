@@ -40,7 +40,7 @@ class TestDocker(CliTestCase):
 
     def test_docker_insufficient_cpu(self):
         stdout_mock = MagicMock()
-        docker_info_mock = MagicMock(return_value=b'\nTotal Memory: 3.8 GiB\nCPUs: 3')
+        docker_info_mock = MagicMock(return_value=b'\nTotal Memory: 3.8 GiB\nCPUs: 1')
 
         logging_setup.configure_logging(MagicMock(), output=stdout_mock)
 
@@ -49,7 +49,7 @@ class TestDocker(CliTestCase):
 
         docker_info_mock.assert_called_with()
         self.assertEqual(
-            as_warn('Warning: Docker has an insufficient no. of CPUs 3 - please increase to a minimum of 4 CPUs\n'),
+            as_warn('Warning: Docker has an insufficient no. of CPUs 1 - please increase to a minimum of 2 CPUs\n'),
             self.output(stdout_mock))
 
     def test_docker_sufficient_ram_and_cpu(self):
