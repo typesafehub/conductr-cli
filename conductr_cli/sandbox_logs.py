@@ -1,5 +1,6 @@
 import os
 
+
 def logs_args(args):
     core_log = os.path.abspath('{}/core/logs/conductr.log'.format(args.image_dir))
     agent_log = os.path.abspath('{}/agent/logs/conductr-agent.log'.format(args.image_dir))
@@ -19,6 +20,7 @@ def logs_args(args):
     tail_args.append(agent_log)
 
     return tail_args
+
 
 def logs(args):
     os.execv('/usr/bin/env', logs_args(args))
