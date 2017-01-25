@@ -6,22 +6,18 @@ Command Line Interface (CLI) for Lightbend ConductR
 Installation
 ~~~~~~~~~~~~
 
-Python 3 is required.
+There are two types of installation:
 
-**macOS**
+* "native" where we have pre-built a native package for Windows, Linux and OS X requiring no other dependencies; and
+* "python" where you must install Python 3 and use pip3 to install it.
 
-Use homebrew to install Python 3:
+Install natively
+^^^^^^^^^^^^^^^^
 
-.. code:: bash
+Lightbend hosts native images at bintray: https://bintray.com/lightbend/generic/conductr-cli. Download an archive that is suitable for your environment and then place the resultant package in a place accessible from your PATH. For example, on Unix, copy the contents of archive to your /usr/local/bin folder.
 
-    brew install python3
-
-**Other operation systems**
-
-Install Python 3 with the system package manager or use one of the Python 3 distributions from https://www.python.org/downloads
-
-Install using pip3
-^^^^^^^^^^^^^^^^^^
+Install using Python
+^^^^^^^^^^^^^^^^^^^^
 
 Install the ``conductr-cli`` with ``pip3``. Depending on your OS the command is:
 
@@ -82,56 +78,6 @@ To install it only for the current user, use:
 
     pip install -U conductr-cli
 
-
-Install as a deb package
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Build a docker image for building a deb package:
-
-.. code:: bash
-
-    docker build -t debian-distribution deb_dist/
-
-Run built docker image:
-
-.. code:: bash
-
-  docker run -v $(pwd):/source debian-distribution
-
-Install built deb package:
-
-.. code:: bash
-
-    dpkg -i deb_dist/python3-conductr-cli_0.1-1_all.deb
-
-Install required dependencies:
-
-.. code:: bash
-
-    apt-get install -f
-
-Autocomplete support
-^^^^^^^^^^^^^^^^^^^^
-
-If you have installed argcomplete and want to activate Bash completion for the CLI, you have to execute the following, either transiently in your terminal session or more permanently in your ``.bashrc`` or ``.bash_profile``:
-
-.. code:: bash
-
-    eval "$(register-python-argcomplete conduct)"
-    eval "$(register-python-argcomplete sandbox)"
-
-Alternatively, if you have a Bash version 4.2 or later, you can activate global completion once:
-
-.. code:: bash
-
-    activate-global-python-argcomplete --dest=/path/to/bash_completion.d
-
-If you are running zsh, execute the following command to enable autocomplete:
-
-.. code:: bash
-
-    autoload bashcompinit && autoload compinit && bashcompinit && compinit && eval "$(register-python-argcomplete conduct)" && eval "$(register-python-argcomplete sandbox)"
-    
 Setup Bintray credentials
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -153,17 +99,6 @@ e.g.
 
     $ sandbox -h
     usage: sandbox [-h] {version,run,stop} ...
-
-    optional arguments:
-      -h, --help            show this help message and exit
-
-    commands:
-      {version,run,stop}    Use one of the following sub commands
-        version             print version
-        run                 Run ConductR sandbox cluster
-        stop                Stop ConductR sandbox cluster
-
-The sandbox is connecting to the running Docker host to start the ConductR nodes inside Docker containers. The host IP address of the Docker host is automatically resolved. It is also possible to skip this automatic resolving of the Docker host IP by setting the environment variable ``CONDUCTR_HOST`` which will be then used instead.
 
 To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature run:
 
@@ -192,28 +127,7 @@ e.g.
                   {version,info,service-names,acls,load,run,stop,unload,events,logs,setup-dcos} 
                   ...
 
-    optional arguments:
-      -h, --help            show this help message and exit
-
-    commands:
-      {version,info,service-names,acls,load,run,stop,unload,events,logs,setup-dcos}
-                            Use one of the following sub commands
-        version             print version
-        info                print bundle information
-        service-names       print the service names available to the service
-                            locator
-        acls                print request ACL information
-        load                load a bundle
-        run                 run a bundle
-        stop                stop a bundle
-        unload              unload a bundle
-        events              show bundle events
-        logs                show bundle logs
-        setup-dcos          setup integration with the DC/OS CLI so that 'dcos
-                            conduct ..' commands can be used to access ConductR
-                            via DC/OS
-
-Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--host`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_HOST`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. By default, the IP address will be automatically resolved to the Docker host IP.
+Most sub-commands connect to a ConductR instance and therefore you have to specify its IP and port. This can be done in different ways. You can specify the IP via the ``--host`` option and the port via the ``--port`` option. Alternatively, you can set the environment variables ``CONDUCTR_HOST`` and ``CONDUCTR_PORT``. Default values will be used if both are not set. The port defaults to 9005. By default, the IP address will be automatically resolved to the sandbox host IP.
 
 Here’s an example for loading a bundle:
 
@@ -339,13 +253,24 @@ Execute the following command to run all defined tests:
 Releasing
 ^^^^^^^^^
 
-CLI releases can be performed completely from the GitHub project page. Follow these steps to cut a release:
+CLI releases to the pip3 repository can be performed completely from the GitHub project page. Follow these steps to cut a release:
 
 1. Edit `conductr_cli/__init__.py <conductr_cli/__init__.py>`_ file to contain the version to be released.
 2. Create a new release on the `Github releases page <https://github.com/typesafehub/conductr-cli/releases>`_.
 
 After CI build is finished for the tagged commit, new version will automatically be deployed to PyPi repository.
 
+**Native**
+
+Pyinstaller is required. Please visit http://www.pyinstaller.org/ to obtain instructions on how to install it.
+
+To build native packages follow the form:
+
+    pyinstaller --onefile conductr_cli/conduct.py
+    pyinstaller --onefile conductr_cli/shazar.py
+    pyinstaller --onefile conductr_cli/sandbox.py
+    
+This will result in standalone images for your current environment being created in a `dist` folder.
 
 
 .. |build_status| image:: https://travis-ci.org/typesafehub/conductr-cli.svg?branch=master
