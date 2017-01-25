@@ -2,6 +2,7 @@ from conductr_cli.test.cli_test_case import CliTestCase
 from conductr_cli import sandbox_logs
 from unittest.mock import MagicMock
 
+
 class TestSandboxLogs(CliTestCase):
     def test_tail_args_built(self):
         self.assertEqual(
@@ -13,7 +14,6 @@ class TestSandboxLogs(CliTestCase):
                 'lines': 15
             }))
         )
-
 
         self.assertEqual(
             ['/usr/bin/env', 'tail', '-q', '-f', '--follow=name', '--retry', '-n', '35', '/some/image/dir/core/logs/conductr.log', '/some/image/dir/agent/logs/conductr-agent.log'],
