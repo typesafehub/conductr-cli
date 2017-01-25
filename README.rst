@@ -266,6 +266,8 @@ Pyinstaller is required. Please visit http://www.pyinstaller.org/ to obtain inst
 
 To build native packages follow the form:
 
+.. code:: bash
+
     pyinstaller --onefile conductr_cli/conduct.py
     pyinstaller --onefile conductr_cli/shazar.py
     pyinstaller --onefile conductr_cli/sandbox.py
