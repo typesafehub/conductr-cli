@@ -2,8 +2,8 @@ from conductr_cli import terminal
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, \
     BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
 import os
+import psutil
 import re
-import subprocess
 from subprocess import CalledProcessError
 
 
@@ -28,6 +28,47 @@ def resolve_conductr_info(image_dir):
     return core_info, agent_info
 
 
+def raw_process_info():
+    processes = []
+
+    for proc in psutil.process_iter():
+        try:
+            processes.append(proc.as_dict(attrs=['pid', 'name', 'cmdline']))
+        except psutil.NoSuchProcess:
+            pass
+
+    return processes
+
+
+def calculate_pids(core_run_dir, agent_run_dir, ps):
+    pids_info = []
+
+    for process in ps:
+        def extract_param(regex, default):
+            for e in process['cmdline']:
+                try:
+                    return re.search(regex, e).group(1)
+                except AttributeError:
+                    pass
+
+            return default
+
+        if process['name'] == 'java' and any('com.typesafe.conductr.ConductR' == e for e in process['cmdline']) and any(core_run_dir in e for e in process['cmdline']):
+            pids_info.append({
+                'type': 'core',
+                'id': int(process['pid']),
+                'ip': extract_param('-Dconductr.ip=(\S+)', '')
+            })
+        elif process['name'] == 'java' and any('com.typesafe.conductr.agent.ConductRAgent' == e for e in process['cmdline']) and any(agent_run_dir in e for e in process['cmdline']):
+            pids_info.append({
+                'type': 'agent',
+                'id': int(process['pid']),
+                'ip': extract_param('-Dconductr.agent.ip=(\S+)', '')
+            })
+
+    return pids_info
+
+
 def find_pids(core_run_dir, agent_run_dir):
     """
     Finds the PIDs of ConductR core and agent from the output of the ps process, looking for java process
@@ -36,29 +77,8 @@ def find_pids(core_run_dir, agent_run_dir):
     :param agent_run_dir: directory of where ConductR agent is running from.
     :return: the list of the ConductR core and agent pids.
     """
-    pids_info = []
-    ps_output = subprocess.getoutput('ps ax')
-    for line in ps_output.split('\n'):
-        def extract_param(regex, default):
-            try:
-                return re.search(regex, line).group(1)
-            except AttributeError:
-                return default
 
-        pid = line.split()[0]
-        if core_run_dir in line:
-            pids_info.append({
-                'type': 'core',
-                'id': int(pid),
-                'ip': extract_param('-Dconductr.ip=(\S+)', '')
-            })
-        if agent_run_dir in line:
-            pids_info.append({
-                'type': 'agent',
-                'id': int(pid),
-                'ip': extract_param('-Dconductr.agent.ip=(\S+)', '')
-            })
-    return pids_info
+    return calculate_pids(core_run_dir, agent_run_dir, raw_process_info())
 
 
 def resolve_running_docker_containers():

@@ -11,6 +11,7 @@ install_requires = [
     'requests>=2.6.0',
     'requests-toolbelt>=0.7.0',
     'argcomplete>=0.8.1',
+    'psutil>=5.0.1, <6.0',
     'pyhocon==0.2.1',
     'arrow>=0.6.0',
     'colorama>=0.3.7',
