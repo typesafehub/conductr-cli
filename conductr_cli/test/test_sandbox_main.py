@@ -19,7 +19,7 @@ class TestSandbox(CliTestCase):
         self.assertEqual(args.envs, [])
         self.assertEqual(args.image, CONDUCTR_DEV_IMAGE)
         self.assertEqual(args.log_level, 'info')
-        self.assertEqual(args.nr_of_instances, '1')
+        self.assertEqual(args.nr_of_instances, '3')
         self.assertEqual(args.ports, [])
         self.assertEqual(args.features, [])
         self.assertEqual(args.local_connection, True)
