@@ -5,7 +5,7 @@ import re
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
 from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_OFFLINE_MODE
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_ps, logging_setup, docker, version
+from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_logs, sandbox_ps, logging_setup, docker, version
 from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
 
 
@@ -61,9 +61,7 @@ def build_parser():
                             default='info',
                             help='Log level of ConductR.\n'
                                  'Defaults to `info`.\n'
-                                 'You can observe ConductRs logging via the `docker logs` command. \n'
-                                 'For example `docker logs -f cond-0` will follow the logs of the first '
-                                 'ConductR container.\n'
+                                 'ConductR logs can be inspected via the `sandbox logs` command.\n'
                                  'Available log levels: ' + ', '.join(log_levels),
                             choices=log_levels,
                             metavar='')
@@ -149,6 +147,18 @@ def build_parser():
                            dest='is_quiet',
                            action='store_true')
     ps_parser.set_defaults(func=sandbox_ps.ps)
+
+    # Sub-parser for `logs` sub-command
+    logs_parser = subparsers.add_parser('logs',
+                                        help='Fetches the logs of ConductR core and agent processes')
+    add_image_dir(logs_parser)
+    add_default_arguments(logs_parser)
+    logs_parser.add_argument('-f', '--follow',
+                             help='Output appended as the log files grow',
+                             default=False,
+                             dest='follow',
+                             action='store_true')
+    logs_parser.set_defaults(func=sandbox_logs.logs)
 
     return parser
 
