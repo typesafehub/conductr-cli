@@ -158,11 +158,6 @@ def build_parser():
                              default=False,
                              dest='follow',
                              action='store_true')
-    logs_parser.add_argument('-n', '--lines',
-                             help='Output the last NUM lines (default 10)',
-                             default=10,
-                             type=int,
-                             dest='lines')
     logs_parser.set_defaults(func=sandbox_logs.logs)
 
     return parser
