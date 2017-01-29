@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
-from conductr_cli import logging_setup, sandbox_run, sandbox_run_docker, sandbox_run_jvm
+from conductr_cli import logging_setup, sandbox_run, sandbox_run_docker, sandbox_run_jvm, sandbox_features
 from conductr_cli.docker import DockerVmType
 from conductr_cli.exceptions import InstanceCountError, JavaCallError, JavaUnsupportedVendorError, \
     JavaUnsupportedVersionError, JavaVersionParseError
@@ -41,7 +41,9 @@ class TestSandboxRunCommand(CliTestCase):
     def test_docker_sandbox(self):
         conductr_version = '1.1.11'
 
-        mock_feature = MagicMock()
+        bundle_start_result = []
+        mock_feature_attrs = {'start.return_value': bundle_start_result}
+        mock_feature = MagicMock(**mock_feature_attrs)
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
 
@@ -65,16 +67,19 @@ class TestSandboxRunCommand(CliTestCase):
 
         mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
-        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0, DEFAULT_WAIT_RETRIES,
+                                                       DEFAULT_WAIT_RETRY_INTERVAL)
 
-        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, True, 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, False, 60)
 
         mock_feature.assert_not_called()
 
     def test_jvm_sandbox(self):
         conductr_version = '2.0.0'
 
-        mock_feature = MagicMock()
+        bundle_start_result = [sandbox_features.BundleStartResult('bundle-a', 1001)]
+        mock_feature_attrs = {'start.return_value': bundle_start_result}
+        mock_feature = MagicMock(**mock_feature_attrs)
         mock_feature.ports = [10001]
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
@@ -106,7 +111,7 @@ class TestSandboxRunCommand(CliTestCase):
                                                        DEFAULT_WAIT_RETRY_INTERVAL)
         mock_start_proxy.assert_called_once_with(proxy_bind_addr='192.168.1.1', proxy_ports=[3553, 10001])
 
-        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, True, 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, True, 60)
 
     def test_docker_sandbox_instance_count_error(self):
         conductr_version = '1.1.11'

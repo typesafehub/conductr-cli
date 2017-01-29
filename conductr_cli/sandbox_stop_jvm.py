@@ -1,5 +1,5 @@
 from conductr_cli import sandbox_common
-from conductr_cli.screen_utils import headline
+from conductr_cli.screen_utils import h1
 import os
 import signal
 import logging
@@ -19,7 +19,7 @@ def stop(args):
 
     pids_info = sandbox_common.find_pids(core_info['extraction_dir'], agent_info['extraction_dir'])
     if pids_info:
-        log.info(headline('Stopping ConductR'))
+        log.info(h1('Stopping ConductR'))
         killed_pids_info, hung_pids_info = kill_processes(core_info, agent_info, pids_info)
         if hung_pids_info:
             for hung_pid_info in hung_pids_info:

@@ -2,7 +2,7 @@ from conductr_cli import host, sandbox_common, sandbox_stop, terminal
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.exceptions import InstanceCountError
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, CONDUCTR_NAME_PREFIX, CONDUCTR_PORTS, flatten
-from conductr_cli.screen_utils import headline
+from conductr_cli.screen_utils import h1
 
 import logging
 import os
@@ -29,12 +29,12 @@ def run(args, features):
     return SandboxRunResult(container_names, host.DOCKER_IP)
 
 
-def log_run_attempt(args, run_result, is_started, wait_timeout):
+def log_run_attempt(args, run_result, feature_results, is_conductr_started, is_proxy_started, wait_timeout):
     container_names = run_result.container_names
     if not args.no_wait:
         log = logging.getLogger(__name__)
-        if is_started:
-            log.info(headline('Summary'))
+        if is_conductr_started:
+            log.info(h1('Summary'))
             log.info('ConductR has been started')
             plural_string = 's' if len(container_names) > 1 else ''
             log.info('Check resource consumption of Docker container{} that run the ConductR node{} with:'
@@ -43,7 +43,7 @@ def log_run_attempt(args, run_result, is_started, wait_timeout):
             log.info('Check current bundle status with:')
             log.info('  conduct info')
         else:
-            log.info(headline('Summary'))
+            log.info(h1('Summary'))
             log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
             log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
 
@@ -73,7 +73,7 @@ def scale_cluster(args, nr_of_containers, features):
 def start_nodes(args, nr_of_containers, features):
     container_names = []
     log = logging.getLogger(__name__)
-    log.info(headline('Starting ConductR'))
+    log.info(h1('Starting ConductR'))
     ports = collect_ports(args, features)
     conductr_args = flatten([feature.conductr_args() for feature in features])
     conductr_features = flatten([feature.conductr_feature_envs() for feature in features])

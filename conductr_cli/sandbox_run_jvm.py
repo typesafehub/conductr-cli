@@ -1,5 +1,6 @@
 from conductr_cli import conduct_main, host, sandbox_stop, sandbox_common
-from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
+from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, \
+    DEFAULT_SERVICE_LOCATOR_PORT
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
     SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
@@ -7,7 +8,7 @@ from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
 from conductr_cli.sandbox_common import flatten
-from conductr_cli.screen_utils import headline
+from conductr_cli.screen_utils import h1, h2
 from requests.exceptions import HTTPError, ConnectionError
 from subprocess import CalledProcessError
 
@@ -22,6 +23,7 @@ import subprocess
 NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
 BIND_TEST_PORT = 19991  # The port used for testing if an address can be bound.
 CONDUCTR_AKKA_REMOTING_PORT = 9004  # The port used by ConductR's Akka remoting.
+CONDUCTR_BUNDLE_PROXY_PORT = 9000  # The default proxy port for bundles.
 NR_OF_PROXY_INSTANCE = 1  # Only run 1 instance of ConductR HAProxy since there's only one HAProxy running per machine.
 SUPPORTED_JVM_VENDOR = ["java", "openjdk"]  # Oracle JVM vendor is `java`, OpenJDK is `openjdk`
 SUPPORTED_JVM_VERSION = (1, 8)  # Supports JVM version 1.8 and above.
@@ -62,7 +64,7 @@ def run(args, features):
     sandbox_stop.stop(args)
 
     log = logging.getLogger(__name__)
-    log.info(headline('Starting ConductR'))
+    log.info(h1('Starting ConductR'))
 
     bind_addrs = find_bind_addrs(max(nr_of_core_instances, nr_of_agent_instances), args.addr_range)
 
@@ -83,36 +85,60 @@ def run(args, features):
     return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs)
 
 
-def log_run_attempt(args, run_result, is_started, wait_timeout):
+def log_run_attempt(args, run_result, feature_results, is_conductr_started, is_proxy_started, wait_timeout):
     """
     Logs the run attempt. This method will be called after the completion of run method and when all the features has
     been started.
 
     :param args: args parsed from the input arguments
     :param run_result: the result from calling sandbox_run_jvm.run() - instance of sandbox_run_jvm.SandboxRunResult
-    :param is_started: sets to true if sandbox is started
+    :param feature_results: the feature result
+    :param is_conductr_started: sets to true if sandbox is started
+    :param is_proxy_started: sets to true if proxy is started
     :param wait_timeout: the amount of timeout waiting for sandbox to be started
     :return:
     """
     log = logging.getLogger(__name__)
     if not args.no_wait:
-        if is_started:
-            log.info(headline('Summary'))
+        if is_conductr_started:
+            log.info(h1('Summary'))
+            log.info(h2('ConductR'))
             log.info('ConductR has been started:')
+            plural_core = 's' if len(run_result.core_addrs) > 1 else ''
+            log.info('  core instance{} on {}'.format(plural_core, ', '.join(str(i) for i in run_result.core_addrs)))
+            plural_agent = 's' if len(run_result.agent_addrs) > 1 else ''
+            log.info('  agent instance{} on {}'.format(plural_agent, ', '.join(str(i) for i in run_result.agent_addrs)))
+            log.info('ConductR service locator has been started on:')
+            log.info('  {}:{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT))
 
-            nr_instance_core = len(run_result.core_pids)
-            plural_core = 's' if nr_instance_core > 1 else ''
-            log.info('  core: {} instance{}'.format(nr_instance_core, plural_core))
+            log.info(h2('Proxy'))
+            if is_proxy_started:
+                log.info('HAProxy has been started')
+                log.info('Your Bundles are by default accessible on:')
+                log.info('  {}:{}'.format(run_result.host, CONDUCTR_BUNDLE_PROXY_PORT))
+            else:
+                log.info('HAProxy has not been started')
+                log.info('To enable proxying ensure Docker is running and restart the sandbox')
 
-            nr_instance_agent = len(run_result.agent_pids)
-            plural_agents = 's' if nr_instance_agent > 1 else ''
-            log.info('  agent: {} instance{}'.format(nr_instance_agent, plural_agents))
+            if feature_results:
+                log.info(h2('Features'))
+                log.info('The following feature related bundles have been started:')
+                for feature_result in feature_results:
+                    if is_proxy_started:
+                        uri = '{}:{}'.format(run_result.host, feature_result.port)
+                    else:
+                        uri = '{}:{}/services/{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT,
+                                                         feature_result.name)
+                    log.info('  {} on {}'.format(feature_result.name, uri))
 
-            log.info('Check current bundle status with:')
+            log.info(h2('Bundles'))
+            log.info('Check latest bundle status with:')
             log.info('  conduct info')
+            log.info('Current bundle status:')
             conduct_main.run(['info', '--host', run_result.host], configure_logging=False)
+
         else:
-            log.info(headline('Summary'))
+            log.info(h1('Summary'))
             log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
             log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
 
@@ -425,7 +451,7 @@ def start_core_instances(core_extracted_dir, bind_addrs, conductr_roles, feature
                 '{}:{}'.format(bind_addrs[0], CONDUCTR_AKKA_REMOTING_PORT)
             ])
 
-        log.info('Starting ConductR core instance {} on {}..'.format(idx, bind_addr))
+        log.info('Starting ConductR core instance on {}..'.format(bind_addr))
         pid = subprocess.Popen(commands,
                                cwd=core_extracted_dir,
                                start_new_session=True,
@@ -475,7 +501,7 @@ def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs, conductr_
         ] + [
             '-Dconductr.agent.roles.{}={}'.format(j, role) for j, role in enumerate(agent_roles)
         ] + agent_args
-        log.info('Starting ConductR agent instance {} on {}..'.format(idx, bind_addr))
+        log.info('Starting ConductR agent instance on {}..'.format(bind_addr))
         pid = subprocess.Popen(commands,
                                cwd=agent_extracted_dir,
                                start_new_session=True,
