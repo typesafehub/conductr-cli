@@ -1,6 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
 from conductr_cli import sandbox_stop_jvm, logging_setup
-from conductr_cli.screen_utils import headline
+from conductr_cli.screen_utils import h1
 from unittest.mock import patch, MagicMock, call
 import signal
 
@@ -116,7 +116,7 @@ class TestStop(CliTestCase):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout, stderr)
             sandbox_stop_jvm.stop(MagicMock(**self.default_args))
 
-        self.assertEqual(headline('Stopping ConductR') + '\n', self.output(stdout))
+        self.assertEqual(h1('Stopping ConductR') + '\n', self.output(stdout))
         self.assertEqual(strip_margin(as_error("""|Error: ConductR core pid 58002 could not be stopped
                                                   |Error: ConductR agent pid 58003 could not be stopped
                                                   |Error: Please stop the processes manually
@@ -125,16 +125,14 @@ class TestStop(CliTestCase):
                                        call(58003, signal.SIGTERM)])
 
     def test_no_process(self):
-        ps_output = '58001   ??  Ss     0:36.97 /sbin/launchd\n' \
-                    '58008   ??  Ss     0:36.97 /usr/libexec/logd'
+        ps_output = []
 
         stdout = MagicMock()
         mock_os_kill = MagicMock()
-        mock_subprocess_getoutput = MagicMock(return_value=ps_output)
+        mock_find_pids = MagicMock(return_value=ps_output)
 
         with patch('os.kill', mock_os_kill), \
-                patch('subprocess.getoutput', mock_subprocess_getoutput), \
-                patch('conductr_cli.sandbox_stop_jvm', mock_subprocess_getoutput):
+                patch('conductr_cli.sandbox_common.find_pids', mock_find_pids):
             logging_setup.configure_logging(MagicMock(**self.default_args), stdout)
             sandbox_stop_jvm.stop(MagicMock(**self.default_args))
 

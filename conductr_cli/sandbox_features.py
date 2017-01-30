@@ -16,8 +16,14 @@ Feature attributes:
 
 from conductr_cli import conduct_main, docker
 from conductr_cli.sandbox_common import major_version
-from conductr_cli.screen_utils import headline
+from conductr_cli.screen_utils import h1
 import logging
+
+
+class BundleStartResult:
+    def __init__(self, name, port):
+        self.name = name
+        self.port = port
 
 
 class VisualizationFeature:
@@ -55,16 +61,17 @@ class VisualizationFeature:
 
     def start(self):
         if major_version(self.image_version) == 1:
-            pass
+            return []
         else:
             log = logging.getLogger(__name__)
-            log.info(headline('Starting visualization feature'))
+            log.info(h1('Starting visualization feature'))
             visualizer = select_bintray_uri('visualizer', self.version_args)
             log.info('Deploying bundle %s..' % visualizer['bundle'])
             load_command = ['load', visualizer['bundle'], '--disable-instructions'] + \
                 parse_offline_mode_arg(self.offline_mode)
             conduct_main.run(load_command, configure_logging=False)
             conduct_main.run(['run', visualizer['name'], '--disable-instructions'], configure_logging=False)
+            return [BundleStartResult('visualizer', self.ports[0])]
 
 
 class LoggingFeature:
@@ -106,10 +113,10 @@ class LoggingFeature:
 
     def start(self):
         if major_version(self.image_version) == 1:
-            pass
+            return []
         else:
             log = logging.getLogger(__name__)
-            log.info(headline('Starting logging feature based on elasticsearch and kibana'))
+            log.info(h1('Starting logging feature based on elasticsearch and kibana'))
             log.info('conductr-kibana bundle is packaged as a Docker image. Checking Docker requirements..')
             docker.validate_docker_vm(docker.vm_type())
             log.info('Docker is installed and configured correctly.')
@@ -125,6 +132,8 @@ class LoggingFeature:
                 parse_offline_mode_arg(self.offline_mode)
             conduct_main.run(kibana_load_command, configure_logging=False)
             conduct_main.run(['run', kibana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
+            return [BundleStartResult('conductr-kibana', self.ports[0]),
+                    BundleStartResult('conductr-elasticsearch', self.ports[1])]
 
 
 class LiteLoggingFeature:
@@ -160,16 +169,17 @@ class LiteLoggingFeature:
 
     def start(self):
         if major_version(self.image_version) == 1:
-            pass
+            return []
         else:
             log = logging.getLogger(__name__)
-            log.info(headline('Starting logging feature based on eslite'))
+            log.info(h1('Starting logging feature based on eslite'))
             eslite = select_bintray_uri('eslite', self.version_args)
             log.info('Deploying bundle %s..' % eslite['bundle'])
             load_command = ['load', eslite['bundle'], '--disable-instructions'] + \
                 parse_offline_mode_arg(self.offline_mode)
             conduct_main.run(load_command, configure_logging=False)
             conduct_main.run(['run', eslite['name'], '--disable-instructions'], configure_logging=False)
+            return []
 
 
 class MonitoringFeature:
@@ -211,7 +221,7 @@ class MonitoringFeature:
 
     def start(self):
         log = logging.getLogger(__name__)
-        log.info(headline('Starting monitoring feature'))
+        log.info(h1('Starting monitoring feature'))
         bundle_repo = 'lightbend/commercial-monitoring/' if self.version_args and self.version_args[0] == 'snapshot' \
             else ''
         bundle_name = 'cinnamon-grafana' if major_version(self.image_version) == 1 else 'cinnamon-grafana-docker'
@@ -221,6 +231,7 @@ class MonitoringFeature:
             parse_offline_mode_arg(self.offline_mode)
         conduct_main.run(load_command, configure_logging=False)
         conduct_main.run(['run', grafana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
+        return [BundleStartResult(grafana['name'], self.ports[0])]
 
 
 feature_classes = [VisualizationFeature, LoggingFeature, LiteLoggingFeature, MonitoringFeature]

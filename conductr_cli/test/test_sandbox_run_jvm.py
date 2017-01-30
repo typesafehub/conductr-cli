@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from conductr_cli import logging_setup, sandbox_run_jvm
+from conductr_cli import logging_setup, sandbox_run_jvm, sandbox_features
 from conductr_cli.exceptions import BindAddressNotFound, InstanceCountError, BintrayUnreachableError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, \
     SandboxUnsupportedOsArchError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
@@ -13,6 +13,7 @@ import subprocess
 
 
 class TestRun(CliTestCase):
+
     addr_range = ipaddress.ip_network('192.168.1.0/24', strict=True)
     default_args = {
         'image_version': '2.0.0',
@@ -706,6 +707,8 @@ class TestLogRunAttempt(CliTestCase):
         [2001, 2002, 2003],
         [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')]
     )
+    feature_results = [sandbox_features.BundleStartResult('bundle-a', 1001),
+                       sandbox_features.BundleStartResult('bundle-b', 1002)]
 
     def test_log_output(self):
         run_mock = MagicMock()
@@ -719,7 +722,9 @@ class TestLogRunAttempt(CliTestCase):
             sandbox_run_jvm.log_run_attempt(
                 input_args,
                 run_result=self.run_result,
-                is_started=True,
+                feature_results=self.feature_results,
+                is_conductr_started=True,
+                is_proxy_started=True,
                 wait_timeout=self.wait_timeout
             )
 
@@ -728,11 +733,32 @@ class TestLogRunAttempt(CliTestCase):
         expected_stdout = strip_margin("""||------------------------------------------------|
                                           || Summary                                        |
                                           ||------------------------------------------------|
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || ConductR                                       |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           |ConductR has been started:
-                                          |  core: 3 instances
-                                          |  agent: 3 instances
-                                          |Check current bundle status with:
+                                          |  core instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
+                                          |  agent instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
+                                          |ConductR service locator has been started on:
+                                          |  192.168.1.1:9008
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Proxy                                          |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |HAProxy has been started
+                                          |Your Bundles are by default accessible on:
+                                          |  192.168.1.1:9000
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Features                                       |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |The following feature related bundles have been started:
+                                          |  bundle-a on 192.168.1.1:1001
+                                          |  bundle-b on 192.168.1.1:1002
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Bundles                                        |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |Check latest bundle status with:
                                           |  conduct info
+                                          |Current bundle status:
                                           |""")
         self.assertEqual(expected_stdout, self.output(stdout))
 
@@ -755,18 +781,91 @@ class TestLogRunAttempt(CliTestCase):
             sandbox_run_jvm.log_run_attempt(
                 input_args,
                 run_result=run_result,
-                is_started=True,
+                feature_results=self.feature_results,
+                is_conductr_started=True,
+                is_proxy_started=True,
                 wait_timeout=self.wait_timeout
             )
 
         expected_stdout = strip_margin("""||------------------------------------------------|
                                           || Summary                                        |
                                           ||------------------------------------------------|
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || ConductR                                       |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           |ConductR has been started:
-                                          |  core: 1 instance
-                                          |  agent: 1 instance
-                                          |Check current bundle status with:
+                                          |  core instance on 192.168.1.1
+                                          |  agent instance on 192.168.1.1
+                                          |ConductR service locator has been started on:
+                                          |  192.168.1.1:9008
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Proxy                                          |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |HAProxy has been started
+                                          |Your Bundles are by default accessible on:
+                                          |  192.168.1.1:9000
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Features                                       |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |The following feature related bundles have been started:
+                                          |  bundle-a on 192.168.1.1:1001
+                                          |  bundle-b on 192.168.1.1:1002
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Bundles                                        |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |Check latest bundle status with:
                                           |  conduct info
+                                          |Current bundle status:
+                                          |""")
+        self.assertEqual(expected_stdout, self.output(stdout))
+
+    def test_log_output_no_proxy(self):
+
+        run_mock = MagicMock()
+        stdout = MagicMock()
+        input_args = MagicMock(**{
+            'no_wait': False
+        })
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            sandbox_run_jvm.log_run_attempt(
+                input_args,
+                run_result=self.run_result,
+                feature_results=self.feature_results,
+                is_conductr_started=True,
+                is_proxy_started=False,
+                wait_timeout=self.wait_timeout
+            )
+
+        expected_stdout = strip_margin("""||------------------------------------------------|
+                                          || Summary                                        |
+                                          ||------------------------------------------------|
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || ConductR                                       |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |ConductR has been started:
+                                          |  core instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
+                                          |  agent instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
+                                          |ConductR service locator has been started on:
+                                          |  192.168.1.1:9008
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Proxy                                          |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |HAProxy has not been started
+                                          |To enable proxying ensure Docker is running and restart the sandbox
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Features                                       |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |The following feature related bundles have been started:
+                                          |  bundle-a on 192.168.1.1:9008/services/bundle-a
+                                          |  bundle-b on 192.168.1.1:9008/services/bundle-b
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Bundles                                        |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |Check latest bundle status with:
+                                          |  conduct info
+                                          |Current bundle status:
                                           |""")
         self.assertEqual(expected_stdout, self.output(stdout))
 
@@ -782,7 +881,9 @@ class TestLogRunAttempt(CliTestCase):
             sandbox_run_jvm.log_run_attempt(
                 input_args,
                 run_result=self.run_result,
-                is_started=True,
+                feature_results=self.feature_results,
+                is_conductr_started=True,
+                is_proxy_started=True,
                 wait_timeout=self.wait_timeout
             )
 
