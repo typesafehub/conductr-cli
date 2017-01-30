@@ -397,7 +397,7 @@ def run(_args=[], configure_logging=True):
     if not vars(args).get('func'):
         if vars(args).get('dcos_info'):
             print('Lightbend ConductR sub commands. Type \'dcos conduct\' to see more.')
-            exit(0)
+            sys.exit(0)
         else:
             parser.print_help()
     else:
@@ -457,7 +457,7 @@ def run(_args=[], configure_logging=True):
                 logging_setup.configure_logging(args)
                 log = logging.getLogger(__name__)
                 log.error('Ensure server SSL verification file exists: {}'.format(args.server_verification_file))
-                exit(1)
+                sys.exit(1)
 
             if not args.dcos_mode and args.scheme == 'https':
                 disable_urllib3_warnings()
@@ -467,4 +467,4 @@ def run(_args=[], configure_logging=True):
 
         is_completed_without_error = args.func(args)
         if not is_completed_without_error:
-            exit(1)
+            sys.exit(1)
