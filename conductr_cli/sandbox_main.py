@@ -2,6 +2,7 @@ import argcomplete
 import argparse
 import ipaddress
 import re
+import sys
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
 from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_OFFLINE_MODE
@@ -222,7 +223,7 @@ def run():
 
         result = args.func(args)
         if not result:
-            exit(1)
+            sys.exit(1)
 
 
 def nr_of_instances(value):
