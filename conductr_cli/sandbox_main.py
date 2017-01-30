@@ -5,7 +5,8 @@ import re
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
 from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_OFFLINE_MODE
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_logs, sandbox_ps, logging_setup, docker, version
+from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_logs, sandbox_ps, logging_setup, docker, \
+    version, validation
 from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
 
 
@@ -184,6 +185,7 @@ def add_image_dir(sub_parser):
                             help='Default directory where sandbox images is stored.')
 
 
+@validation.handle_docker_validation_error
 def run():
     # Parse arguments
     parser = build_parser()
