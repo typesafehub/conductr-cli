@@ -270,7 +270,7 @@ To build native packages follow the form:
 
     pyinstaller --onefile conductr_cli/conduct.py
     pyinstaller --onefile conductr_cli/shazar.py
-    pyinstaller --onefile conductr_cli/sandbox.py
+    pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py
     
 This will result in standalone images for your current environment being created in a `dist` folder.
 
