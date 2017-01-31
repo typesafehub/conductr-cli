@@ -11,7 +11,7 @@ import json
 class TestGenerateHmac(TestCase):
     def test_success(self):
         result = bundle_deploy.generate_hmac_signature('secret', 'reactive-maps-backend-summary')
-        self.assertEqual('GnNDrC0VQ0CN1qbWFgnvLw==', result)
+        self.assertEqual('2un791uBDf59/fHrIOWMqt0mhwEoH0yqkZXmz//4alQ=', result)
 
 
 class TestGetDeploymentStateIp(CliTestCase):

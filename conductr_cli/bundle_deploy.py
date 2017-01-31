@@ -8,7 +8,7 @@ import logging
 import base64
 
 STRING_ENCODING = 'UTF-8'
-HMAC_DIGEST_MOD = 'MD5'
+HMAC_DIGEST_MOD = 'SHA256'
 
 
 def generate_hmac_signature(secret_key, text):
