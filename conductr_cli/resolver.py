@@ -43,8 +43,8 @@ def resolve_bundle_configuration(custom_settings, cache_dir, uri, offline_mode=F
     raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
 
 
-def resolve_bundle_version(custom_settings, uri):
-    all_resolvers = resolver_chain(custom_settings)
+def resolve_bundle_version(custom_settings, uri, offline_mode=False):
+    all_resolvers = resolver_chain(custom_settings, offline_mode)
 
     for resolver in all_resolvers:
         resolved_version = resolver.resolve_bundle_version(uri)
@@ -54,8 +54,8 @@ def resolve_bundle_version(custom_settings, uri):
     raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
 
 
-def continuous_delivery_uri(custom_settings, resolved_version):
-    all_resolvers = resolver_chain(custom_settings)
+def continuous_delivery_uri(custom_settings, resolved_version, offline_mode=False):
+    all_resolvers = resolver_chain(custom_settings, offline_mode)
 
     for resolver in all_resolvers:
         uri = resolver.continuous_delivery_uri(resolved_version)

@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, Mock
 from conductr_cli.test.cli_test_case import strip_margin, create_mock_logger
-from conductr_cli.exceptions import BundleResolutionError
+from conductr_cli.exceptions import BundleResolutionError, ContinuousDeliveryError
 from conductr_cli import resolver
 from conductr_cli.resolvers import bintray_resolver, uri_resolver, offline_resolver
 from pyhocon import ConfigFactory
@@ -150,7 +150,27 @@ class TestResolverResolveBundleVersion(TestCase):
             result = resolver.resolve_bundle_version(custom_settings, 'bundle')
             self.assertEqual(resolved_version, result)
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
+        first_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
+        second_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
+
+    def test_resolve_bundle_version_success_offline(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=None)
+
+        second_resolver_mock = Mock()
+        resolved_version = {'test': 'only'}
+        second_resolver_mock.resolve_bundle_version = MagicMock(return_value=resolved_version)
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
+
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
+            result = resolver.resolve_bundle_version(custom_settings, 'bundle', offline_mode=True)
+            self.assertEqual(resolved_version, result)
+
+        resolver_chain_mock.assert_called_with(custom_settings, True)
         first_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
         second_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
 
@@ -164,8 +184,75 @@ class TestResolverResolveBundleVersion(TestCase):
         with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
             self.assertRaises(BundleResolutionError, resolver.resolve_bundle_version, custom_settings, 'bundle')
 
-        resolver_chain_mock.assert_called_with(custom_settings)
+        resolver_chain_mock.assert_called_with(custom_settings, False)
         first_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
+
+
+class TestResolverContinuousDeliveryUri(TestCase):
+    resolved_version = {
+        'test': 'only'
+    }
+
+    def test_success(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+        first_resolver_mock.continuous_delivery_uri = MagicMock(return_value=None)
+
+        resolved_cd_url = 'http://test'
+
+        second_resolver_mock = Mock()
+        second_resolver_mock.continuous_delivery_uri = MagicMock(return_value=resolved_cd_url)
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
+
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
+            result = resolver.continuous_delivery_uri(custom_settings, self.resolved_version)
+            self.assertEqual(resolved_cd_url, result)
+
+        resolver_chain_mock.assert_called_with(custom_settings, False)
+        first_resolver_mock.continuous_delivery_uri.assert_called_with(self.resolved_version)
+        second_resolver_mock.continuous_delivery_uri.assert_called_with(self.resolved_version)
+
+    def test_success_offline(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+        first_resolver_mock.continuous_delivery_uri = MagicMock(return_value=None)
+
+        resolved_cd_url = 'http://test'
+
+        second_resolver_mock = Mock()
+        second_resolver_mock.continuous_delivery_uri = MagicMock(return_value=resolved_cd_url)
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
+
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
+            result = resolver.continuous_delivery_uri(custom_settings, self.resolved_version, offline_mode=True)
+            self.assertEqual(resolved_cd_url, result)
+
+        resolver_chain_mock.assert_called_with(custom_settings, True)
+        first_resolver_mock.continuous_delivery_uri.assert_called_with(self.resolved_version)
+        second_resolver_mock.continuous_delivery_uri.assert_called_with(self.resolved_version)
+
+    def test_not_found(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+        first_resolver_mock.continuous_delivery_uri = MagicMock(return_value=None)
+
+        second_resolver_mock = Mock()
+        second_resolver_mock.continuous_delivery_uri = MagicMock(return_value=None)
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
+
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
+            self.assertRaises(ContinuousDeliveryError, resolver.continuous_delivery_uri, custom_settings,
+                              self.resolved_version)
+
+        resolver_chain_mock.assert_called_with(custom_settings, False)
+        first_resolver_mock.continuous_delivery_uri.assert_called_with(self.resolved_version)
+        second_resolver_mock.continuous_delivery_uri.assert_called_with(self.resolved_version)
 
 
 class TestResolverChain(TestCase):
