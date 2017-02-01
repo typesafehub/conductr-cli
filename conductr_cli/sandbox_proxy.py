@@ -1,6 +1,6 @@
 from conductr_cli import conduct_main, docker, terminal
 from conductr_cli.constants import DEFAULT_SANDBOX_PROXY_DIR, DEFAULT_SANDBOX_PROXY_CONTAINER_NAME
-from conductr_cli.exceptions import DockerValidationError
+from conductr_cli.exceptions import DockerValidationError, NOT_FOUND_ERROR
 from conductr_cli.screen_utils import h1
 from subprocess import CalledProcessError
 import logging
@@ -55,7 +55,7 @@ def stop_proxy():
             log.info('HAProxy has been successfully stopped')
 
         return True
-    except (AttributeError, CalledProcessError):
+    except (AttributeError, CalledProcessError, NOT_FOUND_ERROR):
         # Fail silently as these errors will be raised if Docker is not installed or Docker environment is not
         # configured properly.
         return False

@@ -45,7 +45,7 @@ class TestStop(CliTestCase):
                                          ||------------------------------------------------|
                                          |"""), self.output(stdout))
         self.assertEqual(
-            as_error(strip_margin("""|Error: ConductR containers could not be stopped pid 58002 could not be stopped
+            as_error(strip_margin("""|Error: ConductR containers could not be stopped
                                      |Error: Please stop the Docker containers manually
                                      |""")), self.output(stderr))
         mock_docker_rm.assert_called_once_with(containers)

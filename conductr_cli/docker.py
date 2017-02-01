@@ -2,7 +2,7 @@ import os.path
 import re
 import logging
 from conductr_cli import terminal
-from conductr_cli.exceptions import DockerValidationError
+from conductr_cli.exceptions import DockerValidationError, NOT_FOUND_ERROR
 from subprocess import CalledProcessError
 
 DEFAULT_DOCKER_RAM_SIZE = 1.9
@@ -60,7 +60,7 @@ def validate_docker_vm(vm_type):
                 if not has_sufficient_cpu:
                     log.warning('Docker has an insufficient no. of CPUs {} - please increase to a minimum of {} CPUs'
                                 .format(existing_cpu, DEFAULT_DOCKER_CPU_COUNT))
-        except (AttributeError, CalledProcessError):
+        except (AttributeError, CalledProcessError, NOT_FOUND_ERROR):
             raise DockerValidationError([
                 'Docker is installed but not running.',
                 'Please start Docker with one of the Docker flavors based on your OS:',
