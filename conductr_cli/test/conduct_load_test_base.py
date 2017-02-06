@@ -569,7 +569,7 @@ class ConductLoadTestBase(CliTestCase):
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
-        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.configuration_resolve_cache_dir,
                                                              'no_such.conf', self.offline_mode)
 
         self.assertEqual(

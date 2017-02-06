@@ -8,8 +8,8 @@ from conductr_cli import \
 from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
-    DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR, \
-    DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT, DEFAULT_OFFLINE_MODE
+    DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR, DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
+    DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT, DEFAULT_OFFLINE_MODE
 from dcos import config, constants
 
 from pathlib import Path
@@ -107,11 +107,19 @@ def add_custom_plugins_dir(sub_parser):
 
 
 def add_bundle_resolve_cache_dir(sub_parser):
-    sub_parser.add_argument('--resolve-cache-dir',
+    sub_parser.add_argument('--bundle-resolve-cache-dir',
                             help='Directory where resolved bundles are cached, defaults to {}'.format(
                                 DEFAULT_BUNDLE_RESOLVE_CACHE_DIR),
                             default=DEFAULT_BUNDLE_RESOLVE_CACHE_DIR,
-                            dest='resolve_cache_dir')
+                            dest='bundle_resolve_cache_dir')
+
+
+def add_configuration_resolve_cache_dir(sub_parser):
+    sub_parser.add_argument('--configuration-resolve-cache-dir',
+                            help='Directory where resolved bundle configurations are cached, defaults to {}'.format(
+                                DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR),
+                            default=DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR,
+                            dest='configuration_resolve_cache_dir')
 
 
 def add_disable_instructions(sub_parser):
@@ -231,6 +239,7 @@ def build_parser(dcos_mode):
                                   'If not set the default is False.')
     add_default_arguments(load_parser, dcos_mode)
     add_bundle_resolve_cache_dir(load_parser)
+    add_configuration_resolve_cache_dir(load_parser)
     add_wait_timeout(load_parser)
     add_no_wait(load_parser)
     load_parser.set_defaults(func=conduct_load.load)

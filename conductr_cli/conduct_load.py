@@ -43,20 +43,20 @@ def load_v1(args):
 
     log.info('Retrieving bundle..')
     custom_settings = args.custom_settings
-    resolve_cache_dir = args.resolve_cache_dir
+    bundle_resolve_cache_dir = args.bundle_resolve_cache_dir
+    configuration_cache_dir = args.configuration_resolve_cache_dir
 
-    validate_cache_dir_permissions(resolve_cache_dir, log)
+    validate_cache_dir_permissions([bundle_resolve_cache_dir, configuration_cache_dir], log)
 
-    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
+    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, bundle_resolve_cache_dir,
                                                             args.bundle, args.offline_mode)
 
     configuration_file_name, configuration_file = (None, None)
     if args.configuration is not None:
         log.info('Retrieving configuration..')
-        configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
-                                                                                            resolve_cache_dir,
-                                                                                            args.configuration,
-                                                                                            args.offline_mode)
+        configuration_file_name, configuration_file = \
+            resolver.resolve_bundle_configuration(custom_settings, configuration_cache_dir,
+                                                  args.configuration, args.offline_mode)
 
     bundle_conf = ConfigFactory.parse_string(bundle_utils.conf(bundle_file))
     overlay_bundle_conf = None if configuration_file is None else \
@@ -94,7 +94,7 @@ def load_v1(args):
     if not args.no_wait:
         bundle_installation.wait_for_installation(response_json['bundleId'], args)
 
-    cleanup_old_bundles(resolve_cache_dir, bundle_file_name, excluded=bundle_file)
+    cleanup_old_bundles(bundle_resolve_cache_dir, bundle_file_name, excluded=bundle_file)
 
     log.info('Bundle loaded.')
     if not args.disable_instructions:
@@ -130,17 +130,20 @@ def get_payload(bundle_name, bundle_file, bundle_configuration):
     ]
 
 
-def validate_cache_dir_permissions(cache_dir, log):
-    if os.path.exists(cache_dir):
-        permissions = oct(stat.S_IMODE(os.lstat(cache_dir).st_mode))[-3:]
-        if permissions[-2:] != '00':
-            if cache_dir == DEFAULT_BUNDLE_RESOLVE_CACHE_DIR:
-                log.info('Cache directory {} has the permissions {}. Setting permissions to 700.'.format(cache_dir,
-                                                                                                         permissions))
-                os.chmod(cache_dir, 0o700)
-            else:
-                raise InsecureFilePermissions('The cache directory {} has the permissions: {}'.format(cache_dir,
-                                                                                                      permissions))
+def validate_cache_dir_permissions(cache_dirs, log):
+    def validate(cache_dir):
+        if os.path.exists(cache_dir):
+            permissions = oct(stat.S_IMODE(os.lstat(cache_dir).st_mode))[-3:]
+            if permissions[-2:] != '00':
+                if cache_dir == DEFAULT_BUNDLE_RESOLVE_CACHE_DIR:
+                    log.info('Cache directory {} has the permissions {}. Setting permissions to 700.'
+                             .format(cache_dir, permissions))
+                    os.chmod(cache_dir, 0o700)
+                else:
+                    raise InsecureFilePermissions('The cache directory {} has the permissions: {}'
+                                                  .format(cache_dir, permissions))
+        for cache_dir in cache_dirs:
+            validate(cache_dir)
 
 
 def load_v2(args):
@@ -148,11 +151,12 @@ def load_v2(args):
 
     log.info('Retrieving bundle..')
     custom_settings = args.custom_settings
-    resolve_cache_dir = args.resolve_cache_dir
+    bundle_resolve_cache_dir = args.bundle_resolve_cache_dir
+    configuration_cache_dir = args.configuration_resolve_cache_dir
 
-    validate_cache_dir_permissions(resolve_cache_dir, log)
+    validate_cache_dir_permissions([bundle_resolve_cache_dir, configuration_cache_dir], log)
 
-    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, resolve_cache_dir,
+    bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, bundle_resolve_cache_dir,
                                                             args.bundle, args.offline_mode)
     bundle_conf = bundle_utils.conf(bundle_file)
 
@@ -162,10 +166,9 @@ def load_v2(args):
         configuration_file_name, configuration_file, bundle_conf_overlay = (None, None, None)
         if args.configuration is not None:
             log.info('Retrieving configuration..')
-            configuration_file_name, configuration_file = resolver.resolve_bundle_configuration(custom_settings,
-                                                                                                resolve_cache_dir,
-                                                                                                args.configuration,
-                                                                                                args.offline_mode)
+            configuration_file_name, configuration_file = \
+                resolver.resolve_bundle_configuration(custom_settings, configuration_cache_dir,
+                                                      args.configuration, args.offline_mode)
             bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
         files = [('bundleConf', ('bundle.conf', string_io(bundle_conf)))]
@@ -203,7 +206,7 @@ def load_v2(args):
         if not args.no_wait:
             bundle_installation.wait_for_installation(response_json['bundleId'], args)
 
-        cleanup_old_bundles(resolve_cache_dir, bundle_file_name, excluded=bundle_file)
+        cleanup_old_bundles(bundle_resolve_cache_dir, bundle_file_name, excluded=bundle_file)
 
         log.info('Bundle loaded.')
         if not args.disable_instructions:

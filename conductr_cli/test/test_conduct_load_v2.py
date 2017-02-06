@@ -20,6 +20,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.compatibility_version = '2.0'
         self.custom_settings = Mock()
         self.bundle_resolve_cache_dir = 'bundle-resolve-cache-dir'
+        self.configuration_resolve_cache_dir = 'configuration-resolve-cache-dir'
 
         self.tmpdir, self.bundle_file = create_temp_bundle(
             strip_margin("""|nrOfCpus               = {}
@@ -55,7 +56,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
             'command': 'conduct',
             'cli_parameters': '',
             'custom_settings': self.custom_settings,
-            'resolve_cache_dir': self.bundle_resolve_cache_dir,
+            'bundle_resolve_cache_dir': self.bundle_resolve_cache_dir,
+            'configuration_resolve_cache_dir': self.configuration_resolve_cache_dir,
             'bundle': self.bundle_file,
             'configuration': None,
             'conductr_auth': self.conductr_auth,
@@ -176,7 +178,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
-        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.configuration_resolve_cache_dir,
                                                              config_file, self.offline_mode)
         self.assertEqual(
             conf_mock.call_args_list,
@@ -252,7 +254,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
-        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.configuration_resolve_cache_dir,
                                                              config_file, self.offline_mode)
 
         self.assertEqual(
