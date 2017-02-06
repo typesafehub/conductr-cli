@@ -3,7 +3,7 @@ from pyhocon.exceptions import ConfigMissingException
 from conductr_cli import bundle_utils, conduct_request, conduct_url, screen_utils, validation
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
-from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR
+from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR
 from conductr_cli.conduct_url import conductr_host
 from functools import partial
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
@@ -46,7 +46,7 @@ def load_v1(args):
     bundle_resolve_cache_dir = args.bundle_resolve_cache_dir
     configuration_cache_dir = args.configuration_resolve_cache_dir
 
-    validate_cache_dir_permissions([bundle_resolve_cache_dir, configuration_cache_dir], log)
+    validate_cache_dir_permissions(bundle_resolve_cache_dir, configuration_cache_dir, log)
 
     bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, bundle_resolve_cache_dir,
                                                             args.bundle, args.offline_mode)
@@ -130,20 +130,20 @@ def get_payload(bundle_name, bundle_file, bundle_configuration):
     ]
 
 
-def validate_cache_dir_permissions(cache_dirs, log):
-    def validate(cache_dir):
+def validate_cache_dir_permissions(bundle_cache_dir, configuration_cache_dir, log):
+    def validate(cache_dir, default_cache_dir):
         if os.path.exists(cache_dir):
             permissions = oct(stat.S_IMODE(os.lstat(cache_dir).st_mode))[-3:]
             if permissions[-2:] != '00':
-                if cache_dir == DEFAULT_BUNDLE_RESOLVE_CACHE_DIR:
+                if cache_dir == default_cache_dir:
                     log.info('Cache directory {} has the permissions {}. Setting permissions to 700.'
                              .format(cache_dir, permissions))
                     os.chmod(cache_dir, 0o700)
                 else:
                     raise InsecureFilePermissions('The cache directory {} has the permissions: {}'
                                                   .format(cache_dir, permissions))
-        for cache_dir in cache_dirs:
-            validate(cache_dir)
+    validate(bundle_cache_dir, DEFAULT_BUNDLE_RESOLVE_CACHE_DIR)
+    validate(configuration_cache_dir, DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR)
 
 
 def load_v2(args):
@@ -154,7 +154,7 @@ def load_v2(args):
     bundle_resolve_cache_dir = args.bundle_resolve_cache_dir
     configuration_cache_dir = args.configuration_resolve_cache_dir
 
-    validate_cache_dir_permissions([bundle_resolve_cache_dir, configuration_cache_dir], log)
+    validate_cache_dir_permissions(bundle_resolve_cache_dir, configuration_cache_dir, log)
 
     bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, bundle_resolve_cache_dir,
                                                             args.bundle, args.offline_mode)
