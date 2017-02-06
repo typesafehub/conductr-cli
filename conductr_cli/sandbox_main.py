@@ -5,7 +5,8 @@ import re
 import sys
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
-from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_OFFLINE_MODE
+from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, \
+    DEFAULT_SANDBOX_TMP_DIR, DEFAULT_OFFLINE_MODE
 from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_logs, sandbox_ps, logging_setup, docker, \
     version, validation
 from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
@@ -34,6 +35,12 @@ def build_parser():
                             help='Version of the ConductR docker image to use.\n'
                                  'To obtain the current version and additional information, please visit \n'
                                  'http://lightbend.com/product/conductr/developer')
+    run_parser.add_argument('--tmp-dir',
+                            default=DEFAULT_SANDBOX_TMP_DIR,
+                            dest='tmp_dir',
+                            help='Temp directory for sandbox ConductR processes.\n'
+                                 'The bundles and its files will be placed in this directory by the Sandbox.\n'
+                                 'The directory is cleared with every sandbox restart.')
     run_parser.add_argument('-r', '--conductr-role',
                             dest='conductr_roles',
                             action='append',
