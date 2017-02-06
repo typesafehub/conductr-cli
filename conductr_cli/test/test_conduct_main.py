@@ -72,7 +72,9 @@ class TestConduct(TestCase):
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
-        self.assertEqual(args.resolve_cache_dir, '{}/.conductr/cache'.format(os.path.expanduser('~')))
+        self.assertEqual(args.bundle_resolve_cache_dir, '{}/.conductr/cache/bundle'.format(os.path.expanduser('~')))
+        self.assertEqual(args.configuration_resolve_cache_dir,
+                         '{}/.conductr/cache/configuration'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.no_wait, False)
@@ -80,15 +82,37 @@ class TestConduct(TestCase):
         self.assertEqual(args.bundle, 'path-to-bundle')
         self.assertEqual(args.configuration, 'path-to-conf')
 
-    def test_parser_load_with_custom_resolve_cache_dir(self):
-        args = self.parser.parse_args('load --resolve-cache-dir /somewhere path-to-bundle path-to-conf'.split())
+    def test_parser_load_with_custom_bundle_resolve_cache_dir(self):
+        args = self.parser.parse_args('load --bundle-resolve-cache-dir /new-bundle-dir path-to-bundle path-to-conf'
+                                      .split())
 
         self.assertEqual(args.func.__name__, 'load')
         self.assertEqual(args.ip, None)
         self.assertEqual(args.port, 9005)
         self.assertEqual(args.api_version, '2')
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
-        self.assertEqual(args.resolve_cache_dir, '/somewhere')
+        self.assertEqual(args.bundle_resolve_cache_dir, '/new-bundle-dir')
+        self.assertEqual(args.configuration_resolve_cache_dir,
+                         '{}/.conductr/cache/configuration'.format(os.path.expanduser('~')))
+        self.assertEqual(args.verbose, False)
+        self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 60)
+        self.assertEqual(args.bundle, 'path-to-bundle')
+        self.assertEqual(args.configuration, 'path-to-conf')
+        self.assertFalse(args.quiet)
+
+    def test_parser_load_with_custom_configuration_resolve_cache_dir(self):
+        args = self.parser.parse_args('load --configuration-resolve-cache-dir /new-conf-dir path-to-bundle path-to-conf'
+                                      .split())
+
+        self.assertEqual(args.func.__name__, 'load')
+        self.assertEqual(args.ip, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.bundle_resolve_cache_dir, '{}/.conductr/cache/bundle'.format(os.path.expanduser('~')))
+        self.assertEqual(args.configuration_resolve_cache_dir, '/new-conf-dir')
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.no_wait, False)
