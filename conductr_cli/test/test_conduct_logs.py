@@ -22,7 +22,6 @@ class TestConductLogsCommand(CliTestCase):
         'api_version': '1',
         'bundle': bundle_id,
         'lines': 1,
-        'date': True,
         'utc': True,
         'conductr_auth': conductr_auth,
         'server_verification_file': server_verification_file
@@ -50,6 +49,7 @@ class TestConductLogsCommand(CliTestCase):
             self.output(stdout))
 
     def test_multiple_events(self):
+        self.maxDiff = None
         http_method = self.respond_with(text="""[
             {
                 "timestamp":"2015-08-24T01:16:22.327Z",
@@ -75,9 +75,9 @@ class TestConductLogsCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|TIME                  HOST        LOG
-                            |2015-08-24T01:16:22Z  10.0.1.232  [WARN] [04/21/2015 12:54:30.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-22] Association with remote system has failed.
-                            |2015-08-24T01:16:25Z  10.0.1.232  [WARN] [04/21/2015 12:54:36.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-26] Association with remote system has failed.
+            strip_margin("""|TIME                      HOST        LOG
+                            |Mon 2015-08-24T01:16:22Z  10.0.1.232  [WARN] [04/21/2015 12:54:30.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-22] Association with remote system has failed.
+                            |Mon 2015-08-24T01:16:25Z  10.0.1.232  [WARN] [04/21/2015 12:54:36.079] [doc-renderer-cluster-1-akka.remote.default-remote-dispatcher-26] Association with remote system has failed.
                             |"""),
             self.output(stdout))
 

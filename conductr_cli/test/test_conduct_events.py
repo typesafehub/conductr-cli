@@ -22,7 +22,6 @@ class TestConductEventsCommand(CliTestCase):
         'api_version': '1',
         'bundle': bundle_id,
         'lines': 1,
-        'date': True,
         'utc': True,
         'conductr_auth': conductr_auth,
         'server_verification_file': server_verification_file
@@ -50,6 +49,7 @@ class TestConductEventsCommand(CliTestCase):
             self.output(stdout))
 
     def test_multiple_events(self):
+        self.maxDiff = None
         http_method = self.respond_with(text="""[
             {
                 "timestamp":"2015-08-24T01:16:22.327Z",
@@ -75,9 +75,9 @@ class TestConductEventsCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|TIME                  EVENT                                       DESC
-                            |2015-08-24T01:16:22Z  conductr.loadScheduler.loadBundleRequested  Load bundle requested: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer
-                            |2015-08-24T01:16:25Z  conductr.loadExecutor.bundleWritten         Bundle written: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer
+            strip_margin("""|TIME                      EVENT                                       DESC
+                            |Mon 2015-08-24T01:16:22Z  conductr.loadScheduler.loadBundleRequested  Load bundle requested: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer
+                            |Mon 2015-08-24T01:16:25Z  conductr.loadExecutor.bundleWritten         Bundle written: requestId=cba938cd-860e-41a4-9cbe-2c677feaca20, bundleName=visualizer
                             |"""),
             self.output(stdout))
 

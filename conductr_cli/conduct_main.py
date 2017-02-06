@@ -156,6 +156,12 @@ def add_dcos_mode_args(sub_parser, dcos_mode):
         add_dcos_settings(sub_parser)
 
 
+def add_date_args(sub_parser):
+    sub_parser.add_argument('--utc',
+                            action='store_true',
+                            help='Convert the date/time of the events to UTC')
+
+
 def add_default_arguments(sub_parser, dcos_mode):
     add_dcos_mode_args(sub_parser, dcos_mode)
     add_verbose(sub_parser)
@@ -274,12 +280,7 @@ def build_parser(dcos_mode):
                                type=int,
                                default=10,
                                help='The number of events to fetch, defaults to 10')
-    events_parser.add_argument('--date',
-                               action='store_true',
-                               help='Display the date of the events')
-    events_parser.add_argument('--utc',
-                               action='store_true',
-                               help='Convert the date/time of the events to UTC')
+    add_date_args(events_parser)
     events_parser.add_argument('bundle',
                                help='The ID or name of the bundle')
     events_parser.set_defaults(func=conduct_events.events)
@@ -292,12 +293,7 @@ def build_parser(dcos_mode):
                              type=int,
                              default=10,
                              help='The number of logs to fetch, defaults to 10')
-    logs_parser.add_argument('--date',
-                             action='store_true',
-                             help='Display the date of the log')
-    logs_parser.add_argument('--utc',
-                             action='store_true',
-                             help='Convert the date/time of the log to UTC')
+    add_date_args(logs_parser)
     logs_parser.add_argument('bundle',
                              help='The ID or name of the bundle')
     logs_parser.set_defaults(func=conduct_logs.logs)

@@ -420,15 +420,9 @@ def handle_docker_validation_error(func):
 
 def format_timestamp(timestamp, args):
     date = arrow.get(timestamp)
-
-    if args.date and args.utc:
-        return date.to('UTC').strftime('%Y-%m-%dT%H:%M:%SZ')
-    elif args.date:
-        return date.to('local').strftime('%c')
-    elif args.utc:
-        return date.to('UTC').strftime('%H:%M:%SZ')
-    else:
-        return date.to('local').strftime('%X')
+    date_display = date.to('UTC') if args.utc else date.to('local')
+    date_format = '%a %Y-%m-%dT%H:%M:%SZ' if args.utc else '%a %Y-%m-%dT%H:%M:%S%z'
+    return date_display.strftime(date_format)
 
 
 def get_logger_for_func(func):
