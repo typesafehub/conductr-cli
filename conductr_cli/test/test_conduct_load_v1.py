@@ -107,6 +107,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        cleanup_old_cache_location_mock = MagicMock()
         wait_for_installation_mock = MagicMock()
 
         args = self.default_args.copy()
@@ -118,6 +119,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
@@ -176,7 +178,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |""").format(self.memory, self.disk_space, ', '.join(self.roles)))
 
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        cleanup_old_cache_location_mock = MagicMock()
+        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
             logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
@@ -204,7 +208,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |""").format(self.nr_of_cpus, self.disk_space, ', '.join(self.roles)))
 
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        cleanup_old_cache_location_mock = MagicMock()
+        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
             logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
@@ -232,7 +238,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |""").format(self.nr_of_cpus, self.memory, ', '.join(self.roles)))
 
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        cleanup_old_cache_location_mock = MagicMock()
+        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
             logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
@@ -260,7 +268,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |""").format(self.nr_of_cpus, self.memory, self.disk_space))
 
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        cleanup_old_cache_location_mock = MagicMock()
+        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
             logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
@@ -289,7 +299,9 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |""").format(self.nr_of_cpus, self.memory, self.disk_space, '-'.join(self.roles)))
 
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, bundle_file))
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        cleanup_old_cache_location_mock = MagicMock()
+        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': bundle_file})
             logging_setup.configure_logging(MagicMock(**args), err_output=stderr)

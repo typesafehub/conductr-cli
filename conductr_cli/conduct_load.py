@@ -3,7 +3,8 @@ from pyhocon.exceptions import ConfigMissingException
 from conductr_cli import bundle_utils, conduct_request, conduct_url, screen_utils, validation
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
-from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR
+from conductr_cli.constants import DEFAULT_RESOLVE_CACHE_DIR, DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
+    DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR
 from conductr_cli.conduct_url import conductr_host
 from functools import partial
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
@@ -32,6 +33,7 @@ KEEP_BUNDLE_VERSIONS = 1
 @validation.handle_insecure_file_permissions
 @validation.handle_bintray_credentials_error
 def load(args):
+    cleanup_old_cache_location()
     if args.api_version == '1':
         return load_v1(args)
     else:
@@ -248,6 +250,17 @@ def conduct_load_progress_monitor(log):
 
 def string_io(input_text):
     return io.StringIO(input_text)
+
+
+def cleanup_old_cache_location():
+    """
+    Removes files under `~/.cache` directory.
+    Nowadays, the files are cached under `/.cache/bundle` and `/.cache/configuration`.
+    """
+    with os.scandir(DEFAULT_RESOLVE_CACHE_DIR) as it:
+        for entry in it:
+            if entry.is_file():
+                os.remove(entry)
 
 
 def cleanup_old_bundles(cache_dir, bundle_file_name, excluded):
