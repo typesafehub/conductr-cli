@@ -35,19 +35,14 @@ def run(args):
     run_result = sandbox.run(args, features)
 
     is_conductr_started, wait_timeout = wait_for_start(args, run_result)
+
+    feature_results = []
+    print_proxy_output = False
     if is_conductr_started:
         if not is_conductr_v1:
-            feature_ports = []
-            for feature in features:
-                feature_ports.extend(feature.ports)
-
-            proxy_ports = sorted(args.ports + feature_ports)
             print_proxy_output = sandbox_proxy.start_proxy(proxy_bind_addr=run_result.core_addrs[0],
-                                                           proxy_ports=proxy_ports)
-        else:
-            print_proxy_output = False
+                                                           proxy_ports=sorted(args.ports))
 
-        feature_results = []
         for feature in features:
             result = feature.start()
             feature_results += result

@@ -1,4 +1,4 @@
-from conductr_cli import conduct_main, docker, terminal
+from conductr_cli import conduct_main, docker, terminal, sandbox_features
 from conductr_cli.constants import DEFAULT_SANDBOX_PROXY_DIR, DEFAULT_SANDBOX_PROXY_CONTAINER_NAME
 from conductr_cli.exceptions import DockerValidationError, NOT_FOUND_ERROR
 from conductr_cli.screen_utils import h1
@@ -94,6 +94,7 @@ def start_docker_instance(proxy_bind_addr, proxy_ports):
 
     all_proxy_ports = []
     all_proxy_ports.extend(DEFAULT_PROXY_PORTS)
+    all_proxy_ports.extend(sandbox_features.all_feature_ports())
     all_proxy_ports.extend(proxy_ports)
     all_proxy_ports = sorted(all_proxy_ports)
 

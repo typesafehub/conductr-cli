@@ -306,3 +306,11 @@ def parse_offline_mode_arg(offline_mode):
         return ['--offline']
     else:
         return []
+
+
+def all_feature_ports():
+    return sorted([
+        port
+        for f in feature_classes
+        for port in f.ports
+    ])
