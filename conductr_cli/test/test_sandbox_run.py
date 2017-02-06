@@ -93,7 +93,7 @@ class TestSandboxRunCommand(CliTestCase):
         args = self.default_args.copy()
         args.update({
             'image_version': conductr_version,
-            'ports': [3553]
+            'ports': [5001, 3553]
         })
         input_args = MagicMock(**args)
         with \
@@ -109,7 +109,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0,
                                                        DEFAULT_WAIT_RETRIES,
                                                        DEFAULT_WAIT_RETRY_INTERVAL)
-        mock_start_proxy.assert_called_once_with(proxy_bind_addr='192.168.1.1', proxy_ports=[3553, 10001])
+        mock_start_proxy.assert_called_once_with(proxy_bind_addr='192.168.1.1', proxy_ports=[3553, 5001])
 
         mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, True, 60)
 
