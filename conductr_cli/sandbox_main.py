@@ -62,6 +62,18 @@ def build_parser():
                             help='Set additional environment variables for each ConductR container\n'
                                  'Defaults to []',
                             metavar='')
+    run_parser.add_argument('--env-core',
+                            dest='envs_core',
+                            action='append',
+                            default=[],
+                            help='Set additional environment variables for each ConductR core process. Defaults to [].',
+                            metavar='')
+    run_parser.add_argument('--env-agent',
+                            dest='envs_agent',
+                            action='append',
+                            default=[],
+                            help='Set additional environment variables for each ConductR agent process. Defaults to [].',
+                            metavar='')
     run_parser.add_argument('-i', '--image',
                             default=CONDUCTR_DEV_IMAGE,
                             help='Docker image to use\n'

@@ -24,7 +24,10 @@ class TestRun(CliTestCase):
         'addr_range': addr_range,
         'offline_mode': False,
         'no_wait': False,
-        'tmp_dir': tmp_dir
+        'tmp_dir': tmp_dir,
+        'envs': [],
+        'envs_core': [],
+        'envs_agent': []
     }
 
     def test_default_args(self):
@@ -70,12 +73,16 @@ class TestRun(CliTestCase):
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
                                                      self.tmp_dir,
+                                                     [],
+                                                     [],
                                                      bind_addrs,
                                                      [],
                                                      features,
                                                      'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
+                                                      [],
+                                                      [],
                                                       bind_addrs,
                                                       bind_addrs,
                                                       [],
@@ -131,13 +138,84 @@ class TestRun(CliTestCase):
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
                                                      self.tmp_dir,
+                                                     [],
+                                                     [],
                                                      [bind_addr1],
                                                      [],
                                                      features,
                                                      'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
+                                                      [],
+                                                      [],
                                                       [bind_addr1, bind_addr2, bind_addr3],
+                                                      [bind_addr1],
+                                                      [],
+                                                      features,
+                                                      'info')
+
+    def test_custom_env(self):
+        mock_validate_jvm_support = MagicMock()
+        mock_validate_64bit_support = MagicMock()
+
+        bind_addr1 = MagicMock()
+        bind_addr2 = MagicMock()
+        bind_addr3 = MagicMock()
+        bind_addrs = [bind_addr1, bind_addr2, bind_addr3]
+        mock_find_bind_addrs = MagicMock(return_value=bind_addrs)
+
+        mock_core_extracted_dir = MagicMock()
+        mock_agent_extracted_dir = MagicMock()
+        mock_obtain_sandbox_image = MagicMock(return_value=(mock_core_extracted_dir, mock_agent_extracted_dir))
+
+        mock_sandbox_stop = MagicMock()
+
+        mock_core_pids = MagicMock()
+        mock_start_core_instances = MagicMock(return_value=mock_core_pids)
+
+        mock_agent_pids = MagicMock()
+        mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
+
+        envs = ['COMMON=1']
+        envs_core = ['CORE=A', 'CORE_B=B']
+        envs_agent = ['AGENT=X', 'AGENT_B=Y']
+        args = self.default_args.copy()
+        args.update({
+            'envs': envs,
+            'envs_core': envs_core,
+            'envs_agent': envs_agent,
+        })
+        input_args = MagicMock(**args)
+        features = []
+
+        with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
+                patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
+                patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
+                patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
+            result = sandbox_run_jvm.run(input_args, features)
+            expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
+                                                               mock_agent_pids, [bind_addr1])
+            self.assertEqual(expected_result, result)
+
+        mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_64bit_support.assert_called_once_with()
+        mock_find_bind_addrs.assert_called_with(1, self.addr_range)
+        mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
+                                                     self.tmp_dir,
+                                                     envs,
+                                                     envs_core,
+                                                     [bind_addr1],
+                                                     [],
+                                                     features,
+                                                     'info')
+        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
+                                                      self.tmp_dir,
+                                                      envs,
+                                                      envs_agent,
+                                                      [bind_addr1],
                                                       [bind_addr1],
                                                       [],
                                                       features,
@@ -192,12 +270,16 @@ class TestRun(CliTestCase):
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
                                                      self.tmp_dir,
+                                                     [],
+                                                     [],
                                                      bind_addrs,
                                                      [['role1', 'role2'], ['role3']],
                                                      features,
                                                      'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
+                                                      [],
+                                                      [],
                                                       bind_addrs,
                                                       bind_addrs,
                                                       [['role1', 'role2'], ['role3']],
@@ -493,11 +575,17 @@ class TestStartCore(CliTestCase):
         ipaddress.ip_address('192.168.1.3')
     ]
 
+    envs = ['FOO=BAR']
+    core_envs = ['CORE=XYZ']
+
     log_level = 'info'
 
     def test_start_instances(self):
         conductr_roles = []
         features = []
+
+        merged_env = {'test': 'only'}
+        mock_merge_with_os_envs = MagicMock(return_value=merged_env)
 
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
@@ -505,14 +593,19 @@ class TestStartCore(CliTestCase):
             self.mock_pid(1003)
         ])
 
-        with patch('subprocess.Popen', mock_popen):
+        with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
+                patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_core_instances(self.extract_dir,
                                                           self.tmp_dir,
+                                                          self.envs,
+                                                          self.core_envs,
                                                           self.addrs,
                                                           conductr_roles,
                                                           features,
                                                           self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
+
+        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.core_envs)
 
         self.assertEqual([
             call([
@@ -521,7 +614,7 @@ class TestStartCore(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[0]),
                 '-Dconductr.resource-provider.match-offer-roles=off'
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
@@ -529,7 +622,7 @@ class TestStartCore(CliTestCase):
                 '-Dconductr.ip={}'.format(self.addrs[1]),
                 '-Dconductr.resource-provider.match-offer-roles=off',
                 '--seed', '{}:9004'.format(self.addrs[0])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
@@ -537,12 +630,15 @@ class TestStartCore(CliTestCase):
                 '-Dconductr.ip={}'.format(self.addrs[2]),
                 '-Dconductr.resource-provider.match-offer-roles=off',
                 '--seed', '{}:9004'.format(self.addrs[0])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 
     def test_roles_and_features(self):
         conductr_roles = [['role1', 'role2'], ['role3']]
         features = [LoggingFeature("v1", "2.0.0", offline_mode=False)]
+
+        merged_env = {'test': 'only'}
+        mock_merge_with_os_envs = MagicMock(return_value=merged_env)
 
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
@@ -550,14 +646,19 @@ class TestStartCore(CliTestCase):
             self.mock_pid(1003)
         ])
 
-        with patch('subprocess.Popen', mock_popen):
+        with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
+                patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_core_instances(self.extract_dir,
                                                           self.tmp_dir,
+                                                          self.envs,
+                                                          self.core_envs,
                                                           self.addrs,
                                                           conductr_roles,
                                                           features,
                                                           self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
+
+        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.core_envs)
 
         self.assertEqual([
             call([
@@ -568,7 +669,7 @@ class TestStartCore(CliTestCase):
                 '-Dconductr.resource-provider.match-offer-roles=on',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
@@ -578,7 +679,7 @@ class TestStartCore(CliTestCase):
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on',
                 '--seed', '{}:9004'.format(self.addrs[0])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
@@ -588,7 +689,7 @@ class TestStartCore(CliTestCase):
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on',
                 '--seed', '{}:9004'.format(self.addrs[0])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 
     def mock_pid(self, pid_value):
@@ -608,24 +709,35 @@ class TestStartAgent(CliTestCase):
         ipaddress.ip_address('192.168.1.3')
     ]
 
+    envs = ['FOO=BAR']
+    agent_envs = ['AGENT=XYZ']
+
     log_level = 'info'
 
     def test_start_instances(self):
+        merged_env = {'test': 'only'}
+        mock_merge_with_os_envs = MagicMock(return_value=merged_env)
+
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
             self.mock_pid(1002),
             self.mock_pid(1003)
         ])
 
-        with patch('subprocess.Popen', mock_popen):
+        with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
+                patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
                                                            self.tmp_dir,
+                                                           self.envs,
+                                                           self.agent_envs,
                                                            self.addrs,
                                                            self.addrs,
                                                            conductr_roles=[],
                                                            features=[],
                                                            log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
+
+        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.agent_envs)
 
         self.assertEqual([
             call([
@@ -634,24 +746,27 @@ class TestStartAgent(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[0]),
                 '--core-node', '{}:9004'.format(self.addrs[0])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
                 '--core-node', '{}:9004'.format(self.addrs[1])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[2]),
                 '--core-node', '{}:9004'.format(self.addrs[2])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 
     def test_roles_and_features(self):
+        merged_env = {'test': 'only'}
+        mock_merge_with_os_envs = MagicMock(return_value=merged_env)
+
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
             self.mock_pid(1002),
@@ -661,15 +776,20 @@ class TestStartAgent(CliTestCase):
         conductr_roles = [['role1', 'role2'], ['role3']]
         features = [LoggingFeature('v2', '2.0.0', offline_mode=False)]
 
-        with patch('subprocess.Popen', mock_popen):
+        with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
+                patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
                                                            self.tmp_dir,
+                                                           self.envs,
+                                                           self.agent_envs,
                                                            self.addrs,
                                                            self.addrs,
                                                            conductr_roles=conductr_roles,
                                                            features=features,
                                                            log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
+
+        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.agent_envs)
 
         self.assertEqual([
             call([
@@ -684,7 +804,7 @@ class TestStartAgent(CliTestCase):
                 '-Dconductr.agent.roles.3=kibana',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
@@ -694,7 +814,7 @@ class TestStartAgent(CliTestCase):
                 '-Dconductr.agent.roles.0=role3',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
@@ -705,10 +825,13 @@ class TestStartAgent(CliTestCase):
                 '-Dconductr.agent.roles.1=role2',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 
     def test_start_instances_with_less_number_of_core_nodes(self):
+        merged_env = {'test': 'only'}
+        mock_merge_with_os_envs = MagicMock(return_value=merged_env)
+
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
             self.mock_pid(1002),
@@ -718,15 +841,20 @@ class TestStartAgent(CliTestCase):
         conductr_roles = []
         features = []
 
-        with patch('subprocess.Popen', mock_popen):
+        with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
+                patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
                                                            self.tmp_dir,
+                                                           self.envs,
+                                                           self.agent_envs,
                                                            self.addrs,
                                                            self.addrs[0:2],
                                                            conductr_roles=conductr_roles,
                                                            features=features,
                                                            log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
+
+        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.agent_envs)
 
         self.assertEqual([
             call([
@@ -735,21 +863,21 @@ class TestStartAgent(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[0]),
                 '--core-node', '{}:9004'.format(self.addrs[0])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
                 '--core-node', '{}:9004'.format(self.addrs[1])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[2]),
                 '--core-node', '{}:9004'.format(self.addrs[0])
-            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
+            ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 
     def mock_pid(self, pid_value):
@@ -1332,3 +1460,21 @@ class TestCleanupTmpDir(CliTestCase):
         mock_exists.assert_called_once_with(self.tmp_dir)
         mock_rmtree.assert_not_called()
         mock_makedirs.assert_called_once_with(self.tmp_dir, exist_ok=True)
+
+
+class TestMergeWithOsEnv(CliTestCase):
+    def test_return_merged_env(self):
+        os_env = {'os': 'env'}
+        mock_copy = MagicMock(return_value=os_env)
+
+        with patch('os.environ.copy', mock_copy):
+            result = sandbox_run_jvm.merge_with_os_envs(['a=1', 'b=2'], ['c=3'])
+            self.assertEqual({
+                'a': '1',
+                'b': '2',
+                'c': '3',
+                'os': 'env',
+            }, result)
+
+    def test_return_none_if_empty_inputs(self):
+        self.assertIsNone(sandbox_run_jvm.merge_with_os_envs([], []))

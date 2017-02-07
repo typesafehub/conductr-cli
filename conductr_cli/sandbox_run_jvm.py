@@ -76,6 +76,8 @@ def run(args, features):
     core_addrs = bind_addrs[0:nr_of_core_instances]
     core_pids = start_core_instances(core_extracted_dir,
                                      args.tmp_dir,
+                                     args.envs,
+                                     args.envs_core,
                                      core_addrs,
                                      args.conductr_roles,
                                      features,
@@ -84,6 +86,8 @@ def run(args, features):
     agent_addrs = bind_addrs[0:nr_of_agent_instances]
     agent_pids = start_agent_instances(agent_extracted_dir,
                                        args.tmp_dir,
+                                       args.envs,
+                                       args.envs_agent,
                                        bind_addrs[0:nr_of_agent_instances],
                                        core_addrs,
                                        args.conductr_roles,
@@ -423,7 +427,7 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
         raise SandboxImageNotFoundError(artefact_type, image_version)
 
 
-def start_core_instances(core_extracted_dir, tmp_dir, bind_addrs, conductr_roles, features, log_level):
+def start_core_instances(core_extracted_dir, tmp_dir, envs, envs_core, bind_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR core process.
 
@@ -433,6 +437,9 @@ def start_core_instances(core_extracted_dir, tmp_dir, bind_addrs, conductr_roles
     - The instances will be allocated these addresses: 192.168.128.1, 192.168.128.2, 192.168.128.3
 
     :param core_extracted_dir: the directory containing the files expanded from core's binary .tgz
+    :param tmp_dir: temp directory for ConductR core process.
+    :param envs: environment variables declared for both with ConductR core and agent process.
+    :param envs_core: environment variables declared for ConductR core process.
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :param conductr_roles: list of roles specified by the end user.
@@ -443,6 +450,7 @@ def start_core_instances(core_extracted_dir, tmp_dir, bind_addrs, conductr_roles
     :return: the pids of the core instances.
     """
     log = logging.getLogger(__name__)
+    process_envs = merge_with_os_envs(envs, envs_core)
     pids = []
 
     feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
@@ -476,12 +484,14 @@ def start_core_instances(core_extracted_dir, tmp_dir, bind_addrs, conductr_roles
                                start_new_session=True,
                                stdout=subprocess.DEVNULL,
                                stdin=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL).pid
+                               stderr=subprocess.DEVNULL,
+                               env=process_envs).pid
         pids.append(pid)
     return pids
 
 
-def start_agent_instances(agent_extracted_dir, tmp_dir, bind_addrs, core_addrs, conductr_roles, features, log_level):
+def start_agent_instances(agent_extracted_dir, tmp_dir, envs, envs_agent,
+                          bind_addrs, core_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR agent process.
 
@@ -491,6 +501,9 @@ def start_agent_instances(agent_extracted_dir, tmp_dir, bind_addrs, core_addrs, 
     - The instances will be allocated these addresses: 192.168.128.1, 192.168.128.2, 192.168.128.3
 
     :param agent_extracted_dir: the directory containing the files expanded from agent's binary .tgz
+    :param tmp_dir: temp dir for ConductR agent directory.
+    :param envs: environment variables declared for both with ConductR core and agent process.
+    :param envs_agent: environment variables declared for ConductR agent process.
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :param conductr_roles: list of roles specified by the end user.
@@ -503,6 +516,7 @@ def start_agent_instances(agent_extracted_dir, tmp_dir, bind_addrs, core_addrs, 
     :return: the pids of the agent instances.
     """
     log = logging.getLogger(__name__)
+    process_envs = merge_with_os_envs(envs, envs_agent)
     pids = []
     feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
     agent_args = flatten([feature.conductr_args() for feature in features])
@@ -527,7 +541,8 @@ def start_agent_instances(agent_extracted_dir, tmp_dir, bind_addrs, core_addrs, 
                                start_new_session=True,
                                stdout=subprocess.DEVNULL,
                                stdin=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL).pid
+                               stderr=subprocess.DEVNULL,
+                               env=process_envs).pid
         pids.append(pid)
     return pids
 
@@ -539,3 +554,19 @@ def artefact_os_name():
         return 'Linux'
     else:
         raise SandboxUnsupportedOsError()
+
+
+def merge_with_os_envs(common_envs, process_specific_envs):
+    envs_to_override = common_envs + process_specific_envs
+    if envs_to_override:
+        result = os.environ.copy()
+        for env in envs_to_override:
+            if "=" in env:
+                env_split = env.split("=")
+                key = env_split[0]
+                value = env_split[-1]
+                result.update({key: value})
+
+        return result
+    else:
+        return None
