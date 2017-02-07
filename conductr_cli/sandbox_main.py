@@ -86,8 +86,8 @@ def build_parser():
                             action='store_true',
                             help='Enables offline mode to resolve bundles only locally '
                                  'either by file uri or from the cache directory. '
-                                 'Defaults to environment variable CONDUCTR_OFFLINE_MODE. '
-                                 'If not set the default is False.')
+                                 'True if CONDUCTR_OFFLINE_MODE environment variable is set. '
+                                 'False if --offline flag not specified and environment variable not set.')
     run_parser.add_argument('-p', '--port',
                             dest='ports',
                             action='append',
