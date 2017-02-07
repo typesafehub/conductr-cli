@@ -235,8 +235,8 @@ def build_parser(dcos_mode):
                              action='store_true',
                              help='Enables offline mode to resolve bundles only locally '
                                   'either by file uri or from the cache directory. '
-                                  'Defaults to environment variable CONDUCTR_OFFLINE_MODE. '
-                                  'If not set the default is False.')
+                                  'True if CONDUCTR_OFFLINE_MODE environment variable is set. '
+                                  'False if --offline flag not specified and environment variable not set.')
     add_default_arguments(load_parser, dcos_mode)
     add_bundle_resolve_cache_dir(load_parser)
     add_configuration_resolve_cache_dir(load_parser)
