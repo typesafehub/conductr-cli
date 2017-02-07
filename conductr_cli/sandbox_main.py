@@ -13,13 +13,14 @@ from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
 
 def build_parser():
     # Main argument parser
-    parser = argparse.ArgumentParser('sandbox')
+    parser = argparse.ArgumentParser('sandbox', formatter_class=argparse.RawTextHelpFormatter)
     subparsers = parser.add_subparsers(title='commands',
-                                       help='Use one of the following sub commands')
+                                       help='Use one of the following sub commands:')
 
     # Sub-parser for `version` sub-command
     version_parser = subparsers.add_parser('version',
-                                           help='print version')
+                                           help='Print version',
+                                           formatter_class=argparse.RawTextHelpFormatter)
     version_parser.set_defaults(func=version.version)
 
     # Sub-parser for `run` sub-command
@@ -31,39 +32,40 @@ def build_parser():
     add_image_dir(run_parser)
     run_parser.add_argument('image_version',
                             nargs='?',
-                            help='Version of the ConductR docker image to use.\n'
-                                 'To obtain the current version and additional information, please visit \n'
+                            help='Version of the ConductR docker image to use\n'
+                                 'To obtain the current version and additional information, please visit\n'
                                  'http://lightbend.com/product/conductr/developer')
     run_parser.add_argument('-r', '--conductr-role',
                             dest='conductr_roles',
                             action='append',
                             nargs='*',
                             default=[],
-                            help='Set additional roles allowed per ConductR node.\n'
-                                 'Multiple roles per node are separated by a whitespace.\n'
+                            help='Set additional roles allowed per ConductR node\n'
+                                 'Multiple roles per node are separated by a whitespace\n'
                                  'Example: sandbox run IMAGE_VERSION -r role1 role2 -r role3\n'
                                  'In this example the roles role1 and role2 are assigned to the first node and\n'
-                                 'role3 is assigned to the second node.\n'
-                                 'Afterwards the specified roles are subsequently applied to the remaining nodes.\n'
-                                 'Defaults to [].',
+                                 'role3 is assigned to the second node\n'
+                                 'Afterwards the specified roles are subsequently applied to the remaining nodes\n'
+                                 'Defaults to []',
                             metavar='')
     run_parser.add_argument('-e', '--env',
                             dest='envs',
                             action='append',
                             default=[],
-                            help='Set additional environment variables for each ConductR container. Defaults to [].',
+                            help='Set additional environment variables for each ConductR container\n'
+                                 'Defaults to []',
                             metavar='')
     run_parser.add_argument('-i', '--image',
                             default=CONDUCTR_DEV_IMAGE,
-                            help='Docker image to use.\n'
-                                 'Defaults to `{}`.'.format(CONDUCTR_DEV_IMAGE),
+                            help='Docker image to use\n'
+                                 'Defaults to {}'.format(CONDUCTR_DEV_IMAGE),
                             metavar='')
     log_levels = ['debug', 'info', 'warning']
     run_parser.add_argument('-l', '--log-level',
                             default='info',
-                            help='Log level of ConductR.\n'
-                                 'Defaults to `info`.\n'
-                                 'ConductR logs can be inspected via the `sandbox logs` command.\n'
+                            help='Log level of ConductR\n'
+                                 'Defaults to info\n'
+                                 'ConductR logs can be inspected via the `sandbox logs` command\n'
                                  'Available log levels: ' + ', '.join(log_levels),
                             choices=log_levels,
                             metavar='')
@@ -71,80 +73,86 @@ def build_parser():
                             type=nr_of_instances,
                             default='1',
                             dest='nr_of_instances',
-                            help='Number of ConductR core and agent instances. Defaults to 1.\n'
+                            help='Number of ConductR core and agent instances\n'
+                                 'Defaults to 1\n'
                                  'Also accepts `x:y` format: `x` is a number of core instances, '
                                  'and y is a number of agent instances\n'
-                                 'If a number instead of the `x:y` format is specified, then the value correlates '
-                                 'to the number of agent instances.\n'
-                                 'The core instance will then be 1.\n'
+                                 'If a number instead of the `x:y` format is specified, then the value correlates\n'
+                                 'to the number of agent instances\n'
+                                 'The core instance will then be 1\n'
                                  'Example: -n 3 converts to -n 1:3\n'
-                                 'For ConductR 1.x, this corresponds to the number of nodes.',
+                                 'For ConductR 1.x, this corresponds to the number of nodes',
                             metavar='')
     run_parser.add_argument('--offline',
                             default=DEFAULT_OFFLINE_MODE,
                             dest='offline_mode',
                             action='store_true',
-                            help='Enables offline mode to resolve bundles only locally '
-                                 'either by file uri or from the cache directory. '
-                                 'True if CONDUCTR_OFFLINE_MODE environment variable is set. '
-                                 'False if --offline flag not specified and environment variable not set.')
+                            help='Enables offline mode to resolve bundles only locally\n'
+                                 'either by file uri or from the cache directory\n'
+                                 'True if CONDUCTR_OFFLINE_MODE environment variable is set\n'
+                                 'False if --offline flag not specified and environment variable not set')
     run_parser.add_argument('-p', '--port',
                             dest='ports',
                             action='append',
                             type=int,
                             default=[],
-                            help='Set additional ports to be made public by each of the ConductR containers.',
+                            help='Set additional ports to be made public by each of the ConductR containers\n'
+                                 'Defaults to []',
                             metavar='')
     run_parser.add_argument('--bundle-http-port',
                             dest='bundle_http_port',
                             type=int,
                             default=sandbox_common.bundle_http_port(),
-                            help='Set default frontend port for proxying HTTP based request ACLs.',
+                            help='Set default frontend port for proxying HTTP based request ACLs\n'
+                                 'Defaults to {}'.format(sandbox_common.bundle_http_port()),
                             metavar='')
     run_parser.add_argument('-f', '--feature',
                             dest='features',
                             action='append',
                             nargs='*',
                             default=[],
-                            help='Features to be enabled.\n'
+                            help='Features to be enabled\n'
                                  'Available features: ' + ', '.join(feature_names),
                             metavar='')
     run_parser.add_argument('--no-wait',
-                            help='Disables waiting for ConductR to be started in the sandbox.',
+                            help='Disables waiting for ConductR to be started in the sandbox',
                             default=False,
                             dest='no_wait',
                             action='store_true')
     run_parser.add_argument('--addr-range',
                             type=addr_range,
                             default=DEFAULT_SANDBOX_ADDR_RANGE,
-                            help='Range of address which will be used by ConductR Sandbox to bind to.\n'
-                                 'The address range is specified using CIDR notation, i.e. 192.168.1.0/24')
+                            help='Range of address which will be used by ConductR Sandbox to bind to\n'
+                                 'The address range is specified using CIDR notation, i.e. 192.168.1.0/24\n'
+                                 'Defaults to {}'.format(DEFAULT_SANDBOX_ADDR_RANGE))
     run_parser.set_defaults(func=sandbox_run.run)
 
     # Sub-parser for `stop` sub-command
     stop_parser = subparsers.add_parser('stop',
-                                        help='Stop ConductR sandbox cluster')
+                                        help='Stop ConductR sandbox cluster',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     add_image_dir(stop_parser)
     add_default_arguments(stop_parser)
     stop_parser.set_defaults(func=sandbox_stop.stop)
 
     # Sub-parser for `ps` sub-command
     ps_parser = subparsers.add_parser('ps',
-                                      help='List the pids for ConductR core and agent sandbox processes')
+                                      help='List the pids for ConductR core and agent sandbox processes',
+                                      formatter_class=argparse.RawTextHelpFormatter)
     add_image_dir(ps_parser)
     add_default_arguments(ps_parser)
     ps_parser.add_argument('--core',
-                           help='Displays ConductR core sandbox process only.',
+                           help='Displays ConductR core sandbox process only',
                            default=False,
                            dest='is_filter_core',
                            action='store_true')
     ps_parser.add_argument('--agent',
-                           help='Displays ConductR agent sandbox process only.',
+                           help='Displays ConductR agent sandbox process only',
                            default=False,
                            dest='is_filter_agent',
                            action='store_true')
     ps_parser.add_argument('-q', '--quiet',
-                           help='Displays only the pids without the column headers.',
+                           help='Displays only the pids without the column headers',
                            default=False,
                            dest='is_quiet',
                            action='store_true')
@@ -152,7 +160,8 @@ def build_parser():
 
     # Sub-parser for `logs` sub-command
     logs_parser = subparsers.add_parser('logs',
-                                        help='Fetches the logs of ConductR core and agent processes')
+                                        help='Fetches the logs of ConductR core and agent processes',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     add_image_dir(logs_parser)
     add_default_arguments(logs_parser)
     logs_parser.add_argument('-f', '--follow',
@@ -183,7 +192,7 @@ def add_resolve_ip(sub_parser, default_value):
 def add_image_dir(sub_parser):
     sub_parser.add_argument('--image-dir',
                             default=DEFAULT_SANDBOX_IMAGE_DIR,
-                            help='Default directory where sandbox images is stored.')
+                            help='Default directory where sandbox images is stored')
 
 
 @validation.handle_docker_validation_error
