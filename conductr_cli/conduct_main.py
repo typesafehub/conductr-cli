@@ -21,33 +21,38 @@ import sys
 
 def add_scheme_host_ip_port_and_base_path(sub_parser):
     sub_parser.add_argument('--scheme',
-                            help='The optional ConductR scheme, defaults to `http`',
+                            help='The optional ConductR scheme, defaults to http',
                             default=DEFAULT_SCHEME)
     sub_parser.add_argument('--host',
-                            help='The optional ConductR IP, defaults to one of the value in this order: '
-                                 '$CONDUCTR_HOST or'
-                                 '$CONDUCTR_IP or'
-                                 'IP address of the docker VM or'
-                                 '`127.0.0.1`',
+                            help='The optional ConductR host\n'
+                                 'Defaults to one of the value in this order:\n'
+                                 '1. $CONDUCTR_HOST\n'
+                                 '2. $CONDUCTR_IP\n'
+                                 '3. IP address of the docker VM or\n'
+                                 '4. 127.0.0.1',
                             default=None)  # Default is determined given the Docker environment
     sub_parser.add_argument('-i', '--ip',
-                            help='The optional ConductR IP, defaults to one of the value in this order: '
-                                 '$CONDUCTR_IP or '
-                                 'IP address of the docker VM or'
-                                 '`127.0.0.1`',
+                            help='The optional ConductR IP\n'
+                                 'Defaults to one of the value in this order:\n'
+                                 '1. $CONDUCTR_IP\n'
+                                 '2. IP address of the docker VM\n'
+                                 '3. 127.0.0.1',
                             default=None)  # Default is determined given the Docker environment
     sub_parser.add_argument('-p', '--port',
                             type=int,
-                            help='The optional ConductR port, defaults to $CONDUCTR_PORT or `9005`',
+                            help='The optional ConductR port\n'
+                                 'Defaults to $CONDUCTR_PORT or 9005',
                             default=DEFAULT_PORT)
     sub_parser.add_argument('--base-path',
-                            help='The optional ConductR base path, defaults to DEFAULT_BASE_PATH or `/`',
+                            help='The optional ConductR base path\n'
+                                 'Defaults to $DEFAULT_BASE_PATH or /',
                             default=DEFAULT_BASE_PATH)
 
 
 def add_dcos_settings(sub_parser):
     sub_parser.add_argument('--service',
-                            help='The ConductR service ID or name to direct requests to. Defaults to `conductr`',
+                            help='The ConductR service ID or name to direct requests to\n'
+                                 'Defaults to conductr',
                             default=DEFAULT_DCOS_SERVICE)
 
 
@@ -69,7 +74,8 @@ def add_long_ids(sub_parser):
 
 def add_api_version(sub_parser):
     sub_parser.add_argument('--api-version',
-                            help='Sets which ConductR api version to be used',
+                            help='Sets which ConductR api version to be used\n'
+                                 'Defaults to {}'.format(DEFAULT_API_VERSION),
                             default=DEFAULT_API_VERSION,
                             dest='api_version',
                             choices=version.supported_api_versions())
@@ -84,48 +90,48 @@ def add_local_connection_flag(sub_parser):
 
 def add_cli_settings_dir(sub_parser):
     sub_parser.add_argument('--settings-dir',
-                            help='Directory where ConductR CLI settings are stored, defaults to {}'.format(
-                                DEFAULT_CLI_SETTINGS_DIR),
+                            help='Directory where ConductR CLI settings are stored\n'
+                                 'Defaults to {}'.format(DEFAULT_CLI_SETTINGS_DIR),
                             default=DEFAULT_CLI_SETTINGS_DIR,
                             dest='cli_settings_dir')
 
 
 def add_custom_settings_file(sub_parser):
     sub_parser.add_argument('--custom-settings-file',
-                            help='Configuration where custom settings for ConductR CLI are stored in HOCON format,'
-                                 'defaults to {}'.format(DEFAULT_CUSTOM_SETTINGS_FILE),
+                            help='Configuration where custom settings for ConductR CLI are stored in HOCON format\n'
+                                 'Defaults to {}'.format(DEFAULT_CUSTOM_SETTINGS_FILE),
                             default=DEFAULT_CUSTOM_SETTINGS_FILE,
                             dest='custom_settings_file')
 
 
 def add_custom_plugins_dir(sub_parser):
     sub_parser.add_argument('--custom-plugins-dir',
-                            help='Directory where custom plugins for ConductR CLI are stored, defaults to {}'.format(
-                                DEFAULT_CUSTOM_PLUGINS_DIR),
+                            help='Directory where custom plugins for ConductR CLI are stored\n'
+                                 'Defaults to {}'.format(DEFAULT_CUSTOM_PLUGINS_DIR),
                             default=DEFAULT_CUSTOM_PLUGINS_DIR,
                             dest='custom_plugins_dir')
 
 
 def add_bundle_resolve_cache_dir(sub_parser):
     sub_parser.add_argument('--bundle-resolve-cache-dir',
-                            help='Directory where resolved bundles are cached, defaults to {}'.format(
-                                DEFAULT_BUNDLE_RESOLVE_CACHE_DIR),
+                            help='Directory where resolved bundles are cached\n'
+                                 'Defaults to {}'.format(DEFAULT_BUNDLE_RESOLVE_CACHE_DIR),
                             default=DEFAULT_BUNDLE_RESOLVE_CACHE_DIR,
                             dest='bundle_resolve_cache_dir')
 
 
 def add_configuration_resolve_cache_dir(sub_parser):
     sub_parser.add_argument('--configuration-resolve-cache-dir',
-                            help='Directory where resolved bundle configurations are cached, defaults to {}'.format(
-                                DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR),
+                            help='Directory where resolved bundle configurations are cached\n'
+                                 'Defaults to {}'.format(DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR),
                             default=DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR,
                             dest='configuration_resolve_cache_dir')
 
 
 def add_disable_instructions(sub_parser):
     sub_parser.add_argument('--disable-instructions',
-                            help='Disables further instruction output after the command has been succeeded, '
-                                 'defaults to False',
+                            help='Disables further instruction output after the command has been succeeded\n'
+                                 'Defaults to False',
                             default=False,
                             dest='disable_instructions',
                             action='store_true')
@@ -133,7 +139,8 @@ def add_disable_instructions(sub_parser):
 
 def add_quiet_flag(sub_parser):
     sub_parser.add_argument('-q',
-                            help='Prints affected bundle id on screen if enabled',
+                            help='Prints affected bundle id on screen if enabled\n'
+                                 'Defaults to False',
                             default=False,
                             dest='quiet',
                             action='store_true')
@@ -141,8 +148,9 @@ def add_quiet_flag(sub_parser):
 
 def add_wait_timeout(sub_parser, wait_timeout=DEFAULT_WAIT_TIMEOUT):
     sub_parser.add_argument('--wait-timeout',
-                            help='Timeout in seconds waiting for bundle scale to be achieved in conduct run, '
-                                 'or bundle to be stopped in conduct stop, defaults to {}'.format(wait_timeout),
+                            help='Timeout in seconds waiting for bundle scale to be achieved in conduct run\n'
+                                 'or bundle to be stopped in conduct stop\n'
+                                 'Defaults to {}'.format(wait_timeout),
                             type=int,
                             default=wait_timeout,
                             dest='wait_timeout')
@@ -150,8 +158,9 @@ def add_wait_timeout(sub_parser, wait_timeout=DEFAULT_WAIT_TIMEOUT):
 
 def add_no_wait(sub_parser):
     sub_parser.add_argument('--no-wait',
-                            help='Disables waiting for bundle scale to be achieved in conduct run, or bundle to be '
-                                 'stopped in conduct stop, defaults to False.',
+                            help='Disables waiting for bundle scale to be achieved in conduct run\n'
+                                 'or bundle to be stopped in conduct stop\n'
+                                 'Defaults to False',
                             default=False,
                             dest='no_wait',
                             action='store_true')
@@ -185,44 +194,50 @@ def add_default_arguments(sub_parser, dcos_mode):
 
 def build_parser(dcos_mode):
     # Main argument parser
-    parser = argparse.ArgumentParser('conduct')
+    parser = argparse.ArgumentParser('conduct', formatter_class=argparse.RawTextHelpFormatter)
     if dcos_mode:
         parser.add_argument('--info',
                             action='store_true',
                             dest='dcos_info')
 
     subparsers = parser.add_subparsers(title='commands',
-                                       help='Use one of the following sub commands')
+                                       help='Use one of the following sub commands:')
 
     # Sub-parser for `version` sub-command
     version_parser = subparsers.add_parser('version',
-                                           help='print version')
+                                           help='Print version',
+                                           formatter_class=argparse.RawTextHelpFormatter)
     version_parser.set_defaults(func=version.version)
 
     # Sub-parser for `info` sub-command
     info_parser = subparsers.add_parser('info',
-                                        help='print bundle information')
+                                        help='Print bundle information',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(info_parser, dcos_mode)
     info_parser.set_defaults(func=conduct_info.info)
 
     # Sub-parser for `service-names` sub-command
     service_names_parser = subparsers.add_parser('service-names',
-                                                 help='print the service names available to the service locator')
+                                                 help='Print the service names available to the service locator',
+                                                 formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(service_names_parser, dcos_mode)
     service_names_parser.set_defaults(func=conduct_service_names.service_names)
 
     # Sub-parser for `acls` sub-command
     acls_parser = subparsers.add_parser('acls',
-                                        help='print request ACL information')
+                                        help='Print request ACL information',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     acls_parser.add_argument('protocol_family',
                              choices=conduct_acls.SUPPORTED_PROTOCOL_FAMILIES,
-                             help='The protocol family of the ACL to be displayed, either http or tcp')
+                             help='The protocol family of the ACL to be displayed\n'
+                                  'Either http or tcp')
     add_default_arguments(acls_parser, dcos_mode)
     acls_parser.set_defaults(func=conduct_acls.acls)
 
     # Sub-parser for `load` sub-command
     load_parser = subparsers.add_parser('load',
-                                        help='load a bundle')
+                                        help='Load a bundle',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     load_parser.add_argument('bundle',
                              help='The path to the bundle')
     load_parser.add_argument('configuration',
@@ -233,10 +248,10 @@ def build_parser(dcos_mode):
                              default=DEFAULT_OFFLINE_MODE,
                              dest='offline_mode',
                              action='store_true',
-                             help='Enables offline mode to resolve bundles only locally '
-                                  'either by file uri or from the cache directory. '
-                                  'True if CONDUCTR_OFFLINE_MODE environment variable is set. '
-                                  'False if --offline flag not specified and environment variable not set.')
+                             help='Enables offline mode to resolve bundles only locally\n'
+                                  'either by file uri or from the cache directory\n'
+                                  'True if CONDUCTR_OFFLINE_MODE environment variable is set\n'
+                                  'False if --offline flag not specified and environment variable not set')
     add_default_arguments(load_parser, dcos_mode)
     add_bundle_resolve_cache_dir(load_parser)
     add_configuration_resolve_cache_dir(load_parser)
@@ -246,11 +261,13 @@ def build_parser(dcos_mode):
 
     # Sub-parser for `run` sub-command
     run_parser = subparsers.add_parser('run',
-                                       help='run a bundle')
+                                       help='Run a bundle',
+                                       formatter_class=argparse.RawTextHelpFormatter)
     run_parser.add_argument('--scale',
                             type=int,
                             default=1,
-                            help='The optional number of executions, defaults to 1')
+                            help='The optional number of executions\n'
+                                 'Defaults to 1')
     run_parser.add_argument('--affinity',
                             default=None,
                             help='The optional ID of the bundle to run alongside with (v2.0 onwards)')
@@ -263,7 +280,8 @@ def build_parser(dcos_mode):
 
     # Sub-parser for `stop` sub-command
     stop_parser = subparsers.add_parser('stop',
-                                        help='stop a bundle')
+                                        help='Stop a bundle',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     stop_parser.add_argument('bundle',
                              help='The ID of the bundle')
     add_default_arguments(stop_parser, dcos_mode)
@@ -273,7 +291,8 @@ def build_parser(dcos_mode):
 
     # Sub-parser for `unload` sub-command
     unload_parser = subparsers.add_parser('unload',
-                                          help='unload a bundle')
+                                          help='Unload a bundle',
+                                          formatter_class=argparse.RawTextHelpFormatter)
     unload_parser.add_argument('bundle',
                                help='The ID of the bundle')
     add_default_arguments(unload_parser, dcos_mode)
@@ -283,12 +302,14 @@ def build_parser(dcos_mode):
 
     # Sub-parser for `events` sub-command
     events_parser = subparsers.add_parser('events',
-                                          help='show bundle events')
+                                          help='Show bundle events',
+                                          formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(events_parser, dcos_mode)
     events_parser.add_argument('-n', '--lines',
                                type=int,
                                default=10,
-                               help='The number of events to fetch, defaults to 10')
+                               help='The number of events to fetch\n'
+                                    'Defaults to 10')
     add_date_args(events_parser)
     events_parser.add_argument('bundle',
                                help='The ID or name of the bundle')
@@ -296,12 +317,14 @@ def build_parser(dcos_mode):
 
     # Sub-parser for `logs` sub-command
     logs_parser = subparsers.add_parser('logs',
-                                        help='show bundle logs')
+                                        help='Show bundle logs',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(logs_parser, dcos_mode)
     logs_parser.add_argument('-n', '--lines',
                              type=int,
                              default=10,
-                             help='The number of logs to fetch, defaults to 10')
+                             help='The number of logs to fetch\n'
+                                  'Defaults to 10')
     add_date_args(logs_parser)
     logs_parser.add_argument('bundle',
                              help='The ID or name of the bundle')
@@ -309,15 +332,16 @@ def build_parser(dcos_mode):
 
     # Sub-parser for `setup-dcos` sub-command
     dcos_parser = subparsers.add_parser('setup-dcos',
-                                        help='setup integration with the DC/OS CLI '
-                                             'so that \'dcos conduct ..\' commands can '
-                                             'be used to access ConductR via DC/OS')
+                                        help='Setup integration with the DC/OS CLI\n'
+                                             'so that \'dcos conduct ..\' commands can\n'
+                                             'be used to access ConductR via DC/OS',
+                                        formatter_class=argparse.RawTextHelpFormatter)
     dcos_parser.set_defaults(func=conduct_dcos.setup)
 
     # Sub-parser for `deploy` sub-command
     deploy_parser = subparsers.add_parser('deploy',
-                                          help='manual trigger for continuous delivery - '
-                                               'replace a running bundle with a deployed version')
+                                          help='Replaces a running bundle with a deployed version',
+                                          formatter_class=argparse.RawTextHelpFormatter)
     deploy_parser.add_argument('bundle',
                                help='The ID of the bundle')
     deploy_parser.add_argument('-y',
