@@ -25,12 +25,12 @@ class TestStartProxy(CliTestCase):
                 patch('conductr_cli.sandbox_proxy.start_docker_instance', mock_start_docker_instance), \
                 patch('conductr_cli.sandbox_proxy.start_conductr_haproxy', mock_start_conductr_haproxy):
             logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.start_proxy(ipaddress.ip_address('192.168.1.1'), [3003])
+            sandbox_proxy.start_proxy(ipaddress.ip_address('192.168.1.1'), 9000, [3003])
 
         mock_is_docker_present.assert_called_once_with()
         mock_setup_haproxy_dirs.assert_called_once_with()
         mock_stop_proxy.assert_called_once_with()
-        mock_start_docker_instance.assert_called_once_with(ipaddress.ip_address('192.168.1.1'), [3003])
+        mock_start_docker_instance.assert_called_once_with(ipaddress.ip_address('192.168.1.1'), 9000, [3003])
         mock_start_conductr_haproxy.assert_called_once_with()
 
         self.assertEqual('', self.output(stdout))
@@ -52,7 +52,7 @@ class TestStartProxy(CliTestCase):
                 patch('conductr_cli.sandbox_proxy.start_docker_instance', mock_start_docker_instance), \
                 patch('conductr_cli.sandbox_proxy.start_conductr_haproxy', mock_start_conductr_haproxy):
             logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.start_proxy(ipaddress.ip_address('192.168.1.1'), [3003])
+            sandbox_proxy.start_proxy(ipaddress.ip_address('192.168.1.1'), 9000, [3003])
 
         mock_is_docker_present.assert_called_once_with()
         mock_setup_haproxy_dirs.assert_not_called()
@@ -226,7 +226,7 @@ class TestStartDockerInstance(CliTestCase):
                 patch('conductr_cli.terminal.docker_run', mock_docker_run), \
                 patch('conductr_cli.sandbox_features.all_feature_ports', mock_all_feature_ports):
             logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.start_docker_instance(ipaddress.ip_address('192.168.1.1'), [3003])
+            sandbox_proxy.start_docker_instance(ipaddress.ip_address('192.168.1.1'), 9000, [3003])
 
         mock_docker_images.assert_called_once_with('haproxy:1.5')
         mock_docker_pull.assert_not_called()
@@ -266,7 +266,7 @@ class TestStartDockerInstance(CliTestCase):
                 patch('conductr_cli.terminal.docker_run', mock_docker_run), \
                 patch('conductr_cli.sandbox_features.all_feature_ports', mock_all_feature_ports):
             logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.start_docker_instance(ipaddress.ip_address('192.168.1.1'), [3003, 3000])
+            sandbox_proxy.start_docker_instance(ipaddress.ip_address('192.168.1.1'), 9000, [3003, 3000])
 
         mock_docker_images.assert_called_once_with('haproxy:1.5')
         mock_docker_pull.assert_not_called()
@@ -307,7 +307,7 @@ class TestStartDockerInstance(CliTestCase):
                 patch('conductr_cli.terminal.docker_run', mock_docker_run), \
                 patch('conductr_cli.sandbox_features.all_feature_ports', mock_all_feature_ports):
             logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.start_docker_instance(ipaddress.ip_address('192.168.1.1'), [3003])
+            sandbox_proxy.start_docker_instance(ipaddress.ip_address('192.168.1.1'), 9000, [3003])
 
         mock_docker_images.assert_called_once_with('haproxy:1.5')
         mock_docker_pull.assert_called_once_with('haproxy:1.5')

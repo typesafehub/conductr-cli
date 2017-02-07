@@ -12,7 +12,7 @@ HAPROXY_DOCKER_IMAGE = 'haproxy:{}'.format(HAPROXY_VERSION)
 
 HAPROXY_CFG_DIR = '{}/haproxy'.format(DEFAULT_SANDBOX_PROXY_DIR)
 HAPROXY_CFG_PATH = '{}/haproxy.cfg'.format(HAPROXY_CFG_DIR)
-DEFAULT_PROXY_PORTS = [80, 443, 9000]  # These are the ports which will be opened by default to the proxy.
+DEFAULT_PROXY_PORTS = [80, 443]  # These are the ports which will be opened by default to the proxy.
 
 # This is the default config which will be supplied so HAProxy instance within Docker can be started.
 DEFAULT_HAPROXY_CFG_ENTRIES = 'defaults\n' \
@@ -31,11 +31,11 @@ DEFAULT_HAPROXY_CFG_ENTRIES = 'defaults\n' \
                               ''
 
 
-def start_proxy(proxy_bind_addr, proxy_ports):
+def start_proxy(proxy_bind_addr, bundle_http_port, proxy_ports):
     if is_docker_present():
         setup_haproxy_dirs()
         stop_proxy()
-        start_docker_instance(proxy_bind_addr, proxy_ports)
+        start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports)
         start_conductr_haproxy()
         return True
     else:
@@ -82,7 +82,7 @@ def get_running_haproxy():
     return terminal.docker_ps(ps_filter='name={}'.format(DEFAULT_SANDBOX_PROXY_CONTAINER_NAME))
 
 
-def start_docker_instance(proxy_bind_addr, proxy_ports):
+def start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports):
     log = logging.getLogger(__name__)
     log.info(h1('Starting HAProxy'))
 
@@ -91,7 +91,7 @@ def start_docker_instance(proxy_bind_addr, proxy_ports):
         log.info('Pulling docker image {}'.format(HAPROXY_DOCKER_IMAGE))
         terminal.docker_pull(HAPROXY_DOCKER_IMAGE)
 
-    all_proxy_ports = []
+    all_proxy_ports = [bundle_http_port]
     all_proxy_ports.extend(DEFAULT_PROXY_PORTS)
     all_proxy_ports.extend(sandbox_features.all_feature_ports())
     all_proxy_ports.extend(proxy_ports)
