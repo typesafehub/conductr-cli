@@ -1,12 +1,14 @@
 from conductr_cli import conduct_request, conduct_url, validation, sandbox_features, sandbox_proxy, \
     sandbox_run_docker, sandbox_run_jvm
+from conductr_cli.constants import DEFAULT_CLI_TMP_DIR
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
-from conductr_cli.sandbox_common import major_version
+from conductr_cli.sandbox_common import major_version, LATEST_SANDBOX_RUN_ARGS_FILE
 from requests.exceptions import ConnectionError
 
 import logging
 import os
 import time
+import sys
 
 
 # Will retry 30 times, every two seconds
@@ -28,6 +30,7 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 @validation.handle_docker_validation_error
 def run(args):
     """`sandbox run` command"""
+    write_run_command()
     is_conductr_v1 = major_version(args.image_version) == 1
     features = sandbox_features.collect_features(args.features, args.image_version, args.offline_mode)
     sandbox = sandbox_run_docker if is_conductr_v1 else sandbox_run_jvm
@@ -81,3 +84,11 @@ def wait_for_conductr(args, run_result, current_retry, max_retries, interval):
     # Reprint previous message with flush to go to next line
     log.progress(last_message, flush=True)
     return True if current_retry < max_retries else False
+
+
+def write_run_command():
+    # Only save the command if it is an actual 'sandbox run' command and not a 'sandbox restart' command
+    if len(sys.argv) > 1 and sys.argv[1] == 'run':
+        os.makedirs(DEFAULT_CLI_TMP_DIR, mode=0o700, exist_ok=True)
+        with open(LATEST_SANDBOX_RUN_ARGS_FILE, mode='w') as f:
+            f.write(' '.join(sys.argv[2:]))

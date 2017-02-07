@@ -5,10 +5,10 @@ import re
 import sys
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
 from conductr_cli.sandbox_features import feature_names
-from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, \
-    DEFAULT_SANDBOX_TMP_DIR, DEFAULT_OFFLINE_MODE
-from conductr_cli import sandbox_run, sandbox_stop, sandbox_common, sandbox_logs, sandbox_ps, logging_setup, docker, \
-    version, validation
+from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_SANDBOX_TMP_DIR, \
+    DEFAULT_OFFLINE_MODE
+from conductr_cli import sandbox_run, sandbox_restart, sandbox_stop, sandbox_common, sandbox_logs, sandbox_ps, \
+    logging_setup, docker, version, validation
 from conductr_cli.sandbox_run_jvm import NR_OF_INSTANCE_EXPRESSION
 
 
@@ -134,6 +134,11 @@ def build_parser():
                                  'Defaults to {}'.format(DEFAULT_SANDBOX_ADDR_RANGE))
     run_parser.set_defaults(func=sandbox_run.run)
 
+    # Sub-parser for `restart` sub-command
+    restart_parser = subparsers.add_parser('restart',
+                                           help='Restart ConductR sandbox cluster')
+    restart_parser.set_defaults(func=sandbox_restart.restart)
+
     # Sub-parser for `stop` sub-command
     stop_parser = subparsers.add_parser('stop',
                                         help='Stop ConductR sandbox cluster',
@@ -203,11 +208,13 @@ def add_image_dir(sub_parser):
 
 
 @validation.handle_docker_validation_error
-def run():
+def run(_args=[], configure_logging=True):
     # Parse arguments
+    if not _args:
+        _args = sys.argv[1:]
     parser = build_parser()
     argcomplete.autocomplete(parser)
-    args = parser.parse_args()
+    args = parser.parse_args(_args)
 
     # Print help or execute subparser function
     if not vars(args).get('func'):
@@ -222,7 +229,8 @@ def run():
         logging_setup.configure_logging(args)
         args.func(args)
     else:
-        logging_setup.configure_logging(args)
+        if configure_logging:
+            logging_setup.configure_logging(args)
         # Check that all feature arguments are valid
         if vars(args).get('func').__name__ == 'run':
             if args.features and args.no_wait:

@@ -180,7 +180,7 @@ class TestSetupHAProxyDirs(CliTestCase):
                 patch('pathlib.Path', mock_path_creator):
             sandbox_proxy.setup_haproxy_dirs()
 
-        mock_makedirs.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_DIR, exist_ok=True)
+        mock_makedirs.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_DIR, mode=0o700, exist_ok=True)
         mock_path.exists.assert_called_once_with()
         mock_path.write_text.assert_called_once_with(sandbox_proxy.DEFAULT_HAPROXY_CFG_ENTRIES)
 
@@ -197,7 +197,7 @@ class TestSetupHAProxyDirs(CliTestCase):
                 patch('pathlib.Path', mock_path_creator):
             sandbox_proxy.setup_haproxy_dirs()
 
-        mock_makedirs.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_DIR, exist_ok=True)
+        mock_makedirs.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_DIR, mode=0o700, exist_ok=True)
         mock_path.exists.assert_called_once_with()
         mock_path.write_text.assert_not_called()
 

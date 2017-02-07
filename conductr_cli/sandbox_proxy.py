@@ -71,7 +71,7 @@ def is_docker_present():
 
 
 def setup_haproxy_dirs():
-    os.makedirs(HAPROXY_CFG_DIR, exist_ok=True)
+    os.makedirs(HAPROXY_CFG_DIR, exist_ok=True, mode=0o700)
 
     # Correct haproxy.cfg file must exists in order for Docker image to be working
     haproxy_cfg = pathlib.Path(HAPROXY_CFG_PATH)
