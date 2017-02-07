@@ -96,7 +96,7 @@ def start_docker_instance(proxy_bind_addr, proxy_ports):
     all_proxy_ports.extend(DEFAULT_PROXY_PORTS)
     all_proxy_ports.extend(sandbox_features.all_feature_ports())
     all_proxy_ports.extend(proxy_ports)
-    all_proxy_ports = sorted(all_proxy_ports)
+    all_proxy_ports = sorted(set(all_proxy_ports))
 
     port_args = []
     for port in all_proxy_ports:
