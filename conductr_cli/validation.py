@@ -15,7 +15,8 @@ from conductr_cli.exceptions import BindAddressNotFound, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
     WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
     JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, \
-    SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, SandboxUnsupportedOsArchError
+    SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, \
+    NOT_FOUND_ERROR
 
 
 def connection_error(log, err, args):
@@ -311,6 +312,24 @@ def handle_sandbox_unsupported_os_arch_error(func):
             log = get_logger_for_func(func)
             log.error('ConductR does not support {} architecture.'.format(platform.architecture()))
             log.error('Only 64-bit architecture is supported.')
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_sandbox_restart_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except NOT_FOUND_ERROR:
+            log = get_logger_for_func(func)
+            log.error('ConductR cannot be restarted.')
+            log.error('Please start ConductR first with: sandbox run')
             return False
 
     # Do not change the wrapped function name,

@@ -14,7 +14,8 @@ Feature attributes:
     start (method): Start the feature as needed. Called after the sandbox has started.
 """
 
-from conductr_cli import conduct_main, docker
+import conductr_cli
+from conductr_cli import docker
 from conductr_cli.sandbox_common import major_version
 from conductr_cli.screen_utils import h1
 import logging
@@ -69,8 +70,8 @@ class VisualizationFeature:
             log.info('Deploying bundle %s..' % visualizer['bundle'])
             load_command = ['load', visualizer['bundle'], '--disable-instructions'] + \
                 parse_offline_mode_arg(self.offline_mode)
-            conduct_main.run(load_command, configure_logging=False)
-            conduct_main.run(['run', visualizer['name'], '--disable-instructions'], configure_logging=False)
+            conductr_cli.conduct_main.run(load_command, configure_logging=False)
+            conductr_cli.conduct_main.run(['run', visualizer['name'], '--disable-instructions'], configure_logging=False)
             return [BundleStartResult('visualizer', self.ports[0])]
 
 
@@ -124,14 +125,14 @@ class LoggingFeature:
             log.info('Deploying bundle %s..' % elasticsearch['bundle'])
             elasticsearch_load_command = ['load', elasticsearch['bundle'], '--disable-instructions'] + \
                 parse_offline_mode_arg(self.offline_mode)
-            conduct_main.run(elasticsearch_load_command, configure_logging=False)
-            conduct_main.run(['run', elasticsearch['name'], '--disable-instructions'], configure_logging=False)
+            conductr_cli.conduct_main.run(elasticsearch_load_command, configure_logging=False)
+            conductr_cli.conduct_main.run(['run', elasticsearch['name'], '--disable-instructions'], configure_logging=False)
             kibana = select_bintray_uri('conductr-kibana', self.version_args)
             log.info('Deploying bundle %s..' % kibana['bundle'])
             kibana_load_command = ['load', kibana['bundle'], '--disable-instructions'] + \
                 parse_offline_mode_arg(self.offline_mode)
-            conduct_main.run(kibana_load_command, configure_logging=False)
-            conduct_main.run(['run', kibana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
+            conductr_cli.conduct_main.run(kibana_load_command, configure_logging=False)
+            conductr_cli.conduct_main.run(['run', kibana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
             return [BundleStartResult('conductr-kibana', self.ports[0]),
                     BundleStartResult('conductr-elasticsearch', self.ports[1])]
 
@@ -177,8 +178,8 @@ class LiteLoggingFeature:
             log.info('Deploying bundle %s..' % eslite['bundle'])
             load_command = ['load', eslite['bundle'], '--disable-instructions'] + \
                 parse_offline_mode_arg(self.offline_mode)
-            conduct_main.run(load_command, configure_logging=False)
-            conduct_main.run(['run', eslite['name'], '--disable-instructions'], configure_logging=False)
+            conductr_cli.conduct_main.run(load_command, configure_logging=False)
+            conductr_cli.conduct_main.run(['run', eslite['name'], '--disable-instructions'], configure_logging=False)
             return []
 
 
@@ -229,8 +230,8 @@ class MonitoringFeature:
         log.info('Deploying bundle %s..' % grafana['bundle'])
         load_command = ['load', grafana['bundle'], '--disable-instructions'] + \
             parse_offline_mode_arg(self.offline_mode)
-        conduct_main.run(load_command, configure_logging=False)
-        conduct_main.run(['run', grafana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
+        conductr_cli.conduct_main.run(load_command, configure_logging=False)
+        conductr_cli.conduct_main.run(['run', grafana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
         return [BundleStartResult(grafana['name'], self.ports[0])]
 
 
