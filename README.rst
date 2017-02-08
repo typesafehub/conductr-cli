@@ -203,13 +203,15 @@ After pyenv has been installed, add python 3.4. On macOS use:
 
   CFLAGS="-I$(brew --prefix openssl)/include" \
   LDFLAGS="-L$(brew --prefix openssl)/lib" \
-  pyenv install -v 3.4.3
+  pyenv install -v 3.4.5
+  pyenv install -v 3.5.2
 
 For others OS this is easier:
 
 .. code:: bash
 
-  pyenv install -v 3.4.3
+  pyenv install -v 3.4.5
+  pyenv install -v 3.5.2
 
 Make sure to install the ``tox`` module for multi-environment testing:
 
@@ -222,7 +224,7 @@ Afterwards, install the necessary dependencies for each environment and to set t
 .. code:: bash
 
   pip3 install .
-  pyenv local system 3.4.3
+  pyenv local system 3.4.5 3.5.2
 
 Running
 ^^^^^^^
