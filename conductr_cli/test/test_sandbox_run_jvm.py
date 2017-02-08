@@ -15,6 +15,7 @@ import subprocess
 class TestRun(CliTestCase):
 
     addr_range = ipaddress.ip_network('192.168.1.0/24', strict=True)
+    tmp_dir = '~/.conductr/image/tmp'
     default_args = {
         'image_version': '2.0.0',
         'conductr_roles': [],
@@ -22,12 +23,14 @@ class TestRun(CliTestCase):
         'nr_of_containers': 1,
         'addr_range': addr_range,
         'offline_mode': False,
-        'no_wait': False
+        'no_wait': False,
+        'tmp_dir': tmp_dir
     }
 
     def test_default_args(self):
         mock_validate_jvm_support = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr = MagicMock()
         bind_addrs = [bind_addr]
@@ -50,6 +53,7 @@ class TestRun(CliTestCase):
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
@@ -62,14 +66,26 @@ class TestRun(CliTestCase):
 
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
-        mock_start_core_instances.assert_called_with(mock_core_extracted_dir, bind_addrs, [], features, 'info')
-        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir, bind_addrs, bind_addrs,
-                                                      [], features, 'info')
+        mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
+                                                     self.tmp_dir,
+                                                     bind_addrs,
+                                                     [],
+                                                     features,
+                                                     'info')
+        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
+                                                      self.tmp_dir,
+                                                      bind_addrs,
+                                                      bind_addrs,
+                                                      [],
+                                                      features,
+                                                      'info')
 
     def test_nr_of_core_agent_instances(self):
         mock_validate_jvm_support = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr1 = MagicMock()
         bind_addr2 = MagicMock()
@@ -98,6 +114,7 @@ class TestRun(CliTestCase):
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
@@ -110,9 +127,16 @@ class TestRun(CliTestCase):
 
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
-        mock_start_core_instances.assert_called_with(mock_core_extracted_dir, [bind_addr1], [], features, 'info')
+        mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
+                                                     self.tmp_dir,
+                                                     [bind_addr1],
+                                                     [],
+                                                     features,
+                                                     'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
+                                                      self.tmp_dir,
                                                       [bind_addr1, bind_addr2, bind_addr3],
                                                       [bind_addr1],
                                                       [],
@@ -122,6 +146,7 @@ class TestRun(CliTestCase):
     def test_roles(self):
         mock_validate_jvm_support = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr = MagicMock()
         bind_addrs = [bind_addr]
@@ -150,6 +175,7 @@ class TestRun(CliTestCase):
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
@@ -162,13 +188,16 @@ class TestRun(CliTestCase):
 
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
+                                                     self.tmp_dir,
                                                      bind_addrs,
                                                      [['role1', 'role2'], ['role3']],
                                                      features,
                                                      'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
+                                                      self.tmp_dir,
                                                       bind_addrs,
                                                       bind_addrs,
                                                       [['role1', 'role2'], ['role3']],
@@ -456,6 +485,8 @@ class TestObtainSandboxImage(CliTestCase):
 class TestStartCore(CliTestCase):
     extract_dir = '/User/tester/.conductr/images/core'
 
+    tmp_dir = '/User/tester/.conductr/images/tmp'
+
     addrs = [
         ipaddress.ip_address('192.168.1.1'),
         ipaddress.ip_address('192.168.1.2'),
@@ -475,19 +506,25 @@ class TestStartCore(CliTestCase):
         ])
 
         with patch('subprocess.Popen', mock_popen):
-            result = sandbox_run_jvm.start_core_instances(self.extract_dir, self.addrs, conductr_roles, features,
+            result = sandbox_run_jvm.start_core_instances(self.extract_dir,
+                                                          self.tmp_dir,
+                                                          self.addrs,
+                                                          conductr_roles,
+                                                          features,
                                                           self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
         self.assertEqual([
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[0]),
                 '-Dconductr.resource-provider.match-offer-roles=off'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[1]),
                 '-Dconductr.resource-provider.match-offer-roles=off',
@@ -495,6 +532,7 @@ class TestStartCore(CliTestCase):
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[2]),
                 '-Dconductr.resource-provider.match-offer-roles=off',
@@ -513,13 +551,18 @@ class TestStartCore(CliTestCase):
         ])
 
         with patch('subprocess.Popen', mock_popen):
-            result = sandbox_run_jvm.start_core_instances(self.extract_dir, self.addrs, conductr_roles, features,
+            result = sandbox_run_jvm.start_core_instances(self.extract_dir,
+                                                          self.tmp_dir,
+                                                          self.addrs,
+                                                          conductr_roles,
+                                                          features,
                                                           self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
         self.assertEqual([
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[0]),
                 '-Dconductr.resource-provider.match-offer-roles=on',
@@ -528,6 +571,7 @@ class TestStartCore(CliTestCase):
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[1]),
                 '-Dconductr.resource-provider.match-offer-roles=on',
@@ -537,6 +581,7 @@ class TestStartCore(CliTestCase):
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[2]),
                 '-Dconductr.resource-provider.match-offer-roles=on',
@@ -555,6 +600,8 @@ class TestStartCore(CliTestCase):
 class TestStartAgent(CliTestCase):
     extract_dir = '/User/tester/.conductr/images/agent'
 
+    tmp_dir = '/User/tester/.conductr/images/tmp'
+
     addrs = [
         ipaddress.ip_address('192.168.1.1'),
         ipaddress.ip_address('192.168.1.2'),
@@ -572,6 +619,7 @@ class TestStartAgent(CliTestCase):
 
         with patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                           self.tmp_dir,
                                                            self.addrs,
                                                            self.addrs,
                                                            conductr_roles=[],
@@ -582,18 +630,21 @@ class TestStartAgent(CliTestCase):
         self.assertEqual([
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[0]),
                 '--core-node', '{}:9004'.format(self.addrs[0])
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
                 '--core-node', '{}:9004'.format(self.addrs[1])
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[2]),
                 '--core-node', '{}:9004'.format(self.addrs[2])
@@ -612,6 +663,7 @@ class TestStartAgent(CliTestCase):
 
         with patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                           self.tmp_dir,
                                                            self.addrs,
                                                            self.addrs,
                                                            conductr_roles=conductr_roles,
@@ -622,6 +674,7 @@ class TestStartAgent(CliTestCase):
         self.assertEqual([
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[0]),
                 '--core-node', '{}:9004'.format(self.addrs[0]),
@@ -634,6 +687,7 @@ class TestStartAgent(CliTestCase):
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
                 '--core-node', '{}:9004'.format(self.addrs[1]),
@@ -643,6 +697,7 @@ class TestStartAgent(CliTestCase):
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[2]),
                 '--core-node', '{}:9004'.format(self.addrs[2]),
@@ -665,6 +720,7 @@ class TestStartAgent(CliTestCase):
 
         with patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                           self.tmp_dir,
                                                            self.addrs,
                                                            self.addrs[0:2],
                                                            conductr_roles=conductr_roles,
@@ -675,18 +731,21 @@ class TestStartAgent(CliTestCase):
         self.assertEqual([
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[0]),
                 '--core-node', '{}:9004'.format(self.addrs[0])
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
                 '--core-node', '{}:9004'.format(self.addrs[1])
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
+                '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[2]),
                 '--core-node', '{}:9004'.format(self.addrs[0])
@@ -1241,3 +1300,35 @@ class TestArtefactOsName(CliTestCase):
 
         mock_is_macos.assert_called_once_with()
         mock_is_linux.assert_called_once_with()
+
+
+class TestCleanupTmpDir(CliTestCase):
+    tmp_dir = '~/.conductr/images/tmp'
+
+    def test_existing_tmp_dir(self):
+        mock_exists = MagicMock(return_value=True)
+        mock_rmtree = MagicMock()
+        mock_makedirs = MagicMock()
+
+        with patch('os.path.exists', mock_exists), \
+                patch('shutil.rmtree', mock_rmtree), \
+                patch('os.makedirs', mock_makedirs):
+            sandbox_run_jvm.cleanup_tmp_dir(self.tmp_dir)
+
+        mock_exists.assert_called_once_with(self.tmp_dir)
+        mock_rmtree.assert_called_once_with(self.tmp_dir)
+        mock_makedirs.assert_called_once_with(self.tmp_dir, exist_ok=True)
+
+    def test_without_existing_tmp_dir(self):
+        mock_exists = MagicMock(return_value=False)
+        mock_rmtree = MagicMock()
+        mock_makedirs = MagicMock()
+
+        with patch('os.path.exists', mock_exists), \
+                patch('shutil.rmtree', mock_rmtree), \
+                patch('os.makedirs', mock_makedirs):
+            sandbox_run_jvm.cleanup_tmp_dir(self.tmp_dir)
+
+        mock_exists.assert_called_once_with(self.tmp_dir)
+        mock_rmtree.assert_not_called()
+        mock_makedirs.assert_called_once_with(self.tmp_dir, exist_ok=True)

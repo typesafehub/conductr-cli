@@ -66,16 +66,24 @@ def run(args, features):
     log = logging.getLogger(__name__)
     log.info(h1('Starting ConductR'))
 
+    cleanup_tmp_dir(args.tmp_dir)
+
     bind_addrs = find_bind_addrs(max(nr_of_core_instances, nr_of_agent_instances), args.addr_range)
 
     core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version,
                                                                    args.offline_mode)
 
     core_addrs = bind_addrs[0:nr_of_core_instances]
-    core_pids = start_core_instances(core_extracted_dir, core_addrs, args.conductr_roles, features, args.log_level)
+    core_pids = start_core_instances(core_extracted_dir,
+                                     args.tmp_dir,
+                                     core_addrs,
+                                     args.conductr_roles,
+                                     features,
+                                     args.log_level)
 
     agent_addrs = bind_addrs[0:nr_of_agent_instances]
     agent_pids = start_agent_instances(agent_extracted_dir,
+                                       args.tmp_dir,
                                        bind_addrs[0:nr_of_agent_instances],
                                        core_addrs,
                                        args.conductr_roles,
@@ -213,6 +221,16 @@ def validate_64bit_support():
     """
     if not host.is_64bit():
         raise SandboxUnsupportedOsArchError()
+
+
+def cleanup_tmp_dir(tmp_dir):
+    """
+    Clears the content of the sandbox tmp dir
+    """
+    if os.path.exists(tmp_dir):
+        shutil.rmtree(tmp_dir)
+
+    os.makedirs(tmp_dir, exist_ok=True)
 
 
 def find_bind_addrs(nr_of_addrs, addr_range):
@@ -405,7 +423,7 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
         raise SandboxImageNotFoundError(artefact_type, image_version)
 
 
-def start_core_instances(core_extracted_dir, bind_addrs, conductr_roles, features, log_level):
+def start_core_instances(core_extracted_dir, tmp_dir, bind_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR core process.
 
@@ -439,6 +457,7 @@ def start_core_instances(core_extracted_dir, bind_addrs, conductr_roles, feature
     for idx, bind_addr in enumerate(bind_addrs):
         commands = [
             '{}/bin/conductr'.format(core_extracted_dir),
+            '-Djava.io.tmpdir={}'.format(tmp_dir),
             '-Dakka.loglevel={}'.format(log_level),
             '-Dconductr.ip={}'.format(bind_addr),
             '-Dconductr.resource-provider.match-offer-roles={}'.format('on' if roles_enabled else 'off')
@@ -462,7 +481,7 @@ def start_core_instances(core_extracted_dir, bind_addrs, conductr_roles, feature
     return pids
 
 
-def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs, conductr_roles, features, log_level):
+def start_agent_instances(agent_extracted_dir, tmp_dir, bind_addrs, core_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR agent process.
 
@@ -494,6 +513,7 @@ def start_agent_instances(agent_extracted_dir, bind_addrs, core_addrs, conductr_
 
         commands = [
             '{}/bin/conductr-agent'.format(agent_extracted_dir),
+            '-Djava.io.tmpdir={}'.format(tmp_dir),
             '-Dakka.loglevel={}'.format(log_level),
             '-Dconductr.agent.ip={}'.format(bind_addr),
             '--core-node',
