@@ -257,10 +257,9 @@ def cleanup_old_cache_location():
     Removes files under `~/.cache` directory.
     Nowadays, the files are cached under `/.cache/bundle` and `/.cache/configuration`.
     """
-    with os.scandir(DEFAULT_RESOLVE_CACHE_DIR) as it:
-        for entry in it:
-            if entry.is_file():
-                os.remove(entry)
+    for entry in os.scandir(DEFAULT_RESOLVE_CACHE_DIR):
+        if entry.is_file():
+            os.remove(entry.path)
 
 
 def cleanup_old_bundles(cache_dir, bundle_file_name, excluded):
