@@ -62,13 +62,11 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -103,12 +101,10 @@ class ConductLoadTestBase(CliTestCase):
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('dcos.http.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -139,7 +135,6 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         args = self.default_args.copy()
@@ -148,7 +143,6 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -179,7 +173,6 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         args = self.default_args.copy()
@@ -188,7 +181,6 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -219,7 +211,6 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         args = self.default_args.copy()
@@ -228,7 +219,6 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -259,7 +249,6 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         cli_parameters = ' --ip 127.0.1.1 --port 9006'
@@ -269,7 +258,6 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -302,7 +290,6 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         cli_parameters = ' --host 127.0.1.1 --port 9006'
@@ -312,7 +299,6 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -350,13 +336,11 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
         wait_for_installation_mock = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         input_args = MagicMock(**args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -386,7 +370,6 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
         args = self.default_args.copy()
@@ -395,7 +378,6 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
@@ -423,7 +405,6 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
-        cleanup_old_cache_location_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
         wait_for_installation_mock = MagicMock()
 
@@ -433,7 +414,6 @@ class ConductLoadTestBase(CliTestCase):
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
@@ -463,12 +443,10 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         stderr = MagicMock()
         open_mock = MagicMock(return_value=1)
-        cleanup_old_cache_location_mock = MagicMock()
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
@@ -497,12 +475,10 @@ class ConductLoadTestBase(CliTestCase):
         stdout = MagicMock()
         stderr = MagicMock()
         open_mock = MagicMock(return_value=1)
-        cleanup_old_cache_location_mock = MagicMock()
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
@@ -527,7 +503,6 @@ class ConductLoadTestBase(CliTestCase):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.raise_read_timeout_error('test reason', self.default_url)
-        cleanup_old_cache_location_mock = MagicMock()
         stdout = MagicMock()
         stderr = MagicMock()
         open_mock = MagicMock(return_value=1)
@@ -535,7 +510,6 @@ class ConductLoadTestBase(CliTestCase):
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
@@ -563,10 +537,8 @@ class ConductLoadTestBase(CliTestCase):
         resolve_bundle_mock = MagicMock(side_effect=BundleResolutionError('some message'))
         stdout = MagicMock()
         stderr = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
 
-        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
-                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             args = self.default_args.copy()
             args.update({'bundle': 'no_such.bundle'})
             logging_setup.configure_logging(MagicMock(**args), stdout, stderr)
@@ -586,11 +558,9 @@ class ConductLoadTestBase(CliTestCase):
         resolve_bundle_configuration_mock = MagicMock(side_effect=BundleResolutionError('some message'))
         stdout = MagicMock()
         stderr = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
-                patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock):
+                patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock):
             args = self.default_args.copy()
             args.update({'configuration': 'no_such.conf'})
             logging_setup.configure_logging(MagicMock(**args), stdout, stderr)
@@ -611,10 +581,8 @@ class ConductLoadTestBase(CliTestCase):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
         stderr = MagicMock()
         open_mock = MagicMock(side_effect=BadZipFile('test bad zip error'))
-        cleanup_old_cache_location_mock = MagicMock()
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('builtins.open', open_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             result = conduct_load.load(MagicMock(**self.default_args))
@@ -633,10 +601,8 @@ class ConductLoadTestBase(CliTestCase):
         add_info_mock = MagicMock()
         resolve_bundle_mock = MagicMock(side_effect=HTTPError('url', 'code', 'message', 'headers', add_info_mock))
         stderr = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
 
-        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
-                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             result = conduct_load.load(MagicMock(**self.default_args))
             self.assertFalse(result)
@@ -652,10 +618,8 @@ class ConductLoadTestBase(CliTestCase):
     def base_test_failure_no_file_url_error(self):
         resolve_bundle_mock = MagicMock(side_effect=URLError('reason', None))
         stderr = MagicMock()
-        cleanup_old_cache_location_mock = MagicMock()
 
-        with patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
-                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             result = conduct_load.load(MagicMock(**self.default_args))
             self.assertFalse(result)
@@ -674,7 +638,6 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(200, self.default_response)
         stderr = MagicMock()
         open_mock = MagicMock(return_value=1)
-        cleanup_old_cache_location_mock = MagicMock()
         wait_for_installation_mock = MagicMock(side_effect=WaitTimeoutError('test timeout'))
 
         input_args = MagicMock(**self.default_args)
@@ -682,7 +645,6 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
-                patch('conductr_cli.conduct_load.cleanup_old_cache_location', cleanup_old_cache_location_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, err_output=stderr)
             result = conduct_load.load(input_args)
