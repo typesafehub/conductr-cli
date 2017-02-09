@@ -272,6 +272,7 @@ class TestWaitForInstallation(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = False
@@ -284,7 +285,8 @@ class TestWaitForInstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_installation.wait_for_installation(bundle_id, args)
 
@@ -331,6 +333,7 @@ class TestWaitForInstallation(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = True
@@ -343,7 +346,8 @@ class TestWaitForInstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_installation.wait_for_installation(bundle_id, args)
 
@@ -390,6 +394,7 @@ class TestWaitForInstallation(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = True
@@ -402,7 +407,8 @@ class TestWaitForInstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_installation.wait_for_installation, bundle_id, args)
 
@@ -515,6 +521,7 @@ class TestWaitForInstallation(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = True
@@ -527,7 +534,8 @@ class TestWaitForInstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_installation.wait_for_installation, bundle_id, args)
 
@@ -698,6 +706,7 @@ class TestWaitForUninstallation(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = True
@@ -710,7 +719,8 @@ class TestWaitForUninstallation(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.bundle_installation.count_installations', count_installations_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_installation.wait_for_uninstallation, bundle_id, args)
 
