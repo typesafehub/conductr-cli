@@ -264,7 +264,7 @@ After CI build is finished for the tagged commit, new version will automatically
 
 **Native**
 
-Pyinstaller is required. Please visit http://www.pyinstaller.org/ to obtain instructions on how to install it.
+Pyinstaller version `3.2.1` or above is required. Please visit http://www.pyinstaller.org/ to obtain instructions on how to install it.
 
 To build native packages follow the form:
 
