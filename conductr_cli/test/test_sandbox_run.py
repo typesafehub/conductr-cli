@@ -271,6 +271,7 @@ class TestSandboxRunCommand(CliTestCase):
 class TestWaitForStart(CliTestCase):
     def test_wait_for_start(self):
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
         mock_get_env = MagicMock(return_value=1)
 
         members_url = '/members'
@@ -281,7 +282,8 @@ class TestWaitForStart(CliTestCase):
         with \
                 patch('os.getenv', mock_get_env), \
                 patch('conductr_cli.conduct_url.url', mock_url), \
-                patch('conductr_cli.conduct_request.get', mock_http_get):
+                patch('conductr_cli.conduct_request.get', mock_http_get), \
+                patch('sys.stdout.isatty', is_tty_mock):
             args = MagicMock(**{
                 'no_wait': False
             })
@@ -313,6 +315,7 @@ class TestWaitForStart(CliTestCase):
 
     def test_wait_for_start_timeout(self):
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
         mock_get_env = MagicMock(return_value=1)
 
         members_url = '/members'
@@ -323,7 +326,8 @@ class TestWaitForStart(CliTestCase):
         with \
                 patch('os.getenv', mock_get_env), \
                 patch('conductr_cli.conduct_url.url', mock_url), \
-                patch('conductr_cli.conduct_request.get', mock_http_get):
+                patch('conductr_cli.conduct_request.get', mock_http_get), \
+                patch('sys.stdout.isatty', is_tty_mock):
             args = MagicMock(**{
                 'no_wait': False
             })

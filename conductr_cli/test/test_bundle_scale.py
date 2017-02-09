@@ -323,6 +323,7 @@ class TestWaitForScale(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = False
@@ -336,7 +337,8 @@ class TestWaitForScale(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_scale.wait_for_scale(bundle_id, 3, args)
 
@@ -396,6 +398,7 @@ class TestWaitForScale(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = False
@@ -408,7 +411,8 @@ class TestWaitForScale(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_scale.wait_for_scale(bundle_id, 3, args)
 
@@ -470,6 +474,7 @@ class TestWaitForScale(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = False
@@ -482,7 +487,8 @@ class TestWaitForScale(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, args)
 
@@ -599,6 +605,7 @@ class TestWaitForScale(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         dcos_mode = False
@@ -611,7 +618,8 @@ class TestWaitForScale(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, args)
 

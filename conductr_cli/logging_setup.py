@@ -77,13 +77,14 @@ def progress(self, message, *args, **kwargs):
     log.info('Hey')
     ```
     """
-    flush_required = kwargs.pop('flush')
+    if sys.stdout.isatty():
+        flush_required = kwargs.pop('flush')
 
-    line_end = '\r'
-    if flush_required:
-        line_end = '\n'
+        line_end = '\r'
+        if flush_required:
+            line_end = '\n'
 
-    self.log(LOG_LEVEL_PROGRESS, '{}{}'.format(message, line_end), *args, **kwargs)
+        self.log(LOG_LEVEL_PROGRESS, '{}{}'.format(message, line_end), *args, **kwargs)
 
 
 def is_verbose_enabled(self):

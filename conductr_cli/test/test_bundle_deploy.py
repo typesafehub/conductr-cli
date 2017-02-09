@@ -175,6 +175,7 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
         resolved_version = {
@@ -197,7 +198,8 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
@@ -302,6 +304,7 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
         resolved_version = {
@@ -324,7 +327,8 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
@@ -539,6 +543,7 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
         resolved_version = {
@@ -561,7 +566,8 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
@@ -673,6 +679,7 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
         stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
         resolved_version = {
@@ -695,7 +702,8 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(ContinuousDeliveryError, bundle_deploy.wait_for_deployment_complete, deployment_id,
                               resolved_version, args)
