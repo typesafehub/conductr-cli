@@ -252,6 +252,17 @@ Execute the following command to run all defined tests:
 
     tox
 
+Python Compatibility
+^^^^^^^^^^^^^^^^^^^^
+
+ConductR CLI supports Python ``3.4`` and above.
+
+When using standard or third-party libraries, always ensure the implementation is compatible with Python ``3.4``.
+
+When browsing the latest Python 3 documentation or arriving to a documentation page from a search result, be sure to check the Python version of the documentation page.
+
+When using a method, check if there's a mention of whether it has been introduced after Python ``3.4``.
+
 Releasing
 ^^^^^^^^^
 
@@ -264,7 +275,23 @@ After CI build is finished for the tagged commit, new version will automatically
 
 **Native**
 
-Pyinstaller version `3.2.1` or above is required. Please visit http://www.pyinstaller.org/ to obtain instructions on how to install it.
+Ensure correct system requirement is used for each target platform.
+
+For MacOS:
+- OSX version ``10.11``: native executables built on ``10.11`` will be compatible with ``10.12``, but the reverse is not true.
+- Python version ``3.5``.
+
+For Linux:
+- Ubuntu version ``14.04.5 LTS``.
+- Python version ``3.4``.
+
+For Windows:
+- Windows 7
+- Python version ``3.5``.
+
+Pyinstaller version ``3.2.1`` or above is required. Please visit http://www.pyinstaller.org/ to obtain instructions on how to install it.
+
+Ensure the native executables are built from tagged release commit.
 
 To build native packages follow the form:
 
@@ -274,7 +301,30 @@ To build native packages follow the form:
     pyinstaller --onefile conductr_cli/shazar.py
     pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py
     
-This will result in standalone images for your current environment being created in a `dist` folder.
+This will result in standalone images for your current environment being created in a ``dist`` folder.
+
+Ensure correct versions are built.
+
+.. code:: bash
+
+    ./dist/sandbox version
+    ./dist/conduct version
+
+For MacOS and Linux, perform sanity check by running:
+
+.. code:: bash
+
+    ./dist/sandbox run 2.0.0 -f visualization
+    ./dist/conduct info
+    ./dist/shazar -h
+
+For Windows, perform the following since the ``sandbox`` command is not supported:
+
+.. code:: bash
+
+    ./dist/conduct info --host [host of some running ConductR]
+    ./dist/shazar -h
+
 
 
 .. |build_status| image:: https://travis-ci.org/typesafehub/conductr-cli.svg?branch=master
