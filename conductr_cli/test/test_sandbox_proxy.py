@@ -167,39 +167,36 @@ class TestIsDockerPresentVm(CliTestCase):
 
 
 class TestSetupHAProxyDirs(CliTestCase):
-    def test_create_dir(self):
+    def test_create_config(self):
         mock_makedirs = MagicMock()
 
-        mock_path = MagicMock()
-        mock_path.exists = MagicMock(return_value=False)
-        mock_path.write_text = MagicMock()
-
-        mock_path_creator = MagicMock(return_value=mock_path)
+        mock_exists = MagicMock(return_value=False)
+        mock_open = MagicMock()
 
         with patch('os.makedirs', mock_makedirs), \
-                patch('pathlib.Path', mock_path_creator):
+                patch('os.path.exists', mock_exists), \
+                patch('builtins.open', mock_open):
             sandbox_proxy.setup_haproxy_dirs()
 
         mock_makedirs.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_DIR, mode=0o700, exist_ok=True)
-        mock_path.exists.assert_called_once_with()
-        mock_path.write_text.assert_called_once_with(sandbox_proxy.DEFAULT_HAPROXY_CFG_ENTRIES)
+        mock_exists.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_PATH)
+        mock_open.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_PATH, 'w')
+        mock_open.return_value.__enter__.return_value.write.assert_called_once_with(sandbox_proxy.DEFAULT_HAPROXY_CFG_ENTRIES)
 
-    def test_not_create_dir(self):
+    def test_not_create_config(self):
         mock_makedirs = MagicMock()
 
-        mock_path = MagicMock()
-        mock_path.exists = MagicMock(return_value=True)
-        mock_path.write_text = MagicMock()
-
-        mock_path_creator = MagicMock(return_value=mock_path)
+        mock_exists = MagicMock(return_value=True)
+        mock_open = MagicMock()
 
         with patch('os.makedirs', mock_makedirs), \
-                patch('pathlib.Path', mock_path_creator):
+                patch('os.path.exists', mock_exists), \
+                patch('builtins.open', mock_open):
             sandbox_proxy.setup_haproxy_dirs()
 
         mock_makedirs.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_DIR, mode=0o700, exist_ok=True)
-        mock_path.exists.assert_called_once_with()
-        mock_path.write_text.assert_not_called()
+        mock_exists.assert_called_once_with(sandbox_proxy.HAPROXY_CFG_PATH)
+        mock_open.assert_not_called()
 
 
 class TestGetRunningHAProxy(CliTestCase):

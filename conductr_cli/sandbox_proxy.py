@@ -4,7 +4,6 @@ from conductr_cli.exceptions import DockerValidationError, NOT_FOUND_ERROR
 from conductr_cli.screen_utils import h1
 from subprocess import CalledProcessError
 import logging
-import pathlib
 import os
 
 
@@ -74,9 +73,9 @@ def setup_haproxy_dirs():
     os.makedirs(HAPROXY_CFG_DIR, exist_ok=True, mode=0o700)
 
     # Correct haproxy.cfg file must exists in order for Docker image to be working
-    haproxy_cfg = pathlib.Path(HAPROXY_CFG_PATH)
-    if not haproxy_cfg.exists():
-        haproxy_cfg.write_text(DEFAULT_HAPROXY_CFG_ENTRIES)
+    if not os.path.exists(HAPROXY_CFG_PATH):
+        with open(HAPROXY_CFG_PATH, 'w') as haproxy_cfg:
+            haproxy_cfg.write(DEFAULT_HAPROXY_CFG_ENTRIES)
 
 
 def get_running_haproxy():
