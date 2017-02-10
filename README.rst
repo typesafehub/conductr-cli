@@ -157,7 +157,7 @@ To enable HTTP Basic Authentication, provide the following settings file in the 
 When the switch ``enabled`` is set to ``true``, HTTP Basic Authentication is enabled. Set to ``false`` to disable.
  Set the ``username`` and ``password`` accordingly. The ``server_ssl_verification_file`` points to an absolute path of the file used to validate the SSL cert of the server.
 
-It's important to note the CLI will fail with an error if HTTP Basic Authentication is enabled without HTTPS.
+If HTTP Basic Authentication is enabled then the CLI will send HTTP requests using HTTPS instead of HTTP.
 
 shazar
 ^^^^^^
