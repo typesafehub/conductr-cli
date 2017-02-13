@@ -59,20 +59,49 @@ def build_parser():
                             dest='envs',
                             action='append',
                             default=[],
-                            help='Set additional environment variables for each ConductR container\n'
+                            help='Set additional environment variables for each ConductR core and agent process\n'
                                  'Defaults to []',
                             metavar='')
     run_parser.add_argument('--env-core',
                             dest='envs_core',
                             action='append',
                             default=[],
-                            help='Set additional environment variables for each ConductR core process. Defaults to [].',
+                            help='Set additional environment variables for each ConductR core process\n'
+                                 'Defaults to [].',
                             metavar='')
     run_parser.add_argument('--env-agent',
                             dest='envs_agent',
                             action='append',
                             default=[],
-                            help='Set additional environment variables for each ConductR agent process. Defaults to [].',
+                            help='Set additional environment variables for each ConductR agent process\n'
+                                 'Defaults to [].',
+                            metavar='')
+    run_parser.add_argument('--arg',
+                            dest='args',
+                            action='append',
+                            default=[],
+                            help='Additional input argument which is passed in as argument to each ConductR core and agent process\n'
+                                 'System properties can be specified through --arg option as well\n'
+                                 'Example: sandbox run IMAGE_VERSION --arg="-Dprop1=value"\n'
+                                 'Defaults to []',
+                            metavar='')
+    run_parser.add_argument('--arg-core',
+                            dest='args_core',
+                            action='append',
+                            default=[],
+                            help='Additional input argument which is passed in as argument to each ConductR core process\n'
+                                 'System properties can be specified through --arg option as well\n'
+                                 'Example: sandbox run IMAGE_VERSION --arg-core="-Dprop1=value"\n'
+                                 'Defaults to []',
+                            metavar='')
+    run_parser.add_argument('--arg-agent',
+                            dest='args_agent',
+                            action='append',
+                            default=[],
+                            help='Additional input argument which is passed in as argument to each ConductR agent process\n'
+                                 'System properties can be specified through --arg option as well\n'
+                                 'Example: sandbox run IMAGE_VERSION --arg-agent="-Dprop1=value"\n'
+                                 'Defaults to []',
                             metavar='')
     run_parser.add_argument('-i', '--image',
                             default=CONDUCTR_DEV_IMAGE,

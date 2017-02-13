@@ -27,7 +27,10 @@ class TestRun(CliTestCase):
         'tmp_dir': tmp_dir,
         'envs': [],
         'envs_core': [],
-        'envs_agent': []
+        'envs_agent': [],
+        'args': [],
+        'args_core': [],
+        'args_agent': []
     }
 
     def test_default_args(self):
@@ -75,12 +78,16 @@ class TestRun(CliTestCase):
                                                      self.tmp_dir,
                                                      [],
                                                      [],
+                                                     [],
+                                                     [],
                                                      bind_addrs,
                                                      [],
                                                      features,
                                                      'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
+                                                      [],
+                                                      [],
                                                       [],
                                                       [],
                                                       bind_addrs,
@@ -140,6 +147,8 @@ class TestRun(CliTestCase):
                                                      self.tmp_dir,
                                                      [],
                                                      [],
+                                                     [],
+                                                     [],
                                                      [bind_addr1],
                                                      [],
                                                      features,
@@ -148,13 +157,15 @@ class TestRun(CliTestCase):
                                                       self.tmp_dir,
                                                       [],
                                                       [],
+                                                      [],
+                                                      [],
                                                       [bind_addr1, bind_addr2, bind_addr3],
                                                       [bind_addr1],
                                                       [],
                                                       features,
                                                       'info')
 
-    def test_custom_env(self):
+    def test_custom_env_args(self):
         mock_validate_jvm_support = MagicMock()
         mock_validate_64bit_support = MagicMock()
 
@@ -179,11 +190,19 @@ class TestRun(CliTestCase):
         envs = ['COMMON=1']
         envs_core = ['CORE=A', 'CORE_B=B']
         envs_agent = ['AGENT=X', 'AGENT_B=Y']
+
+        args_input = ['-Dall=one']
+        args_input_core = ['-Dcore=A']
+        args_input_agent = ['-Dagent=B']
+
         args = self.default_args.copy()
         args.update({
             'envs': envs,
             'envs_core': envs_core,
             'envs_agent': envs_agent,
+            'args': args_input,
+            'args_core': args_input_core,
+            'args_agent': args_input_agent,
         })
         input_args = MagicMock(**args)
         features = []
@@ -207,6 +226,8 @@ class TestRun(CliTestCase):
                                                      self.tmp_dir,
                                                      envs,
                                                      envs_core,
+                                                     args_input,
+                                                     args_input_core,
                                                      [bind_addr1],
                                                      [],
                                                      features,
@@ -215,6 +236,8 @@ class TestRun(CliTestCase):
                                                       self.tmp_dir,
                                                       envs,
                                                       envs_agent,
+                                                      args_input,
+                                                      args_input_agent,
                                                       [bind_addr1],
                                                       [bind_addr1],
                                                       [],
@@ -272,12 +295,16 @@ class TestRun(CliTestCase):
                                                      self.tmp_dir,
                                                      [],
                                                      [],
+                                                     [],
+                                                     [],
                                                      bind_addrs,
                                                      [['role1', 'role2'], ['role3']],
                                                      features,
                                                      'info')
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
+                                                      [],
+                                                      [],
                                                       [],
                                                       [],
                                                       bind_addrs,
@@ -577,6 +604,8 @@ class TestStartCore(CliTestCase):
 
     envs = ['FOO=BAR']
     core_envs = ['CORE=XYZ']
+    args = ['-Dcommon=1']
+    core_args = ['-Dcore=A']
 
     log_level = 'info'
 
@@ -599,6 +628,8 @@ class TestStartCore(CliTestCase):
                                                           self.tmp_dir,
                                                           self.envs,
                                                           self.core_envs,
+                                                          self.args,
+                                                          self.core_args,
                                                           self.addrs,
                                                           conductr_roles,
                                                           features,
@@ -613,7 +644,9 @@ class TestStartCore(CliTestCase):
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[0]),
-                '-Dconductr.resource-provider.match-offer-roles=off'
+                '-Dconductr.resource-provider.match-offer-roles=off',
+                '-Dcommon=1',
+                '-Dcore=A'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr'.format(self.extract_dir),
@@ -621,6 +654,8 @@ class TestStartCore(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[1]),
                 '-Dconductr.resource-provider.match-offer-roles=off',
+                '-Dcommon=1',
+                '-Dcore=A',
                 '--seed', '{}:9004'.format(self.addrs[0])
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
@@ -629,6 +664,8 @@ class TestStartCore(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[2]),
                 '-Dconductr.resource-provider.match-offer-roles=off',
+                '-Dcommon=1',
+                '-Dcore=A',
                 '--seed', '{}:9004'.format(self.addrs[0])
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
@@ -652,6 +689,8 @@ class TestStartCore(CliTestCase):
                                                           self.tmp_dir,
                                                           self.envs,
                                                           self.core_envs,
+                                                          self.args,
+                                                          self.core_args,
                                                           self.addrs,
                                                           conductr_roles,
                                                           features,
@@ -667,6 +706,8 @@ class TestStartCore(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[0]),
                 '-Dconductr.resource-provider.match-offer-roles=on',
+                '-Dcommon=1',
+                '-Dcore=A',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
@@ -676,6 +717,8 @@ class TestStartCore(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[1]),
                 '-Dconductr.resource-provider.match-offer-roles=on',
+                '-Dcommon=1',
+                '-Dcore=A',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on',
                 '--seed', '{}:9004'.format(self.addrs[0])
@@ -686,6 +729,8 @@ class TestStartCore(CliTestCase):
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.ip={}'.format(self.addrs[2]),
                 '-Dconductr.resource-provider.match-offer-roles=on',
+                '-Dcommon=1',
+                '-Dcore=A',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on',
                 '--seed', '{}:9004'.format(self.addrs[0])
@@ -712,6 +757,9 @@ class TestStartAgent(CliTestCase):
     envs = ['FOO=BAR']
     agent_envs = ['AGENT=XYZ']
 
+    args = ['-Dcommon=1']
+    agent_args = ['-Dagent=A']
+
     log_level = 'info'
 
     def test_start_instances(self):
@@ -730,6 +778,8 @@ class TestStartAgent(CliTestCase):
                                                            self.tmp_dir,
                                                            self.envs,
                                                            self.agent_envs,
+                                                           self.args,
+                                                           self.agent_args,
                                                            self.addrs,
                                                            self.addrs,
                                                            conductr_roles=[],
@@ -745,21 +795,27 @@ class TestStartAgent(CliTestCase):
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[0]),
-                '--core-node', '{}:9004'.format(self.addrs[0])
+                '--core-node', '{}:9004'.format(self.addrs[0]),
+                '-Dcommon=1',
+                '-Dagent=A'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
-                '--core-node', '{}:9004'.format(self.addrs[1])
+                '--core-node', '{}:9004'.format(self.addrs[1]),
+                '-Dcommon=1',
+                '-Dagent=A'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[2]),
-                '--core-node', '{}:9004'.format(self.addrs[2])
+                '--core-node', '{}:9004'.format(self.addrs[2]),
+                '-Dcommon=1',
+                '-Dagent=A'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 
@@ -782,6 +838,8 @@ class TestStartAgent(CliTestCase):
                                                            self.tmp_dir,
                                                            self.envs,
                                                            self.agent_envs,
+                                                           self.args,
+                                                           self.agent_args,
                                                            self.addrs,
                                                            self.addrs,
                                                            conductr_roles=conductr_roles,
@@ -802,6 +860,8 @@ class TestStartAgent(CliTestCase):
                 '-Dconductr.agent.roles.1=role2',
                 '-Dconductr.agent.roles.2=elasticsearch',
                 '-Dconductr.agent.roles.3=kibana',
+                '-Dcommon=1',
+                '-Dagent=A',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
@@ -812,6 +872,8 @@ class TestStartAgent(CliTestCase):
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
                 '--core-node', '{}:9004'.format(self.addrs[1]),
                 '-Dconductr.agent.roles.0=role3',
+                '-Dcommon=1',
+                '-Dagent=A',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
@@ -823,6 +885,8 @@ class TestStartAgent(CliTestCase):
                 '--core-node', '{}:9004'.format(self.addrs[2]),
                 '-Dconductr.agent.roles.0=role1',
                 '-Dconductr.agent.roles.1=role2',
+                '-Dcommon=1',
+                '-Dagent=A',
                 '-Dcontrail.syslog.server.port=9200',
                 '-Dcontrail.syslog.server.elasticsearch.enabled=on'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
@@ -847,6 +911,8 @@ class TestStartAgent(CliTestCase):
                                                            self.tmp_dir,
                                                            self.envs,
                                                            self.agent_envs,
+                                                           self.args,
+                                                           self.agent_args,
                                                            self.addrs,
                                                            self.addrs[0:2],
                                                            conductr_roles=conductr_roles,
@@ -862,21 +928,27 @@ class TestStartAgent(CliTestCase):
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[0]),
-                '--core-node', '{}:9004'.format(self.addrs[0])
+                '--core-node', '{}:9004'.format(self.addrs[0]),
+                '-Dcommon=1',
+                '-Dagent=A'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[1]),
-                '--core-node', '{}:9004'.format(self.addrs[1])
+                '--core-node', '{}:9004'.format(self.addrs[1]),
+                '-Dcommon=1',
+                '-Dagent=A'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
             call([
                 '{}/bin/conductr-agent'.format(self.extract_dir),
                 '-Djava.io.tmpdir={}'.format(self.tmp_dir),
                 '-Dakka.loglevel={}'.format(self.log_level),
                 '-Dconductr.agent.ip={}'.format(self.addrs[2]),
-                '--core-node', '{}:9004'.format(self.addrs[0])
+                '--core-node', '{}:9004'.format(self.addrs[0]),
+                '-Dcommon=1',
+                '-Dagent=A'
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 

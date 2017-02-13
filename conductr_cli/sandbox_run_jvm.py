@@ -78,6 +78,8 @@ def run(args, features):
                                      args.tmp_dir,
                                      args.envs,
                                      args.envs_core,
+                                     args.args,
+                                     args.args_core,
                                      core_addrs,
                                      args.conductr_roles,
                                      features,
@@ -88,6 +90,8 @@ def run(args, features):
                                        args.tmp_dir,
                                        args.envs,
                                        args.envs_agent,
+                                       args.args,
+                                       args.args_agent,
                                        bind_addrs[0:nr_of_agent_instances],
                                        core_addrs,
                                        args.conductr_roles,
@@ -427,7 +431,10 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
         raise SandboxImageNotFoundError(artefact_type, image_version)
 
 
-def start_core_instances(core_extracted_dir, tmp_dir, envs, envs_core, bind_addrs, conductr_roles, features, log_level):
+def start_core_instances(core_extracted_dir, tmp_dir,
+                         envs, envs_core,
+                         args, args_core,
+                         bind_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR core process.
 
@@ -440,6 +447,8 @@ def start_core_instances(core_extracted_dir, tmp_dir, envs, envs_core, bind_addr
     :param tmp_dir: temp directory for ConductR core process.
     :param envs: environment variables declared for both with ConductR core and agent process.
     :param envs_core: environment variables declared for ConductR core process.
+    :param args: input arguments for both with ConductR core and agent process.
+    :param args_core: input arguments for ConductR core process.
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :param conductr_roles: list of roles specified by the end user.
@@ -460,7 +469,7 @@ def start_core_instances(core_extracted_dir, tmp_dir, envs, envs_core, bind_addr
     roles_enabled = len(sandbox_common.resolve_conductr_roles_by_instance(conductr_roles,
                                                                           feature_conductr_roles, 0)) > 0
 
-    core_args = flatten([feature.conductr_args() for feature in features])
+    args_feature = flatten([feature.conductr_args() for feature in features])
 
     for idx, bind_addr in enumerate(bind_addrs):
         commands = [
@@ -470,8 +479,12 @@ def start_core_instances(core_extracted_dir, tmp_dir, envs, envs_core, bind_addr
             '-Dconductr.ip={}'.format(bind_addr),
             '-Dconductr.resource-provider.match-offer-roles={}'.format('on' if roles_enabled else 'off')
         ]
-        if core_args:
-            commands.extend(core_args)
+        if args:
+            commands.extend(args)
+        if args_core:
+            commands.extend(args_core)
+        if args_feature:
+            commands.extend(args_feature)
         if idx > 0:
             commands.extend([
                 '--seed',
@@ -490,7 +503,9 @@ def start_core_instances(core_extracted_dir, tmp_dir, envs, envs_core, bind_addr
     return pids
 
 
-def start_agent_instances(agent_extracted_dir, tmp_dir, envs, envs_agent,
+def start_agent_instances(agent_extracted_dir, tmp_dir,
+                          envs, envs_agent,
+                          args, args_agent,
                           bind_addrs, core_addrs, conductr_roles, features, log_level):
     """
     Starts the ConductR agent process.
@@ -504,6 +519,8 @@ def start_agent_instances(agent_extracted_dir, tmp_dir, envs, envs_agent,
     :param tmp_dir: temp dir for ConductR agent directory.
     :param envs: environment variables declared for both with ConductR core and agent process.
     :param envs_agent: environment variables declared for ConductR agent process.
+    :param args: input arguments declared for both with ConductR core and agent process.
+    :param args_agent: input arguments declared for ConductR agent process.
     :param bind_addrs: a list of addresses which the core instances will bind to.
                        If there are 3 instances of core required, there will be 3 addresses supplied.
     :param conductr_roles: list of roles specified by the end user.
@@ -519,7 +536,7 @@ def start_agent_instances(agent_extracted_dir, tmp_dir, envs, envs_agent,
     process_envs = merge_with_os_envs(envs, envs_agent)
     pids = []
     feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
-    agent_args = flatten([feature.conductr_args() for feature in features])
+    args_features = flatten([feature.conductr_args() for feature in features])
     for idx, bind_addr in enumerate(bind_addrs):
         core_addr = core_addrs[idx] if len(core_addrs) > idx else core_addrs[0]
         agent_roles = sandbox_common.resolve_conductr_roles_by_instance(conductr_roles,
@@ -534,7 +551,15 @@ def start_agent_instances(agent_extracted_dir, tmp_dir, envs, envs_agent,
             '{}:{}'.format(core_addr, CONDUCTR_AKKA_REMOTING_PORT)
         ] + [
             '-Dconductr.agent.roles.{}={}'.format(j, role) for j, role in enumerate(agent_roles)
-        ] + agent_args
+        ]
+
+        if args:
+            commands.extend(args)
+        if args_agent:
+            commands.extend(args_agent)
+        if args_features:
+            commands.extend(args_features)
+
         log.info('Starting ConductR agent instance on {}..'.format(bind_addr))
         pid = subprocess.Popen(commands,
                                cwd=agent_extracted_dir,
