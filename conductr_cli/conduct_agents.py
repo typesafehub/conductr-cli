@@ -5,46 +5,6 @@ import logging
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
 
-def calculate_row(entry):
-    return {
-        'address': entry['address'],
-        'roles': ','.join(entry['roles'])
-    }
-
-
-def calculate_rows(args, raw_data):
-    data = [
-        {
-            'address': 'ADDRESS',
-            'roles': 'ROLES'
-        }
-    ]
-
-    for entry in raw_data:
-        if include_entry(args, entry):
-            data.append(calculate_row(entry))
-
-    return data
-
-
-def format_rows(rows):
-    padding = 2
-    column_widths = dict(screen_utils.calc_column_widths(rows), **{'padding': ' ' * padding})
-
-    formatted = []
-
-    for row in rows:
-        formatted.append('''\
-{address: <{address_width}}{padding}\
-{roles: >{roles_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
-
-    return formatted
-
-
-def include_entry(args, entry):
-    return args.role is None or args.role in entry['roles']
-
-
 @validation.handle_connection_error
 @validation.handle_http_error
 def agents(args):
@@ -63,10 +23,29 @@ def agents(args):
 
     raw_data = json.loads(response.text)
 
-    rows = calculate_rows(args, raw_data)
-    formatted_rows = format_rows(rows)
+    data = [
+        {
+            'address': 'ADDRESS',
+            'roles': 'ROLES',
+            'observed': 'OBSERVED BY'
+        }
+    ]
 
-    for line in formatted_rows:
-        log.screen(line)
+    for entry in raw_data:
+        if args.role is None or args.role in entry['roles']:
+            data.append({
+                'address': entry['address'],
+                'roles': ','.join(entry['roles']),
+                'observed': ','.join(map(lambda e: e['node']['uid'], entry['observedBy']))
+            })
+
+    padding = 2
+    column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
+
+    for row in data:
+        log.screen('''\
+{address: <{address_width}}{padding}\
+{roles: <{roles_width}}{padding}\
+{observed: >{observed_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
 
     return True

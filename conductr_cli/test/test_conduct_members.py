@@ -1,13 +1,14 @@
-import json
-
-from conductr_cli.test.cli_test_case import CliTestCase
-from conductr_cli import conduct_members
-from unittest.mock import MagicMock
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli import conduct_members, logging_setup
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+from unittest.mock import patch, MagicMock
 
 
 class TestConductMembersCommand(CliTestCase):
     conductr_auth = ('username', 'password')
     server_verification_file = MagicMock(name='server_verification_file')
+
+    default_url = 'http://127.0.0.1:9005/v2/members'
 
     default_args = {
         'dcos_mode': False,
@@ -15,7 +16,7 @@ class TestConductMembersCommand(CliTestCase):
         'host': '127.0.0.1',
         'port': 9005,
         'base_path': '/',
-        'api_version': '1',
+        'api_version': '2',
         'verbose': False,
         'quiet': False,
         'long_ids': False,
@@ -24,93 +25,123 @@ class TestConductMembersCommand(CliTestCase):
         'role': None
     }
 
-    filtered_by_role_asdf_args = default_args.copy()
-    filtered_by_role_asdf_args.update({'role': 'asdf'})
-
-    filtered_by_role_replicator_args = default_args.copy()
-    filtered_by_role_replicator_args.update({'role': 'replicator'})
-
-    example_json = json.loads(
-        """
+    fake_output = """
+        {
+          "members": [
             {
-                "selfNode": {
-                    "address": "akka.tcp://conductr@127.0.0.1:9004",
-                    "uid": -2007039750
-                },
-                "members": [
-                    {
-                        "node": {
-                            "address": "akka.tcp://conductr@127.0.0.1:9004",
-                            "uid": -2007039750
-                        },
-                        "status": "Up",
-                        "roles": [
-                            "replicator"
-                        ]
-                    },
-                    {
-                        "node": {
-                            "address": "akka.tcp://conductr@127.0.0.2:9004",
-                            "uid": 1902649436
-                        },
-                        "status": "Up",
-                        "roles": [
-                            "replicator"
-                        ]
-                    }
-                ],
-                "unreachable": [
-                    {
-                        "node": {
-                            "address": "akka.tcp://conductr@127.0.0.2:9004",
-                            "uid": 1902649436
-                        },
-                        "observedBy": [
-                            {
-                                "address": "akka.tcp://conductr@127.0.0.1:9004",
-                                "uid": -2007039750
-                            }
-                        ]
-                    }
-                ]
+              "node": {
+                "address": "akka.tcp://conductr@192.168.10.1:9004",
+                "uid": -916664159
+              },
+              "roles": [
+                "replicator"
+              ],
+              "status": "Up"
+            },
+            {
+              "node": {
+                "address": "akka.tcp://conductr@192.168.10.2:9004",
+                "uid": 1129598726
+              },
+              "roles": [
+                "replicator"
+              ],
+              "status": "Up"
+            },
+            {
+              "node": {
+                "address": "akka.tcp://conductr@192.168.10.3:9004",
+                "uid": -543773917
+              },
+              "roles": [
+                "replicator"
+              ],
+              "status": "Up"
             }
-        """
-    )
+          ],
+          "selfNode": {
+            "address": "akka.tcp://conductr@192.168.10.1:9004",
+            "uid": -916664159
+          },
+          "unreachable": []
+        }
+    """
 
-    def test_calculate_rows(self):
-        example_rows = conduct_members.calculate_rows(MagicMock(**self.default_args), self.example_json)
+    def test_basic_usage(self):
+        self.maxDiff = None
 
-        self.assertEqual(example_rows[1], {
-            'address': 'akka.tcp://conductr@127.0.0.1:9004',
-            'uid': -2007039750,
-            'roles': 'replicator',
-            'status': 'Up',
-            'reachable': 'Yes'
-        })
+        http_method = self.respond_with(text=self.fake_output)
 
-        self.assertEqual(example_rows[2], {
-            'address': 'akka.tcp://conductr@127.0.0.2:9004',
-            'uid': 1902649436,
-            'roles': 'replicator',
-            'status': 'Up',
-            'reachable': 'No'
-        })
+        stdout = MagicMock()
 
-    def test_include_entry(self):
-        self.assertFalse(conduct_members.include_entry(MagicMock(**self.filtered_by_role_asdf_args), {
-            'node': {
-                'address': 'akka.tcp://conductr@127.0.0.1:9004',
-                'uid': -2007039750
-            },
-            'status': 'Up',
-            'roles': ['replicator']
-        }))
+        input_args = MagicMock(**self.default_args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_members.members(input_args)
+            self.assertTrue(result)
 
-        self.assertTrue(conduct_members.include_entry(MagicMock(**self.filtered_by_role_replicator_args), {
-            'node': {
-                'address': 'akka.tcp://conductr@127.0.0.1:9004',
-                'uid': -2007039750
-            },
-            'status': 'Up',
-            'roles': ['replicator']
-        }))
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.assertEqual(
+            strip_margin("""|UID         ADDRESS                                ROLES       STATUS  REACHABLE
+                            |-916664159  akka.tcp://conductr@192.168.10.1:9004  replicator  Up            Yes
+                            |1129598726  akka.tcp://conductr@192.168.10.2:9004  replicator  Up            Yes
+                            |-543773917  akka.tcp://conductr@192.168.10.3:9004  replicator  Up            Yes
+                            |"""),
+
+            self.output(stdout)
+        )
+
+    def test_role_no_match(self):
+        self.maxDiff = None
+
+        filtered_by_role_asdf_args = self.default_args.copy()
+        filtered_by_role_asdf_args.update({'role': 'asdf'})
+        http_method = self.respond_with(text=self.fake_output)
+
+        stdout = MagicMock()
+
+        input_args = MagicMock(**filtered_by_role_asdf_args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_members.members(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|UID  ADDRESS  ROLES  STATUS  REACHABLE
+                            |"""),
+
+            self.output(stdout)
+        )
+
+    def test_role_match(self):
+        self.maxDiff = None
+
+        filtered_by_role_replicator_args = self.default_args.copy()
+        filtered_by_role_replicator_args.update({'role': 'replicator'})
+
+        http_method = self.respond_with(text=self.fake_output)
+
+        stdout = MagicMock()
+
+        input_args = MagicMock(**filtered_by_role_replicator_args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_members.members(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.assertEqual(
+            strip_margin("""|UID         ADDRESS                                ROLES       STATUS  REACHABLE
+                            |-916664159  akka.tcp://conductr@192.168.10.1:9004  replicator  Up            Yes
+                            |1129598726  akka.tcp://conductr@192.168.10.2:9004  replicator  Up            Yes
+                            |-543773917  akka.tcp://conductr@192.168.10.3:9004  replicator  Up            Yes
+                            |"""),
+
+            self.output(stdout)
+        )
