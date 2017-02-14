@@ -21,12 +21,14 @@ class TestGetDeploymentStateIp(CliTestCase):
 
     def test_success(self):
         deployment_state = strip_margin(
-            """|{
-               |  "eventType": "deploymentStarted",
-               |  "deploymentId": "abc-def",
-               |  "bundleName": "cassandra",
-               |  "compatibleVersion": "v1"
-               |}
+            """|[
+               |  {
+               |    "eventType": "deploymentStarted",
+               |    "deploymentId": "abc-def",
+               |    "bundleName": "cassandra",
+               |    "compatibleVersion": "v1"
+               |  }
+               |]
                |""")
         http_method = self.respond_with(text=deployment_state)
 
@@ -42,7 +44,7 @@ class TestGetDeploymentStateIp(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_deploy.get_deployment_state('abc-def', input_args)
+            result = bundle_deploy.get_deployment_events('abc-def', input_args)
             self.assertEqual(json.loads(deployment_state), result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/deployments/abc-def', auth=self.conductr_auth,
@@ -63,7 +65,7 @@ class TestGetDeploymentStateIp(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_deploy.get_deployment_state('abc-def', input_args)
+            result = bundle_deploy.get_deployment_events('abc-def', input_args)
             self.assertIsNone(result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/deployments/abc-def', auth=self.conductr_auth,
@@ -77,12 +79,14 @@ class TestGetDeploymentStateHost(CliTestCase):
 
     def test_success(self):
         deployment_state = strip_margin(
-            """|{
-               |  "eventType": "deploymentStarted",
-               |  "deploymentId": "abc-def",
-               |  "bundleName": "cassandra",
-               |  "compatibleVersion": "v1"
-               |}
+            """|[
+               |  {
+               |    "eventType": "deploymentStarted",
+               |    "deploymentId": "abc-def",
+               |    "bundleName": "cassandra",
+               |    "compatibleVersion": "v1"
+               |  }
+               |]
                |""")
         http_method = self.respond_with(text=deployment_state)
 
@@ -98,7 +102,7 @@ class TestGetDeploymentStateHost(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_deploy.get_deployment_state('abc-def', input_args)
+            result = bundle_deploy.get_deployment_events('abc-def', input_args)
             self.assertEqual(json.loads(deployment_state), result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/deployments/abc-def', auth=self.conductr_auth,
@@ -119,7 +123,7 @@ class TestGetDeploymentStateHost(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_deploy.get_deployment_state('abc-def', input_args)
+            result = bundle_deploy.get_deployment_events('abc-def', input_args)
             self.assertIsNone(result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/deployments/abc-def', auth=self.conductr_auth,
@@ -131,22 +135,74 @@ class TestWaitForDeployment(CliTestCase):
     server_verification_file = MagicMock(name='server_verification_file')
 
     def test_wait_for_deployment(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
-            self.create_deployment_state('deploymentStarted'),
-            self.create_deployment_state('bundleDownload'),
-            self.create_deployment_state('configDownload', {
-                'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
-            }),
-            self.create_deployment_state('load', {'configFileName': 'cassandra-prod-config.zip'}),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 1},
-                'bundleNew': {'scale': 0}
-            }),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 0},
-                'bundleNew': {'scale': 1}
-            }),
-            self.create_deployment_state('deploymentSuccess'),
+        get_deployment_events_mock = MagicMock(side_effect=[
+            [
+                self.create_deployment_state(0, 'deploymentStarted')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'})
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                }),
+                self.create_deployment_state(6, 'deploymentSuccess')
+            ],
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -197,13 +253,13 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
             call(deployment_id, args),
             call(deployment_id, args),
@@ -260,22 +316,74 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
     def test_wait_for_deployment_long_ids(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
-            self.create_deployment_state('deploymentStarted'),
-            self.create_deployment_state('bundleDownload'),
-            self.create_deployment_state('configDownload', {
-                'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
-            }),
-            self.create_deployment_state('load', {'configFileName': 'cassandra-prod-config.zip'}),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 1},
-                'bundleNew': {'scale': 0}
-            }),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 0},
-                'bundleNew': {'scale': 1}
-            }),
-            self.create_deployment_state('deploymentSuccess'),
+        get_deployment_events_mock = MagicMock(side_effect=[
+            [
+                self.create_deployment_state(0, 'deploymentStarted')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'})
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                }),
+                self.create_deployment_state(6, 'deploymentSuccess')
+            ],
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -326,13 +434,13 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
             call(deployment_id, args),
             call(deployment_id, args),
@@ -389,8 +497,10 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
     def test_return_immediately_if_deployment_is_successful(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
-            self.create_deployment_state('deploymentSuccess'),
+        get_deployment_events_mock = MagicMock(side_effect=[
+            [
+                self.create_deployment_state(0, 'deploymentSuccess')
+            ],
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -419,12 +529,12 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
         ])
 
@@ -444,8 +554,10 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
     def test_fail_immediately_if_deployment_failed(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
-            self.create_deployment_state('deploymentFailure', {'failure': 'test only'}),
+        get_deployment_events_mock = MagicMock(side_effect=[
+            [
+                self.create_deployment_state(0, 'deploymentFailure', {'failure': 'test only'})
+            ],
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -475,13 +587,13 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout, stderr)
             self.assertRaises(ContinuousDeliveryError, bundle_deploy.wait_for_deployment_complete, deployment_id,
                               resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
         ])
 
@@ -498,23 +610,75 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
     def test_wait_for_deployment_with_initial_deployment_not_found(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
+        get_deployment_events_mock = MagicMock(side_effect=[
             None,
-            self.create_deployment_state('deploymentStarted'),
-            self.create_deployment_state('bundleDownload'),
-            self.create_deployment_state('configDownload', {
-                'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
-            }),
-            self.create_deployment_state('load', {'configFileName': 'cassandra-prod-config.zip'}),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 1},
-                'bundleNew': {'scale': 0}
-            }),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 0},
-                'bundleNew': {'scale': 1}
-            }),
-            self.create_deployment_state('deploymentSuccess'),
+            [
+                self.create_deployment_state(0, 'deploymentStarted')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'})
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                }),
+                self.create_deployment_state(6, 'deploymentSuccess')
+            ],
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -565,13 +729,13 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
             call(deployment_id, args),
             call(deployment_id, args),
@@ -635,22 +799,74 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
     def test_deployment_completed_with_failure(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
-            self.create_deployment_state('deploymentStarted'),
-            self.create_deployment_state('bundleDownload'),
-            self.create_deployment_state('configDownload', {
-                'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
-            }),
-            self.create_deployment_state('load', {'configFileName': 'cassandra-prod-config.zip'}),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 1},
-                'bundleNew': {'scale': 0}
-            }),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 0},
-                'bundleNew': {'scale': 1}
-            }),
-            self.create_deployment_state('deploymentFailure', {'failure': 'test only'}),
+        get_deployment_events_mock = MagicMock(side_effect=[
+            [
+                self.create_deployment_state(0, 'deploymentStarted')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'})
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {
+                    'compatibleBundleId': 'abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de'
+                }),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                }),
+                self.create_deployment_state(6, 'deploymentFailure', {'failure': 'test only'})
+            ],
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -701,14 +917,14 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(ContinuousDeliveryError, bundle_deploy.wait_for_deployment_complete, deployment_id,
                               resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
             call(deployment_id, args),
             call(deployment_id, args),
@@ -762,7 +978,9 @@ class TestWaitForDeployment(CliTestCase):
         ])
 
     def test_periodic_check_between_events(self):
-        get_deployment_state_mock = MagicMock(return_value=self.create_deployment_state('deploymentStarted'))
+        get_deployment_events_mock = MagicMock(return_value=[
+            self.create_deployment_state(0, 'deploymentStarted')
+        ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
@@ -797,13 +1015,13 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_deploy.wait_for_deployment_complete,
                               deployment_id, resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
             call(deployment_id, args),
             call(deployment_id, args),
@@ -818,20 +1036,64 @@ class TestWaitForDeployment(CliTestCase):
                                            verify=self.server_verification_file)
 
     def test_wait_timeout(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
-            self.create_deployment_state('deploymentStarted'),
-            self.create_deployment_state('bundleDownload'),
-            self.create_deployment_state('configDownload', {'compatibleBundleId': 'cassandra'}),
-            self.create_deployment_state('load', {'configFileName': 'cassandra-prod-config.zip'}),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 1},
-                'bundleNew': {'scale': 0}
-            }),
-            self.create_deployment_state('deploy', {
-                'bundleOld': {'scale': 0},
-                'bundleNew': {'scale': 1}
-            }),
-            self.create_deployment_state('deploymentFailure', {'failure': 'test only'}),
+        get_deployment_events_mock = MagicMock(side_effect=[
+            [
+                self.create_deployment_state(0, 'deploymentStarted')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload')
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {'compatibleBundleId': 'cassandra'})
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {'compatibleBundleId': 'cassandra'}),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'})
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {'compatibleBundleId': 'cassandra'}),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {'compatibleBundleId': 'cassandra'}),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                })
+            ],
+            [
+                self.create_deployment_state(0, 'deploymentStarted'),
+                self.create_deployment_state(1, 'bundleDownload'),
+                self.create_deployment_state(2, 'configDownload', {'compatibleBundleId': 'cassandra'}),
+                self.create_deployment_state(3, 'load', {'configFileName': 'cassandra-prod-config.zip'}),
+                self.create_deployment_state(4, 'deploy', {
+                    'bundleOld': {'scale': 1},
+                    'bundleNew': {'scale': 0}
+                }),
+                self.create_deployment_state(5, 'deploy', {
+                    'bundleOld': {'scale': 0},
+                    'bundleNew': {'scale': 1}
+                }),
+                self.create_deployment_state(6, 'deploymentFailure', {'failure': 'test only'})
+            ],
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -881,13 +1143,13 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_deploy.wait_for_deployment_complete, deployment_id,
                               resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
         ])
 
@@ -899,8 +1161,10 @@ class TestWaitForDeployment(CliTestCase):
                                            verify=self.server_verification_file)
 
     def test_no_events(self):
-        get_deployment_state_mock = MagicMock(side_effect=[
-            self.create_deployment_state('deploymentStarted')
+        get_deployment_events_mock = MagicMock(side_effect=[
+            [
+                self.create_deployment_state(0, 'deploymentStarted')
+            ]
         ])
         url_mock = MagicMock(return_value='/deployments/events')
         conductr_host = '10.0.0.1'
@@ -936,13 +1200,13 @@ class TestWaitForDeployment(CliTestCase):
         })
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
-                patch('conductr_cli.bundle_deploy.get_deployment_state', get_deployment_state_mock), \
+                patch('conductr_cli.bundle_deploy.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
             self.assertRaises(WaitTimeoutError, bundle_deploy.wait_for_deployment_complete, deployment_id,
                               resolved_version, args)
 
-        self.assertEqual(get_deployment_state_mock.call_args_list, [
+        self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
         ])
 
@@ -958,8 +1222,11 @@ class TestWaitForDeployment(CliTestCase):
         sse_mock.event = event_name
         return sse_mock
 
-    def create_deployment_state(self, event_type, data={}):
+    def create_deployment_state(self, deployment_sequence, event_type, data={}):
         result = {}
-        result.update({'eventType': event_type})
+        result.update({
+            'eventType': event_type,
+            'deploymentSequence': deployment_sequence
+        })
         result.update(data)
         return result
