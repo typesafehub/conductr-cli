@@ -1,7 +1,7 @@
 import argcomplete
 import argparse
 from conductr_cli import \
-    conduct_deploy, conduct_info, conduct_load, conduct_run, conduct_service_names, \
+    conduct_agents, conduct_deploy, conduct_info, conduct_load, conduct_members, conduct_run, conduct_service_names, \
     conduct_stop, conduct_unload, version, conduct_logs, \
     conduct_events, conduct_acls, conduct_dcos, host, logging_setup, \
     conduct_url, custom_settings
@@ -359,6 +359,32 @@ def build_parser(dcos_mode):
     add_no_wait(deploy_parser)
     add_long_ids(deploy_parser)
     deploy_parser.set_defaults(func=conduct_deploy.deploy)
+
+    # Sub-parser for `members` sub-command
+    members_parser = subparsers.add_parser('members',
+                                           help='Display cluster member information',
+                                           formatter_class=argparse.RawTextHelpFormatter)
+
+    add_default_arguments(members_parser, dcos_mode)
+
+    members_parser.add_argument('--role',
+                                help='Show only agents with supplied role',
+                                default=None)
+
+    members_parser.set_defaults(func=conduct_members.members)
+
+    # Sub-parser for `agents` sub-command
+    agents_parser = subparsers.add_parser('agents',
+                                          help='Display agent information',
+                                          formatter_class=argparse.RawTextHelpFormatter)
+
+    add_default_arguments(agents_parser, dcos_mode)
+
+    agents_parser.add_argument('--role',
+                               help='Show only agents with supplied role',
+                               default=None)
+
+    agents_parser.set_defaults(func=conduct_agents.agents)
 
     return parser
 
