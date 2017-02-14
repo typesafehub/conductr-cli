@@ -44,6 +44,7 @@ def run(args):
     if is_conductr_started:
         if not is_conductr_v1:
             print_proxy_output = sandbox_proxy.start_proxy(proxy_bind_addr=run_result.core_addrs[0],
+                                                           bundle_http_port=args.bundle_http_port,
                                                            proxy_ports=sorted(args.ports))
 
         for feature in features:

@@ -11,6 +11,8 @@ from requests.exceptions import ConnectionError
 
 class TestSandboxRunCommand(CliTestCase):
 
+    bundle_http_port = 9000
+
     default_args = {
         'vm_type': DockerVmType.DOCKER_ENGINE,
         'conductr_roles': [],
@@ -20,7 +22,7 @@ class TestSandboxRunCommand(CliTestCase):
         'nr_of_containers': 1,
         'offline_mode': False,
         'ports': [],
-        'bundle_http_port': 9000,
+        'bundle_http_port': bundle_http_port,
         'features': [],
         'no_wait': False,
         'local_connection': True
@@ -109,7 +111,9 @@ class TestSandboxRunCommand(CliTestCase):
         mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0,
                                                        DEFAULT_WAIT_RETRIES,
                                                        DEFAULT_WAIT_RETRY_INTERVAL)
-        mock_start_proxy.assert_called_once_with(proxy_bind_addr='192.168.1.1', proxy_ports=[3553, 5001])
+        mock_start_proxy.assert_called_once_with(proxy_bind_addr='192.168.1.1',
+                                                 bundle_http_port=self.bundle_http_port,
+                                                 proxy_ports=[3553, 5001])
 
         mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, True, 60)
 
