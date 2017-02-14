@@ -91,10 +91,10 @@ class TestConductAgentsCommand(CliTestCase):
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
-            strip_margin("""|ADDRESS                                                                            ROLES     OBSERVED BY
-                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data   1129598726
-                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web        1129598726
-                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data   1129598726
+            strip_margin("""|ADDRESS                                                                            ROLES                               OBSERVED BY
+                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data  akka.tcp://conductr@192.168.10.2:9004
+                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web       akka.tcp://conductr@192.168.10.2:9004
+                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data  akka.tcp://conductr@192.168.10.2:9004
                             |"""),
             self.output(stdout))
 
@@ -139,10 +139,10 @@ class TestConductAgentsCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|ADDRESS                                                                            ROLES     OBSERVED BY
-                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data   1129598726
-                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web        1129598726
-                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data   1129598726
+            strip_margin("""|ADDRESS                                                                            ROLES                               OBSERVED BY
+                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data  akka.tcp://conductr@192.168.10.2:9004
+                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web       akka.tcp://conductr@192.168.10.2:9004
+                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data  akka.tcp://conductr@192.168.10.2:9004
                             |"""),
             self.output(stdout))
 
@@ -165,8 +165,8 @@ class TestConductAgentsCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|ADDRESS                                                                            ROLES     OBSERVED BY
-                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data   1129598726
-                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data   1129598726
+            strip_margin("""|ADDRESS                                                                            ROLES                               OBSERVED BY
+                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data  akka.tcp://conductr@192.168.10.2:9004
+                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data  akka.tcp://conductr@192.168.10.2:9004
                             |"""),
             self.output(stdout))
