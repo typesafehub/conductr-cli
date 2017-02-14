@@ -36,7 +36,7 @@ def agents(args):
             data.append({
                 'address': entry['address'],
                 'roles': ','.join(entry['roles']),
-                'observed': ','.join(map(lambda e: e['node']['uid'], entry['observedBy']))
+                'observed': ','.join(map(lambda e: e['node']['address'], entry['observedBy']))
             })
 
     padding = 2

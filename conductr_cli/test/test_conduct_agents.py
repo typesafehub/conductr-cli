@@ -38,7 +38,8 @@ class TestConductAgentsCommand(CliTestCase):
               }
             ],
             "roles": [
-              "web"
+              "web",
+              "data"
             ]
           },
           {
@@ -66,7 +67,8 @@ class TestConductAgentsCommand(CliTestCase):
               }
             ],
             "roles": [
-              "web"
+              "web",
+              "data"
             ]
           }
         ]
@@ -89,10 +91,10 @@ class TestConductAgentsCommand(CliTestCase):
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.assertEqual(
-            strip_margin("""|ADDRESS                                                                            ROLES  OBSERVED BY
-                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web     1129598726
-                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web     1129598726
-                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web     1129598726
+            strip_margin("""|ADDRESS                                                                            ROLES     OBSERVED BY
+                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data   1129598726
+                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web        1129598726
+                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data   1129598726
                             |"""),
             self.output(stdout))
 
@@ -137,9 +139,34 @@ class TestConductAgentsCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|ADDRESS                                                                            ROLES  OBSERVED BY
-                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web     1129598726
-                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web     1129598726
-                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web     1129598726
+            strip_margin("""|ADDRESS                                                                            ROLES     OBSERVED BY
+                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data   1129598726
+                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131  web        1129598726
+                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data   1129598726
+                            |"""),
+            self.output(stdout))
+
+    def test_role_match_data(self):
+        self.maxDiff = None
+
+        filtered_by_role_web_args = self.default_args.copy()
+        filtered_by_role_web_args.update({'role': 'data'})
+
+        http_method = self.respond_with(text=self.fake_output)
+
+        stdout = MagicMock()
+
+        input_args = MagicMock(**filtered_by_role_web_args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_agents.agents(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|ADDRESS                                                                            ROLES     OBSERVED BY
+                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  web,data   1129598726
+                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  web,data   1129598726
                             |"""),
             self.output(stdout))
