@@ -31,7 +31,7 @@ class TestConductServiceNamesCommand(CliTestCase):
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS
+            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS  SERVICE LOCATOR URL
                             |"""),
             self.output(stdout))
 
@@ -48,15 +48,15 @@ class TestConductServiceNamesCommand(CliTestCase):
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            as_warn(strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                   STATUS
-                                    |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running
-                                    |comp1-endp2   f804d64    multi-comp-multi-endp-1.0.0   Running
-                                    |comp2-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running
-                                    |comp2-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                                    |comp2-endp2   f804d64    multi-comp-multi-endp-1.0.0   Running
-                                    |comp2-endp2   6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                                    |comp3-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                                    |comp3-endp2   6e4560e    multi2-comp-multi-endp-1.0.0  Running
+            as_warn(strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                   STATUS   SERVICE LOCATOR URL
+                                    |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running  http://127.0.0.1:9008/services/comp1-endp1
+                                    |comp1-endp2   f804d64    multi-comp-multi-endp-1.0.0   Running  http://127.0.0.1:9008/services/comp1-endp2
+                                    |comp2-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running  http://127.0.0.1:9008/services/comp2-endp1
+                                    |comp2-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp2-endp1
+                                    |comp2-endp2   f804d64    multi-comp-multi-endp-1.0.0   Running  http://127.0.0.1:9008/services/comp2-endp2
+                                    |comp2-endp2   6e4560e    multi2-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp2-endp2
+                                    |comp3-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp3-endp1
+                                    |comp3-endp2   6e4560e    multi2-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp3-endp2
                                     |
                                     |Warning: Multiple endpoints found for the following services: /comp2-endp2
                                     |Warning: Service resolution for these services is undefined.
@@ -64,6 +64,7 @@ class TestConductServiceNamesCommand(CliTestCase):
             self.output(stdout))
 
     def test_two_bundles_mult_components_endpoints_no_path(self):
+        self.maxDiff = None
         http_method = self.respond_with_file_contents('data/bundle_with_services/two_bundles_no_path.json')
         stdout = MagicMock()
 
@@ -75,17 +76,18 @@ class TestConductServiceNamesCommand(CliTestCase):
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                   STATUS
-                            |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running
-                            |comp1-endp2   f804d64    multi-comp-multi-endp-1.0.0   Running
-                            |comp2-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running
-                            |comp2-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                            |comp3-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running
-                            |comp3-endp2   6e4560e    multi2-comp-multi-endp-1.0.0  Running
+            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                   STATUS   SERVICE LOCATOR URL
+                            |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running  http://127.0.0.1:9008/services/comp1-endp1
+                            |comp1-endp2   f804d64    multi-comp-multi-endp-1.0.0   Running  http://127.0.0.1:9008/services/comp1-endp2
+                            |comp2-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running  http://127.0.0.1:9008/services/comp2-endp1
+                            |comp2-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp2-endp1
+                            |comp3-endp1   6e4560e    multi2-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp3-endp1
+                            |comp3-endp2   6e4560e    multi2-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp3-endp2
                             |"""),
             self.output(stdout))
 
     def test_one_bundle_starting(self):
+        self.maxDiff = None
         http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
         stdout = MagicMock()
 
@@ -97,15 +99,16 @@ class TestConductServiceNamesCommand(CliTestCase):
 
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                            |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0  Starting
-                            |comp1-endp2   f804d64    multi-comp-multi-endp-1.0.0  Starting
-                            |comp2-endp1   f804d64    multi-comp-multi-endp-1.0.0  Starting
-                            |comp2-endp2   f804d64    multi-comp-multi-endp-1.0.0  Starting
+            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                  STATUS    SERVICE LOCATOR URL
+                            |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp1-endp1
+                            |comp1-endp2   f804d64    multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp1-endp2
+                            |comp2-endp1   f804d64    multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp2-endp1
+                            |comp2-endp2   f804d64    multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp2-endp2
                             |"""),
             self.output(stdout))
 
     def test_one_bundle_starting_long_ids(self):
+        self.maxDiff = None
         http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
         stdout = MagicMock()
 
@@ -120,11 +123,11 @@ class TestConductServiceNamesCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|SERVICE NAME  BUNDLE ID                         BUNDLE NAME                  STATUS
-                   |comp1-endp1   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                   |comp1-endp2   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                   |comp2-endp1   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
-                   |comp2-endp2   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                """|SERVICE NAME  BUNDLE ID                         BUNDLE NAME                  STATUS    SERVICE LOCATOR URL
+                   |comp1-endp1   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp1-endp1
+                   |comp1-endp2   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp1-endp2
+                   |comp2-endp1   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp2-endp1
+                   |comp2-endp2   f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting  http://127.0.0.1:9008/services/comp2-endp2
                    |"""),
             self.output(stdout))
 
@@ -143,7 +146,7 @@ class TestConductServiceNamesCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS
+                """|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS  SERVICE LOCATOR URL
                    |"""),
             self.output(stdout))
 
@@ -160,12 +163,13 @@ class TestConductServiceNamesCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|SERVICE NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0  Running
+                """|SERVICE NAME  BUNDLE ID  BUNDLE NAME                  STATUS   SERVICE LOCATOR URL
+                   |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0  Running  http://127.0.0.1:9008/services/comp1-endp1
                    |"""),
             self.output(stdout))
 
     def test_mix_acls_and_service_uris(self):
+        self.maxDiff = None
         http_method = self.respond_with_file_contents('data/bundle_with_acls_and_services/http_acl_and_service.json')
         stdout = MagicMock()
 
@@ -178,10 +182,10 @@ class TestConductServiceNamesCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|SERVICE NAME  BUNDLE ID  BUNDLE NAME                 STATUS
-                   |my-endp1      f804d64    bundle-with-acl-1.0.0       Running
-                   |my-svc1       ga04d64    bundle-with-services-1.0.0  Starting
-                   |my-svc2       ga04d64    bundle-with-services-1.0.0  Starting
+                """|SERVICE NAME  BUNDLE ID  BUNDLE NAME                 STATUS    SERVICE LOCATOR URL
+                   |my-endp1      f804d64    bundle-with-acl-1.0.0       Running   http://127.0.0.1:9008/services/my-endp1
+                   |my-svc1       ga04d64    bundle-with-services-1.0.0  Starting  http://127.0.0.1:9008/services/my-svc1
+                   |my-svc2       ga04d64    bundle-with-services-1.0.0  Starting  http://127.0.0.1:9008/services/my-svc2
                    |"""),
             self.output(stdout))
 
@@ -203,6 +207,6 @@ class TestConductServiceNamesCommand(CliTestCase):
         default_url = 'http://10.0.0.1:9005/bundles'
         http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         self.assertEqual(
-            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS
+            strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS  SERVICE LOCATOR URL
                             |"""),
             self.output(stdout))

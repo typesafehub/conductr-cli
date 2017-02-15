@@ -40,7 +40,9 @@ def service_names(args):
                 'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(
                     bundle['bundleId']),
                 'bundle_name': bundle['attributes']['bundleName'],
-                'status': execution_status(bundle['bundleExecutions'])
+                'status': execution_status(bundle['bundleExecutions']),
+                'service_locator_url': conduct_url.service_locator_url(get_service_name_from_service_uri(service_uri),
+                                                                       args)
             }
         )
         for bundle in json.loads(response.text) if bundle['bundleExecutions']
@@ -56,7 +58,8 @@ def service_names(args):
                 'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(
                     bundle['bundleId']),
                 'bundle_name': bundle['attributes']['bundleName'],
-                'status': execution_status(bundle['bundleExecutions'])
+                'status': execution_status(bundle['bundleExecutions']),
+                'service_locator_url': conduct_url.service_locator_url(endpoint['serviceName'], args)
             }
         )
         for bundle in json.loads(response.text) if bundle['bundleExecutions']
@@ -77,7 +80,13 @@ def service_names(args):
     duplicate_endpoints = [service for (service, endpoint) in service_endpoints.items() if len(endpoint) > 1] \
         if len(service_endpoints) > 0 else []
 
-    data.insert(0, {'service_name': 'SERVICE NAME', 'bundle_id': 'BUNDLE ID', 'bundle_name': 'BUNDLE NAME', 'status': 'STATUS'})
+    data.insert(0, {
+        'service_name': 'SERVICE NAME',
+        'bundle_id': 'BUNDLE ID',
+        'bundle_name': 'BUNDLE NAME',
+        'status': 'STATUS',
+        'service_locator_url': 'SERVICE LOCATOR URL'
+    })
 
     padding = 2
     column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
@@ -86,7 +95,8 @@ def service_names(args):
             '{service_name: <{service_name_width}}{padding}'
             '{bundle_id: <{bundle_id_width}}{padding}'
             '{bundle_name: <{bundle_name_width}}{padding}'
-            '{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
+            '{status: <{status_width}}{padding}'
+            '{service_locator_url: <{service_locator_url_width}}'.format(**dict(row, **column_widths)).rstrip())
 
     if len(duplicate_endpoints) > 0:
         log.screen('')
