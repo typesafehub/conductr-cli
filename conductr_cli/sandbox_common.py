@@ -56,7 +56,7 @@ def calculate_pids(core_run_dir, agent_run_dir, ps):
             return default
 
         if process['name'] and process['name'] == 'java' and \
-                process['cmdline'] and any('com.typesafe.conductr.ConductR' == e for e in process['cmdline']) and \
+                process['cmdline'] and any('-Dconductr.ip=' in e for e in process['cmdline']) and \
                 any(core_run_dir in e for e in process['cmdline']):
             pids_info.append({
                 'type': 'core',
@@ -65,7 +65,7 @@ def calculate_pids(core_run_dir, agent_run_dir, ps):
             })
         elif process['name'] and process['name'] == 'java' and \
                 process['cmdline'] and \
-                any('com.typesafe.conductr.agent.ConductRAgent' == e for e in process['cmdline']) and \
+                any('-Dconductr.agent.ip=' in e for e in process['cmdline']) and \
                 any(agent_run_dir in e for e in process['cmdline']):
             pids_info.append({
                 'type': 'agent',
