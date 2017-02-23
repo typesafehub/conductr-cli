@@ -32,7 +32,7 @@ def run(args):
     """`sandbox run` command"""
     write_run_command()
     is_conductr_v1 = major_version(args.image_version) == 1
-    features = sandbox_features.collect_features(args.features, args.image_version, args.offline_mode)
+    features = sandbox_features.collect_features(args.features, args.no_default_features, args.image_version, args.offline_mode)
     sandbox = sandbox_run_docker if is_conductr_v1 else sandbox_run_jvm
 
     run_result = sandbox.run(args, features)
