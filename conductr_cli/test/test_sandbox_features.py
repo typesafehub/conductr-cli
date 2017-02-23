@@ -9,31 +9,39 @@ from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 
 class TestFeatures(TestCase):
     def test_collect_features(self):
+        # default features enabled works
         self.assertEqual([LiteLoggingFeature],
-                         [type(f) for f in collect_features([], LATEST_CONDUCTR_VERSION, False)])
+                         [type(f) for f in collect_features([], False, LATEST_CONDUCTR_VERSION, False)])
+
+        # defeault features disabled works
+        self.assertEqual([],
+                         [type(f) for f in collect_features([], True, LATEST_CONDUCTR_VERSION, False)])
 
         self.assertEqual([LiteLoggingFeature, VisualizationFeature],
-                         [type(f) for f in collect_features([['visualization']], LATEST_CONDUCTR_VERSION, False)])
+                         [type(f) for f in collect_features([['visualization']], False, LATEST_CONDUCTR_VERSION, False)])
 
         self.assertEqual([LoggingFeature],
-                         [type(f) for f in collect_features([['logging']], LATEST_CONDUCTR_VERSION, False)])
+                         [type(f) for f in collect_features([['logging']], False, LATEST_CONDUCTR_VERSION, False)])
 
-        # enable dependencies
+        self.assertEqual([LoggingFeature],
+                         [type(f) for f in collect_features([['logging']], True, LATEST_CONDUCTR_VERSION, False)])
+
+    # enable dependencies
         self.assertEqual([LoggingFeature, MonitoringFeature],
-                         [type(f) for f in collect_features([['monitoring']], LATEST_CONDUCTR_VERSION, False)])
+                         [type(f) for f in collect_features([['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
 
         # allow explicit listing of dependencies
         self.assertEqual([LoggingFeature, MonitoringFeature],
-                         [type(f) for f in collect_features([['logging'], ['monitoring']], LATEST_CONDUCTR_VERSION, False)])
+                         [type(f) for f in collect_features([['logging'], ['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
 
         # topological ordering for dependencies
         self.assertEqual([LoggingFeature, MonitoringFeature],
-                         [type(f) for f in collect_features([['monitoring'], ['logging']], LATEST_CONDUCTR_VERSION, False)])
+                         [type(f) for f in collect_features([['monitoring'], ['logging']], False, LATEST_CONDUCTR_VERSION, False)])
 
         # topological ordering and ignore duplicates
         self.assertEqual([LoggingFeature, MonitoringFeature, VisualizationFeature],
                          [type(f) for f in collect_features([['monitoring'], ['visualization'], ['logging'], ['monitoring']],
-                                                            LATEST_CONDUCTR_VERSION, False)])
+                                                            False, LATEST_CONDUCTR_VERSION, False)])
 
     def test_select_bintray_uri(self):
         self.assertEqual('cinnamon-grafana', select_bintray_uri('cinnamon-grafana')['name'])

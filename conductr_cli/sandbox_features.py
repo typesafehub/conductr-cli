@@ -241,7 +241,7 @@ feature_names = [feature.name for feature in feature_classes]
 feature_lookup = {feature.name: feature for feature in feature_classes}
 
 
-def collect_features(feature_args, image_version, offline_mode):
+def collect_features(feature_args, no_default_features, image_version, offline_mode):
     """Collect all enabled features.
 
     Collect features recursively with topological sort to include all dependencies in order.
@@ -250,6 +250,7 @@ def collect_features(feature_args, image_version, offline_mode):
         feature_args (list of list of str): Command-line arguments for features.
             Note that each feature has a list of arguments, the first is the feature name,
             followed by optional arguments. For example: `[['logging'], ['monitoring', '2.1.0']]`.
+        no_default_features: If true, no features will be enabled unless explicitly included
         image_version: Version of the ConductR docker image.
         offline_mode: The offline mode flag
 
@@ -272,13 +273,18 @@ def collect_features(feature_args, image_version, offline_mode):
                 visit(feature.dependencies)
                 features.append(feature)
 
-    def add_logging_lite(features):
-        names = [feature.name for feature in features]
-        if LoggingFeature.name not in names:
-            features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version, offline_mode))
+    def add_default_features(features):
+        def add_logging_lite(features):
+            names = [feature.name for feature in features]
+            if LoggingFeature.name not in names:
+                features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version, offline_mode))
+
+        add_logging_lite(features)
 
     visit(feature_names)
-    add_logging_lite(features)
+
+    if not no_default_features:
+        add_default_features(features)
 
     return features
 

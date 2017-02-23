@@ -162,6 +162,11 @@ def build_parser():
                             help='Features to be enabled\n'
                                  'Available features: ' + ', '.join(feature_names),
                             metavar='')
+    run_parser.add_argument('--no-default-features',
+                            help='Disables default features (currently proxying and lite-logging)',
+                            dest='no_default_features',
+                            default=False,
+                            action='store_true')
     run_parser.add_argument('--no-wait',
                             help='Disables waiting for ConductR to be started in the sandbox',
                             default=False,
