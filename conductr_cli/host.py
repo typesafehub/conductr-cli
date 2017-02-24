@@ -79,12 +79,23 @@ def is_listening(ip_addr, port):
     return result
 
 
-def addr_alias_setup_instructions(addrs, subnet_mask):
+def addr_alias_setup_instructions(addrs, ip_version):
     info_text = 'Whoops. Network address aliases are required ' \
                 'so that the sandbox can operate as a cluster of machines.' + \
                 '\n\nPlease run the following and then try your command again:'
 
     if_name = loopback_device_name()
+
+    # Note that the CIDR notation (e.g. /24) is for identifying the subnet to pick an address from.
+    # For actually setting up the alias, we want to mask out the entire network so the alias only
+    # responds to traffic for its own IP.
+
+    masks = {
+        4: "255.255.255.255",
+        6: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    }
+
+    subnet_mask = masks[ip_version]
 
     if is_linux():
         commands = ['sudo ifconfig {}:{} {} netmask {} up'.format(if_name, idx, addr.exploded, subnet_mask)
