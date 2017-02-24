@@ -230,7 +230,7 @@ class TestIsListening(TestCase):
 
 
 class TestAddrAliasSetupInstructions(TestCase):
-    addr_range_ipv4 = ipaddress.ip_network('192.168.1.0/32')
+    addr_range_ipv4 = ipaddress.ip_network('192.168.1.0/24')
     addrs_ipv4 = [
         ipaddress.ip_address('192.168.1.1'),
         ipaddress.ip_address('192.168.1.2')

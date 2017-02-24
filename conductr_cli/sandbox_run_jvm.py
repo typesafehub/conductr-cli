@@ -440,7 +440,7 @@ def start_core_instances(core_extracted_dir, tmp_dir,
 
     Each instance is allocated an address to be bound based on the address range. For example:
     - Given 3 required core instances
-    - Given the address range input of 192.168.128.0/32
+    - Given the address range input of 192.168.128.0/24
     - The instances will be allocated these addresses: 192.168.128.1, 192.168.128.2, 192.168.128.3
 
     :param core_extracted_dir: the directory containing the files expanded from core's binary .tgz
@@ -512,7 +512,7 @@ def start_agent_instances(agent_extracted_dir, tmp_dir,
 
     Each instance is allocated an address to be bound based on the address range. For example:
     - Given 3 required agent instances
-    - Given the address range input of 192.168.128.0/32
+    - Given the address range input of 192.168.128.0/24
     - The instances will be allocated these addresses: 192.168.128.1, 192.168.128.2, 192.168.128.3
 
     :param agent_extracted_dir: the directory containing the files expanded from agent's binary .tgz
