@@ -196,26 +196,32 @@ def validate_jvm_support():
     try:
         raw_output = subprocess.getoutput('java -version')
         lines = raw_output.splitlines()
-        if lines:
-            first_line = lines[0]
-            parts = first_line.split(' ')
-            if len(parts) == 3:
-                jvm_vendor = parts[0]
 
-                if jvm_vendor in SUPPORTED_JVM_VENDOR:
-                    jvm_version = parts[2].replace('"', '')
-                    jvm_version_parts = jvm_version.split('.')
-                    if len(jvm_version_parts) >= 2:
-                        jvm_version_major = int(jvm_version_parts[0])
-                        jvm_version_minor = int(jvm_version_parts[1])
-                        jvm_version_tuple = (jvm_version_major, jvm_version_minor)
+        parts = None
 
-                        if jvm_version_tuple >= SUPPORTED_JVM_VERSION:
-                            return
-                        else:
-                            raise JavaUnsupportedVersionError(jvm_version)
-                else:
-                    raise JavaUnsupportedVendorError(jvm_vendor)
+        for line in lines:
+            maybe_parts = line.split(' ')
+
+            if len(maybe_parts) == 3 and maybe_parts[1] == 'version':
+                parts = maybe_parts
+
+        if parts is not None:
+            jvm_vendor = parts[0]
+
+            if jvm_vendor in SUPPORTED_JVM_VENDOR:
+                jvm_version = parts[2].replace('"', '')
+                jvm_version_parts = jvm_version.split('.')
+                if len(jvm_version_parts) >= 2:
+                    jvm_version_major = int(jvm_version_parts[0])
+                    jvm_version_minor = int(jvm_version_parts[1])
+                    jvm_version_tuple = (jvm_version_major, jvm_version_minor)
+
+                    if jvm_version_tuple >= SUPPORTED_JVM_VERSION:
+                        return
+                    else:
+                        raise JavaUnsupportedVersionError(jvm_version)
+            else:
+                raise JavaUnsupportedVendorError(jvm_vendor)
 
         raise JavaVersionParseError(raw_output)
     except CalledProcessError:

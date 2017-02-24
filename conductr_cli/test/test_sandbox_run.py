@@ -180,7 +180,7 @@ class TestSandboxRunCommand(CliTestCase):
 
         expected_output = strip_margin(as_error("""|Error: Unable to obtain java version.
                                                    |Error: test
-                                                   |Error: Please ensure Oracle JVM 1.8 and above is installed.
+                                                   |Error: Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.
                                                    |"""))
         self.assertEqual(expected_output, self.output(stderr))
 
@@ -209,7 +209,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
 
         expected_output = strip_margin(as_error("""|Error: Unsupported JVM vendor: test
-                                                   |Error: Please ensure Oracle JVM 1.8 and above is installed.
+                                                   |Error: Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.
                                                    |"""))
         self.assertEqual(expected_output, self.output(stderr))
 
@@ -238,7 +238,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
 
         expected_output = strip_margin(as_error("""|Error: Unsupported JVM version: 1.4
-                                                   |Error: Please ensure Oracle JVM 1.8 and above is installed.
+                                                   |Error: Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.
                                                    |"""))
         self.assertEqual(expected_output, self.output(stderr))
 
@@ -267,7 +267,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
 
         expected_output = strip_margin(as_error("""|Error: Unable to obtain java version from the `java -version` command.
-                                                   |Error: Please ensure Oracle JVM 1.8 and above is installed.
+                                                   |Error: Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.
                                                    |"""))
         self.assertEqual(expected_output, self.output(stderr))
 
