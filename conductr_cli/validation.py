@@ -394,22 +394,22 @@ def handle_jvm_validation_error(func):
             log = get_logger_for_func(func)
             log.error('Unable to obtain java version.')
             log.error(e.message)
-            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            log.error('Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.')
             return False
         except JavaUnsupportedVendorError as e:
             log = get_logger_for_func(func)
             log.error('Unsupported JVM vendor: {}'.format(e.vendor))
-            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            log.error('Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.')
             return False
         except JavaUnsupportedVersionError as e:
             log = get_logger_for_func(func)
             log.error('Unsupported JVM version: {}'.format(e.jvm_version))
-            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            log.error('Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.')
             return False
         except JavaVersionParseError as e:
             log = get_logger_for_func(func)
             log.error('Unable to obtain java version from the `java -version` command.')
-            log.error('Please ensure Oracle JVM 1.8 and above is installed.')
+            log.error('Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.')
             return False
 
         # Do not change the wrapped function name,

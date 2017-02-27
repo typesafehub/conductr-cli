@@ -1175,6 +1175,20 @@ class TestValidateJvm(CliTestCase):
 
         mock_getoutput.assert_called_once_with('java -version')
 
+    def test_supported_with_options_warnings(self):
+        cmd_output = strip_margin("""|Picked up _JAVA_OPTIONS: -Xss8m -Xms512m -Xmx2048m -XX:MaxPermSize=512m -XX:ReservedCodeCacheSize=128m -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC
+                                     |OpenJDK 64-Bit Server VM warning: ignoring option MaxPermSize=512m; support was removed in 8.0
+                                     |openjdk version "1.8.0_121"
+                                     |OpenJDK Runtime Environment (build 1.8.0_121-8u121-b13-3-b13)
+                                     |OpenJDK 64-Bit Server VM (build 25.121-b13, mixed mode)""")
+
+        mock_getoutput = MagicMock(return_value=cmd_output)
+
+        with patch('subprocess.getoutput', mock_getoutput):
+            sandbox_run_jvm.validate_jvm_support()
+
+        mock_getoutput.assert_called_once_with('java -version')
+
     def test_unsupported_vendor(self):
         cmd_output = strip_margin("""|unsupported version "1.2.3.4"
                                      |UnsupportedJDK Runtime Environment (build 1.2.3.4)
