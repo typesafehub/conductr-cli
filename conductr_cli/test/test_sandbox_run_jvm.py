@@ -370,7 +370,7 @@ class TestFindBindAddresses(CliTestCase):
             [ipaddress.ip_address('192.168.1.1'),
              ipaddress.ip_address('192.168.1.2'),
              ipaddress.ip_address('192.168.1.3')],
-            self.addr_range.netmask)
+            4)
 
     def test_partial_found(self):
         mock_can_bind = MagicMock(side_effect=[
@@ -390,7 +390,7 @@ class TestFindBindAddresses(CliTestCase):
         mock_addr_alias_setup_instructions.assert_called_once_with(
             [ipaddress.ip_address('192.168.1.2'),
              ipaddress.ip_address('192.168.1.3')],
-            self.addr_range.netmask)
+            4)
 
 
 class TestObtainSandboxImage(CliTestCase):

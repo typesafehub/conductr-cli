@@ -249,9 +249,9 @@ def find_bind_addrs(nr_of_addrs, addr_range):
 
     These addresses requires setup using ifconfig as such (MacOS example):
 
-    sudo ifconfig lo0 alias 192.168.128.1 255.255.255.0
-    sudo ifconfig lo0 alias 192.168.128.2 255.255.255.0
-    sudo ifconfig lo0 alias 192.168.128.3 255.255.255.0
+    sudo ifconfig lo0 alias 192.168.128.1 255.255.255.255
+    sudo ifconfig lo0 alias 192.168.128.2 255.255.255.255
+    sudo ifconfig lo0 alias 192.168.128.3 255.255.255.255
 
     This command will check if 192.168.128.1, 192.168.128.2, and 192.168.128.3 can be bound. The check is done by
     binding a socket to each of these address using a test port.
@@ -277,7 +277,7 @@ def find_bind_addrs(nr_of_addrs, addr_range):
     if len(addrs_to_bind) < nr_of_addrs:
         nr_of_addr_setup = nr_of_addrs - len(addrs_to_bind)
         setup_instructions = host.addr_alias_setup_instructions(addrs_unavailable[0:nr_of_addr_setup],
-                                                                addr_range.netmask)
+                                                                addr_range.version)
         raise BindAddressNotFound(setup_instructions)
     else:
         return addrs_to_bind
