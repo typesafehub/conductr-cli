@@ -219,11 +219,12 @@ Make sure to install the ``tox`` module for multi-environment testing:
 
   pip3 install tox
 
-Afterwards, install the necessary dependencies for each environment and to set the python versions for ``conductr-cli``:
+Afterwards, install the necessary dependencies for each environment, ensure that the ``.tox`` is not present and to set the python versions for ``conductr-cli``:
 
 .. code:: bash
 
   pip3 install .
+  rm -rf .tox
   pyenv local system 3.4.5 3.5.2
 
 Running
