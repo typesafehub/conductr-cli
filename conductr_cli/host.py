@@ -98,8 +98,8 @@ def addr_alias_setup_instructions(addrs, ip_version):
     subnet_mask = masks[ip_version]
 
     if is_linux():
-        commands = ['sudo ifconfig {}:{} {} netmask {} up'.format(if_name, idx, addr.exploded, subnet_mask)
-                    for idx, addr in enumerate(addrs)]
+        commands = ['sudo ifconfig {}:{} {} netmask {} up'
+                    .format(if_name, int(addr.exploded[-1:]) - 1, addr.exploded, subnet_mask) for addr in addrs]
 
         return '{}\n' \
                '\n' \

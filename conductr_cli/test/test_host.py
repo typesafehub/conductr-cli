@@ -290,6 +290,33 @@ class TestAddrAliasSetupInstructions(TestCase):
         mock_is_linux.assert_called_once_with()
         mock_is_macos.assert_not_called()
 
+    def test_linux_with_bound_addresses(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=True)
+        mock_is_macos = MagicMock(return_value=False)
+        addrs_ipv4 = [
+            ipaddress.ip_address('192.168.1.2'),
+            ipaddress.ip_address('192.168.1.3')
+        ]
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(addrs_ipv4, 4)
+
+            expected_result = strip_margin("""|Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines.
+                                              |
+                                              |Please run the following and then try your command again:
+                                              |
+                                              |sudo ifconfig ix0:1 192.168.1.2 netmask 255.255.255.255 up
+                                              |sudo ifconfig ix0:2 192.168.1.3 netmask 255.255.255.255 up
+                                              |""")
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_not_called()
+
     def test_macos_ipv4(self):
         mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
         mock_is_linux = MagicMock(return_value=False)
@@ -329,6 +356,33 @@ class TestAddrAliasSetupInstructions(TestCase):
                                               |
                                               |sudo ifconfig ix0 alias 0000:0000:0000:0000:0000:ffff:c0a8:0101 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
                                               |sudo ifconfig ix0 alias 0000:0000:0000:0000:0000:ffff:c0a8:0102 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+                                              |""")
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_called_once_with()
+
+    def test_macos_with_bound_address(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=False)
+        mock_is_macos = MagicMock(return_value=True)
+        addrs_ipv4 = [
+            ipaddress.ip_address('192.168.1.2'),
+            ipaddress.ip_address('192.168.1.3')
+        ]
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_setup_instructions(addrs_ipv4, 4)
+
+            expected_result = strip_margin("""|Whoops. Network address aliases are required so that the sandbox can operate as a cluster of machines.
+                                              |
+                                              |Please run the following and then try your command again:
+                                              |
+                                              |sudo ifconfig ix0 alias 192.168.1.2 255.255.255.255
+                                              |sudo ifconfig ix0 alias 192.168.1.3 255.255.255.255
                                               |""")
             self.assertEqual(expected_result, result)
 
