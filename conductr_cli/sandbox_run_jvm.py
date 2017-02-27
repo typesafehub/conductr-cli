@@ -253,7 +253,7 @@ def find_bind_addrs(nr_of_addrs, addr_range):
     - Let's say 3 address aliases is required.
     - The address range is 192.168.128.0/24
 
-    These addresses requires setup using ifconfig as such (MacOS example):
+    These addresses requires setup using ifconfig as such (macOS example):
 
     sudo ifconfig lo0 alias 192.168.128.1 255.255.255.255
     sudo ifconfig lo0 alias 192.168.128.2 255.255.255.255
