@@ -110,21 +110,10 @@ class TestProxyingFeature(TestCase):
 
         proxy_start.assert_called_once_with(proxy_bind_addr='192.168.100.1', bundle_http_port=9000, proxy_ports=[], all_feature_ports=[3000, 5601, 9200, 9999])
 
-    def test_stop_not_running(self):
-        proxy_stop = MagicMock()
+    def test_stop(self):
+        proxy_stop = MagicMock(return_value=True)
 
-        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', lambda: False):
-            feature = ProxyingFeature([], '2.0.0', False)
-
-            self.assertTrue(feature.stop())
-
-        proxy_stop.assert_not_called()
-
-    def test_stop_running(self):
-        proxy_stop = MagicMock()
-
-        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', lambda: True), \
-                patch('conductr_cli.sandbox_proxy.stop_proxy', proxy_stop):
+        with patch('conductr_cli.sandbox_proxy.stop_proxy', proxy_stop):
             feature = ProxyingFeature([], '2.0.0', False)
 
             self.assertTrue(feature.stop())
