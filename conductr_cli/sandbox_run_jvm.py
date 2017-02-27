@@ -1,6 +1,6 @@
 from conductr_cli import conduct_main, host, sandbox_stop, sandbox_common
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, \
-    DEFAULT_SERVICE_LOCATOR_PORT
+    DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
     SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
@@ -23,7 +23,6 @@ import subprocess
 NR_OF_INSTANCE_EXPRESSION = '[0-9]+\\:[0-9]+'
 BIND_TEST_PORT = 19991  # The port used for testing if an address can be bound.
 CONDUCTR_AKKA_REMOTING_PORT = 9004  # The port used by ConductR's Akka remoting.
-CONDUCTR_BUNDLE_PROXY_PORT = 9000  # The default proxy port for bundles.
 NR_OF_PROXY_INSTANCE = 1  # Only run 1 instance of ConductR HAProxy since there's only one HAProxy running per machine.
 SUPPORTED_JVM_VENDOR = ["java", "openjdk"]  # Oracle JVM vendor is `java`, OpenJDK is `openjdk`
 SUPPORTED_JVM_VERSION = (1, 8)  # Supports JVM version 1.8 and above.
@@ -101,7 +100,7 @@ def run(args, features):
     return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs)
 
 
-def log_run_attempt(args, run_result, feature_results, is_conductr_started, is_proxy_started, wait_timeout):
+def log_run_attempt(args, run_result, feature_results, is_conductr_started, feature_provided, wait_timeout):
     """
     Logs the run attempt. This method will be called after the completion of run method and when all the features has
     been started.
@@ -110,7 +109,7 @@ def log_run_attempt(args, run_result, feature_results, is_conductr_started, is_p
     :param run_result: the result from calling sandbox_run_jvm.run() - instance of sandbox_run_jvm.SandboxRunResult
     :param feature_results: the feature result
     :param is_conductr_started: sets to true if sandbox is started
-    :param is_proxy_started: sets to true if proxy is started
+    :param feature_provided: the values provided by all started features
     :param wait_timeout: the amount of timeout waiting for sandbox to be started
     :return:
     """
@@ -127,20 +126,11 @@ def log_run_attempt(args, run_result, feature_results, is_conductr_started, is_p
             log.info('ConductR service locator has been started on:')
             log.info('  {}:{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT))
 
-            log.info(h2('Proxy'))
-            if is_proxy_started:
-                log.info('HAProxy has been started')
-                log.info('Your Bundles are by default accessible on:')
-                log.info('  {}:{}'.format(run_result.host, CONDUCTR_BUNDLE_PROXY_PORT))
-            else:
-                log.info('HAProxy has not been started')
-                log.info('To enable proxying ensure Docker is running and restart the sandbox')
-
             if feature_results:
                 log.info(h2('Features'))
                 log.info('The following feature related bundles have been started:')
                 for feature_result in feature_results:
-                    if is_proxy_started:
+                    if FEATURE_PROVIDE_PROXYING in feature_provided:
                         uri = '{}:{}'.format(run_result.host, feature_result.port)
                     else:
                         uri = '{}:{}/services/{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT,

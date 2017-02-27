@@ -34,3 +34,7 @@ DEFAULT_SANDBOX_PROXY_CONTAINER_NAME = os.getenv('CONDUCTR_SANDBOX_PROXY_CONTAIN
 DEFAULT_ERROR_LOG_FILE = os.path.abspath(os.getenv('CONDUCTR_CLI_ERROR_LOG',
                                                    '{}/errors.log'.format(DEFAULT_CLI_SETTINGS_DIR)))
 DEFAULT_WAIT_TIMEOUT = 60  # seconds
+
+FEATURE_PROVIDE_PROXYING = 'proxying'
+
+FEATURE_PROVIDE_LOGGING = 'logging'

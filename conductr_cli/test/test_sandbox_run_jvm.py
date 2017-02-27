@@ -1,5 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_run_jvm, sandbox_features
+from conductr_cli.constants import FEATURE_PROVIDE_PROXYING
 from conductr_cli.exceptions import BindAddressNotFound, InstanceCountError, BintrayUnreachableError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, \
     SandboxUnsupportedOsArchError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
@@ -983,7 +984,7 @@ class TestLogRunAttempt(CliTestCase):
                 run_result=self.run_result,
                 feature_results=self.feature_results,
                 is_conductr_started=True,
-                is_proxy_started=True,
+                feature_provided=[FEATURE_PROVIDE_PROXYING],
                 wait_timeout=self.wait_timeout
             )
 
@@ -1000,12 +1001,6 @@ class TestLogRunAttempt(CliTestCase):
                                           |  agent instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
                                           |ConductR service locator has been started on:
                                           |  192.168.1.1:9008
-                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
-                                          || Proxy                                          |
-                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
-                                          |HAProxy has been started
-                                          |Your Bundles are by default accessible on:
-                                          |  192.168.1.1:9000
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           || Features                                       |
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
@@ -1042,7 +1037,7 @@ class TestLogRunAttempt(CliTestCase):
                 run_result=run_result,
                 feature_results=self.feature_results,
                 is_conductr_started=True,
-                is_proxy_started=True,
+                feature_provided=[FEATURE_PROVIDE_PROXYING],
                 wait_timeout=self.wait_timeout
             )
 
@@ -1057,12 +1052,6 @@ class TestLogRunAttempt(CliTestCase):
                                           |  agent instance on 192.168.1.1
                                           |ConductR service locator has been started on:
                                           |  192.168.1.1:9008
-                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
-                                          || Proxy                                          |
-                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
-                                          |HAProxy has been started
-                                          |Your Bundles are by default accessible on:
-                                          |  192.168.1.1:9000
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           || Features                                       |
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
@@ -1079,7 +1068,6 @@ class TestLogRunAttempt(CliTestCase):
         self.assertEqual(expected_stdout, self.output(stdout))
 
     def test_log_output_no_proxy(self):
-
         run_mock = MagicMock()
         stdout = MagicMock()
         input_args = MagicMock(**{
@@ -1093,7 +1081,7 @@ class TestLogRunAttempt(CliTestCase):
                 run_result=self.run_result,
                 feature_results=self.feature_results,
                 is_conductr_started=True,
-                is_proxy_started=False,
+                feature_provided=[],
                 wait_timeout=self.wait_timeout
             )
 
@@ -1108,11 +1096,6 @@ class TestLogRunAttempt(CliTestCase):
                                           |  agent instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
                                           |ConductR service locator has been started on:
                                           |  192.168.1.1:9008
-                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
-                                          || Proxy                                          |
-                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
-                                          |HAProxy has not been started
-                                          |To enable proxying ensure Docker is running and restart the sandbox
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           || Features                                       |
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
@@ -1142,7 +1125,7 @@ class TestLogRunAttempt(CliTestCase):
                 run_result=self.run_result,
                 feature_results=self.feature_results,
                 is_conductr_started=True,
-                is_proxy_started=True,
+                feature_provided=[FEATURE_PROVIDE_PROXYING],
                 wait_timeout=self.wait_timeout
             )
 

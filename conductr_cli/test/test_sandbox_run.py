@@ -44,7 +44,8 @@ class TestSandboxRunCommand(CliTestCase):
         conductr_version = '1.1.11'
 
         bundle_start_result = []
-        mock_feature_attrs = {'start.return_value': bundle_start_result}
+        feature_start_result = sandbox_features.FeatureStartResult(True, bundle_start_result)
+        mock_feature_attrs = {'start.return_value': feature_start_result}
         mock_feature = MagicMock(**mock_feature_attrs)
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
@@ -72,7 +73,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0, DEFAULT_WAIT_RETRIES,
                                                        DEFAULT_WAIT_RETRY_INTERVAL)
 
-        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, False, 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, [], 60)
 
         mock_feature.assert_not_called()
 
@@ -80,7 +81,10 @@ class TestSandboxRunCommand(CliTestCase):
         conductr_version = '2.0.0'
 
         bundle_start_result = [sandbox_features.BundleStartResult('bundle-a', 1001)]
-        mock_feature_attrs = {'start.return_value': bundle_start_result}
+
+        feature_start_result = sandbox_features.FeatureStartResult(True, bundle_start_result)
+
+        mock_feature_attrs = {'start.return_value': feature_start_result}
         mock_feature = MagicMock(**mock_feature_attrs)
         mock_feature.ports = [10001]
         features = [mock_feature]
@@ -89,7 +93,6 @@ class TestSandboxRunCommand(CliTestCase):
         sandbox_run_result = sandbox_run_jvm.SandboxRunResult([1001], ['192.168.1.1'], [1002], ['192.168.1.1'])
         mock_sandbox_run_jvm = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
-        mock_start_proxy = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
 
         args = self.default_args.copy()
@@ -102,8 +105,7 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
                 patch('conductr_cli.sandbox_run_jvm.run', mock_sandbox_run_jvm), \
                 patch('conductr_cli.sandbox_run_jvm.log_run_attempt', mock_log_run_attempt), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr), \
-                patch('conductr_cli.sandbox_proxy.start_proxy', mock_start_proxy):
+                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
             self.assertTrue(sandbox_run.run(input_args))
 
         mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
@@ -111,11 +113,8 @@ class TestSandboxRunCommand(CliTestCase):
         mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0,
                                                        DEFAULT_WAIT_RETRIES,
                                                        DEFAULT_WAIT_RETRY_INTERVAL)
-        mock_start_proxy.assert_called_once_with(proxy_bind_addr='192.168.1.1',
-                                                 bundle_http_port=self.bundle_http_port,
-                                                 proxy_ports=[3553, 5001])
 
-        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, True, 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, [], 60)
 
     def test_docker_sandbox_instance_count_error(self):
         conductr_version = '1.1.11'

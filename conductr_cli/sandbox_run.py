@@ -1,4 +1,4 @@
-from conductr_cli import conduct_request, conduct_url, validation, sandbox_features, sandbox_proxy, \
+from conductr_cli import conduct_request, conduct_url, validation, sandbox_features, \
     sandbox_run_docker, sandbox_run_jvm
 from conductr_cli.constants import DEFAULT_CLI_TMP_DIR
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
@@ -40,18 +40,19 @@ def run(args):
     is_conductr_started, wait_timeout = wait_for_start(args, run_result)
 
     feature_results = []
-    print_proxy_output = False
+    feature_provided = []
+
     if is_conductr_started:
-        if not is_conductr_v1:
-            print_proxy_output = sandbox_proxy.start_proxy(proxy_bind_addr=run_result.core_addrs[0],
-                                                           bundle_http_port=args.bundle_http_port,
-                                                           proxy_ports=sorted(args.ports))
-
         for feature in features:
+            feature.conductr_post_start(args, run_result)
             result = feature.start()
-            feature_results += result
+            feature_results += result.bundle_results
 
-    sandbox.log_run_attempt(args, run_result, feature_results, is_conductr_started, print_proxy_output, wait_timeout)
+            if result.started:
+                for provided in feature.provides:
+                    feature_provided.append(provided)
+
+    sandbox.log_run_attempt(args, run_result, feature_results, is_conductr_started, feature_provided, wait_timeout)
 
     return True
 
