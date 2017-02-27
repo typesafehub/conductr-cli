@@ -1,4 +1,4 @@
-from conductr_cli import conduct_main, docker, terminal, sandbox_features
+from conductr_cli import conduct_main, docker, terminal
 from conductr_cli.constants import DEFAULT_SANDBOX_PROXY_DIR, DEFAULT_SANDBOX_PROXY_CONTAINER_NAME
 from conductr_cli.exceptions import DockerValidationError, NOT_FOUND_ERROR
 from conductr_cli.screen_utils import h1
@@ -31,11 +31,11 @@ DEFAULT_HAPROXY_CFG_ENTRIES = 'defaults\n' \
                               ''
 
 
-def start_proxy(proxy_bind_addr, bundle_http_port, proxy_ports):
+def start_proxy(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_ports):
     if is_docker_present():
         setup_haproxy_dirs()
         stop_proxy()
-        start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports)
+        start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_ports)
         start_conductr_haproxy()
         return True
     else:
@@ -82,7 +82,7 @@ def get_running_haproxy():
     return terminal.docker_ps(ps_filter='name={}'.format(DEFAULT_SANDBOX_PROXY_CONTAINER_NAME))
 
 
-def start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports):
+def start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_ports):
     log = logging.getLogger(__name__)
     log.info(h1('Starting HAProxy'))
 
@@ -93,7 +93,7 @@ def start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports):
 
     all_proxy_ports = [bundle_http_port]
     all_proxy_ports.extend(DEFAULT_PROXY_PORTS)
-    all_proxy_ports.extend(sandbox_features.all_feature_ports())
+    all_proxy_ports.extend(all_feature_ports)
     all_proxy_ports.extend(proxy_ports)
     all_proxy_ports = sorted(set(all_proxy_ports))
 

@@ -4,7 +4,7 @@ import ipaddress
 import re
 import sys
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
-from conductr_cli.sandbox_features import feature_names
+from conductr_cli.sandbox_features import feature_conflicts, feature_names
 from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_SANDBOX_TMP_DIR, \
     DEFAULT_OFFLINE_MODE
 from conductr_cli import sandbox_run, sandbox_restart, sandbox_stop, sandbox_common, sandbox_logs, sandbox_ps, \
@@ -286,6 +286,17 @@ def run(_args=[], configure_logging=True):
                 parser.exit('Invalid features: %s (choose from %s)' %
                             (', '.join("'%s'" % f for f in invalid_features),
                              ', '.join("'%s'" % f for f in feature_names)))
+
+            conflicting_features = feature_conflicts([name for name, *args in args.features])
+
+            if len(conflicting_features) > 0:
+                messages = []
+
+                for p, fs in conflicting_features.items():
+                    messages.append("'{0}' provided by ({1})".format(p, ', '.join(map(lambda e: "'" + e + "'", fs))))
+
+                parser.exit('Conflicting features: {0}'.format(', '.join(messages)))
+
         # Docker VM validation
         args.vm_type = docker.vm_type()
         if vars(args).get('func').__name__ == 'run' and major_version(args.image_version) == 1:

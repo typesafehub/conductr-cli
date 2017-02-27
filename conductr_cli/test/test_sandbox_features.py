@@ -1,45 +1,65 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
 from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature,\
-    LoggingFeature, MonitoringFeature, \
-    collect_features, select_bintray_uri
+    LoggingFeature, MonitoringFeature, ProxyingFeature, \
+    calculate_features, collect_features, feature_conflicts, select_bintray_uri
 from conductr_cli.docker import DockerVmType
 from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 
 
 class TestFeatures(TestCase):
+    def test_feature_conflicts(self):
+        # test no features
+        self.assertEqual(feature_conflicts([]), {})
+
+        # test not conflicting features
+        self.assertEqual(feature_conflicts(['proxying', 'lite-logging']), {})
+
+        # basic conflicts
+        self.assertEqual(feature_conflicts(['lite-logging', 'logging']), {'logging': ['lite-logging', 'logging']})
+
+        # conflicts from dependencies
+        self.assertEqual(feature_conflicts(['lite-logging', 'monitoring']), {'logging': ['lite-logging', 'logging']})
+
+    def test_calculate_features(self):
+        self.assertEqual(calculate_features([]), [])
+
+        self.assertEqual(calculate_features(['proxying']), ['proxying'])
+
+        self.assertEqual(calculate_features(['monitoring', 'visualization']), ['logging', 'monitoring', 'visualization'])
+
     def test_collect_features(self):
         # default features enabled works
-        self.assertEqual([LiteLoggingFeature],
+        self.assertEqual([ProxyingFeature, LiteLoggingFeature],
                          [type(f) for f in collect_features([], False, LATEST_CONDUCTR_VERSION, False)])
 
-        # defeault features disabled works
+        # default features disabled works
         self.assertEqual([],
                          [type(f) for f in collect_features([], True, LATEST_CONDUCTR_VERSION, False)])
 
-        self.assertEqual([LiteLoggingFeature, VisualizationFeature],
+        self.assertEqual([ProxyingFeature, LiteLoggingFeature, VisualizationFeature],
                          [type(f) for f in collect_features([['visualization']], False, LATEST_CONDUCTR_VERSION, False)])
 
-        self.assertEqual([LoggingFeature],
+        self.assertEqual([ProxyingFeature, LoggingFeature],
                          [type(f) for f in collect_features([['logging']], False, LATEST_CONDUCTR_VERSION, False)])
 
         self.assertEqual([LoggingFeature],
                          [type(f) for f in collect_features([['logging']], True, LATEST_CONDUCTR_VERSION, False)])
 
-    # enable dependencies
-        self.assertEqual([LoggingFeature, MonitoringFeature],
+        # enable dependencies
+        self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature],
                          [type(f) for f in collect_features([['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
 
         # allow explicit listing of dependencies
-        self.assertEqual([LoggingFeature, MonitoringFeature],
+        self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature],
                          [type(f) for f in collect_features([['logging'], ['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
 
         # topological ordering for dependencies
-        self.assertEqual([LoggingFeature, MonitoringFeature],
+        self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature],
                          [type(f) for f in collect_features([['monitoring'], ['logging']], False, LATEST_CONDUCTR_VERSION, False)])
 
         # topological ordering and ignore duplicates
-        self.assertEqual([LoggingFeature, MonitoringFeature, VisualizationFeature],
+        self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature, VisualizationFeature],
                          [type(f) for f in collect_features([['monitoring'], ['visualization'], ['logging'], ['monitoring']],
                                                             False, LATEST_CONDUCTR_VERSION, False)])
 
@@ -56,6 +76,60 @@ class TestFeatures(TestCase):
                          select_bintray_uri('cinnamon-grafana',
                                             ['snapshot', '2.1.0-20161018-43bab24'],
                                             'lightbend/commercial-monitoring/')['bundle'])
+
+
+class TestProxyingFeature(TestCase):
+    def test_start_v1(self):
+        run_mock = MagicMock()
+
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            ProxyingFeature([], LATEST_CONDUCTR_VERSION, False).start()
+
+        self.assertEqual(run_mock.call_args_list, [])
+
+    def test_start_v2_unconfigured(self):
+        proxy_start = MagicMock()
+
+        with patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start):
+            self.assertFalse(ProxyingFeature([], '2.0.0', False).start().started)
+
+        proxy_start.assert_not_called()
+
+    def test_start_v2_configured_no_docker(self):
+        proxy_start = MagicMock()
+
+        with patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start):
+            feature = ProxyingFeature([], '2.0.0', False)
+
+            feature.conductr_post_start(
+                MagicMock(**{'bundle_http_port': 9000, 'ports': []}),
+                MagicMock(**{'host': '192.168.100.1', 'core_addrs': ['192.168.100.1']})
+            )
+
+            self.assertTrue(feature.start().started)
+
+        proxy_start.assert_called_once_with(proxy_bind_addr='192.168.100.1', bundle_http_port=9000, proxy_ports=[], all_feature_ports=[3000, 5601, 9200, 9999])
+
+    def test_stop_not_running(self):
+        proxy_stop = MagicMock()
+
+        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', lambda: False):
+            feature = ProxyingFeature([], '2.0.0', False)
+
+            self.assertTrue(feature.stop())
+
+        proxy_stop.assert_not_called()
+
+    def test_stop_running(self):
+        proxy_stop = MagicMock()
+
+        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', lambda: True), \
+                patch('conductr_cli.sandbox_proxy.stop_proxy', proxy_stop):
+            feature = ProxyingFeature([], '2.0.0', False)
+
+            self.assertTrue(feature.stop())
+
+        proxy_stop.assert_called_once_with()
 
 
 class TestVisualizationFeature(TestCase):

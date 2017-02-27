@@ -29,7 +29,7 @@ def run(args, features):
     return SandboxRunResult(container_names, host.DOCKER_IP)
 
 
-def log_run_attempt(args, run_result, feature_results, is_conductr_started, is_proxy_started, wait_timeout):
+def log_run_attempt(args, run_result, feature_results, is_conductr_started, feature_provided, wait_timeout):
     container_names = run_result.container_names
     if not args.no_wait:
         log = logging.getLogger(__name__)
