@@ -1,9 +1,11 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
+from conductr_cli import logging_setup
 from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature,\
     LoggingFeature, MonitoringFeature, ProxyingFeature, \
     calculate_features, collect_features, feature_conflicts, select_bintray_uri
 from conductr_cli.docker import DockerVmType
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli.test.data.test_constants import LATEST_CONDUCTR_VERSION
 
 
@@ -78,27 +80,66 @@ class TestFeatures(TestCase):
                                             'lightbend/commercial-monitoring/')['bundle'])
 
 
-class TestProxyingFeature(TestCase):
+class TestProxyingFeature(CliTestCase):
+    logging_setup_args = MagicMock(**{
+        'verbose': False,
+        'quiet': False,
+        'long_ids': False
+    })
+
     def test_start_v1(self):
         run_mock = MagicMock()
+        stdout_mock = MagicMock()
 
         with patch('conductr_cli.conduct_main.run', run_mock):
+            logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             ProxyingFeature([], LATEST_CONDUCTR_VERSION, False).start()
 
         self.assertEqual(run_mock.call_args_list, [])
+        self.assertEqual('', self.output(stdout_mock))
 
     def test_start_v2_unconfigured(self):
         proxy_start = MagicMock()
+        stdout_mock = MagicMock()
 
         with patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start):
+            logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             self.assertFalse(ProxyingFeature([], '2.0.0', False).start().started)
 
         proxy_start.assert_not_called()
+        self.assertEqual('', self.output(stdout_mock))
 
     def test_start_v2_configured_no_docker(self):
-        proxy_start = MagicMock()
+        proxy_start = MagicMock(return_value=False)
+        stdout_mock = MagicMock()
 
         with patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start):
+            logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
+            feature = ProxyingFeature([], '2.0.0', False)
+
+            feature.conductr_post_start(
+                MagicMock(**{'bundle_http_port': 9000, 'ports': []}),
+                MagicMock(**{'host': '192.168.100.1', 'core_addrs': ['192.168.100.1']})
+            )
+
+            self.assertFalse(feature.start().started)
+
+        proxy_start.assert_called_once_with(proxy_bind_addr='192.168.100.1', bundle_http_port=9000, proxy_ports=[], all_feature_ports=[3000, 5601, 9200, 9999])
+        self.assertEqual(
+            strip_margin("""||------------------------------------------------|
+                            || Starting proxying feature                      |
+                            ||------------------------------------------------|
+                            |HAProxy has not been started
+                            |To enable proxying ensure Docker is running and restart the sandbox
+                            |"""),
+            self.output(stdout_mock))
+
+    def test_start_v2_configured_with_docker(self):
+        proxy_start = MagicMock(return_value=True)
+        stdout_mock = MagicMock()
+
+        with patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start):
+            logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             feature = ProxyingFeature([], '2.0.0', False)
 
             feature.conductr_post_start(
@@ -109,6 +150,15 @@ class TestProxyingFeature(TestCase):
             self.assertTrue(feature.start().started)
 
         proxy_start.assert_called_once_with(proxy_bind_addr='192.168.100.1', bundle_http_port=9000, proxy_ports=[], all_feature_ports=[3000, 5601, 9200, 9999])
+        self.assertEqual(
+            strip_margin("""||------------------------------------------------|
+                            || Starting proxying feature                      |
+                            ||------------------------------------------------|
+                            |HAProxy has been started
+                            |Your Bundles are by default accessible on:
+                            |  192.168.100.1:9000
+                            |"""),
+            self.output(stdout_mock))
 
     def test_stop(self):
         proxy_stop = MagicMock(return_value=True)
