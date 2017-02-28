@@ -98,10 +98,7 @@ class ProxyingFeature:
 
     @staticmethod
     def stop():
-        if sandbox_proxy.get_running_haproxy():
-            return sandbox_proxy.stop_proxy()
-        else:
-            return True
+        return sandbox_proxy.stop_proxy()
 
 
 class VisualizationFeature:
