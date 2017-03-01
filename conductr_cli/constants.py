@@ -38,3 +38,6 @@ DEFAULT_WAIT_TIMEOUT = 60  # seconds
 FEATURE_PROVIDE_PROXYING = 'proxying'
 
 FEATURE_PROVIDE_LOGGING = 'logging'
+
+# When reading and writing to IO devices, buffer this many bytes at a time
+IO_CHUNK_SIZE = 32768
