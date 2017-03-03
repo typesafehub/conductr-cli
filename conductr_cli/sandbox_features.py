@@ -55,10 +55,11 @@ class ProxyingFeature:
         self.proxy_ports = None
 
     def conductr_post_start(self, args, run_result):
-        self.host = run_result.host
-        self.proxy_bind_addr = run_result.core_addrs[0]
-        self.bundle_http_port = args.bundle_http_port
-        self.proxy_ports = sorted(args.ports)
+        if major_version(self.image_version) != 1:
+            self.host = run_result.host
+            self.proxy_bind_addr = run_result.core_addrs[0]
+            self.bundle_http_port = args.bundle_http_port
+            self.proxy_ports = sorted(args.ports)
 
     @staticmethod
     def conductr_args():
