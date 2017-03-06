@@ -21,7 +21,8 @@ class CliTestCase(TestCase):
     def respond_with(status_code=200, text=''):
         reasons = {
             200: 'OK',
-            404: 'Not Found'
+            404: 'Not Found',
+            500: 'Error'
         }
 
         response_mock = MagicMock(
