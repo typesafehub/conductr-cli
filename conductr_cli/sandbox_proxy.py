@@ -12,7 +12,7 @@ HAPROXY_DOCKER_IMAGE = 'haproxy:{}'.format(HAPROXY_VERSION)
 
 HAPROXY_CFG_DIR = '{}/haproxy'.format(DEFAULT_SANDBOX_PROXY_DIR)
 HAPROXY_CFG_PATH = '{}/haproxy.cfg'.format(HAPROXY_CFG_DIR)
-DEFAULT_PROXY_PORTS = [80, 443]  # These are the ports which will be opened by default to the proxy.
+DEFAULT_PROXY_PORTS = [80, 443, 8999]  # These are the ports which will be opened by default to the proxy.
 
 # This is the default config which will be supplied so HAProxy instance within Docker can be started.
 DEFAULT_HAPROXY_CFG_ENTRIES = 'defaults\n' \
