@@ -464,3 +464,13 @@ def format_timestamp(timestamp, args):
 
 def get_logger_for_func(func):
     return logging.getLogger('conductr_cli.{}'.format(func.__name__))
+
+
+def argparse_version(value):
+    import argparse
+    import re
+
+    if re.match("^[0-9]+([.][0-9]+)*$", value):
+        return value
+
+    raise argparse.ArgumentTypeError("'%s' is not a valid version number" % value)
