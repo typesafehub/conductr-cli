@@ -42,6 +42,22 @@ class TestConductInfoCommand(CliTestCase):
                             |"""),
             self.output(stdout))
 
+    def test_no_bundles_quiet(self):
+        http_method = self.respond_with(text='[]')
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'quiet': True})
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.assertEqual('', self.output(stdout))
+
     def test_stopped_bundle(self):
         http_method = self.respond_with(text="""[
             {
@@ -103,6 +119,46 @@ class TestConductInfoCommand(CliTestCase):
                             |45e0c47          test-bundle-1     1     0     1
                             |45e0c47-c52e3f8  test-bundle-2     1     1     0
                             |45e0c47          test-bundle-3     1     0     0
+                            |"""),
+            self.output(stdout))
+
+    def test_one_running_one_starting_one_stopped_quiet(self):
+        http_method = self.respond_with(text="""[
+            {
+                "attributes": { "bundleName": "test-bundle-1" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                "bundleExecutions": [{"isStarted": true}],
+                "bundleInstallations": [1]
+            },
+            {
+                "attributes": { "bundleName": "test-bundle-2" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c-c52e3f8d0c58d8aa29ae5e3d774c0e54",
+                "bundleExecutions": [{"isStarted": false}],
+                "bundleInstallations": [1]
+            },
+            {
+                "attributes": { "bundleName": "test-bundle-3" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                "bundleExecutions": [],
+                "bundleInstallations": [1]
+            }
+        ]""")
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'quiet': True})
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|45e0c47
+                            |45e0c47-c52e3f8
+                            |45e0c47
                             |"""),
             self.output(stdout))
 
@@ -204,6 +260,35 @@ class TestConductInfoCommand(CliTestCase):
                             |"""),
             self.output(stdout))
 
+    def test_long_ids_quiet(self):
+        http_method = self.respond_with(text="""[
+            {
+                "attributes": { "bundleName": "test-bundle" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                "bundleExecutions": [],
+                "bundleInstallations": [1]
+            }
+        ]""")
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({
+            'long_ids': True,
+            'quiet': True
+        })
+        input_args = MagicMock(**args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|45e0c477d3e5ea92aa8d85c0d8f3e25c
+                            |"""),
+            self.output(stdout))
+
     def test_double_digits(self):
         http_method = self.respond_with(text="""[
             {
@@ -253,6 +338,34 @@ class TestConductInfoCommand(CliTestCase):
             strip_margin("""|ID         NAME         #REP  #STR  #RUN
                             |! 45e0c47  test-bundle    10     0     0
                             |There are errors: use `conduct events` or `conduct logs` for further information
+                            |"""),
+            self.output(stdout))
+
+    def test_has_error_quiet(self):
+        http_method = self.respond_with(text="""[
+            {
+                "attributes": { "bundleName": "test-bundle" },
+                "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
+                "bundleExecutions": [],
+                "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "hasError": true
+            }
+        ]""")
+        stdout = MagicMock()
+
+        args = self.default_args.copy()
+        args.pop('quiet', True)
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|! 45e0c47
                             |"""),
             self.output(stdout))
 
