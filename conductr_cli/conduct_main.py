@@ -238,8 +238,12 @@ def build_parser(dcos_mode):
     load_parser = subparsers.add_parser('load',
                                         help='Load a bundle',
                                         formatter_class=argparse.RawTextHelpFormatter)
+
     load_parser.add_argument('bundle',
-                             help='The path to the bundle')
+                             nargs=None if sys.stdin.isatty() else '?',
+                             default=None if sys.stdin.isatty() else '-',
+                             help='The path to the bundle. Specify "-" to skip when providing stdin')
+
     load_parser.add_argument('configuration',
                              nargs='?',
                              default=None,

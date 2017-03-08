@@ -35,6 +35,9 @@ DEFAULT_ERROR_LOG_FILE = os.path.abspath(os.getenv('CONDUCTR_CLI_ERROR_LOG',
                                                    '{}/errors.log'.format(DEFAULT_CLI_SETTINGS_DIR)))
 DEFAULT_WAIT_TIMEOUT = 60  # seconds
 
+# Must be able to hold the digest value, name of algorithm, and newline character
+DIGEST_TRAIL_SIZE = 100
+
 FEATURE_PROVIDE_PROXYING = 'proxying'
 
 FEATURE_PROVIDE_LOGGING = 'logging'

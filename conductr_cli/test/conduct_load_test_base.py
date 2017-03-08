@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
-from conductr_cli import conduct_load, logging_setup
+from conductr_cli import bundle_utils, conduct_load, logging_setup
 from conductr_cli.exceptions import BundleResolutionError, WaitTimeoutError
 from zipfile import BadZipFile
 from urllib.error import HTTPError, URLError
@@ -60,7 +60,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -69,13 +69,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -98,7 +100,8 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
+
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -107,13 +110,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('dcos.http.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -133,7 +138,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -145,13 +150,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -171,7 +178,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -183,13 +190,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -209,7 +218,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -221,13 +230,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -247,7 +258,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -260,13 +271,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -288,7 +301,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -301,13 +314,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -334,7 +349,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
         cleanup_old_bundles_mock = MagicMock()
 
@@ -343,13 +358,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -369,7 +386,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         cleanup_old_bundles_mock = MagicMock()
 
         args = self.default_args.copy()
@@ -380,12 +397,14 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -404,7 +423,7 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         cleanup_old_bundles_mock = MagicMock()
         wait_for_installation_mock = MagicMock()
 
@@ -416,13 +435,15 @@ class ConductLoadTestBase(CliTestCase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, True)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -442,18 +463,20 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.respond_with(404)
         stdout = MagicMock()
         stderr = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_load.load(input_args)
             self.assertFalse(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -474,18 +497,20 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.raise_connection_error('test reason', self.default_url)
         stdout = MagicMock()
         stderr = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_load.load(input_args)
             self.assertFalse(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -505,18 +530,20 @@ class ConductLoadTestBase(CliTestCase):
         http_method = self.raise_read_timeout_error('test reason', self.default_url)
         stdout = MagicMock()
         stderr = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock):
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_load.load(input_args)
             self.assertFalse(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
@@ -580,17 +607,21 @@ class ConductLoadTestBase(CliTestCase):
     def base_test_failure_bad_zip(self):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
         stderr = MagicMock()
-        open_mock = MagicMock(side_effect=BadZipFile('test bad zip error'))
+        bundle_open_mock = MagicMock(side_effect=BadZipFile('test bad zip error'))
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
-                patch('builtins.open', open_mock):
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock):
             logging_setup.configure_logging(MagicMock(**self.default_args), err_output=stderr)
             result = conduct_load.load(MagicMock(**self.default_args))
             self.assertFalse(result)
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
                                                self.bundle_file, self.offline_mode)
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(
+            self.bundle_file_name,
+            self.bundle_file,
+            bundle_utils.conf(self.bundle_file)
+        )
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Problem with the bundle: test bad zip error
@@ -637,20 +668,22 @@ class ConductLoadTestBase(CliTestCase):
         create_multipart_mock = MagicMock(return_value=self.multipart_mock)
         http_method = self.respond_with(200, self.default_response)
         stderr = MagicMock()
-        open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock(side_effect=WaitTimeoutError('test timeout'))
 
         input_args = MagicMock(**self.default_args)
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
-                patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, err_output=stderr)
             result = conduct_load.load(input_args)
             self.assertFalse(result)
 
-        open_mock.assert_called_with(self.bundle_file, 'rb')
+        bundle_open_mock.assert_called_with(self.bundle_file_name,
+                                            self.bundle_file,
+                                            bundle_utils.conf(self.bundle_file))
         create_multipart_mock.assert_called_with(self.conduct_load_logger, self.default_files)
         http_method.assert_called_with(self.default_url,
                                        data=self.multipart_mock,
