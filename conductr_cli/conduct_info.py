@@ -1,5 +1,6 @@
-from conductr_cli import bundle_utils, conduct_request, conduct_url, validation, screen_utils
+from conductr_cli import bundle_utils, conduct_request, conduct_url, license, validation, screen_utils
 from conductr_cli.conduct_url import conductr_host
+from conductr_cli.license import UNLICENSED_DISPLAY_TEXT
 import json
 import logging
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
@@ -19,15 +20,31 @@ def info(args):
     if log.is_verbose_enabled():
         log.verbose(validation.pretty_json(response.text))
 
+    bundles = json.loads(response.text)
+    if args.quiet:
+        display_quiet(args, bundles)
+    else:
+        conductr_license = license.get_license(args)
+        display_default(args, conductr_license, bundles)
+
+    return True
+
+
+def display_default(args, conductr_license, bundles):
+    log = logging.getLogger(__name__)
+
+    license_to_display = license.format_license(conductr_license) if conductr_license \
+        else UNLICENSED_DISPLAY_TEXT
+    log.screen('\n{}\n'.format(license_to_display))
+
     data = [
         {
-            'id': ('! ' if bundle.get('hasError', False) else '') +
-                  (bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId'])),
+            'id': display_bundle_id(args, bundle),
             'name': bundle['attributes']['bundleName'],
             'replications': len(bundle['bundleInstallations']),
             'starting': sum([not execution['isStarted'] for execution in bundle['bundleExecutions']]),
             'executions': sum([execution['isStarted'] for execution in bundle['bundleExecutions']])
-        } for bundle in json.loads(response.text)
+        } for bundle in bundles
     ]
     data.insert(0, {'id': 'ID', 'name': 'NAME', 'replications': '#REP', 'starting': '#STR', 'executions': '#RUN'})
 
@@ -46,4 +63,15 @@ def info(args):
     if has_error:
         log.screen('There are errors: use `conduct events` or `conduct logs` for further information')
 
-    return True
+
+def display_quiet(args, bundles):
+    log = logging.getLogger(__name__)
+
+    for bundle in bundles:
+        log.screen(display_bundle_id(args, bundle))
+
+
+def display_bundle_id(args, bundle):
+    bundle_id = bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId'])
+    has_error_display = '! ' if bundle.get('hasError', False) else ''
+    return '{}{}'.format(has_error_display, bundle_id)
