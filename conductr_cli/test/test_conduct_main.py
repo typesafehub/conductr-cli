@@ -177,6 +177,37 @@ class TestConduct(TestCase):
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.bundle, 'cassandra')
 
+    def test_parser_load_license(self):
+        args = self.parser.parse_args('load-license'.split())
+
+        self.assertEqual(args.func.__name__, 'load_license')
+        self.assertEqual(args.host, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertFalse(args.offline_mode)
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+
+    def test_parser_load_license_custom_args(self):
+        args = self.parser.parse_args('load-license '
+                                      '--offline '
+                                      '--host 127.0.0.1 '
+                                      '--port 29005 '
+                                      '--api-version 1 '
+                                      '--settings-dir /tmp '
+                                      '--custom-settings-file /tmp/foo.conf '
+                                      '--custom-plugins-dir /tmp/plugins'.split())
+
+        self.assertEqual(args.func.__name__, 'load_license')
+        self.assertEqual(args.host, '127.0.0.1')
+        self.assertEqual(args.port, 29005)
+        self.assertEqual(args.api_version, '1')
+        self.assertTrue(args.offline_mode)
+        self.assertEqual(args.cli_settings_dir, '/tmp')
+        self.assertEqual(args.custom_settings_file, '/tmp/foo.conf')
+        self.assertEqual(args.custom_plugins_dir, '/tmp/plugins')
+
     def test_default_with_dcos(self):
         dcos_parser = build_parser(True)
 

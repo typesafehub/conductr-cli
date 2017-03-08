@@ -173,3 +173,11 @@ class SandboxUnsupportedOsArchError(Exception):
 
     def __str(self):
         return repr(self)
+
+
+class LicenseLoadError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str(self):
+        return repr(os.linesep.join(self.message))

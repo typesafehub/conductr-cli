@@ -33,6 +33,8 @@ DEFAULT_SANDBOX_PROXY_DIR = os.path.abspath(os.getenv('CONDUCTR_SANDBOX_PROXY_DI
 DEFAULT_SANDBOX_PROXY_CONTAINER_NAME = os.getenv('CONDUCTR_SANDBOX_PROXY_CONTAINER_NAME', 'sandbox-haproxy')
 DEFAULT_ERROR_LOG_FILE = os.path.abspath(os.getenv('CONDUCTR_CLI_ERROR_LOG',
                                                    '{}/errors.log'.format(DEFAULT_CLI_SETTINGS_DIR)))
+DEFAULT_LICENSE_FILE = os.path.abspath(os.getenv('CONDUCTR_LICENSE_FILE',
+                                                 '{}/.lightbend/license'.format(os.path.expanduser('~'))))
 DEFAULT_WAIT_TIMEOUT = 60  # seconds
 
 FEATURE_PROVIDE_PROXYING = 'proxying'

@@ -2,9 +2,8 @@ import argcomplete
 import argparse
 from conductr_cli import \
     conduct_agents, conduct_deploy, conduct_info, conduct_load, conduct_members, conduct_run, conduct_service_names, \
-    conduct_stop, conduct_unload, version, conduct_logs, \
-    conduct_events, conduct_acls, conduct_dcos, host, logging_setup, \
-    conduct_url, custom_settings
+    conduct_stop, conduct_unload, version, conduct_logs, conduct_events, conduct_acls, conduct_dcos, \
+    conduct_load_license, host, logging_setup, conduct_url, custom_settings
 from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
@@ -179,6 +178,17 @@ def add_date_args(sub_parser):
                             help='Convert the date/time of the events to UTC')
 
 
+def add_offline_mode(sub_parser):
+    sub_parser.add_argument('--offline',
+                            default=DEFAULT_OFFLINE_MODE,
+                            dest='offline_mode',
+                            action='store_true',
+                            help='Enables offline mode to resolve bundles only locally\n'
+                                 'either by file uri or from the cache directory\n'
+                                 'True if CONDUCTR_OFFLINE_MODE environment variable is set\n'
+                                 'False if --offline flag not specified and environment variable not set')
+
+
 def add_default_arguments(sub_parser, dcos_mode):
     add_dcos_mode_args(sub_parser, dcos_mode)
     add_verbose(sub_parser)
@@ -244,14 +254,7 @@ def build_parser(dcos_mode):
                              nargs='?',
                              default=None,
                              help='The optional configuration for the bundle')
-    load_parser.add_argument('--offline',
-                             default=DEFAULT_OFFLINE_MODE,
-                             dest='offline_mode',
-                             action='store_true',
-                             help='Enables offline mode to resolve bundles only locally\n'
-                                  'either by file uri or from the cache directory\n'
-                                  'True if CONDUCTR_OFFLINE_MODE environment variable is set\n'
-                                  'False if --offline flag not specified and environment variable not set')
+    add_offline_mode(load_parser)
     add_default_arguments(load_parser, dcos_mode)
     add_bundle_resolve_cache_dir(load_parser)
     add_configuration_resolve_cache_dir(load_parser)
@@ -385,6 +388,20 @@ def build_parser(dcos_mode):
                                default=None)
 
     agents_parser.set_defaults(func=conduct_agents.agents)
+
+    # Sub-parser for `load-license` sub-command
+    load_license_parser = subparsers.add_parser('load-license',
+                                                help='Obtains license from Lightbend.com and '
+                                                     'loads the license into ConductR',
+                                                formatter_class=argparse.RawTextHelpFormatter)
+
+    add_dcos_mode_args(load_license_parser, dcos_mode)
+    add_api_version(load_license_parser)
+    add_offline_mode(load_license_parser)
+    add_cli_settings_dir(load_license_parser)
+    add_custom_settings_file(load_license_parser)
+    add_custom_plugins_dir(load_license_parser)
+    load_license_parser.set_defaults(func=conduct_load_license.load_license)
 
     return parser
 
