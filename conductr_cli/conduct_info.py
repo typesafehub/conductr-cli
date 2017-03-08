@@ -1,5 +1,6 @@
-from conductr_cli import bundle_utils, conduct_request, conduct_url, validation, screen_utils
+from conductr_cli import bundle_utils, conduct_request, conduct_url, license, validation, screen_utils
 from conductr_cli.conduct_url import conductr_host
+from conductr_cli.license import UNLICENSED_DISPLAY_TEXT
 import json
 import logging
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
@@ -23,13 +24,18 @@ def info(args):
     if args.quiet:
         display_quiet(args, bundles)
     else:
-        display_default(args, bundles)
+        conductr_license = license.get_license(args)
+        display_default(args, conductr_license, bundles)
 
     return True
 
 
-def display_default(args, bundles):
+def display_default(args, conductr_license, bundles):
     log = logging.getLogger(__name__)
+
+    license_to_display = license.format_license(conductr_license) if conductr_license \
+        else UNLICENSED_DISPLAY_TEXT
+    log.screen('\n{}\n'.format(license_to_display))
 
     data = [
         {
