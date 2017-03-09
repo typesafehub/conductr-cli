@@ -1,10 +1,10 @@
-from conductr_cli import conduct_main, host, sandbox_stop, sandbox_common
+from conductr_cli import conduct_main, host, license_validation, sandbox_stop, sandbox_common
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, \
-    DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING
+    DEFAULT_LICENSE_FILE, DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
     SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError
+    JavaVersionParseError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
 from conductr_cli.sandbox_common import flatten
@@ -83,6 +83,15 @@ def run(args, features):
                                      args.conductr_roles,
                                      features,
                                      args.log_level)
+
+    try:
+        license_validation.validate_license(args.image_version,
+                                            core_addrs[0],
+                                            nr_of_agent_instances,
+                                            DEFAULT_LICENSE_FILE)
+    except LicenseValidationError as e:
+        sandbox_stop.stop(args)
+        raise e
 
     agent_addrs = bind_addrs[0:nr_of_agent_instances]
     agent_pids = start_agent_instances(agent_extracted_dir,

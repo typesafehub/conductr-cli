@@ -82,7 +82,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|UNLICENSED - please use "conduct load-license" to use more than one agent. Additional agents are freely available for registered users.
+            strip_margin("""|UNLICENSED - please use "conduct load-license" to use more agents. Additional agents are freely available for registered users.
                             |Licensed To: unknown
                             |Max ConductR agents: 1
                             |ConductR Version(s): 2.1.*

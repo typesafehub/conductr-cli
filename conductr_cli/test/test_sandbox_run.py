@@ -3,10 +3,8 @@ from conductr_cli import logging_setup, sandbox_run, sandbox_run_docker, sandbox
 from conductr_cli.docker import DockerVmType
 from conductr_cli.exceptions import InstanceCountError, JavaCallError, JavaUnsupportedVendorError, \
     JavaUnsupportedVersionError, JavaVersionParseError
-from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
-from conductr_cli.sandbox_run import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
-from unittest.mock import call, patch, MagicMock
-from requests.exceptions import ConnectionError
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
+from unittest.mock import patch, MagicMock
 
 
 class TestSandboxRunCommand(CliTestCase):
@@ -64,13 +62,13 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
                 patch('conductr_cli.sandbox_run_docker.run', mock_sandbox_run_docker), \
                 patch('conductr_cli.sandbox_run_docker.log_run_attempt', mock_log_run_attempt), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
+                patch('conductr_cli.sandbox_common.wait_for_conductr', mock_wait_for_conductr):
             self.assertTrue(sandbox_run.run(input_args))
 
         mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
-        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0, DEFAULT_WAIT_RETRIES,
-                                                       DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_wait_for_conductr.assert_called_once_with(sandbox_run_result, 0, DEFAULT_WAIT_RETRIES,
+                                                       DEFAULT_WAIT_RETRY_INTERVAL, log_output=True)
 
         mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, [], 60)
 
@@ -104,14 +102,13 @@ class TestSandboxRunCommand(CliTestCase):
                 patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
                 patch('conductr_cli.sandbox_run_jvm.run', mock_sandbox_run_jvm), \
                 patch('conductr_cli.sandbox_run_jvm.log_run_attempt', mock_log_run_attempt), \
-                patch('conductr_cli.sandbox_run.wait_for_conductr', mock_wait_for_conductr):
+                patch('conductr_cli.sandbox_common.wait_for_conductr', mock_wait_for_conductr):
             self.assertTrue(sandbox_run.run(input_args))
 
         mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
 
-        mock_wait_for_conductr.assert_called_once_with(input_args, sandbox_run_result, 0,
-                                                       DEFAULT_WAIT_RETRIES,
-                                                       DEFAULT_WAIT_RETRY_INTERVAL)
+        mock_wait_for_conductr.assert_called_once_with(sandbox_run_result, 0, DEFAULT_WAIT_RETRIES,
+                                                       DEFAULT_WAIT_RETRY_INTERVAL, log_output=True)
 
         mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, [], 60)
 
@@ -268,89 +265,3 @@ class TestSandboxRunCommand(CliTestCase):
                                                    |Error: Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.
                                                    |"""))
         self.assertEqual(expected_output, self.output(stderr))
-
-
-class TestWaitForStart(CliTestCase):
-    def test_wait_for_start(self):
-        stdout = MagicMock()
-        is_tty_mock = MagicMock(return_value=True)
-        mock_get_env = MagicMock(return_value=1)
-
-        members_url = '/members'
-        mock_url = MagicMock(return_value=members_url)
-
-        mock_http_get = MagicMock(return_value='test only')
-
-        with \
-                patch('os.getenv', mock_get_env), \
-                patch('conductr_cli.conduct_url.url', mock_url), \
-                patch('conductr_cli.conduct_request.get', mock_http_get), \
-                patch('sys.stdout.isatty', is_tty_mock):
-            args = MagicMock(**{})
-            logging_setup.configure_logging(args, stdout)
-            run_result = MagicMock(**{
-                'host': '10.0.0.1'
-            })
-            result = sandbox_run.wait_for_start(args, run_result)
-            self.assertEqual((True, 1.0), result)
-
-        self.assertEqual([
-            call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),
-            call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
-        ], mock_get_env.call_args_list)
-
-        mock_http_get.assert_called_once_with(dcos_mode=False, host='10.0.0.1', timeout=5, url='/members')
-
-        self.assertEqual([
-            call.write('Waiting for ConductR to start\r'),
-            call.write(''),
-            call.flush(),
-            call.write('Waiting for ConductR to start.\r'),
-            call.write(''),
-            call.flush(),
-            call.write('Waiting for ConductR to start.\n'),
-            call.write(''),
-            call.flush()
-        ], stdout.method_calls)
-
-    def test_wait_for_start_timeout(self):
-        stdout = MagicMock()
-        is_tty_mock = MagicMock(return_value=True)
-        mock_get_env = MagicMock(return_value=1)
-
-        members_url = '/members'
-        mock_url = MagicMock(return_value=members_url)
-
-        mock_http_get = MagicMock(side_effect=[ConnectionError()])
-
-        with \
-                patch('os.getenv', mock_get_env), \
-                patch('conductr_cli.conduct_url.url', mock_url), \
-                patch('conductr_cli.conduct_request.get', mock_http_get), \
-                patch('sys.stdout.isatty', is_tty_mock):
-            args = MagicMock(**{})
-            logging_setup.configure_logging(args, stdout)
-            run_result = MagicMock(**{
-                'host': '10.0.0.1'
-            })
-            result = sandbox_run.wait_for_start(args, run_result)
-            self.assertEqual((False, 1.0), result)
-
-        self.assertEqual([
-            call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),
-            call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
-        ], mock_get_env.call_args_list)
-
-        mock_http_get.assert_called_once_with(dcos_mode=False, host='10.0.0.1', timeout=5, url='/members')
-
-        self.assertEqual([
-            call.write('Waiting for ConductR to start\r'),
-            call.write(''),
-            call.flush(),
-            call.write('Waiting for ConductR to start.\r'),
-            call.write(''),
-            call.flush(),
-            call.write('Waiting for ConductR to start.\n'),
-            call.write(''),
-            call.flush()
-        ], stdout.method_calls)

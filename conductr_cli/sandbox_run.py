@@ -1,19 +1,10 @@
-from conductr_cli import conduct_request, conduct_url, validation, sandbox_features, \
+from conductr_cli import validation, sandbox_common, sandbox_features, \
     sandbox_run_docker, sandbox_run_jvm
 from conductr_cli.constants import DEFAULT_CLI_TMP_DIR
-from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.sandbox_common import major_version, LATEST_SANDBOX_RUN_ARGS_FILE
-from requests.exceptions import ConnectionError
 
-import logging
 import os
-import time
 import sys
-
-
-# Will retry 30 times, every two seconds
-DEFAULT_WAIT_RETRIES = 30
-DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 
 
 @validation.handle_connection_error
@@ -28,6 +19,7 @@ DEFAULT_WAIT_RETRY_INTERVAL = 2.0
 @validation.handle_bintray_unreachable_error
 @validation.handle_jvm_validation_error
 @validation.handle_docker_validation_error
+@validation.handle_license_validation_error
 def run(args):
     """`sandbox run` command"""
     write_run_command()
@@ -37,7 +29,7 @@ def run(args):
 
     run_result = sandbox.run(args, features)
 
-    is_conductr_started, wait_timeout = wait_for_start(args, run_result)
+    is_conductr_started, wait_timeout = sandbox_common.wait_for_start(run_result)
 
     feature_results = []
     feature_provided = []
@@ -55,34 +47,6 @@ def run(args):
     sandbox.log_run_attempt(args, run_result, feature_results, is_conductr_started, feature_provided, wait_timeout)
 
     return True
-
-
-def wait_for_start(args, run_result):
-    retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
-    interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
-    return wait_for_conductr(args, run_result, 0, retries, interval), retries * interval
-
-
-def wait_for_conductr(args, run_result, current_retry, max_retries, interval):
-    log = logging.getLogger(__name__)
-    last_message = 'Waiting for ConductR to start'
-    log.progress(last_message, flush=False)
-    for attempt in range(0, max_retries):
-        time.sleep(interval)
-
-        last_message = '{}.'.format(last_message)
-        log.progress(last_message, flush=False)
-
-        url = conduct_url.url('members', run_result)
-        try:
-            conduct_request.get(dcos_mode=False, host=run_result.host, url=url, timeout=DEFAULT_HTTP_TIMEOUT)
-            break
-        except ConnectionError:
-            current_retry += 1
-
-    # Reprint previous message with flush to go to next line
-    log.progress(last_message, flush=True)
-    return True if current_retry < max_retries else False
 
 
 def write_run_command():
