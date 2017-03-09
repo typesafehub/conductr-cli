@@ -139,3 +139,46 @@ class TestCommonFunctions(TestCase):
             call(file_a), call(file_b),
             call(file_a), call(file_b)
         ])
+
+    def test_open_bundle_use_given_name_no_digest(self):
+        extract_open_mock = MagicMock(return_value=(1, None))
+
+        with patch('conductr_cli.bundle_utils.digest_extract_and_open', extract_open_mock):
+            bundle_file_name, bundle_open_file = \
+                conduct_load.open_bundle(
+                    'bundle-6ae881d57578a07900c4eb37e21afa4c2095beb8e852fb6ed8d0c9f343bc7fa8.zip',
+                    '/tmp/asdf',
+                    '{ name = "mock-name" }'
+                )
+
+        self.assertEqual(
+            bundle_file_name,
+            'bundle-6ae881d57578a07900c4eb37e21afa4c2095beb8e852fb6ed8d0c9f343bc7fa8.zip'
+        )
+
+    def test_open_bundle_use_bundle_name_for_digest_format(self):
+        extract_open_mock = MagicMock(return_value=(1, ('sha-256', '6ae881d57578a07900c4eb37e21afa4c'
+                                                                   '2095beb8e852fb6ed8d0c9f343bc7fa8')))
+
+        with patch('conductr_cli.bundle_utils.digest_extract_and_open', extract_open_mock):
+            bundle_file_name, bundle_open_file = \
+                conduct_load.open_bundle('bundle.zip', '/tmp/asdf', '{ name = "mock-name" }')
+
+        self.assertEqual(
+            bundle_file_name,
+            'mock-name-6ae881d57578a07900c4eb37e21afa4c2095beb8e852fb6ed8d0c9f343bc7fa8.zip'
+        )
+
+    def test_open_bundle_error_for_digest_format_when_no_bundle_name(self):
+        extract_open_mock = MagicMock(return_value=(1, ('sha-256', '6ae881d57578a07900c4eb37e21afa4c'
+                                                                   '2095beb8e852fb6ed8d0c9f343bc7fa8')))
+
+        test_failed = True
+
+        with patch('conductr_cli.bundle_utils.digest_extract_and_open', extract_open_mock):
+            try:
+                conduct_load.open_bundle(None, '/tmp/asdf', '{ }')
+            except conduct_load.MalformedBundleError:
+                test_failed = False
+
+        self.assertFalse(test_failed)

@@ -6,8 +6,11 @@ import os
 
 
 class TestConduct(TestCase):
+    with patch('sys.stdin.isatty', lambda: False):
+        parser = build_parser(False)
 
-    parser = build_parser(False)
+    with patch('sys.stdin.isatty', lambda: True):
+        parser_tty = build_parser(False)
 
     def test_parser_version(self):
         args = self.parser.parse_args('version'.split())
@@ -81,6 +84,33 @@ class TestConduct(TestCase):
         self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.bundle, 'path-to-bundle')
         self.assertEqual(args.configuration, 'path-to-conf')
+
+    def test_parser_load_stdin_explicit(self):
+        args = self.parser.parse_args('load - path-to-conf'.split())
+
+        self.assertEqual(args.func.__name__, 'load')
+        self.assertEqual(args.bundle, '-')
+        self.assertEqual(args.configuration, 'path-to-conf')
+
+    def test_parser_load_stdin_implied(self):
+        args = self.parser.parse_args('load'.split())
+
+        self.assertEqual(args.func.__name__, 'load')
+        self.assertEqual(args.bundle, '-')
+
+    def test_parser_load_no_stdin_noargs(self):
+        exit_mock = MagicMock()
+        print_usage_mock = MagicMock()
+        stderr = MagicMock()
+
+        with patch('sys.exit', exit_mock), \
+                patch('argparse.ArgumentParser.print_usage', print_usage_mock), \
+                patch('sys.stderr.write', stderr):
+            self.parser_tty.parse_args('load'.split())
+
+        self.assertEquals(print_usage_mock.call_count, 1)
+        stderr.assert_called_once_with('conduct load: error: the following arguments are required: bundle\n')
+        exit_mock.assert_called_with(2)
 
     def test_parser_load_with_custom_bundle_resolve_cache_dir(self):
         args = self.parser.parse_args('load --bundle-resolve-cache-dir /new-bundle-dir path-to-bundle path-to-conf'

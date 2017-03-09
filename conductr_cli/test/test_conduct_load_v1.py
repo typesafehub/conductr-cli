@@ -1,7 +1,7 @@
 from conductr_cli.test.conduct_load_test_base import ConductLoadTestBase
 from conductr_cli.test.cli_test_case import create_temp_bundle, strip_margin, as_error, \
     create_temp_bundle_with_contents
-from conductr_cli import conduct_load, logging_setup
+from conductr_cli import bundle_utils, conduct_load, logging_setup
 from unittest.mock import call, patch, MagicMock, Mock
 import shutil
 
@@ -107,6 +107,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         http_method = self.respond_with(200, self.default_response)
         stdout = MagicMock()
         open_mock = MagicMock(return_value=1)
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
         wait_for_installation_mock = MagicMock()
 
         args = self.default_args.copy()
@@ -118,6 +119,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('requests.post', http_method), \
                 patch('builtins.open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
@@ -125,7 +127,12 @@ class TestConductLoadCommand(ConductLoadTestBase):
 
         self.assertEqual(
             open_mock.call_args_list,
-            [call(self.bundle_file, 'rb'), call(config_file, 'rb')]
+            [call(config_file, 'rb')]
+        )
+
+        self.assertEqual(
+            bundle_open_mock.call_args_list,
+            [call(self.bundle_file_name, self.bundle_file, bundle_utils.conf(self.bundle_file))]
         )
 
         resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,

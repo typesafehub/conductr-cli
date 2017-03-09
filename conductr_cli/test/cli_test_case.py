@@ -55,6 +55,16 @@ class CliTestCase(TestCase):
     def output(logger):
         return ''.join([args[0] for name, args, kwargs in logger.method_calls if len(args) > 0])
 
+    @staticmethod
+    def output_bytes(logger):
+        out = []
+
+        for name, args, kwargs in logger.method_calls:
+            if len(args) > 0:
+                out.extend(args[0])
+
+        return bytes(out)
+
 
 def strip_margin(string, margin_char='|'):
     return '\n'.join([line[line.find(margin_char) + 1:] for line in string.split('\n')])

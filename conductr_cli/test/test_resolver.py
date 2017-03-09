@@ -3,8 +3,9 @@ from unittest.mock import patch, MagicMock, Mock
 from conductr_cli.test.cli_test_case import strip_margin, create_mock_logger
 from conductr_cli.exceptions import BundleResolutionError, ContinuousDeliveryError
 from conductr_cli import resolver
-from conductr_cli.resolvers import bintray_resolver, uri_resolver, offline_resolver
+from conductr_cli.resolvers import bintray_resolver, uri_resolver, offline_resolver, stdin_resolver
 from pyhocon import ConfigFactory
+import tempfile
 
 
 class TestResolver(TestCase):
@@ -276,7 +277,7 @@ class TestResolverChain(TestCase):
 
     def test_none_input(self):
         result = resolver.resolver_chain(None, False)
-        expected_result = [uri_resolver, bintray_resolver]
+        expected_result = [stdin_resolver, uri_resolver, bintray_resolver]
         self.assertEqual(expected_result, result)
 
     def test_custom_settings_no_resolver_config(self):
@@ -285,10 +286,43 @@ class TestResolverChain(TestCase):
                             |""")
         )
         result = resolver.resolver_chain(custom_settings, False)
-        expected_result = [uri_resolver, bintray_resolver]
+        expected_result = [stdin_resolver, uri_resolver, bintray_resolver]
         self.assertEqual(expected_result, result)
 
     def test_offline_mode(self):
         result = resolver.resolver_chain(None, True)
-        expected_result = [offline_resolver]
+        expected_result = [stdin_resolver, offline_resolver]
         self.assertEqual(expected_result, result)
+
+
+class TestResolverStdIn(TestCase):
+    def test_tty_in(self):
+        with patch('sys.stdin.isatty', lambda: True):
+            self.assertEqual(
+                resolver.stdin_resolver.resolve_bundle('/some/cache/dir', None, None),
+                (False, None, None)
+            )
+
+    def test_not_used_for_given_file(self):
+        with patch('sys.stdin.isatty', lambda: False):
+            self.assertEqual(
+                resolver.stdin_resolver.resolve_bundle('/some/cache/dir', 'somefile.zip', None),
+                (False, None, None)
+            )
+
+    def test_file_in(self):
+        read_mock = MagicMock(side_effect=[b'hello', b''])
+
+        file = tempfile.NamedTemporaryFile()
+
+        with patch('sys.stdin.isatty', lambda: False), \
+                patch('sys.stdin.buffer.read', read_mock),\
+                patch('tempfile.NamedTemporaryFile', MagicMock(return_value=file)):
+            self.assertEqual(
+                resolver.stdin_resolver.resolve_bundle('/some/cache/dir', '-', None),
+                (True, None, file.name)
+            )
+
+            file.seek(0)
+
+            self.assertEqual(file.read(), b'hello')

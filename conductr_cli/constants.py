@@ -37,6 +37,12 @@ DEFAULT_LICENSE_FILE = os.path.abspath(os.getenv('CONDUCTR_LICENSE_FILE',
                                                  '{}/.lightbend/license'.format(os.path.expanduser('~'))))
 DEFAULT_WAIT_TIMEOUT = 60  # seconds
 
+# Must be able to hold the digest value, name of algorithm, and newline character
+DIGEST_TRAIL_SIZE = 100
+
 FEATURE_PROVIDE_PROXYING = 'proxying'
 
 FEATURE_PROVIDE_LOGGING = 'logging'
+
+# When reading and writing to IO devices, buffer this many bytes at a time
+IO_CHUNK_SIZE = 32768
