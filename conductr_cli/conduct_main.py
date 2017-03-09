@@ -57,7 +57,7 @@ def add_dcos_settings(sub_parser):
 
 def add_verbose(sub_parser):
     sub_parser.add_argument('-v', '--verbose',
-                            help='Print JSON response to the command',
+                            help='Print detailed information of the command',
                             default=False,
                             dest='verbose',
                             action='store_true')
@@ -405,6 +405,7 @@ def build_parser(dcos_mode):
     add_cli_settings_dir(load_license_parser)
     add_custom_settings_file(load_license_parser)
     add_custom_plugins_dir(load_license_parser)
+    add_quiet_flag(load_license_parser)
     load_license_parser.set_defaults(func=conduct_load_license.load_license)
 
     return parser

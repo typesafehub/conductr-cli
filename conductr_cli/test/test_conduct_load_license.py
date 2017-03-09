@@ -1,7 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import conduct_load_license, logging_setup
 from conductr_cli.constants import DEFAULT_LICENSE_FILE
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 from requests.exceptions import ConnectionError, HTTPError
 from dcos.errors import DCOSHTTPException
 
@@ -33,8 +33,8 @@ class TestConductLoadLicense(CliTestCase):
     def test_success(self):
         mock_download_license = MagicMock()
         mock_exists = MagicMock(return_value=True)
-        mock_post_license = MagicMock()
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_post_license = MagicMock(return_value=True)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         mock_format_license = MagicMock(return_value=self.license_formatted)
 
         input_args = MagicMock(**self.args)
@@ -52,7 +52,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
-        mock_get_license.assert_called_once_with(input_args)
+        mock_get_license.assert_has_calls([call(input_args), call(input_args)])
         mock_format_license.assert_called_once_with(self.license)
 
         expected_output = strip_margin("""|Downloading license from Lightbend.com
@@ -67,8 +67,8 @@ class TestConductLoadLicense(CliTestCase):
     def test_offline_mode(self):
         mock_download_license = MagicMock()
         mock_exists = MagicMock(return_value=True)
-        mock_post_license = MagicMock()
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_post_license = MagicMock(return_value=True)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         mock_format_license = MagicMock(return_value=self.license_formatted)
 
         args = self.args.copy()
@@ -88,7 +88,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_not_called()
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
-        mock_get_license.assert_called_once_with(input_args)
+        mock_get_license.assert_has_calls([call(input_args), call(input_args)])
         mock_format_license.assert_called_once_with(self.license)
 
         expected_output = strip_margin("""|Skipping downloading license from Lightbend.com
@@ -103,8 +103,8 @@ class TestConductLoadLicense(CliTestCase):
     def test_offline_mode_license_file_missing(self):
         mock_download_license = MagicMock()
         mock_exists = MagicMock(return_value=False)
-        mock_post_license = MagicMock()
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_post_license = MagicMock(return_value=True)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         mock_format_license = MagicMock(return_value=self.license_formatted)
 
         args = self.args.copy()
@@ -125,7 +125,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_not_called()
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_not_called()
-        mock_get_license.assert_not_called()
+        mock_get_license.assert_called_once_with(input_args)
         mock_format_license.assert_not_called()
 
         expected_output = strip_margin("""|Skipping downloading license from Lightbend.com
@@ -140,8 +140,8 @@ class TestConductLoadLicense(CliTestCase):
     def test_license_not_found_in_conductr(self):
         mock_download_license = MagicMock()
         mock_exists = MagicMock(return_value=True)
-        mock_post_license = MagicMock()
-        mock_get_license = MagicMock(return_value=None)
+        mock_post_license = MagicMock(return_value=True)
+        mock_get_license = MagicMock(return_value=(True, None))
         mock_format_license = MagicMock()
 
         input_args = MagicMock(**self.args)
@@ -160,7 +160,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
-        mock_get_license.assert_called_once_with(input_args)
+        mock_get_license.assert_has_calls([call(input_args), call(input_args)])
         mock_format_license.assert_not_called()
 
         expected_output = strip_margin("""|Downloading license from Lightbend.com
@@ -196,7 +196,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
-        mock_get_license.assert_not_called()
+        mock_get_license.assert_called_once_with(input_args)
         mock_format_license.assert_not_called()
 
     def test_dcos_http_error(self):
@@ -222,7 +222,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
-        mock_get_license.assert_not_called()
+        mock_get_license.assert_called_once_with(input_args)
         mock_format_license.assert_not_called()
 
     def test_connection_error(self):
@@ -248,5 +248,5 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
-        mock_get_license.assert_not_called()
+        mock_get_license.assert_called_once_with(input_args)
         mock_format_license.assert_not_called()

@@ -33,7 +33,7 @@ class TestConductInfoCommand(CliTestCase):
     }
 
     def test_no_bundles(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text='[]')
         stdout = MagicMock()
 
@@ -48,8 +48,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
+            strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
@@ -59,7 +58,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_no_bundles_without_license(self):
-        mock_get_license = MagicMock(return_value=None)
+        mock_get_license = MagicMock(return_value=(True, None))
         http_method = self.respond_with(text='[]')
         stdout = MagicMock()
 
@@ -74,12 +73,31 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |UNLICENSED - please use "conduct load-license" to use more than one agent. Additional agents are freely available for registered users.
+            strip_margin("""|UNLICENSED - please use "conduct load-license" to use more than one agent. Additional agents are freely available for registered users.
                             |Max ConductR agents: 1
                             |Grants: conductr, cinnamon, akka-sbr
                             |
                             |ID  NAME  #REP  #STR  #RUN
+                            |"""),
+            self.output(stdout))
+
+    def test_no_bundles_no_license_enpoints(self):
+        mock_get_license = MagicMock(return_value=(False, None))
+        http_method = self.respond_with(text='[]')
+        stdout = MagicMock()
+
+        input_args = MagicMock(**self.default_args)
+        with patch('requests.get', http_method), \
+                patch('conductr_cli.license.get_license', mock_get_license):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        mock_get_license.assert_called_once_with(input_args)
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.assertEqual(
+            strip_margin("""|ID  NAME  #REP  #STR  #RUN
                             |"""),
             self.output(stdout))
 
@@ -103,7 +121,7 @@ class TestConductInfoCommand(CliTestCase):
         self.assertEqual('', self.output(stdout))
 
     def test_stopped_bundle(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle" },
@@ -125,8 +143,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
+            strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
@@ -137,7 +154,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_running_one_starting_one_stopped(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle-1" },
@@ -171,8 +188,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
+            strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
@@ -185,7 +201,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_running_one_starting_one_stopped_quiet(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle-1" },
@@ -227,7 +243,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_running_one_stopped_verbose(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle-1" },
@@ -296,7 +312,6 @@ class TestConductInfoCommand(CliTestCase):
                             |    ]
                             |  }
                             |]
-                            |
                             |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
@@ -309,7 +324,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_long_ids(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle" },
@@ -333,8 +348,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
+            strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
@@ -345,7 +359,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_long_ids_quiet(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle" },
@@ -376,7 +390,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_double_digits(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle" },
@@ -398,8 +412,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
+            strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
@@ -410,7 +423,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_has_error(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle" },
@@ -433,8 +446,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
+            strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
@@ -446,7 +458,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_has_error_quiet(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
                 "attributes": { "bundleName": "test-bundle" },
@@ -476,7 +488,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stdout))
 
     def test_failure_invalid_address(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
 
@@ -494,7 +506,7 @@ class TestConductInfoCommand(CliTestCase):
             self.output(stderr))
 
     def test_ip(self):
-        mock_get_license = MagicMock(return_value=self.license)
+        mock_get_license = MagicMock(return_value=(True, self.license))
 
         args = {}
         args.update(self.default_args)
@@ -517,8 +529,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         self.assertEqual(
-            strip_margin("""|
-                            |Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
+            strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr

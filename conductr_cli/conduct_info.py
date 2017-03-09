@@ -24,18 +24,19 @@ def info(args):
     if args.quiet:
         display_quiet(args, bundles)
     else:
-        conductr_license = license.get_license(args)
-        display_default(args, conductr_license, bundles)
+        is_license_success, conductr_license = license.get_license(args)
+        display_default(args, is_license_success, conductr_license, bundles)
 
     return True
 
 
-def display_default(args, conductr_license, bundles):
+def display_default(args, is_license_success, conductr_license, bundles):
     log = logging.getLogger(__name__)
 
-    license_to_display = license.format_license(conductr_license) if conductr_license \
-        else UNLICENSED_DISPLAY_TEXT
-    log.screen('\n{}\n'.format(license_to_display))
+    if is_license_success:
+        license_to_display = license.format_license(conductr_license) if conductr_license \
+            else UNLICENSED_DISPLAY_TEXT
+        log.screen('{}\n'.format(license_to_display))
 
     data = [
         {

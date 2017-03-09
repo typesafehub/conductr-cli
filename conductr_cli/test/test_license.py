@@ -64,6 +64,26 @@ class TestPostLicense(CliTestCase):
                                           data=mock_license_file_content,
                                           verify=self.server_verification_file)
 
+    def test_endpoint_not_supported(self):
+        license_file = MagicMock()
+
+        mock_license_file_content = MagicMock()
+        mock_open = MagicMock(return_value=mock_license_file_content)
+
+        mock_post = self.respond_with(status_code=503)
+
+        input_args = MagicMock(**self.args)
+
+        with patch('builtins.open', mock_open), \
+                patch('conductr_cli.conduct_request.post', mock_post):
+            self.assertFalse(license.post_license(input_args, license_file))
+
+        mock_open.assert_called_once_with(license_file, 'rb')
+        mock_post.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license',
+                                          auth=self.auth,
+                                          data=mock_license_file_content,
+                                          verify=self.server_verification_file)
+
 
 class TestGetLicense(CliTestCase):
     auth = ('username', 'password')
@@ -96,8 +116,9 @@ class TestGetLicense(CliTestCase):
         input_args = MagicMock(**self.args)
 
         with patch('conductr_cli.conduct_request.get', mock_get):
-            result = license.get_license(input_args)
-            self.assertEqual(self.license, result)
+            is_license_success, license_result = license.get_license(input_args)
+            self.assertTrue(is_license_success)
+            self.assertEqual(self.license, license_result)
 
         mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
 
@@ -107,8 +128,9 @@ class TestGetLicense(CliTestCase):
         input_args = MagicMock(**self.args)
 
         with patch('conductr_cli.conduct_request.get', mock_get):
-            result = license.get_license(input_args)
-            self.assertIsNone(result)
+            is_license_success, license_result = license.get_license(input_args)
+            self.assertTrue(is_license_success)
+            self.assertIsNone(license_result)
 
         mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
 
@@ -119,6 +141,18 @@ class TestGetLicense(CliTestCase):
 
         with patch('conductr_cli.conduct_request.get', mock_get):
             self.assertRaises(HTTPError, license.get_license, input_args)
+
+        mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
+
+    def test_endpoint_not_supported(self):
+        mock_get = self.respond_with(status_code=503)
+
+        input_args = MagicMock(**self.args)
+
+        with patch('conductr_cli.conduct_request.get', mock_get):
+            is_license_success, license_result = license.get_license(input_args)
+            self.assertFalse(is_license_success)
+            self.assertIsNone(license_result)
 
         mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
 

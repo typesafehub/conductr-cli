@@ -22,7 +22,8 @@ class CliTestCase(TestCase):
         reasons = {
             200: 'OK',
             404: 'Not Found',
-            500: 'Error'
+            500: 'Error',
+            503: 'Service unavailable'
         }
 
         response_mock = MagicMock(
