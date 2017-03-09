@@ -23,7 +23,7 @@ def run(argv=None):
     log = logging.getLogger(__name__)
 
     if sys.stdout.isatty() and args.output is None and (args.source is None or args.tar):
-        if sys.stdin.isatty():
+        if sys.stdin.isatty() and not args.tar:
             parser.print_help()
         else:
             log.error('shazar: Refusing to write to terminal. Provide -o or redirect elsewhere')
@@ -41,7 +41,8 @@ def build_parser():
                         help='The target output file')
     parser.add_argument('--output-dir',
                         default='.',
-                        help="When provided with a directory name to package, the directory to write the bundle to, defaults to '.'")
+                        help="When provided with a directory name to package, "
+                             "the directory to write the bundle to, defaults to '.'")
     parser.add_argument('--tar',
                         help='If provided, source is decoded as a tar file',
                         default=False,
