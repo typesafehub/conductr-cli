@@ -66,9 +66,10 @@ class TestIntegration(CliTestCase):
     def test_inputs_tty_help(self):
         parser_print_help_mock = MagicMock()
 
-        with patch('sys.stdout.isatty', lambda: True), patch('sys.stdin.isatty', lambda: True), \
+        with \
+                patch('sys.stdout.isatty', lambda: True),\
+                patch('sys.stdin.isatty', lambda: True), \
                 patch('argparse.ArgumentParser.print_help', parser_print_help_mock):
-
             run('')
 
         parser_print_help_mock.assert_called_once_with()
@@ -80,11 +81,31 @@ class TestIntegration(CliTestCase):
 
         configure_logging_mock = MagicMock()
 
-        with patch('sys.stdout.isatty', lambda: True), patch('sys.stdin.isatty', lambda: False), \
+        with \
+                patch('sys.stdout.isatty', lambda: True), \
+                patch('sys.stdin.isatty', lambda: False), \
                 patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
                 patch('sys.exit', lambda _: ()):
-
             run('')
+
+        self.assertEqual(
+            self.output(stderr),
+            as_error('Error: shazar: Refusing to write to terminal. Provide -o or redirect elsewhere\n')
+        )
+
+    def test_warn_tar_output_tty(self):
+        stdout = MagicMock()
+        stderr = MagicMock()
+        logging_setup.configure_logging(MagicMock(), stdout, stderr)
+
+        configure_logging_mock = MagicMock()
+
+        with \
+                patch('sys.stdout.isatty', lambda: True), \
+                patch('sys.stdin.isatty', lambda: True), \
+                patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
+                patch('sys.exit', lambda _: ()):
+            run(['--tar', 'test.tar'])
 
         self.assertEqual(
             self.output(stderr),
@@ -94,71 +115,92 @@ class TestIntegration(CliTestCase):
     def test_tar_no_source(self):
         tarfile = MagicMock()
         zipfile = MagicMock()
+        stdout = MagicMock()
 
         file = tempfile.NamedTemporaryFile()
 
-        with patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
-                patch('zipfile.ZipFile', zipfile), patch('tarfile.open', tarfile), \
+        with \
+                patch('sys.stdout.buffer.write', stdout), \
+                patch('sys.stdout.isatty', lambda: False), \
+                patch('sys.stdin.isatty', lambda: False), \
+                patch('zipfile.ZipFile', zipfile), \
+                patch('tarfile.open', tarfile), \
                 patch('tempfile.NamedTemporaryFile', MagicMock(return_value=file)):
-
             run('')
 
         tarfile.assert_called_once_with(fileobj=sys.stdin.buffer, mode='r|')
         zipfile.assert_called_once_with(file, 'w')
+        stdout.assert_called_once_with(b'\nsha-256/'
+                                       b'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
 
     def test_tar_source(self):
         tarfile = MagicMock()
         zipfile = MagicMock()
+        stdout = MagicMock()
 
         file = tempfile.NamedTemporaryFile()
 
-        with patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
-                patch('zipfile.ZipFile', zipfile), patch('tarfile.open', tarfile), \
+        with \
+                patch('sys.stdout.buffer.write', stdout), \
+                patch('sys.stdout.isatty', lambda: False),\
+                patch('sys.stdin.isatty', lambda: False), \
+                patch('zipfile.ZipFile', zipfile),\
+                patch('tarfile.open', tarfile), \
                 patch('tempfile.NamedTemporaryFile', MagicMock(return_value=file)):
-
             run(['--tar', 'testing.tar'])
 
         tarfile.assert_called_once_with('testing.tar', mode='r')
         zipfile.assert_called_once_with(file, 'w')
+        stdout.assert_called_once_with(b'\nsha-256/'
+                                       b'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
 
     def test_regular_source(self):
         tarfile = MagicMock()
         zipfile = MagicMock()
         move = MagicMock()
+        stdout = MagicMock()
 
         file = tempfile.NamedTemporaryFile()
 
-        with patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
+        with \
+                patch('sys.stdout.buffer.write', stdout), \
+                patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
                 patch('zipfile.ZipFile', zipfile), patch('tarfile.open', tarfile), \
                 patch('shutil.move', move), \
                 patch('tempfile.NamedTemporaryFile', MagicMock(return_value=file)):
-                run(['testing.tar'])
+            run(['testing'])
 
         move.assert_called_once_with(
             file.name,
-            './testing.tar-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.zip'
+            './testing-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.zip'
         )
 
         tarfile.assert_not_called()
         zipfile.assert_called_once_with(file, 'w')
+        stdout.assert_called_once_with(
+            b'./testing-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.zip\n'
+        )
 
     def test_output(self):
         mock_tarfile = MagicMock()
         mock_zipfile = MagicMock()
         mock_move = MagicMock()
         mock_open = MagicMock()
+        stdout = MagicMock()
 
         file = tempfile.NamedTemporaryFile()
 
-        with patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
+        with \
+                patch('sys.stdout.buffer.write', stdout), \
+                patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
                 patch('zipfile.ZipFile', mock_zipfile), patch('tarfile.open', mock_tarfile), \
                 patch('builtins.open', mock_open), \
                 patch('shutil.move', mock_move), \
                 patch('tempfile.NamedTemporaryFile', MagicMock(return_value=file)):
-
             run(['-o', 'test.zip'])
 
             mock_tarfile.assert_called_once_with(fileobj=sys.stdin.buffer, mode='r|')
+            stdout.assert_not_called()
             mock_move.assert_not_called()
             mock_open.assert_called_once_with('test.zip', 'wb')
             mock_zipfile.assert_called_once_with(file, 'w')
@@ -169,10 +211,13 @@ class TestIntegration(CliTestCase):
         tarfile = MagicMock()
         zipfile = MagicMock()
         move = MagicMock()
+        stdout = MagicMock()
 
         file = tempfile.NamedTemporaryFile()
 
-        with patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
+        with \
+                patch('sys.stdout.buffer.write', stdout), \
+                patch('sys.stdout.isatty', lambda: False), patch('sys.stdin.isatty', lambda: False), \
                 patch('zipfile.ZipFile', zipfile), patch('tarfile.open', tarfile), \
                 patch('shutil.move', move), \
                 patch('tempfile.NamedTemporaryFile', MagicMock(return_value=file)):
@@ -182,6 +227,8 @@ class TestIntegration(CliTestCase):
             tarfile.assert_called_once_with(fileobj=sys.stdin.buffer, mode='r|')
             move.assert_not_called()
             zipfile.assert_called_once_with(file, 'w')
+            stdout.assert_called_once_with(b'\nsha-256/'
+                                           b'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
 
     def tearDown(self):  # noqa
         shutil.rmtree(self.tmpdir)
