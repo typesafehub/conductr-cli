@@ -11,25 +11,33 @@ import os
 def load_license(args):
     log = logging.getLogger(__name__)
 
-    license_file = DEFAULT_LICENSE_FILE
-
-    if args.offline_mode:
-        log.info('Skipping downloading license from Lightbend.com')
+    if license.get_license(args) == (False, None):
+        if not args.quiet:
+            # Only log the info if quite is False.
+            # This is the default when the user executes conduct load-license
+            # If the function is called from another Python function it might makes sense to set quiet to True
+            # to do not print any license output for ConductR versions 2.0.2-
+            log.info('conduct load-license is only supported by ConductR 2.0.3+')
+        return True
     else:
-        log.info('Downloading license from Lightbend.com')
-        license.download_license(args, save_to=license_file)
-
-    if os.path.exists(license_file):
-        log.info('Loading license into ConductR at {}'.format(args.host))
-        license.post_license(args, license_file)
-
-        uploaded_license = license.get_license(args)
-        if uploaded_license:
-            license_to_display = license.format_license(uploaded_license)
-            log.info('\n{}\n'.format(license_to_display))
-            log.info('License successfully loaded')
-            return True
+        license_file = DEFAULT_LICENSE_FILE
+        if args.offline_mode:
+            log.info('Skipping downloading license from Lightbend.com')
         else:
-            raise LicenseLoadError('Unable to find recently loaded license')
-    else:
-        raise LicenseLoadError('Please ensure the license file exists at {}'.format(license_file))
+            log.info('Downloading license from Lightbend.com')
+            license.download_license(args, save_to=license_file)
+
+        if os.path.exists(license_file):
+            log.info('Loading license into ConductR at {}'.format(args.host))
+            license.post_license(args, license_file)
+
+            _, uploaded_license = license.get_license(args)
+            if uploaded_license:
+                license_to_display = license.format_license(uploaded_license)
+                log.info('\n{}\n'.format(license_to_display))
+                log.info('License successfully loaded')
+                return True
+            else:
+                raise LicenseLoadError('Unable to find recently loaded license')
+        else:
+            raise LicenseLoadError('Please ensure the license file exists at {}'.format(license_file))

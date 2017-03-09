@@ -4,7 +4,6 @@ import arrow
 import datetime
 import json
 
-
 EXPIRY_DATE_DISPLAY_FORMAT = '%a %d %b %Y %H:%M%p'
 
 UNLICENSED_DISPLAY_TEXT = 'UNLICENSED - please use "conduct load-license" to use more than one agent. ' \
@@ -34,8 +33,11 @@ def post_license(args, license_file):
                                     data=open(license_file, 'rb'),
                                     auth=args.conductr_auth,
                                     verify=args.server_verification_file)
-    validation.raise_for_status_inc_3xx(response)
-    return True
+    if response.status_code == 503:
+        return False
+    else:
+        validation.raise_for_status_inc_3xx(response)
+        return True
 
 
 def format_license(license):
@@ -78,15 +80,21 @@ def format_license(license):
 def get_license(args):
     """
     Get license from ConductR.
+    Returns a tuple of Boolean, get_license_payload. The following return values are allowed
+    - False, None: License endpoint does not exist at the ConductR control protocol
+    - True, None: No license has been uploaded to ConductR
+    - True, license_data: Returns the current license from ConductR
     :param args: input args obtained from argparse
     """
     url = conduct_url.url('license', args)
     response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth)
+    if response.status_code == 503:
+        return False, None
     if response.status_code == 404:
-        return None
+        return True, None
     else:
         validation.raise_for_status_inc_3xx(response)
-        return json.loads(response.text)
+        return True, json.loads(response.text)
 
 
 def format_expiry(expiry_date):
