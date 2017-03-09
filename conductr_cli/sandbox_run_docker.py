@@ -30,22 +30,21 @@ def run(args, features):
 
 
 def log_run_attempt(args, run_result, feature_results, is_conductr_started, feature_provided, wait_timeout):
+    log = logging.getLogger(__name__)
     container_names = run_result.container_names
-    if not args.no_wait:
-        log = logging.getLogger(__name__)
-        if is_conductr_started:
-            log.info(h1('Summary'))
-            log.info('ConductR has been started')
-            plural_string = 's' if len(container_names) > 1 else ''
-            log.info('Check resource consumption of Docker container{} that run the ConductR node{} with:'
-                     .format(plural_string, plural_string))
-            log.info('  docker stats {}'.format(' '.join(container_names)))
-            log.info('Check current bundle status with:')
-            log.info('  conduct info')
-        else:
-            log.info(h1('Summary'))
-            log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
-            log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
+    if is_conductr_started:
+        log.info(h1('Summary'))
+        log.info('ConductR has been started')
+        plural_string = 's' if len(container_names) > 1 else ''
+        log.info('Check resource consumption of Docker container{} that run the ConductR node{} with:'
+                 .format(plural_string, plural_string))
+        log.info('  docker stats {}'.format(' '.join(container_names)))
+        log.info('Check current bundle status with:')
+        log.info('  conduct info')
+    else:
+        log.info(h1('Summary'))
+        log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
+        log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
 
 
 def instance_count(image_version, nr_of_containers):

@@ -168,11 +168,6 @@ def build_parser():
                             dest='no_default_features',
                             default=False,
                             action='store_true')
-    run_parser.add_argument('--no-wait',
-                            help='Disables waiting for ConductR to be started in the sandbox',
-                            default=False,
-                            dest='no_wait',
-                            action='store_true')
     run_parser.add_argument('--addr-range',
                             type=addr_range,
                             default=DEFAULT_SANDBOX_ADDR_RANGE,
@@ -280,8 +275,6 @@ def run(_args=[], configure_logging=True):
             logging_setup.configure_logging(args)
         # Check that all feature arguments are valid
         if vars(args).get('func').__name__ == 'run':
-            if args.features and args.no_wait:
-                parser.exit('Option --no-wait is not allowed when starting ConductR with option --feature')
             invalid_features = [f for f, *a in args.features if f not in feature_names]
             if invalid_features:
                 parser.exit('Invalid features: %s (choose from %s)' %

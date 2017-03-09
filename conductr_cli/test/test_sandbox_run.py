@@ -24,7 +24,6 @@ class TestSandboxRunCommand(CliTestCase):
         'ports': [],
         'bundle_http_port': bundle_http_port,
         'features': [],
-        'no_wait': False,
         'local_connection': True
     }
 
@@ -287,9 +286,7 @@ class TestWaitForStart(CliTestCase):
                 patch('conductr_cli.conduct_url.url', mock_url), \
                 patch('conductr_cli.conduct_request.get', mock_http_get), \
                 patch('sys.stdout.isatty', is_tty_mock):
-            args = MagicMock(**{
-                'no_wait': False
-            })
+            args = MagicMock(**{})
             logging_setup.configure_logging(args, stdout)
             run_result = MagicMock(**{
                 'host': '10.0.0.1'
@@ -331,9 +328,7 @@ class TestWaitForStart(CliTestCase):
                 patch('conductr_cli.conduct_url.url', mock_url), \
                 patch('conductr_cli.conduct_request.get', mock_http_get), \
                 patch('sys.stdout.isatty', is_tty_mock):
-            args = MagicMock(**{
-                'no_wait': False
-            })
+            args = MagicMock(**{})
             logging_setup.configure_logging(args, stdout)
             run_result = MagicMock(**{
                 'host': '10.0.0.1'
@@ -359,13 +354,3 @@ class TestWaitForStart(CliTestCase):
             call.write(''),
             call.flush()
         ], stdout.method_calls)
-
-    def test_no_wait(self):
-        args = MagicMock(**{
-            'no_wait': True
-        })
-        run_result = MagicMock(**{
-            'host': '10.0.0.1'
-        })
-        result = sandbox_run.wait_for_start(args, run_result)
-        self.assertEqual((True, 0), result)

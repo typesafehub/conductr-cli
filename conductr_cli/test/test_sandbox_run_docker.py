@@ -23,7 +23,6 @@ class TestRun(CliTestCase):
         'ports': [],
         'bundle_http_port': 9000,
         'features': [],
-        'no_wait': False,
         'local_connection': True
     }
 
@@ -337,9 +336,7 @@ class TestLogRunAttempt(CliTestCase):
 
     def test_log_output(self):
         stdout = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': False
-        })
+        input_args = MagicMock(**{})
 
         logging_setup.configure_logging(input_args, stdout)
         sandbox_run_docker.log_run_attempt(
@@ -364,9 +361,7 @@ class TestLogRunAttempt(CliTestCase):
 
     def test_log_output_single_container(self):
         stdout = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': False
-        })
+        input_args = MagicMock(**{})
 
         logging_setup.configure_logging(input_args, stdout)
         sandbox_run_docker.log_run_attempt(
@@ -392,9 +387,7 @@ class TestLogRunAttempt(CliTestCase):
     def test_log_output_not_started(self):
         stdout = MagicMock()
         stderr = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': False
-        })
+        input_args = MagicMock(**{})
 
         logging_setup.configure_logging(input_args, stdout, stderr)
         sandbox_run_docker.log_run_attempt(
@@ -416,21 +409,3 @@ class TestLogRunAttempt(CliTestCase):
                                                    |Error: Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.
                                                    |"""))
         self.assertEqual(expected_stderr, self.output(stderr))
-
-    def test_log_output_no_wait(self):
-        stdout = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': True
-        })
-
-        logging_setup.configure_logging(input_args, stdout)
-        sandbox_run_docker.log_run_attempt(
-            input_args,
-            run_result=self.run_result,
-            feature_results=self.feature_results,
-            is_conductr_started=True,
-            feature_provided=[FEATURE_PROVIDE_PROXYING],
-            wait_timeout=self.wait_timeout
-        )
-
-        self.assertEqual('', self.output(stdout))

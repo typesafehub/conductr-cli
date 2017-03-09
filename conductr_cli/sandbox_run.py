@@ -58,12 +58,9 @@ def run(args):
 
 
 def wait_for_start(args, run_result):
-    if not args.no_wait:
-        retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
-        interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
-        return wait_for_conductr(args, run_result, 0, retries, interval), retries * interval
-    else:
-        return True, 0
+    retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
+    interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
+    return wait_for_conductr(args, run_result, 0, retries, interval), retries * interval
 
 
 def wait_for_conductr(args, run_result, current_retry, max_retries, interval):

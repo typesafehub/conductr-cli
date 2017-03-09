@@ -24,7 +24,6 @@ class TestRun(CliTestCase):
         'nr_of_containers': 1,
         'addr_range': addr_range,
         'offline_mode': False,
-        'no_wait': False,
         'tmp_dir': tmp_dir,
         'envs': [],
         'envs_core': [],
@@ -973,9 +972,7 @@ class TestLogRunAttempt(CliTestCase):
     def test_log_output(self):
         run_mock = MagicMock()
         stdout = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': False
-        })
+        input_args = MagicMock(**{})
 
         with patch('conductr_cli.conduct_main.run', run_mock):
             logging_setup.configure_logging(input_args, stdout)
@@ -1110,27 +1107,6 @@ class TestLogRunAttempt(CliTestCase):
                                           |Current bundle status:
                                           |""")
         self.assertEqual(expected_stdout, self.output(stdout))
-
-    def test_no_wait(self):
-        run_mock = MagicMock()
-        stdout = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': True
-        })
-
-        with patch('conductr_cli.conduct_main.run', run_mock):
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run_jvm.log_run_attempt(
-                input_args,
-                run_result=self.run_result,
-                feature_results=self.feature_results,
-                is_conductr_started=True,
-                feature_provided=[FEATURE_PROVIDE_PROXYING],
-                wait_timeout=self.wait_timeout
-            )
-
-        run_mock.assert_not_called()
-        self.assertEqual('', self.output(stdout))
 
 
 class TestValidateJvm(CliTestCase):
