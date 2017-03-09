@@ -33,6 +33,7 @@ def build_parser():
     add_image_dir(run_parser)
     run_parser.add_argument('image_version',
                             nargs='?',
+                            type=validation.argparse_version,
                             help='Version of the ConductR docker image to use\n'
                                  'To obtain the current version and additional information, please visit\n'
                                  'http://lightbend.com/product/conductr/developer')
