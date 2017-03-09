@@ -73,7 +73,8 @@ def load_v1(args):
     url = conduct_url.url('bundles', args)
     files = get_payload(bundle_file_name, bundle_open_file, with_bundle_configurations)
     if configuration_file is not None:
-        files.append(('configuration', (configuration_file_name, open(configuration_file, 'rb'))))
+        open_configuration_file, config_digest = bundle_utils.digest_extract_and_open(configuration_file)
+        files.append(('configuration', (configuration_file_name, open_configuration_file)))
 
     # TODO: Delete the bundle configuration file.
     # Currently, this results into a permission error on Windows.
@@ -184,7 +185,8 @@ def load_v2(args):
         files.append(('bundleConfOverlay', ('bundle.conf', string_io(bundle_conf_overlay))))
     files.append(('bundle', (bundle_file_name, bundle_open_file)))
     if configuration_file is not None:
-        files.append(('configuration', (configuration_file_name, open(configuration_file, 'rb'))))
+        open_configuration_file, config_digest = bundle_utils.digest_extract_and_open(configuration_file)
+        files.append(('configuration', (configuration_file_name, open_configuration_file)))
 
     # TODO: Delete the bundle configuration file.
     # Currently, this results into a permission error on Windows.
