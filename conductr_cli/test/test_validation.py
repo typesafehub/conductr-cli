@@ -21,9 +21,11 @@ class TestTerminal(CliTestCase):
         expect_pass('1')
         expect_pass('1.1')
         expect_pass('1.1.0')
+        expect_pass('1.1.0-SNAPSHOT')
         expect_pass('1.2.3.4.5')
         expect_pass('2')
         expect_pass('2.0.0')
+        expect_pass('2.0.0-SNAPSHOT')
 
         expect_fail('potato')
         expect_fail('1.')

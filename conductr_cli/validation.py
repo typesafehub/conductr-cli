@@ -470,7 +470,7 @@ def argparse_version(value):
     import argparse
     import re
 
-    if re.match("^[0-9]+([.][0-9]+)*$", value):
+    if re.match("^[0-9]+([.][0-9]+)*(\\-SNAPSHOT)?$", value):
         return value
 
     raise argparse.ArgumentTypeError("'%s' is not a valid version number" % value)
