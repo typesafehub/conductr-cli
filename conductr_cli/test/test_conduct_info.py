@@ -30,6 +30,15 @@ class TestConductInfoCommand(CliTestCase):
         'maxConductrAgents': 3,
         'conductrVersions': ['2.1.*'],
         'grants': ['akka-sbr', 'cinnamon', 'conductr'],
+        'isLicensed': True
+    }
+
+    default_license = {
+        'user': 'unknown',
+        'maxConductrAgents': 1,
+        'conductrVersions': ['2.1.*'],
+        'grants': ['akka-sbr', 'cinnamon', 'conductr'],
+        'isLicensed': False
     }
 
     def test_no_bundles(self):
@@ -57,8 +66,8 @@ class TestConductInfoCommand(CliTestCase):
                             |"""),
             self.output(stdout))
 
-    def test_no_bundles_without_license(self):
-        mock_get_license = MagicMock(return_value=(True, None))
+    def test_no_bundles_unlicensed(self):
+        mock_get_license = MagicMock(return_value=(True, self.default_license))
         http_method = self.respond_with(text='[]')
         stdout = MagicMock()
 
@@ -74,8 +83,10 @@ class TestConductInfoCommand(CliTestCase):
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin("""|UNLICENSED - please use "conduct load-license" to use more than one agent. Additional agents are freely available for registered users.
+                            |Licensed To: unknown
                             |Max ConductR agents: 1
-                            |Grants: conductr, cinnamon, akka-sbr
+                            |ConductR Version(s): 2.1.*
+                            |Grants: akka-sbr, cinnamon, conductr
                             |
                             |ID  NAME  #REP  #STR  #RUN
                             |"""),

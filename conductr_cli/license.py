@@ -7,9 +7,7 @@ import json
 EXPIRY_DATE_DISPLAY_FORMAT = '%a %d %b %Y %H:%M%p'
 
 UNLICENSED_DISPLAY_TEXT = 'UNLICENSED - please use "conduct load-license" to use more than one agent. ' \
-                          'Additional agents are freely available for registered users.\n' \
-                          'Max ConductR agents: 1\n' \
-                          'Grants: conductr, cinnamon, akka-sbr'
+                          'Additional agents are freely available for registered users.'
 
 
 def download_license(args, save_to):
@@ -88,10 +86,8 @@ def get_license(args):
     """
     url = conduct_url.url('license', args)
     response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth)
-    if response.status_code == 503:
+    if response.status_code == 404 or response.status_code == 503:
         return False, None
-    if response.status_code == 404:
-        return True, None
     else:
         validation.raise_for_status_inc_3xx(response)
         return True, json.loads(response.text)
