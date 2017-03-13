@@ -16,8 +16,8 @@ def load_license(args):
             # Only log the info if quite is False.
             # This is the default when the user executes conduct load-license
             # If the function is called from another Python function it might makes sense to set quiet to True
-            # to do not print any license output for ConductR versions 2.0.2-
-            log.info('conduct load-license is only supported by ConductR 2.0.3+')
+            # to do not print any license output for ConductR versions prior to 2.1
+            log.info('conduct load-license is only supported by ConductR 2.1+')
         return True
     else:
         license_file = DEFAULT_LICENSE_FILE
