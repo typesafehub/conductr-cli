@@ -33,8 +33,12 @@ DEFAULT_SANDBOX_PROXY_DIR = os.path.abspath(os.getenv('CONDUCTR_SANDBOX_PROXY_DI
 DEFAULT_SANDBOX_PROXY_CONTAINER_NAME = os.getenv('CONDUCTR_SANDBOX_PROXY_CONTAINER_NAME', 'sandbox-haproxy')
 DEFAULT_ERROR_LOG_FILE = os.path.abspath(os.getenv('CONDUCTR_CLI_ERROR_LOG',
                                                    '{}/errors.log'.format(DEFAULT_CLI_SETTINGS_DIR)))
+DEFAULT_LICENSE_DOWNLOAD_URL = os.getenv('CONDUCTR_LICENSE_DOWNLOAD_URL',
+                                         'https://www.lightbend.com/product/conductr/license')
 DEFAULT_LICENSE_FILE = os.path.abspath(os.getenv('CONDUCTR_LICENSE_FILE',
                                                  '{}/.lightbend/license'.format(os.path.expanduser('~'))))
+DEFAULT_AUTH_TOKEN_FILE = os.path.abspath(os.getenv('CONDUCTR_AUTH_TOKEN_FILE',
+                                                    '{}/.lightbend/auth-token'.format(os.path.expanduser('~'))))
 DEFAULT_WAIT_TIMEOUT = 60  # seconds
 
 # Must be able to hold the digest value, name of algorithm, and newline character

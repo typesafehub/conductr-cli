@@ -8,6 +8,7 @@ import os
 @validation.handle_connection_error
 @validation.handle_http_error
 @validation.handle_license_load_error
+@validation.handle_license_download_error
 def load_license(args):
     log = logging.getLogger(__name__)
 
@@ -24,7 +25,6 @@ def load_license(args):
         if args.offline_mode:
             log.info('Skipping downloading license from Lightbend.com')
         else:
-            log.info('Downloading license from Lightbend.com')
             license.download_license(args, save_to=license_file)
 
         if os.path.exists(license_file):

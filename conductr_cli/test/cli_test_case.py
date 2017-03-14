@@ -21,6 +21,8 @@ class CliTestCase(TestCase):
     def respond_with(status_code=200, text=''):
         reasons = {
             200: 'OK',
+            401: 'Unauthorized',
+            403: 'Forbidden',
             404: 'Not Found',
             500: 'Error',
             503: 'Service unavailable'

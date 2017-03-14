@@ -8,7 +8,7 @@ from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR, DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
-    DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT, DEFAULT_OFFLINE_MODE
+    DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT, DEFAULT_OFFLINE_MODE, DEFAULT_LICENSE_DOWNLOAD_URL
 from dcos import config, constants
 
 from pathlib import Path
@@ -401,11 +401,16 @@ def build_parser(dcos_mode):
 
     add_dcos_mode_args(load_license_parser, dcos_mode)
     add_api_version(load_license_parser)
+    add_local_connection_flag(load_license_parser)
     add_offline_mode(load_license_parser)
     add_cli_settings_dir(load_license_parser)
     add_custom_settings_file(load_license_parser)
     add_custom_plugins_dir(load_license_parser)
     add_quiet_flag(load_license_parser)
+    load_license_parser.add_argument('--license-download-url',
+                                     dest='license_download_url',
+                                     help=argparse.SUPPRESS,
+                                     default=DEFAULT_LICENSE_DOWNLOAD_URL)
     load_license_parser.set_defaults(func=conduct_load_license.load_license)
 
     return parser
