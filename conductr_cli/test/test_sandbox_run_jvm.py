@@ -1,10 +1,10 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_run_jvm, sandbox_features
-from conductr_cli.constants import FEATURE_PROVIDE_PROXYING
+from conductr_cli.constants import DEFAULT_LICENSE_FILE, FEATURE_PROVIDE_PROXYING
 from conductr_cli.exceptions import BindAddressNotFound, InstanceCountError, BintrayUnreachableError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, \
     SandboxUnsupportedOsArchError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError
+    JavaVersionParseError, LicenseValidationError
 from conductr_cli.sandbox_features import LoggingFeature
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
@@ -24,7 +24,6 @@ class TestRun(CliTestCase):
         'nr_of_containers': 1,
         'addr_range': addr_range,
         'offline_mode': False,
-        'no_wait': False,
         'tmp_dir': tmp_dir,
         'envs': [],
         'envs_core': [],
@@ -52,6 +51,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
+        mock_validate_license = MagicMock()
+
         mock_agent_pids = MagicMock()
         mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
 
@@ -63,14 +64,16 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
-                patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
+                patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
                                                                mock_agent_pids, bind_addrs)
             self.assertEqual(expected_result, result)
 
+        mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
@@ -85,6 +88,7 @@ class TestRun(CliTestCase):
                                                      [],
                                                      features,
                                                      'info')
+        mock_validate_license.assert_called_once_with('2.0.0', bind_addr, 1, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
                                                       [],
@@ -117,6 +121,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
+        mock_validate_license = MagicMock()
+
         mock_agent_pids = MagicMock()
         mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
 
@@ -132,14 +138,16 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
-                patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
+                patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
                                                                mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3])
             self.assertEqual(expected_result, result)
 
+        mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
@@ -154,6 +162,7 @@ class TestRun(CliTestCase):
                                                      [],
                                                      features,
                                                      'info')
+        mock_validate_license.assert_called_once_with('2.0.0', bind_addr1, 3, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
                                                       [],
@@ -185,6 +194,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
+        mock_validate_license = MagicMock()
+
         mock_agent_pids = MagicMock()
         mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
 
@@ -212,14 +223,16 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
-                patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
+                patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
                                                                mock_agent_pids, [bind_addr1])
             self.assertEqual(expected_result, result)
 
+        mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
@@ -233,6 +246,7 @@ class TestRun(CliTestCase):
                                                      [],
                                                      features,
                                                      'info')
+        mock_validate_license.assert_called_once_with('2.0.0', bind_addr1, 1, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
                                                       envs,
@@ -263,6 +277,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
+        mock_validate_license = MagicMock()
+
         mock_agent_pids = MagicMock()
         mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
 
@@ -280,14 +296,16 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
-                patch('conductr_cli.sandbox_run_jvm.sandbox_stop', mock_sandbox_stop), \
+                patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
                                                                mock_agent_pids, bind_addrs)
             self.assertEqual(expected_result, result)
 
+        mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
@@ -302,6 +320,7 @@ class TestRun(CliTestCase):
                                                      [['role1', 'role2'], ['role3']],
                                                      features,
                                                      'info')
+        mock_validate_license.assert_called_once_with('2.0.0', bind_addr, 1, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
                                                       [],
@@ -313,6 +332,64 @@ class TestRun(CliTestCase):
                                                       [['role1', 'role2'], ['role3']],
                                                       features,
                                                       'info')
+
+    def test_license_validation_error(self):
+        mock_validate_jvm_support = MagicMock()
+        mock_validate_64bit_support = MagicMock()
+        mock_cleanup_tmp_dir = MagicMock()
+
+        bind_addr = MagicMock()
+        bind_addrs = [bind_addr]
+        mock_find_bind_addrs = MagicMock(return_value=bind_addrs)
+
+        mock_core_extracted_dir = MagicMock()
+        mock_agent_extracted_dir = MagicMock()
+        mock_obtain_sandbox_image = MagicMock(return_value=(mock_core_extracted_dir, mock_agent_extracted_dir))
+
+        mock_sandbox_stop = MagicMock()
+
+        mock_core_pids = MagicMock()
+        mock_start_core_instances = MagicMock(return_value=mock_core_pids)
+
+        mock_validate_license = MagicMock(side_effect=LicenseValidationError('test only'))
+
+        mock_agent_pids = MagicMock()
+        mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
+
+        input_args = MagicMock(**self.default_args)
+        features = []
+
+        with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
+                patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
+                patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
+                patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
+                patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
+                patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
+            self.assertRaises(LicenseValidationError, sandbox_run_jvm.run, input_args, features)
+
+        mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_64bit_support.assert_called_once_with()
+        mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
+        mock_find_bind_addrs.assert_called_with(1, self.addr_range)
+        mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
+                                                     self.tmp_dir,
+                                                     [],
+                                                     [],
+                                                     [],
+                                                     [],
+                                                     bind_addrs,
+                                                     [],
+                                                     features,
+                                                     'info')
+        mock_validate_license.assert_called_once_with('2.0.0', bind_addr, 1, DEFAULT_LICENSE_FILE)
+        mock_start_agent_instances.assert_not_called()
+        self.assertEqual([
+            call(input_args),
+            call(input_args)
+        ], mock_sandbox_stop.call_args_list)
 
 
 class TestInstanceCount(CliTestCase):
@@ -973,9 +1050,7 @@ class TestLogRunAttempt(CliTestCase):
     def test_log_output(self):
         run_mock = MagicMock()
         stdout = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': False
-        })
+        input_args = MagicMock(**{})
 
         with patch('conductr_cli.conduct_main.run', run_mock):
             logging_setup.configure_logging(input_args, stdout)
@@ -1110,27 +1185,6 @@ class TestLogRunAttempt(CliTestCase):
                                           |Current bundle status:
                                           |""")
         self.assertEqual(expected_stdout, self.output(stdout))
-
-    def test_no_wait(self):
-        run_mock = MagicMock()
-        stdout = MagicMock()
-        input_args = MagicMock(**{
-            'no_wait': True
-        })
-
-        with patch('conductr_cli.conduct_main.run', run_mock):
-            logging_setup.configure_logging(input_args, stdout)
-            sandbox_run_jvm.log_run_attempt(
-                input_args,
-                run_result=self.run_result,
-                feature_results=self.feature_results,
-                is_conductr_started=True,
-                feature_provided=[FEATURE_PROVIDE_PROXYING],
-                wait_timeout=self.wait_timeout
-            )
-
-        run_mock.assert_not_called()
-        self.assertEqual('', self.output(stdout))
 
 
 class TestValidateJvm(CliTestCase):

@@ -1,10 +1,10 @@
-from conductr_cli import conduct_main, host, sandbox_stop, sandbox_common
+from conductr_cli import conduct_main, host, license_validation, sandbox_stop, sandbox_common
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, \
-    DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING
+    DEFAULT_LICENSE_FILE, DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
     SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError
+    JavaVersionParseError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
 from conductr_cli.sandbox_common import flatten
@@ -84,6 +84,15 @@ def run(args, features):
                                      features,
                                      args.log_level)
 
+    try:
+        license_validation.validate_license(args.image_version,
+                                            core_addrs[0],
+                                            nr_of_agent_instances,
+                                            DEFAULT_LICENSE_FILE)
+    except LicenseValidationError as e:
+        sandbox_stop.stop(args)
+        raise e
+
     agent_addrs = bind_addrs[0:nr_of_agent_instances]
     agent_pids = start_agent_instances(agent_extracted_dir,
                                        args.tmp_dir,
@@ -114,39 +123,38 @@ def log_run_attempt(args, run_result, feature_results, is_conductr_started, feat
     :return:
     """
     log = logging.getLogger(__name__)
-    if not args.no_wait:
-        if is_conductr_started:
-            log.info(h1('Summary'))
-            log.info(h2('ConductR'))
-            log.info('ConductR has been started:')
-            plural_core = 's' if len(run_result.core_addrs) > 1 else ''
-            log.info('  core instance{} on {}'.format(plural_core, ', '.join(str(i) for i in run_result.core_addrs)))
-            plural_agent = 's' if len(run_result.agent_addrs) > 1 else ''
-            log.info('  agent instance{} on {}'.format(plural_agent, ', '.join(str(i) for i in run_result.agent_addrs)))
-            log.info('ConductR service locator has been started on:')
-            log.info('  {}:{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT))
+    if is_conductr_started:
+        log.info(h1('Summary'))
+        log.info(h2('ConductR'))
+        log.info('ConductR has been started:')
+        plural_core = 's' if len(run_result.core_addrs) > 1 else ''
+        log.info('  core instance{} on {}'.format(plural_core, ', '.join(str(i) for i in run_result.core_addrs)))
+        plural_agent = 's' if len(run_result.agent_addrs) > 1 else ''
+        log.info('  agent instance{} on {}'.format(plural_agent, ', '.join(str(i) for i in run_result.agent_addrs)))
+        log.info('ConductR service locator has been started on:')
+        log.info('  {}:{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT))
 
-            if feature_results:
-                log.info(h2('Features'))
-                log.info('The following feature related bundles have been started:')
-                for feature_result in feature_results:
-                    if FEATURE_PROVIDE_PROXYING in feature_provided:
-                        uri = '{}:{}'.format(run_result.host, feature_result.port)
-                    else:
-                        uri = '{}:{}/services/{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT,
-                                                         feature_result.name)
-                    log.info('  {} on {}'.format(feature_result.name, uri))
+        if feature_results:
+            log.info(h2('Features'))
+            log.info('The following feature related bundles have been started:')
+            for feature_result in feature_results:
+                if FEATURE_PROVIDE_PROXYING in feature_provided:
+                    uri = '{}:{}'.format(run_result.host, feature_result.port)
+                else:
+                    uri = '{}:{}/services/{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT,
+                                                     feature_result.name)
+                log.info('  {} on {}'.format(feature_result.name, uri))
 
-            log.info(h2('Bundles'))
-            log.info('Check latest bundle status with:')
-            log.info('  conduct info')
-            log.info('Current bundle status:')
-            conduct_main.run(['info', '--host', run_result.host], configure_logging=False)
+        log.info(h2('Bundles'))
+        log.info('Check latest bundle status with:')
+        log.info('  conduct info')
+        log.info('Current bundle status:')
+        conduct_main.run(['info', '--host', run_result.host], configure_logging=False)
 
-        else:
-            log.info(h1('Summary'))
-            log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
-            log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
+    else:
+        log.info(h1('Summary'))
+        log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
+        log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
 
 
 def instance_count(image_version, instance_expression):

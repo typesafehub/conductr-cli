@@ -1,11 +1,15 @@
-from conductr_cli import terminal
+from conductr_cli import conduct_url, conduct_request, terminal
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_CONDUCTR_CORE_PACKAGE_NAME, \
     BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
 from conductr_cli.constants import DEFAULT_CLI_TMP_DIR
+from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+from requests.exceptions import ConnectionError
+from subprocess import CalledProcessError
+import logging
 import os
 import psutil
 import re
-from subprocess import CalledProcessError
+import time
 
 
 CONDUCTR_NAME_PREFIX = 'cond-'
@@ -13,6 +17,11 @@ CONDUCTR_PORTS = {9004,  # ConductR internal akka remoting
                   9005,  # ConductR controlServer
                   9006}  # ConductR bundleStreamServer
 CONDUCTR_DEV_IMAGE = 'typesafe-docker-registry-for-subscribers-only.bintray.io/conductr/conductr'
+
+# Will retry 30 times, every two seconds
+DEFAULT_WAIT_RETRIES = 30
+DEFAULT_WAIT_RETRY_INTERVAL = 2.0
+
 LATEST_SANDBOX_RUN_ARGS_FILE = '{}/latest_sandbox_run_args'.format(DEFAULT_CLI_TMP_DIR)
 
 
@@ -132,3 +141,35 @@ def resolve_conductr_roles_by_instance(user_conductr_roles, feature_conductr_rol
 
 def flatten(list):
     return [item for sublist in list for item in sublist]
+
+
+def wait_for_start(run_result, log_output=True):
+    retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
+    interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
+    return wait_for_conductr(run_result, 0, retries, interval, log_output=log_output), retries * interval
+
+
+def wait_for_conductr(run_result, current_retry, max_retries, interval, log_output=True):
+    def log_progress(message, flush):
+        if log_output:
+            log.progress(message, flush=flush)
+
+    log = logging.getLogger(__name__)
+    last_message = 'Waiting for ConductR to start'
+    log_progress(last_message, flush=False)
+    for attempt in range(0, max_retries):
+        time.sleep(interval)
+
+        last_message = '{}.'.format(last_message)
+        log_progress(last_message, flush=False)
+
+        url = conduct_url.url('members', run_result)
+        try:
+            conduct_request.get(dcos_mode=False, host=run_result.host, url=url, timeout=DEFAULT_HTTP_TIMEOUT)
+            break
+        except ConnectionError:
+            current_retry += 1
+
+    # Reprint previous message with flush to go to next line
+    log_progress(last_message, flush=True)
+    return True if current_retry < max_retries else False

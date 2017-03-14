@@ -16,7 +16,7 @@ from conductr_cli.exceptions import BindAddressNotFound, \
     WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
     JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, \
     SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, \
-    LicenseLoadError, NOT_FOUND_ERROR
+    LicenseLoadError, LicenseValidationError, NOT_FOUND_ERROR
 
 
 def connection_error(log, err, args):
@@ -455,6 +455,25 @@ def handle_license_load_error(func):
     return handler
 
 
+def handle_license_validation_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except LicenseValidationError as e:
+            log = get_logger_for_func(func)
+            log.error('Unable to start ConductR due to license validation failure')
+            for message in e.messages:
+                log.error(message)
+            return False
+
+        # Do not change the wrapped function name,
+        # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
 def format_timestamp(timestamp, args):
     date = arrow.get(timestamp)
     date_display = date.to('UTC') if args.utc else date.to('local')
@@ -470,7 +489,7 @@ def argparse_version(value):
     import argparse
     import re
 
-    if re.match("^[0-9]+([.][0-9]+)*$", value):
+    if re.match("^[0-9]+([.][0-9]+)*(\\-SNAPSHOT)?$", value):
         return value
 
     raise argparse.ArgumentTypeError("'%s' is not a valid version number" % value)

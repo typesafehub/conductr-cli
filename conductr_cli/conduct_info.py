@@ -34,8 +34,10 @@ def display_default(args, is_license_success, conductr_license, bundles):
     log = logging.getLogger(__name__)
 
     if is_license_success:
-        license_to_display = license.format_license(conductr_license) if conductr_license \
-            else UNLICENSED_DISPLAY_TEXT
+        license_formatted = license.format_license(conductr_license)
+        license_to_display = license_formatted if conductr_license['isLicensed'] \
+            else '{}\n{}'.format(UNLICENSED_DISPLAY_TEXT, license_formatted)
+
         log.screen('{}\n'.format(license_to_display))
 
     data = [

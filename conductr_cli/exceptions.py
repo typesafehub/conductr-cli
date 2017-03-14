@@ -180,4 +180,12 @@ class LicenseLoadError(Exception):
         self.message = message
 
     def __str(self):
-        return repr(os.linesep.join(self.message))
+        return repr(self.message)
+
+
+class LicenseValidationError(Exception):
+    def __init__(self, messages):
+        self.messages = messages
+
+    def __str(self):
+        return repr(os.linesep.join(self.messages))

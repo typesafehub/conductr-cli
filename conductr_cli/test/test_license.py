@@ -129,7 +129,7 @@ class TestGetLicense(CliTestCase):
 
         with patch('conductr_cli.conduct_request.get', mock_get):
             is_license_success, license_result = license.get_license(input_args)
-            self.assertTrue(is_license_success)
+            self.assertFalse(is_license_success)
             self.assertIsNone(license_result)
 
         mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)

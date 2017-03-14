@@ -1,6 +1,8 @@
 from conductr_cli.test.cli_test_case import CliTestCase
-from conductr_cli import sandbox_common
-from unittest.mock import patch, MagicMock
+from conductr_cli import logging_setup, sandbox_common
+from conductr_cli.sandbox_common import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
+from unittest.mock import call, patch, MagicMock
+from requests.exceptions import ConnectionError
 
 
 class TestSandboxCommon(CliTestCase):
@@ -94,3 +96,89 @@ class TestResolveConductRRolesByInstance(CliTestCase):
         self.assertEqual(
             ['role1', 'role2'],
             sandbox_common.resolve_conductr_roles_by_instance(self.user_roles, [], instance=2))
+
+
+class TestWaitForStart(CliTestCase):
+    def test_wait_for_start(self):
+        stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
+        mock_get_env = MagicMock(return_value=1)
+
+        members_url = '/members'
+        mock_url = MagicMock(return_value=members_url)
+
+        mock_http_get = MagicMock(return_value='test only')
+
+        with \
+                patch('os.getenv', mock_get_env), \
+                patch('conductr_cli.conduct_url.url', mock_url), \
+                patch('conductr_cli.conduct_request.get', mock_http_get), \
+                patch('sys.stdout.isatty', is_tty_mock):
+            args = MagicMock(**{})
+            logging_setup.configure_logging(args, stdout)
+            run_result = MagicMock(**{
+                'host': '10.0.0.1'
+            })
+            result = sandbox_common.wait_for_start(run_result)
+            self.assertEqual((True, 1.0), result)
+
+        self.assertEqual([
+            call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),
+            call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
+        ], mock_get_env.call_args_list)
+
+        mock_http_get.assert_called_once_with(dcos_mode=False, host='10.0.0.1', timeout=5, url='/members')
+
+        self.assertEqual([
+            call.write('Waiting for ConductR to start\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\n'),
+            call.write(''),
+            call.flush()
+        ], stdout.method_calls)
+
+    def test_wait_for_start_timeout(self):
+        stdout = MagicMock()
+        is_tty_mock = MagicMock(return_value=True)
+        mock_get_env = MagicMock(return_value=1)
+
+        members_url = '/members'
+        mock_url = MagicMock(return_value=members_url)
+
+        mock_http_get = MagicMock(side_effect=[ConnectionError()])
+
+        with \
+                patch('os.getenv', mock_get_env), \
+                patch('conductr_cli.conduct_url.url', mock_url), \
+                patch('conductr_cli.conduct_request.get', mock_http_get), \
+                patch('sys.stdout.isatty', is_tty_mock):
+            args = MagicMock(**{})
+            logging_setup.configure_logging(args, stdout)
+            run_result = MagicMock(**{
+                'host': '10.0.0.1'
+            })
+            result = sandbox_common.wait_for_start(run_result)
+            self.assertEqual((False, 1.0), result)
+
+        self.assertEqual([
+            call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),
+            call('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL)
+        ], mock_get_env.call_args_list)
+
+        mock_http_get.assert_called_once_with(dcos_mode=False, host='10.0.0.1', timeout=5, url='/members')
+
+        self.assertEqual([
+            call.write('Waiting for ConductR to start\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\r'),
+            call.write(''),
+            call.flush(),
+            call.write('Waiting for ConductR to start.\n'),
+            call.write(''),
+            call.flush()
+        ], stdout.method_calls)

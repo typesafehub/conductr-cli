@@ -6,10 +6,8 @@ import json
 
 EXPIRY_DATE_DISPLAY_FORMAT = '%a %d %b %Y %H:%M%p'
 
-UNLICENSED_DISPLAY_TEXT = 'UNLICENSED - please use "conduct load-license" to use more than one agent. ' \
-                          'Additional agents are freely available for registered users.\n' \
-                          'Max ConductR agents: 1\n' \
-                          'Grants: conductr, cinnamon, akka-sbr'
+UNLICENSED_DISPLAY_TEXT = 'UNLICENSED - please use "conduct load-license" to use more agents. ' \
+                          'Additional agents are freely available for registered users.'
 
 
 def download_license(args, save_to):
@@ -88,10 +86,8 @@ def get_license(args):
     """
     url = conduct_url.url('license', args)
     response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth)
-    if response.status_code == 503:
+    if response.status_code == 404 or response.status_code == 503:
         return False, None
-    if response.status_code == 404:
-        return True, None
     else:
         validation.raise_for_status_inc_3xx(response)
         return True, json.loads(response.text)
@@ -101,19 +97,25 @@ def format_expiry(expiry_date):
     expiry_date_local = arrow.get(expiry_date).to('local')
     expiry_date_display = expiry_date_local.strftime(EXPIRY_DATE_DISPLAY_FORMAT)
 
-    now = arrow.get(current_date()).to('local')
+    days_to_expiry = calculate_days_to_expiry(expiry_date)
 
-    diff = expiry_date_local - now
-    diff_day = diff.days
-
-    if diff_day > 0:
-        expiry_state = '{} days'.format(diff_day)
-    elif diff_day == 0:
+    if days_to_expiry > 0:
+        expiry_state = '{} days'.format(days_to_expiry)
+    elif days_to_expiry == 0:
         expiry_state = 'Today'
     else:
         expiry_state = 'Expired'
 
     return '{} ({})'.format(expiry_state, expiry_date_display)
+
+
+def calculate_days_to_expiry(expiry_date):
+    expiry_date_local = arrow.get(expiry_date).to('local')
+
+    now = arrow.get(current_date()).to('local')
+
+    diff = expiry_date_local - now
+    return diff.days
 
 
 def current_date():
