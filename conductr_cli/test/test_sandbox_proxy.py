@@ -67,12 +67,14 @@ class TestStopProxy(CliTestCase):
     def test_stop(self):
         stdout = MagicMock()
 
+        mock_is_docker_present = MagicMock(return_value=True)
         mock_get_running_haproxy = MagicMock(return_value='sandbox-haproxy')
         mock_docker_rm = MagicMock()
 
         args = MagicMock(**{})
 
-        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
+        with patch('conductr_cli.sandbox_proxy.is_docker_present', mock_is_docker_present), \
+                patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
                 patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
             logging_setup.configure_logging(args, stdout)
             self.assertTrue(sandbox_proxy.stop_proxy())
@@ -90,12 +92,14 @@ class TestStopProxy(CliTestCase):
     def test_already_stopped(self):
         stdout = MagicMock()
 
+        mock_is_docker_present = MagicMock(return_value=True)
         mock_get_running_haproxy = MagicMock(return_value=None)
         mock_docker_rm = MagicMock()
 
         args = MagicMock(**{})
 
-        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
+        with patch('conductr_cli.sandbox_proxy.is_docker_present', mock_is_docker_present), \
+                patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
                 patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
             logging_setup.configure_logging(args, stdout)
             self.assertTrue(sandbox_proxy.stop_proxy())
@@ -108,12 +112,14 @@ class TestStopProxy(CliTestCase):
     def test_called_process_error(self):
         stdout = MagicMock()
 
+        mock_is_docker_present = MagicMock(return_value=True)
         mock_get_running_haproxy = MagicMock(side_effect=CalledProcessError(1, 'test'))
         mock_docker_rm = MagicMock()
 
         args = MagicMock(**{})
 
-        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
+        with patch('conductr_cli.sandbox_proxy.is_docker_present', mock_is_docker_present), \
+                patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
                 patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
             logging_setup.configure_logging(args, stdout)
             self.assertFalse(sandbox_proxy.stop_proxy())
@@ -126,12 +132,14 @@ class TestStopProxy(CliTestCase):
     def test_attribute_error(self):
         stdout = MagicMock()
 
+        mock_is_docker_present = MagicMock(return_value=True)
         mock_get_running_haproxy = MagicMock(side_effect=AttributeError('test'))
         mock_docker_rm = MagicMock()
 
         args = MagicMock(**{})
 
-        with patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
+        with patch('conductr_cli.sandbox_proxy.is_docker_present', mock_is_docker_present), \
+                patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
                 patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
             logging_setup.configure_logging(args, stdout)
             self.assertFalse(sandbox_proxy.stop_proxy())
@@ -141,8 +149,28 @@ class TestStopProxy(CliTestCase):
 
         self.assertEqual('', self.output(stdout))
 
+    def test_docker_not_present(self):
+        stdout = MagicMock()
 
-class TestIsDockerPresentVm(CliTestCase):
+        mock_is_docker_present = MagicMock(return_value=False)
+        mock_get_running_haproxy = MagicMock()
+        mock_docker_rm = MagicMock()
+
+        args = MagicMock(**{})
+
+        with patch('conductr_cli.sandbox_proxy.is_docker_present', mock_is_docker_present), \
+                patch('conductr_cli.sandbox_proxy.get_running_haproxy', mock_get_running_haproxy), \
+                patch('conductr_cli.terminal.docker_rm', mock_docker_rm):
+            logging_setup.configure_logging(args, stdout)
+            self.assertTrue(sandbox_proxy.stop_proxy())
+
+        mock_get_running_haproxy.assert_not_called()
+        mock_docker_rm.assert_not_called()
+
+        self.assertEqual('', self.output(stdout))
+
+
+class TestIsDockerPresent(CliTestCase):
     def test_present(self):
         mock_vm_type = MagicMock(return_value=docker.DockerVmType.DOCKER_ENGINE)
         mock_validate_docker_vm = MagicMock()

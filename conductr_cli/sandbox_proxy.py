@@ -45,19 +45,20 @@ def start_proxy(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_port
 def stop_proxy():
     log = logging.getLogger(__name__)
 
-    try:
-        running_container = get_running_haproxy()
-        if running_container:
-            log.info(h1('Stopping HAProxy'))
-            is_docker_present()
-            terminal.docker_rm([DEFAULT_SANDBOX_PROXY_CONTAINER_NAME])
-            log.info('HAProxy has been successfully stopped')
+    if is_docker_present():
+        try:
+            running_container = get_running_haproxy()
+            if running_container:
+                log.info(h1('Stopping HAProxy'))
+                terminal.docker_rm([DEFAULT_SANDBOX_PROXY_CONTAINER_NAME])
+                log.info('HAProxy has been successfully stopped')
 
+            return True
+        except (AttributeError, CalledProcessError, NOT_FOUND_ERROR):
+            return False
+    else:
+        # Docker is not present, so the proxy feature won't be running in the first place.
         return True
-    except (AttributeError, CalledProcessError, NOT_FOUND_ERROR):
-        # Fail silently as these errors will be raised if Docker is not installed or Docker environment is not
-        # configured properly.
-        return False
 
 
 def is_docker_present():
