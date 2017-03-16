@@ -1,6 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
 from conductr_cli import conduct_load_license, logging_setup
 from conductr_cli.constants import DEFAULT_LICENSE_FILE
+from conductr_cli.exceptions import LicenseDownloadError
 from unittest.mock import patch, MagicMock, call
 from requests.exceptions import ConnectionError, HTTPError
 from dcos.errors import DCOSHTTPException
@@ -55,8 +56,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_get_license.assert_has_calls([call(input_args), call(input_args)])
         mock_format_license.assert_called_once_with(self.license)
 
-        expected_output = strip_margin("""|Downloading license from Lightbend.com
-                                          |Loading license into ConductR at {}
+        expected_output = strip_margin("""|Loading license into ConductR at {}
                                           |
                                           |{}
                                           |
@@ -163,8 +163,7 @@ class TestConductLoadLicense(CliTestCase):
         mock_get_license.assert_has_calls([call(input_args), call(input_args)])
         mock_format_license.assert_not_called()
 
-        expected_output = strip_margin("""|Downloading license from Lightbend.com
-                                          |Loading license into ConductR at {}
+        expected_output = strip_margin("""|Loading license into ConductR at {}
                                           |""".format(self.host, self.license_formatted))
         self.assertEqual(expected_output, self.output(stdout))
 
@@ -248,5 +247,31 @@ class TestConductLoadLicense(CliTestCase):
         mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
         mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
         mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
+        mock_get_license.assert_called_once_with(input_args)
+        mock_format_license.assert_not_called()
+
+    def test_license_download_error(self):
+        mock_download_license = MagicMock(side_effect=LicenseDownloadError('test'))
+        mock_exists = MagicMock(return_value=True)
+        mock_post_license = MagicMock()
+        mock_get_license = MagicMock(return_value=(True, None))
+        mock_format_license = MagicMock()
+
+        input_args = MagicMock(**self.args)
+
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        with patch('conductr_cli.license.download_license', mock_download_license), \
+                patch('os.path.exists', mock_exists), \
+                patch('conductr_cli.license.post_license', mock_post_license), \
+                patch('conductr_cli.license.get_license', mock_get_license), \
+                patch('conductr_cli.license.format_license', mock_format_license):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            self.assertFalse(conduct_load_license.load_license(input_args))
+
+        mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
+        mock_exists.assert_not_called()
+        mock_post_license.assert_not_called()
         mock_get_license.assert_called_once_with(input_args)
         mock_format_license.assert_not_called()

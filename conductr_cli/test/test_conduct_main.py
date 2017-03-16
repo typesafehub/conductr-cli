@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from conductr_cli.conduct_main import build_parser, get_cli_parameters
+from conductr_cli.constants import DEFAULT_LICENSE_DOWNLOAD_URL
 from argparse import Namespace
 import os
 
@@ -108,7 +109,7 @@ class TestConduct(TestCase):
                 patch('sys.stderr.write', stderr):
             self.parser_tty.parse_args('load'.split())
 
-        self.assertEquals(print_usage_mock.call_count, 1)
+        self.assertEqual(print_usage_mock.call_count, 1)
         stderr.assert_called_once_with('conduct load: error: the following arguments are required: bundle\n')
         exit_mock.assert_called_with(2)
 
@@ -218,6 +219,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
         self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+        self.assertEqual(args.license_download_url, DEFAULT_LICENSE_DOWNLOAD_URL)
+        self.assertEqual(args.local_connection, True)
 
     def test_parser_load_license_custom_args(self):
         args = self.parser.parse_args('load-license '
@@ -227,7 +230,8 @@ class TestConduct(TestCase):
                                       '--api-version 1 '
                                       '--settings-dir /tmp '
                                       '--custom-settings-file /tmp/foo.conf '
-                                      '--custom-plugins-dir /tmp/plugins'.split())
+                                      '--custom-plugins-dir /tmp/plugins '
+                                      '--license-download-url http://example.org'.split())
 
         self.assertEqual(args.func.__name__, 'load_license')
         self.assertEqual(args.host, '127.0.0.1')
@@ -237,6 +241,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '/tmp')
         self.assertEqual(args.custom_settings_file, '/tmp/foo.conf')
         self.assertEqual(args.custom_plugins_dir, '/tmp/plugins')
+        self.assertEqual(args.license_download_url, 'http://example.org')
+        self.assertEqual(args.local_connection, True)
 
     def test_default_with_dcos(self):
         dcos_parser = build_parser(True)

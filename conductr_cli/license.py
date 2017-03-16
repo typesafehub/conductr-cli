@@ -1,6 +1,9 @@
-from conductr_cli import conduct_request, conduct_url, validation
+from conductr_cli import conduct_request, conduct_url, license_auth, validation
 from conductr_cli.conduct_url import conductr_host
+from conductr_cli.exceptions import LicenseDownloadError
+from urllib.parse import urlparse
 import arrow
+import base64
 import datetime
 import json
 
@@ -17,7 +20,42 @@ def download_license(args, save_to):
     :param save_to: the path where downloaded license will be saved to.
     :return: path to the license file.
     """
-    pass
+    cached_token = license_auth.get_cached_auth_token()
+    if cached_token:
+        auth_token = cached_token
+    else:
+        auth_token = license_auth.prompt_for_auth_token()
+
+    license_download_host = urlparse(args.license_download_url).hostname
+    auth_token_b64_bytes = base64.b64encode(bytes(auth_token, 'UTF-8'))
+    auth_token_b64 = auth_token_b64_bytes.decode('UTF-8')
+
+    auth_header = {'Authorization': 'Bearer {}'.format(auth_token_b64)}
+    response = conduct_request.get(args.dcos_mode, license_download_host, args.license_download_url,
+                                   headers=auth_header,
+                                   verify=args.server_verification_file)
+
+    if response.status_code == 401:
+        license_auth.remove_cached_auth_token()
+        raise LicenseDownloadError([response.text])
+
+    elif response.status_code == 403:
+        raise LicenseDownloadError([response.text])
+
+    validation.raise_for_status_inc_3xx(response)
+
+    license_auth.save_auth_token(auth_token)
+    save_license_data(response.text, save_to)
+
+
+def save_license_data(license_data, save_to):
+    """
+    Saves license data to a specified path.
+    :param license_data: The license data in text
+    :param save_to: the file where the license will be saved to
+    """
+    with open(save_to, 'w') as f:
+        f.write(license_data)
 
 
 def post_license(args, license_file):
