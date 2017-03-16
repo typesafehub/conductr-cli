@@ -67,7 +67,7 @@ class TestConductDeploy(CliTestCase):
                                          'package': 'cassandra',
                                          'version': 'v1-abcabc'
                                      },
-                                     headers={'X-Bintray-WebHook-Hmac': self.hmac_mock},
+                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
                                      auth=self.conductr_auth,
                                      verify=self.server_verification_file)
         wait_for_deployment_complete_mock.assert_called_with(self.deployment_id, self.resolved_version, input_args)
@@ -114,7 +114,7 @@ class TestConductDeploy(CliTestCase):
                                          'package': 'cassandra',
                                          'version': 'v1-abcabc'
                                      },
-                                     headers={'X-Bintray-WebHook-Hmac': self.hmac_mock},
+                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
                                      auth=self.conductr_auth,
                                      verify=self.server_verification_file)
         wait_for_deployment_complete_mock.assert_not_called()
@@ -161,7 +161,7 @@ class TestConductDeploy(CliTestCase):
                                          'package': 'cassandra',
                                          'version': 'v1-abcabc'
                                      },
-                                     headers={'X-Bintray-WebHook-Hmac': self.hmac_mock},
+                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
                                      auth=self.conductr_auth,
                                      verify=self.server_verification_file)
         wait_for_deployment_complete_mock.assert_called_with(self.deployment_id, self.resolved_version, input_args)
@@ -364,7 +364,7 @@ class TestConductDeploy(CliTestCase):
                                          'package': 'cassandra',
                                          'version': 'v1-abcabc'
                                      },
-                                     headers={'X-Bintray-WebHook-Hmac': self.hmac_mock},
+                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
                                      auth=self.conductr_auth,
                                      verify=self.server_verification_file)
         wait_for_deployment_complete_mock.assert_not_called()
