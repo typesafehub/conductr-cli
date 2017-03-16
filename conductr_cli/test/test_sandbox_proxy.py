@@ -262,6 +262,7 @@ class TestStartDockerInstance(CliTestCase):
              '-p', '192.168.1.1:80:80',
              '-p', '192.168.1.1:443:443',
              '-p', '192.168.1.1:3003:3003',
+             '-p', '192.168.1.1:8999:8999',
              '-p', '192.168.1.1:9000:9000',
              '-p', '192.168.1.1:19001:19001',
              '-v', '{}:/usr/local/etc/haproxy:ro'.format(sandbox_proxy.HAPROXY_CFG_DIR)],
@@ -272,7 +273,7 @@ class TestStartDockerInstance(CliTestCase):
         expected_output = strip_margin("""||------------------------------------------------|
                                           || Starting HAProxy                               |
                                           ||------------------------------------------------|
-                                          |Exposing the following ports [80, 443, 3003, 9000, 19001]
+                                          |Exposing the following ports [80, 443, 3003, 8999, 9000, 19001]
                                           |""")
         self.assertEqual(expected_output, self.output(stdout))
 
@@ -300,6 +301,7 @@ class TestStartDockerInstance(CliTestCase):
              '-p', '192.168.1.1:443:443',
              '-p', '192.168.1.1:3000:3000',
              '-p', '192.168.1.1:3003:3003',
+             '-p', '192.168.1.1:8999:8999',
              '-p', '192.168.1.1:9000:9000',
              '-p', '192.168.1.1:19001:19001',
              '-v', '{}:/usr/local/etc/haproxy:ro'.format(sandbox_proxy.HAPROXY_CFG_DIR)],
@@ -310,7 +312,7 @@ class TestStartDockerInstance(CliTestCase):
         expected_output = strip_margin("""||------------------------------------------------|
                                           || Starting HAProxy                               |
                                           ||------------------------------------------------|
-                                          |Exposing the following ports [80, 443, 3000, 3003, 9000, 19001]
+                                          |Exposing the following ports [80, 443, 3000, 3003, 8999, 9000, 19001]
                                           |""")
         self.assertEqual(expected_output, self.output(stdout))
 
@@ -337,6 +339,7 @@ class TestStartDockerInstance(CliTestCase):
              '-p', '192.168.1.1:80:80',
              '-p', '192.168.1.1:443:443',
              '-p', '192.168.1.1:3003:3003',
+             '-p', '192.168.1.1:8999:8999',
              '-p', '192.168.1.1:9000:9000',
              '-p', '192.168.1.1:19001:19001',
              '-v', '{}:/usr/local/etc/haproxy:ro'.format(sandbox_proxy.HAPROXY_CFG_DIR)],
@@ -348,7 +351,7 @@ class TestStartDockerInstance(CliTestCase):
                                           || Starting HAProxy                               |
                                           ||------------------------------------------------|
                                           |Pulling docker image haproxy:1.5
-                                          |Exposing the following ports [80, 443, 3003, 9000, 19001]
+                                          |Exposing the following ports [80, 443, 3003, 8999, 9000, 19001]
                                           |""")
         self.assertEqual(expected_output, self.output(stdout))
 
