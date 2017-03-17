@@ -1,0 +1,113 @@
+[
+  {
+    "bundleId": "90b6082727c545b9534447f206cf98c5",
+    "bundleDigest": "90b6082727c545b9534447f206cf98c55f5e146456c6078b19d48fb34b309e91",
+    "attributes": {
+      "system": "visualizer",
+      "nrOfCpus": 1,
+      "memory": 67108864,
+      "diskSpace": 35000000,
+      "roles": [
+        "web"
+      ],
+      "bundleName": "visualizer",
+      "systemVersion": "1.1",
+      "compatibilityVersion": "1.1"
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "web": {
+          "bindProtocol": "http",
+          "services": [
+            "http://:9999"
+          ]
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1
+    },
+    "bundleExecutions": [
+      {
+        "host": "172.17.0.2",
+        "endpoints": {
+          "web": {
+            "bindPort": 10822,
+            "hostPort": 10822
+          }
+        },
+        "isStarted": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@172.17.0.2:9004",
+          "uid": 34777716
+        },
+        "bundleFile": "file:///tmp/90b6082727c545b9534447f206cf98c55f5e146456c6078b19d48fb34b309e91.zip"
+      }
+    ],
+    "hasError": false
+  },
+  {
+    "bundleId": "55436ba8468dad03313a2bfd6cdd7707",
+    "bundleDigest": "55436ba8468dad03313a2bfd6cdd77077a79d8046abb2944c922cfa9e9c5d0b6",
+    "attributes": {
+      "system": "eslite",
+      "nrOfCpus": 0.1,
+      "memory": 33554432,
+      "diskSpace": 200000000,
+      "roles": [
+        "elasticsearch"
+      ],
+      "bundleName": "eslite",
+      "systemVersion": "1",
+      "compatibilityVersion": "1"
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "akka-remote": {
+          "bindProtocol": "tcp",
+          "services": []
+        },
+        "elastic-search": {
+          "bindProtocol": "http",
+          "services": [
+            "http://127.0.0.1:9200",
+            "http://:9200/elastic-search"
+          ]
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1
+    },
+    "bundleExecutions": [
+      {
+        "host": "172.17.0.2",
+        "endpoints": {
+          "akka-remote": {
+            "bindPort": 10917,
+            "hostPort": 10917
+          },
+          "elastic-search": {
+            "bindPort": 10007,
+            "hostPort": 10007
+          }
+        },
+        "isStarted": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@172.17.0.2:9004",
+          "uid": 34777716
+        },
+        "bundleFile": "file:///tmp/55436ba8468dad03313a2bfd6cdd77077a79d8046abb2944c922cfa9e9c5d0b6.zip"
+      }
+    ],
+    "hasError": false
+  }
+]

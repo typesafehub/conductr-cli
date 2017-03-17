@@ -224,6 +224,11 @@ def build_parser(dcos_mode):
                                         help='Print bundle information',
                                         formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(info_parser, dcos_mode)
+    info_parser.add_argument('bundle',
+                             nargs='?',
+                             default=None,
+                             help='The optional id or name to the bundle.\n'
+                                  'When specified detailed information pertaining to the bundle is displayed')
     info_parser.set_defaults(func=conduct_info.info)
 
     # Sub-parser for `service-names` sub-command

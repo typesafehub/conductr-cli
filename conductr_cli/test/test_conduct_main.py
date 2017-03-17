@@ -44,6 +44,19 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.verbose, False)
         self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.bundle, None)
+
+    def test_parser_info_with_bundle(self):
+        args = self.parser.parse_args('info vis'.split())
+
+        self.assertEqual(args.func.__name__, 'info')
+        self.assertEqual(args.ip, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.verbose, False)
+        self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.bundle, 'vis')
 
     def test_parser_services(self):
         args = self.parser.parse_args('service-names'.split())
