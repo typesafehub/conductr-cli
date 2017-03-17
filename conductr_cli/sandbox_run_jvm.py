@@ -463,17 +463,24 @@ def start_core_instances(core_extracted_dir, tmp_dir,
     :return: the pids of the core instances.
     """
     log = logging.getLogger(__name__)
-    process_envs = merge_with_os_envs(envs, envs_core)
+
     pids = []
 
-    feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
+    [
+        f.conductr_pre_core_start(envs, envs_core, args, args_core, bind_addrs, conductr_roles)
+        for f in features
+    ]
+
+    feature_conductr_roles = flatten([f.conductr_roles() for f in features])
     # Role matching is enabled if there's role present for any of the ConductR agent instances.
     # We will check the first instance of the ConductR agent since it's where the bundles from feature flags
     # will be executing from.
     roles_enabled = len(sandbox_common.resolve_conductr_roles_by_instance(conductr_roles,
                                                                           feature_conductr_roles, 0)) > 0
 
-    args_feature = flatten([feature.conductr_args() for feature in features])
+    args_feature = flatten([f.conductr_args() for f in features])
+    feature_envs = flatten([f.conductr_core_envs() for f in features])
+    process_envs = merge_with_os_envs(feature_envs, envs, envs_core)
 
     for idx, bind_addr in enumerate(bind_addrs):
         commands = [
@@ -537,10 +544,18 @@ def start_agent_instances(agent_extracted_dir, tmp_dir,
     :return: the pids of the agent instances.
     """
     log = logging.getLogger(__name__)
-    process_envs = merge_with_os_envs(envs, envs_agent)
     pids = []
-    feature_conductr_roles = flatten([feature.conductr_roles() for feature in features])
-    args_features = flatten([feature.conductr_args() for feature in features])
+
+    [
+        f.conductr_pre_agent_start(envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles)
+        for f in features
+    ]
+
+    feature_conductr_roles = flatten([f.conductr_roles() for f in features])
+    args_features = flatten([f.conductr_args() for f in features])
+    feature_envs = flatten([f.conductr_agent_envs() for f in features])
+    process_envs = merge_with_os_envs(feature_envs, envs, envs_agent)
+
     for idx, bind_addr in enumerate(bind_addrs):
         core_addr = core_addrs[idx] if len(core_addrs) > idx else core_addrs[0]
         agent_roles = sandbox_common.resolve_conductr_roles_by_instance(conductr_roles,
@@ -585,13 +600,14 @@ def artefact_os_name():
         raise SandboxUnsupportedOsError()
 
 
-def merge_with_os_envs(common_envs, process_specific_envs):
-    envs_to_override = common_envs + process_specific_envs
+def merge_with_os_envs(*args):
+    envs_to_override = [v for list in args for v in list]
+
     if envs_to_override:
         result = os.environ.copy()
         for env in envs_to_override:
-            if "=" in env:
-                env_split = env.split("=")
+            if '=' in env:
+                env_split = env.split('=', 1)
                 key = env_split[0]
                 value = env_split[-1]
                 result.update({key: value})

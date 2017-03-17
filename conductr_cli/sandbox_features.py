@@ -8,10 +8,16 @@ Feature attributes:
     name (str): Feature name used for command line argument.
     ports (list of int): Docker port mappings for the feature.
     dependencies (list of str): Names of other features that should also be enabled.
+    provides (list of str): Names of functionality that is provided, e.g. 'proxying' or 'logging'
     conductr_feature_envs (list of str): Feature names to pass when ConductR is started in Docker.
     conductr_args (list of str): Args that should be added during ConductR start.
     conductr_roles (list of str): Roles that should be added during ConductR start.
     start (method): Start the feature as needed. Called after the sandbox has started.
+    conductr_pre_core_start (method): Hook that is called before cores are started
+    conductr_core_envs (method): Hook that is called to set env vars for core processes
+    conductr_pre_agent_start (method): Hook that is called before agents are started
+    conductr_agent_envs (method): Hook that is called to set env vars for agent processes
+    conductr_post_start (method): Hook that is called after ConductR has started
 """
 
 import conductr_cli
@@ -54,10 +60,28 @@ class ProxyingFeature:
         self.bundle_http_port = None
         self.proxy_ports = None
 
+    def enabled(self):
+        return major_version(self.image_version) > 1
+
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+        pass
+
+    def conductr_core_envs(self):
+        return []
+
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+        if self.enabled():
+            self.proxy_bind_addr = core_addrs[0]
+
+    def conductr_agent_envs(self):
+        if self.enabled() and sandbox_proxy.is_docker_present() and self.proxy_bind_addr is not None:
+            return ['HAPROXY_STATS_IP={}'.format(self.proxy_bind_addr)]
+        else:
+            return []
+
     def conductr_post_start(self, args, run_result):
-        if major_version(self.image_version) != 1:
+        if self.enabled():
             self.host = run_result.host
-            self.proxy_bind_addr = run_result.core_addrs[0]
             self.bundle_http_port = args.bundle_http_port
             self.proxy_ports = sorted(args.ports)
 
@@ -69,14 +93,13 @@ class ProxyingFeature:
         return []
 
     def conductr_roles(self):
-        if major_version(self.image_version) == 1:
-            return []
-        else:
+        if self.enabled():
             return ['haproxy']
+        else:
+            return []
 
     def start(self):
-        if major_version(self.image_version) == 1 or None in [self.host, self.proxy_bind_addr, self.bundle_http_port,
-                                                              self.proxy_ports]:
+        if not self.enabled() or None in [self.host, self.proxy_bind_addr, self.bundle_http_port, self.proxy_ports]:
             return FeatureStartResult(False, [])
         else:
             log = logging.getLogger(__name__)
@@ -122,8 +145,20 @@ class VisualizationFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+        pass
+
+    def conductr_core_envs(self):
+        return []
+
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+        pass
+
+    def conductr_agent_envs(self):
+        return []
+
     def conductr_post_start(self, args, run_result):
-        return
+        pass
 
     def conductr_feature_envs(self):
         if major_version(self.image_version) == 1:
@@ -179,8 +214,20 @@ class LoggingFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+        pass
+
+    def conductr_core_envs(self):
+        return []
+
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+        pass
+
+    def conductr_agent_envs(self):
+        return []
+
     def conductr_post_start(self, args, run_result):
-        return
+        pass
 
     def conductr_feature_envs(self):
         if major_version(self.image_version) == 1:
@@ -249,8 +296,20 @@ class LiteLoggingFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+        pass
+
+    def conductr_core_envs(self):
+        return []
+
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+        pass
+
+    def conductr_agent_envs(self):
+        return []
+
     def conductr_post_start(self, args, run_result):
-        return
+        pass
 
     @staticmethod
     def conductr_feature_envs():
@@ -313,8 +372,20 @@ class MonitoringFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+        pass
+
+    def conductr_core_envs(self):
+        return []
+
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+        pass
+
+    def conductr_agent_envs(self):
+        return []
+
     def conductr_post_start(self, args, run_result):
-        return
+        pass
 
     @staticmethod
     def conductr_feature_envs():

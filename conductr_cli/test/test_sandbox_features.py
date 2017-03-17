@@ -111,16 +111,31 @@ class TestProxyingFeature(CliTestCase):
 
     def test_start_v2_configured_no_docker(self):
         proxy_start = MagicMock(return_value=False)
+        docker_present = MagicMock(return_value=False)
         stdout_mock = MagicMock()
 
-        with patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start):
+        with \
+                patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start), \
+                patch('conductr_cli.sandbox_proxy.is_docker_present', docker_present):
             logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             feature = ProxyingFeature([], '2.0.0', False)
+
+            feature.conductr_pre_agent_start(
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                [],
+                ['192.168.100.1'],
+                MagicMock()
+            )
 
             feature.conductr_post_start(
                 MagicMock(**{'bundle_http_port': 9000, 'ports': []}),
                 MagicMock(**{'host': '192.168.100.1', 'core_addrs': ['192.168.100.1']})
             )
+
+            self.assertEqual(feature.conductr_agent_envs(), [])
 
             self.assertFalse(feature.start().started)
 
@@ -136,16 +151,31 @@ class TestProxyingFeature(CliTestCase):
 
     def test_start_v2_configured_with_docker(self):
         proxy_start = MagicMock(return_value=True)
+        docker_present = MagicMock(return_value=True)
         stdout_mock = MagicMock()
 
-        with patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start):
+        with \
+                patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start), \
+                patch('conductr_cli.sandbox_proxy.is_docker_present', docker_present):
             logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             feature = ProxyingFeature([], '2.0.0', False)
+
+            feature.conductr_pre_agent_start(
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                [],
+                ['192.168.100.1'],
+                MagicMock()
+            )
 
             feature.conductr_post_start(
                 MagicMock(**{'bundle_http_port': 9000, 'ports': []}),
                 MagicMock(**{'host': '192.168.100.1', 'core_addrs': ['192.168.100.1']})
             )
+
+            self.assertEqual(feature.conductr_agent_envs(), ['HAPROXY_STATS_IP=192.168.100.1'])
 
             self.assertTrue(feature.start().started)
 
