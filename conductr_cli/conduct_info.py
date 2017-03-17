@@ -44,12 +44,22 @@ def display_default(args, is_license_success, conductr_license, bundles):
         {
             'id': display_bundle_id(args, bundle),
             'name': bundle['attributes']['bundleName'],
+            'compatibility_version': 'v{}'.format(bundle['attributes']['compatibilityVersion']),
+            'roles': ', '.join(sorted(bundle['attributes']['roles'])),
             'replications': len(bundle['bundleInstallations']),
             'starting': sum([not execution['isStarted'] for execution in bundle['bundleExecutions']]),
             'executions': sum([execution['isStarted'] for execution in bundle['bundleExecutions']])
         } for bundle in bundles
     ]
-    data.insert(0, {'id': 'ID', 'name': 'NAME', 'replications': '#REP', 'starting': '#STR', 'executions': '#RUN'})
+    data.insert(0, {
+        'id': 'ID',
+        'name': 'NAME',
+        'compatibility_version': 'VER',
+        'roles': 'ROLES',
+        'replications': '#REP',
+        'starting': '#STR',
+        'executions': '#RUN'
+    })
 
     padding = 2
     column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
@@ -59,9 +69,11 @@ def display_default(args, is_license_success, conductr_license, bundles):
         log.screen('''\
 {id: <{id_width}}{padding}\
 {name: <{name_width}}{padding}\
+{compatibility_version: >{compatibility_version_width}}{padding}\
 {replications: >{replications_width}}{padding}\
 {starting: >{starting_width}}{padding}\
-{executions: >{executions_width}}'''.format(**dict(row, **column_widths)).rstrip())
+{executions: >{executions_width}}{padding}\
+{roles: <{roles_width}}'''.format(**dict(row, **column_widths)).rstrip())
 
     if has_error:
         log.screen('There are errors: use `conduct events` or `conduct logs` for further information')
