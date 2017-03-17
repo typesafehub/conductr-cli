@@ -714,7 +714,7 @@ class TestStartCore(CliTestCase):
                                                           self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
-        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.core_envs)
+        mock_merge_with_os_envs.assert_called_once_with([], self.envs, self.core_envs)
 
         self.assertEqual([
             call([
@@ -750,7 +750,15 @@ class TestStartCore(CliTestCase):
 
     def test_roles_and_features(self):
         conductr_roles = [['role1', 'role2'], ['role3']]
-        features = [LoggingFeature("v1", "2.0.0", offline_mode=False)]
+
+        mock_feature = MagicMock(**{
+            'conductr_core_envs': lambda: ['CORE_TEST=1']
+        })
+
+        features = [
+            LoggingFeature("v1", "2.0.0", offline_mode=False),
+            mock_feature
+        ]
 
         merged_env = {'test': 'only'}
         mock_merge_with_os_envs = MagicMock(return_value=merged_env)
@@ -775,7 +783,15 @@ class TestStartCore(CliTestCase):
                                                           self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
-        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.core_envs)
+        self.assertEqual(mock_feature.method_calls, [
+            call.conductr_pre_core_start(
+                self.envs, self.core_envs, self.args, self.core_args, self.addrs, conductr_roles
+            ),
+            call.conductr_roles(),
+            call.conductr_args()
+        ])
+
+        mock_merge_with_os_envs.assert_called_once_with(['CORE_TEST=1'], self.envs, self.core_envs)
 
         self.assertEqual([
             call([
@@ -865,7 +881,7 @@ class TestStartAgent(CliTestCase):
                                                            log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
-        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.agent_envs)
+        mock_merge_with_os_envs.assert_called_once_with([], self.envs, self.agent_envs)
 
         self.assertEqual([
             call([
@@ -907,8 +923,15 @@ class TestStartAgent(CliTestCase):
             self.mock_pid(1003)
         ])
 
+        mock_feature = MagicMock(**{
+            'conductr_agent_envs': lambda: ['AGENT_TEST=1']
+        })
+
         conductr_roles = [['role1', 'role2'], ['role3']]
-        features = [LoggingFeature('v2', '2.0.0', offline_mode=False)]
+        features = [
+            LoggingFeature('v2', '2.0.0', offline_mode=False),
+            mock_feature
+        ]
 
         with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
                 patch('subprocess.Popen', mock_popen):
@@ -925,7 +948,19 @@ class TestStartAgent(CliTestCase):
                                                            log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
-        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.agent_envs)
+        mock_merge_with_os_envs.assert_called_once_with(
+            ['AGENT_TEST=1'],
+            self.envs,
+            self.agent_envs
+        )
+
+        self.assertEqual(mock_feature.method_calls, [
+            call.conductr_pre_agent_start(
+                self.envs, self.agent_envs, self.args, self.agent_args, self.addrs, self.addrs, conductr_roles
+            ),
+            call.conductr_roles(),
+            call.conductr_args()
+        ])
 
         self.assertEqual([
             call([
@@ -998,7 +1033,7 @@ class TestStartAgent(CliTestCase):
                                                            log_level=self.log_level)
             self.assertEqual([1001, 1002, 1003], result)
 
-        mock_merge_with_os_envs.assert_called_once_with(self.envs, self.agent_envs)
+        mock_merge_with_os_envs.assert_called_once_with([], self.envs, self.agent_envs)
 
         self.assertEqual([
             call([
