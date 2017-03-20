@@ -1,4 +1,4 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_error
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import sandbox_run_docker, logging_setup
 from conductr_cli.constants import FEATURE_PROVIDE_PROXYING
 from conductr_cli.docker import DockerVmType
@@ -331,7 +331,7 @@ class TestLogRunAttempt(CliTestCase):
     wait_timeout = 60
     container_names = ['cond-0', 'cond-1', 'cond-2']
     hostname = '10.0.0.1'
-    run_result = sandbox_run_docker.SandboxRunResult(container_names, hostname)
+    run_result = sandbox_run_docker.SandboxRunResult(container_names, hostname, wait_for_conductr=False)
     feature_results = []
 
     def test_log_output(self):
@@ -343,9 +343,7 @@ class TestLogRunAttempt(CliTestCase):
             input_args,
             run_result=self.run_result,
             feature_results=self.feature_results,
-            is_conductr_started=True,
-            feature_provided=[FEATURE_PROVIDE_PROXYING],
-            wait_timeout=self.wait_timeout
+            feature_provided=[FEATURE_PROVIDE_PROXYING]
         )
 
         expected_stdout = strip_margin("""||------------------------------------------------|
@@ -366,11 +364,9 @@ class TestLogRunAttempt(CliTestCase):
         logging_setup.configure_logging(input_args, stdout)
         sandbox_run_docker.log_run_attempt(
             input_args,
-            run_result=sandbox_run_docker.SandboxRunResult(['cond-0'], self.hostname),
+            run_result=sandbox_run_docker.SandboxRunResult(['cond-0'], self.hostname, wait_for_conductr=False),
             feature_results=self.feature_results,
-            is_conductr_started=True,
-            feature_provided=[FEATURE_PROVIDE_PROXYING],
-            wait_timeout=self.wait_timeout
+            feature_provided=[FEATURE_PROVIDE_PROXYING]
         )
 
         expected_stdout = strip_margin("""||------------------------------------------------|
@@ -383,29 +379,3 @@ class TestLogRunAttempt(CliTestCase):
                                           |  conduct info
                                           |""")
         self.assertEqual(expected_stdout, self.output(stdout))
-
-    def test_log_output_not_started(self):
-        stdout = MagicMock()
-        stderr = MagicMock()
-        input_args = MagicMock(**{})
-
-        logging_setup.configure_logging(input_args, stdout, stderr)
-        sandbox_run_docker.log_run_attempt(
-            input_args,
-            run_result=self.run_result,
-            feature_results=self.feature_results,
-            is_conductr_started=False,
-            feature_provided=[],
-            wait_timeout=self.wait_timeout
-        )
-
-        expected_stdout = strip_margin("""||------------------------------------------------|
-                                          || Summary                                        |
-                                          ||------------------------------------------------|
-                                          |""")
-        self.assertEqual(expected_stdout, self.output(stdout))
-
-        expected_stderr = strip_margin(as_error("""|Error: ConductR has not been started within 60 seconds.
-                                                   |Error: Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.
-                                                   |"""))
-        self.assertEqual(expected_stderr, self.output(stderr))

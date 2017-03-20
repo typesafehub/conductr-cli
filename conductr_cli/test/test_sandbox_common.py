@@ -1,6 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase
 from conductr_cli import logging_setup, sandbox_common
 from conductr_cli.sandbox_common import DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
+from conductr_cli.exceptions import ConductrStartupError
 from unittest.mock import call, patch, MagicMock
 from requests.exceptions import ConnectionError
 
@@ -120,7 +121,7 @@ class TestWaitForStart(CliTestCase):
                 'host': '10.0.0.1'
             })
             result = sandbox_common.wait_for_start(run_result)
-            self.assertEqual((True, 1.0), result)
+            self.assertEqual(True, result)
 
         self.assertEqual([
             call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),
@@ -161,8 +162,7 @@ class TestWaitForStart(CliTestCase):
             run_result = MagicMock(**{
                 'host': '10.0.0.1'
             })
-            result = sandbox_common.wait_for_start(run_result)
-            self.assertEqual((False, 1.0), result)
+            self.assertRaises(ConductrStartupError, sandbox_common.wait_for_start, run_result)
 
         self.assertEqual([
             call('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES),

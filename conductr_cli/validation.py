@@ -10,7 +10,7 @@ from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
-from conductr_cli.exceptions import BindAddressNotFound, \
+from conductr_cli.exceptions import BindAddressNotFound, ConductrStartupError, \
     InstanceCountError, MalformedBundleError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
     WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
@@ -58,6 +58,25 @@ def handle_http_error(func):
             log.error('{} {}'.format(err.response.status_code, err.response.reason))
             if err.response.text != '':
                 log.error(err.response.text)
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_conductr_startup_error(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ConductrStartupError as err:
+            log = get_logger_for_func(func)
+            log.error('ConductR has not been started within {} seconds'.format(err.timeout))
+            log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRIES to increase the wait timeout')
+            if err.error_log_file:
+                log.error('For more information check the ConductR log file at: {}'.format(err.error_log_file))
             return False
 
     # Do not change the wrapped function name,

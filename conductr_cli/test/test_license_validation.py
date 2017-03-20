@@ -24,7 +24,6 @@ class TestValidateLicense(TestCase):
     license_file = DEFAULT_LICENSE_FILE
 
     def test_validate_posted_license(self):
-        mock_wait_for_start = MagicMock()
         mock_get_license = MagicMock(side_effect=[
             (True, None),
             (True, self.license),
@@ -33,8 +32,7 @@ class TestValidateLicense(TestCase):
         mock_post_license = MagicMock()
         mock_validate_license_data = MagicMock()
 
-        with patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
-                patch('conductr_cli.license.get_license', mock_get_license), \
+        with patch('conductr_cli.license.get_license', mock_get_license), \
                 patch('os.path.exists', mock_exists), \
                 patch('conductr_cli.license.post_license', mock_post_license), \
                 patch('conductr_cli.license_validation.validate_license_data', mock_validate_license_data):
@@ -42,8 +40,6 @@ class TestValidateLicense(TestCase):
                                                 self.nr_of_agent_instances, self.license_file)
 
         expected_args = license_validation.LicenseArgs(self.core_addr)
-
-        mock_wait_for_start.assert_called_once_with(expected_args, log_output=False)
 
         self.assertEqual([
             call(expected_args),
@@ -58,7 +54,6 @@ class TestValidateLicense(TestCase):
                                                            self.license)
 
     def test_no_license_file(self):
-        mock_wait_for_start = MagicMock()
         mock_get_license = MagicMock(side_effect=[
             (True, None),
             (True, None),
@@ -67,8 +62,7 @@ class TestValidateLicense(TestCase):
         mock_post_license = MagicMock()
         mock_validate_license_data = MagicMock()
 
-        with patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
-                patch('conductr_cli.license.get_license', mock_get_license), \
+        with patch('conductr_cli.license.get_license', mock_get_license), \
                 patch('os.path.exists', mock_exists), \
                 patch('conductr_cli.license.post_license', mock_post_license), \
                 patch('conductr_cli.license_validation.validate_license_data', mock_validate_license_data):
@@ -76,8 +70,6 @@ class TestValidateLicense(TestCase):
                                                 self.nr_of_agent_instances, self.license_file)
 
         expected_args = license_validation.LicenseArgs(self.core_addr)
-
-        mock_wait_for_start.assert_called_once_with(expected_args, log_output=False)
 
         self.assertEqual([
             call(expected_args),
@@ -92,14 +84,12 @@ class TestValidateLicense(TestCase):
                                                            None)
 
     def test_no_license_support(self):
-        mock_wait_for_start = MagicMock()
         mock_get_license = MagicMock(return_value=(False, None))
         mock_exists = MagicMock()
         mock_post_license = MagicMock()
         mock_validate_license_data = MagicMock()
 
-        with patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
-                patch('conductr_cli.license.get_license', mock_get_license), \
+        with patch('conductr_cli.license.get_license', mock_get_license), \
                 patch('os.path.exists', mock_exists), \
                 patch('conductr_cli.license.post_license', mock_post_license), \
                 patch('conductr_cli.license_validation.validate_license_data', mock_validate_license_data):
@@ -107,8 +97,6 @@ class TestValidateLicense(TestCase):
                                                 self.nr_of_agent_instances, self.license_file)
 
         expected_args = license_validation.LicenseArgs(self.core_addr)
-
-        mock_wait_for_start.assert_called_once_with(expected_args, log_output=False)
 
         mock_get_license.assert_called_once_with(expected_args)
 
