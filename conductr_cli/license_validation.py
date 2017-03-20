@@ -1,4 +1,4 @@
-from conductr_cli import license, sandbox_common
+from conductr_cli import license
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION
 from conductr_cli.exceptions import LicenseValidationError
 import os
@@ -54,7 +54,6 @@ def validate_license(conductr_version, core_addr, nr_of_agent_instances, license
     """
 
     args = LicenseArgs(core_addr)
-    sandbox_common.wait_for_start(args, log_output=False)
 
     has_license_support, license_existing = license.get_license(args)
     if has_license_support:

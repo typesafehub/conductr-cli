@@ -51,6 +51,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
+        mock_wait_for_start = MagicMock()
+
         mock_validate_license = MagicMock()
 
         mock_agent_pids = MagicMock()
@@ -66,11 +68,13 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
                 patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
-                                                               mock_agent_pids, bind_addrs)
+                                                               mock_agent_pids, bind_addrs,
+                                                               wait_for_conductr=False)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -88,6 +92,8 @@ class TestRun(CliTestCase):
                                                      [],
                                                      features,
                                                      'info')
+        expected_args = sandbox_run_jvm.WaitForConductrArgs(bind_addr)
+        mock_wait_for_start.assert_called_once_with(expected_args)
         mock_validate_license.assert_called_once_with('2.0.0', bind_addr, 1, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
@@ -121,6 +127,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
+        mock_wait_for_start = MagicMock()
+
         mock_validate_license = MagicMock()
 
         mock_agent_pids = MagicMock()
@@ -140,11 +148,13 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
                 patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
-                                                               mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3])
+                                                               mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3],
+                                                               wait_for_conductr=False)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -162,6 +172,8 @@ class TestRun(CliTestCase):
                                                      [],
                                                      features,
                                                      'info')
+        expected_args = sandbox_run_jvm.WaitForConductrArgs(bind_addr1)
+        mock_wait_for_start.assert_called_once_with(expected_args)
         mock_validate_license.assert_called_once_with('2.0.0', bind_addr1, 3, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
@@ -194,6 +206,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
+        mock_wait_for_start = MagicMock()
+
         mock_validate_license = MagicMock()
 
         mock_agent_pids = MagicMock()
@@ -225,11 +239,13 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
                 patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
-                                                               mock_agent_pids, [bind_addr1])
+                                                               mock_agent_pids, [bind_addr1],
+                                                               wait_for_conductr=False)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -246,6 +262,8 @@ class TestRun(CliTestCase):
                                                      [],
                                                      features,
                                                      'info')
+        expected_args = sandbox_run_jvm.WaitForConductrArgs(bind_addr1)
+        mock_wait_for_start.assert_called_once_with(expected_args)
         mock_validate_license.assert_called_once_with('2.0.0', bind_addr1, 1, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
@@ -276,6 +294,7 @@ class TestRun(CliTestCase):
 
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
+        mock_wait_for_start = MagicMock()
 
         mock_validate_license = MagicMock()
 
@@ -298,11 +317,13 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
+                patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
                 patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
-                                                               mock_agent_pids, bind_addrs)
+                                                               mock_agent_pids, bind_addrs,
+                                                               wait_for_conductr=False)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -320,6 +341,8 @@ class TestRun(CliTestCase):
                                                      [['role1', 'role2'], ['role3']],
                                                      features,
                                                      'info')
+        expected_args = sandbox_run_jvm.WaitForConductrArgs(bind_addrs[0])
+        mock_wait_for_start.assert_called_once_with(expected_args)
         mock_validate_license.assert_called_once_with('2.0.0', bind_addr, 1, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
                                                       self.tmp_dir,
@@ -345,6 +368,7 @@ class TestRun(CliTestCase):
         mock_core_extracted_dir = MagicMock()
         mock_agent_extracted_dir = MagicMock()
         mock_obtain_sandbox_image = MagicMock(return_value=(mock_core_extracted_dir, mock_agent_extracted_dir))
+        mock_wait_for_start = MagicMock()
 
         mock_sandbox_stop = MagicMock()
 
@@ -364,6 +388,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
+                patch('conductr_cli.sandbox_common.wait_for_start', mock_wait_for_start), \
                 patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
                 patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
@@ -384,6 +409,8 @@ class TestRun(CliTestCase):
                                                      [],
                                                      features,
                                                      'info')
+        expected_args = sandbox_run_jvm.WaitForConductrArgs(bind_addr)
+        mock_wait_for_start.assert_called_once_with(expected_args)
         mock_validate_license.assert_called_once_with('2.0.0', bind_addr, 1, DEFAULT_LICENSE_FILE)
         mock_start_agent_instances.assert_not_called()
         self.assertEqual([
@@ -1077,7 +1104,8 @@ class TestLogRunAttempt(CliTestCase):
         [1001, 1002, 1003],
         [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
         [2001, 2002, 2003],
-        [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')]
+        [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
+        wait_for_conductr=True
     )
     feature_results = [sandbox_features.BundleStartResult('bundle-a', 1001),
                        sandbox_features.BundleStartResult('bundle-b', 1002)]
@@ -1093,9 +1121,7 @@ class TestLogRunAttempt(CliTestCase):
                 input_args,
                 run_result=self.run_result,
                 feature_results=self.feature_results,
-                is_conductr_started=True,
-                feature_provided=[FEATURE_PROVIDE_PROXYING],
-                wait_timeout=self.wait_timeout
+                feature_provided=[FEATURE_PROVIDE_PROXYING]
             )
 
         run_mock.assert_called_with(['info', '--host', '192.168.1.1'], configure_logging=False)
@@ -1131,7 +1157,8 @@ class TestLogRunAttempt(CliTestCase):
             [1001],
             [ipaddress.ip_address('192.168.1.1')],
             [2001],
-            [ipaddress.ip_address('192.168.1.1')]
+            [ipaddress.ip_address('192.168.1.1')],
+            wait_for_conductr=False
         )
 
         run_mock = MagicMock()
@@ -1146,9 +1173,7 @@ class TestLogRunAttempt(CliTestCase):
                 input_args,
                 run_result=run_result,
                 feature_results=self.feature_results,
-                is_conductr_started=True,
-                feature_provided=[FEATURE_PROVIDE_PROXYING],
-                wait_timeout=self.wait_timeout
+                feature_provided=[FEATURE_PROVIDE_PROXYING]
             )
 
         expected_stdout = strip_margin("""||------------------------------------------------|
@@ -1190,9 +1215,7 @@ class TestLogRunAttempt(CliTestCase):
                 input_args,
                 run_result=self.run_result,
                 feature_results=self.feature_results,
-                is_conductr_started=True,
-                feature_provided=[],
-                wait_timeout=self.wait_timeout
+                feature_provided=[]
             )
 
         expected_stdout = strip_margin("""||------------------------------------------------|

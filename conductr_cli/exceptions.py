@@ -4,6 +4,15 @@ import os
 NOT_FOUND_ERROR = getattr(__builtins__, 'FileNotFoundError', OSError)
 
 
+class ConductrStartupError(Exception):
+    def __init__(self, wait_timeout, error_log_file):
+        self.timeout = wait_timeout
+        self.error_log_file = error_log_file
+
+    def __str__(self):
+        return repr('{} {}'.format(self.wait_timeout, self.error_log_file))
+
+
 class MalformedBundleError(Exception):
     def __init__(self, value):
         self.value = value

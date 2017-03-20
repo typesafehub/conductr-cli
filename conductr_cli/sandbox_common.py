@@ -3,6 +3,7 @@ from conductr_cli.resolvers.bintray_resolver import BINTRAY_CONDUCTR_CORE_PACKAG
     BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME
 from conductr_cli.constants import DEFAULT_CLI_TMP_DIR
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+from conductr_cli.exceptions import ConductrStartupError
 from requests.exceptions import ConnectionError
 from subprocess import CalledProcessError
 import logging
@@ -143,25 +144,24 @@ def flatten(list):
     return [item for sublist in list for item in sublist]
 
 
-def wait_for_start(run_result, log_output=True):
+def wait_for_start(run_result):
     retries = int(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRIES', DEFAULT_WAIT_RETRIES))
     interval = float(os.getenv('CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL', DEFAULT_WAIT_RETRY_INTERVAL))
-    return wait_for_conductr(run_result, 0, retries, interval, log_output=log_output), retries * interval
+    is_conductr_started = wait_for_conductr(run_result, 0, retries, interval)
+    if not is_conductr_started:
+        raise ConductrStartupError(wait_timeout=retries * interval, error_log_file=run_result.conductr_log_file)
+    return True
 
 
-def wait_for_conductr(run_result, current_retry, max_retries, interval, log_output=True):
-    def log_progress(message, flush):
-        if log_output:
-            log.progress(message, flush=flush)
-
+def wait_for_conductr(run_result, current_retry, max_retries, interval):
     log = logging.getLogger(__name__)
     last_message = 'Waiting for ConductR to start'
-    log_progress(last_message, flush=False)
+    log.progress(last_message, flush=False)
     for attempt in range(0, max_retries):
         time.sleep(interval)
 
         last_message = '{}.'.format(last_message)
-        log_progress(last_message, flush=False)
+        log.progress(last_message, flush=False)
 
         url = conduct_url.url('members', run_result)
         try:
@@ -171,5 +171,5 @@ def wait_for_conductr(run_result, current_retry, max_retries, interval, log_outp
             current_retry += 1
 
     # Reprint previous message with flush to go to next line
-    log_progress(last_message, flush=True)
+    log.progress(last_message, flush=True)
     return True if current_retry < max_retries else False

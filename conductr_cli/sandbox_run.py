@@ -20,6 +20,7 @@ import sys
 @validation.handle_jvm_validation_error
 @validation.handle_docker_validation_error
 @validation.handle_license_validation_error
+@validation.handle_conductr_startup_error
 def run(args):
     """`sandbox run` command"""
     write_run_command()
@@ -29,22 +30,22 @@ def run(args):
 
     run_result = sandbox.run(args, features)
 
-    is_conductr_started, wait_timeout = sandbox_common.wait_for_start(run_result)
+    if run_result.wait_for_conductr:
+        sandbox_common.wait_for_start(run_result)
 
     feature_results = []
     feature_provided = []
 
-    if is_conductr_started:
-        for feature in features:
-            feature.conductr_post_start(args, run_result)
-            result = feature.start()
-            feature_results += result.bundle_results
+    for feature in features:
+        feature.conductr_post_start(args, run_result)
+        result = feature.start()
+        feature_results += result.bundle_results
 
-            if result.started:
-                for provided in feature.provides:
-                    feature_provided.append(provided)
+        if result.started:
+            for provided in feature.provides:
+                feature_provided.append(provided)
 
-    sandbox.log_run_attempt(args, run_result, feature_results, is_conductr_started, feature_provided, wait_timeout)
+    sandbox.log_run_attempt(args, run_result, feature_results, feature_provided)
 
     return True
 

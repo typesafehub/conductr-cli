@@ -9,9 +9,10 @@ import os
 
 
 class SandboxRunResult:
-    def __init__(self, container_names, conductr_host):
+    def __init__(self, container_names, conductr_host, wait_for_conductr):
         self.container_names = container_names
         self.host = conductr_host
+        self.wait_for_conductr = wait_for_conductr
 
     scheme = DEFAULT_SCHEME
     port = DEFAULT_PORT
@@ -26,25 +27,20 @@ def run(args, features):
     nr_of_containers = instance_count(args.image_version, args.nr_of_instances)
     pull_image(args)
     container_names = scale_cluster(args, nr_of_containers, features)
-    return SandboxRunResult(container_names, host.DOCKER_IP)
+    return SandboxRunResult(container_names, host.DOCKER_IP, wait_for_conductr=True)
 
 
-def log_run_attempt(args, run_result, feature_results, is_conductr_started, feature_provided, wait_timeout):
+def log_run_attempt(args, run_result, feature_results, feature_provided):
     log = logging.getLogger(__name__)
     container_names = run_result.container_names
-    if is_conductr_started:
-        log.info(h1('Summary'))
-        log.info('ConductR has been started')
-        plural_string = 's' if len(container_names) > 1 else ''
-        log.info('Check resource consumption of Docker container{} that run the ConductR node{} with:'
-                 .format(plural_string, plural_string))
-        log.info('  docker stats {}'.format(' '.join(container_names)))
-        log.info('Check current bundle status with:')
-        log.info('  conduct info')
-    else:
-        log.info(h1('Summary'))
-        log.error('ConductR has not been started within {} seconds.'.format(wait_timeout))
-        log.error('Set the env CONDUCTR_SANDBOX_WAIT_RETRY_INTERVAL to increase the wait timeout.')
+    log.info(h1('Summary'))
+    log.info('ConductR has been started')
+    plural_string = 's' if len(container_names) > 1 else ''
+    log.info('Check resource consumption of Docker container{} that run the ConductR node{} with:'
+             .format(plural_string, plural_string))
+    log.info('  docker stats {}'.format(' '.join(container_names)))
+    log.info('Check current bundle status with:')
+    log.info('  conduct info')
 
 
 def instance_count(image_version, nr_of_containers):

@@ -47,7 +47,8 @@ class TestSandboxRunCommand(CliTestCase):
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
 
-        sandbox_run_result = sandbox_run_docker.SandboxRunResult(self.container_names, '192.168.99.100')
+        sandbox_run_result = sandbox_run_docker.SandboxRunResult(self.container_names, '192.168.99.100',
+                                                                 wait_for_conductr=True)
         mock_sandbox_run_docker = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
@@ -68,9 +69,9 @@ class TestSandboxRunCommand(CliTestCase):
         mock_sandbox_run_docker.assert_called_once_with(input_args, features)
 
         mock_wait_for_conductr.assert_called_once_with(sandbox_run_result, 0, DEFAULT_WAIT_RETRIES,
-                                                       DEFAULT_WAIT_RETRY_INTERVAL, log_output=True)
+                                                       DEFAULT_WAIT_RETRY_INTERVAL)
 
-        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, [], 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, [])
 
         mock_feature.assert_not_called()
 
@@ -87,7 +88,8 @@ class TestSandboxRunCommand(CliTestCase):
         features = [mock_feature]
         mock_collect_features = MagicMock(return_value=features)
 
-        sandbox_run_result = sandbox_run_jvm.SandboxRunResult([1001], ['192.168.1.1'], [1002], ['192.168.1.1'])
+        sandbox_run_result = sandbox_run_jvm.SandboxRunResult([1001], ['192.168.1.1'], [1002], ['192.168.1.1'],
+                                                              wait_for_conductr=True)
         mock_sandbox_run_jvm = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
@@ -108,9 +110,9 @@ class TestSandboxRunCommand(CliTestCase):
         mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
 
         mock_wait_for_conductr.assert_called_once_with(sandbox_run_result, 0, DEFAULT_WAIT_RETRIES,
-                                                       DEFAULT_WAIT_RETRY_INTERVAL, log_output=True)
+                                                       DEFAULT_WAIT_RETRY_INTERVAL)
 
-        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, True, [], 60)
+        mock_log_run_attempt.assert_called_with(input_args, sandbox_run_result, bundle_start_result, [])
 
     def test_docker_sandbox_instance_count_error(self):
         conductr_version = '1.1.11'
