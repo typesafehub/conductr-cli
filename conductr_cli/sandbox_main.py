@@ -26,6 +26,7 @@ def build_parser():
 
     # Sub-parser for `run` sub-command
     run_parser = subparsers.add_parser('run',
+                                       aliases=['start'],
                                        help='Run ConductR sandbox cluster',
                                        usage='%(prog)s IMAGE_VERSION [ARGS]',
                                        formatter_class=argparse.RawTextHelpFormatter)
