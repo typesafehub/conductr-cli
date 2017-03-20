@@ -32,8 +32,8 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /foo           f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -53,8 +53,8 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID                         BUNDLE NAME                  STATUS
-                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH  REWRITE  BUNDLE ID                         BUNDLE NAME                  STATUS
+                   |*       /foo           f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -72,8 +72,8 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /foo           f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -90,11 +90,11 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH                  REWRITE          SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |*       /user/(.*)/item/(.*)  /my-items/\\1-\\2  my-endp-1.0.0                1.0.0           dostat         bbb4d64    my-endp-1.0.0                Running
-                   |POST    ^/baz/boom            /foo             multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
-                   |*       ^/bar                                  multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
-                   |*       /foo                                   multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH                  REWRITE          BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /user/(.*)/item/(.*)  /my-items/\\1-\\2  bbb4d64    my-endp-1.0.0                Running
+                   |POST    ^/baz/boom            /foo             f804d64    multi-comp-multi-endp-1.0.0  Starting
+                   |*       ^/bar                                  f804d64    multi-comp-multi-endp-1.0.0  Starting
+                   |*       /foo                                   f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -111,7 +111,7 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
+                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
             self.output(stdout))
 
@@ -128,7 +128,7 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
+                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
             self.output(stdout))
 
@@ -151,8 +151,8 @@ class TestConductAclsCommandForHttp(CliTestCase):
         http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|METHOD  PATH  REWRITE  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |*       /foo           multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |*       /foo           f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -185,8 +185,8 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|TCP/PORT  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |9001      f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -207,8 +207,8 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID                         BUNDLE NAME                  STATUS
-                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
+                """|TCP/PORT  BUNDLE ID                         BUNDLE NAME                  STATUS
+                   |9001      f804d644a01a5ab9f679f76939f5c7e2  multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -225,8 +225,8 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|TCP/PORT  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |9001      f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
 
@@ -244,10 +244,10 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  SYSTEM              SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME         STATUS
-                   |7101      other-bundle-1.0.0  1.0.0           tunnel         aaa4d64    other-bundle-1.0.0  Starting
-                   |9006      my-bundle-1.0.0     1.0.0           bin-one        f804d64    my-bundle-1.0.0     Starting
-                   |19001     some-bundle-1.0.0   1.0.0           streamer       bbb4d64    some-bundle-1.0.0   Starting
+                """|TCP/PORT  BUNDLE ID  BUNDLE NAME         STATUS
+                   |7101      aaa4d64    other-bundle-1.0.0  Starting
+                   |9006      f804d64    my-bundle-1.0.0     Starting
+                   |19001     bbb4d64    some-bundle-1.0.0   Starting
                    |"""),
             self.output(stdout))
 
@@ -264,7 +264,7 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
+                """|TCP/PORT  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
             self.output(stdout))
 
@@ -281,7 +281,7 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  SYSTEM  SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME  STATUS
+                """|TCP/PORT  BUNDLE ID  BUNDLE NAME  STATUS
                    |"""),
             self.output(stdout))
 
@@ -305,7 +305,7 @@ class TestConductAclsCommandForTcp(CliTestCase):
         http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
         self.assertEqual(
             strip_margin(
-                """|TCP/PORT  SYSTEM                       SYSTEM VERSION  ENDPOINT NAME  BUNDLE ID  BUNDLE NAME                  STATUS
-                   |9001      multi-comp-multi-endp-1.0.0  1.0.0           comp1-endp1    f804d64    multi-comp-multi-endp-1.0.0  Starting
+                """|TCP/PORT  BUNDLE ID  BUNDLE NAME                  STATUS
+                   |9001      f804d64    multi-comp-multi-endp-1.0.0  Starting
                    |"""),
             self.output(stdout))
