@@ -268,6 +268,7 @@ def build_parser(dcos_mode):
 
     # Sub-parser for `run` sub-command
     run_parser = subparsers.add_parser('run',
+                                       aliases=['start'],
                                        help='Run a bundle',
                                        formatter_class=argparse.RawTextHelpFormatter)
     run_parser.add_argument('--scale',
