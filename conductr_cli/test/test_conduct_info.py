@@ -62,7 +62,7 @@ class TestConductInfoCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID  NAME  #REP  #STR  #RUN
+                            |ID  NAME  VER  #REP  #STR  #RUN  ROLES
                             |"""),
             self.output(stdout))
 
@@ -88,7 +88,7 @@ class TestConductInfoCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID  NAME  #REP  #STR  #RUN
+                            |ID  NAME  VER  #REP  #STR  #RUN  ROLES
                             |"""),
             self.output(stdout))
 
@@ -108,7 +108,7 @@ class TestConductInfoCommand(CliTestCase):
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
         self.assertEqual(
-            strip_margin("""|ID  NAME  #REP  #STR  #RUN
+            strip_margin("""|ID  NAME  VER  #REP  #STR  #RUN  ROLES
                             |"""),
             self.output(stdout))
 
@@ -135,7 +135,11 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle" },
+                "attributes": {
+                  "bundleName": "test-bundle",
+                  "compatibilityVersion": "1",
+                  "roles": ["tester"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
@@ -159,8 +163,8 @@ class TestConductInfoCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME         #REP  #STR  #RUN
-                            |45e0c47  test-bundle     1     0     0
+                            |ID       NAME         VER  #REP  #STR  #RUN  ROLES
+                            |45e0c47  test-bundle   v1     1     0     0  tester
                             |"""),
             self.output(stdout))
 
@@ -168,19 +172,31 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle-1" },
+                "attributes": {
+                    "bundleName": "test-bundle-1",
+                    "compatibilityVersion": "1",
+                    "roles": []
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [{"isStarted": true}],
                 "bundleInstallations": [1]
             },
             {
-                "attributes": { "bundleName": "test-bundle-2" },
+                "attributes": {
+                    "bundleName": "test-bundle-2",
+                    "compatibilityVersion": "10",
+                    "roles": ["tester", "load-test", "another"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c-c52e3f8d0c58d8aa29ae5e3d774c0e54",
                 "bundleExecutions": [{"isStarted": false}],
                 "bundleInstallations": [1]
             },
             {
-                "attributes": { "bundleName": "test-bundle-3" },
+                "attributes": {
+                    "bundleName": "test-bundle-3",
+                    "compatibilityVersion": "8",
+                    "roles": ["tester"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
@@ -198,16 +214,17 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license.assert_called_once_with(input_args)
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.maxDiff = None
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID               NAME           #REP  #STR  #RUN
-                            |45e0c47          test-bundle-1     1     0     1
-                            |45e0c47-c52e3f8  test-bundle-2     1     1     0
-                            |45e0c47          test-bundle-3     1     0     0
+                            |ID               NAME           VER  #REP  #STR  #RUN  ROLES
+                            |45e0c47          test-bundle-1   v1     1     0     1
+                            |45e0c47-c52e3f8  test-bundle-2  v10     1     1     0  another, load-test, tester
+                            |45e0c47          test-bundle-3   v8     1     0     0  tester
                             |"""),
             self.output(stdout))
 
@@ -215,19 +232,31 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle-1" },
+                "attributes": {
+                    "bundleName": "test-bundle-1",
+                    "compatibilityVersion": "1",
+                    "roles": ["test"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [{"isStarted": true}],
                 "bundleInstallations": [1]
             },
             {
-                "attributes": { "bundleName": "test-bundle-2" },
+                "attributes": {
+                    "bundleName": "test-bundle-2",
+                    "compatibilityVersion": "1",
+                    "roles": ["test"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c-c52e3f8d0c58d8aa29ae5e3d774c0e54",
                 "bundleExecutions": [{"isStarted": false}],
                 "bundleInstallations": [1]
             },
             {
-                "attributes": { "bundleName": "test-bundle-3" },
+                "attributes": {
+                    "bundleName": "test-bundle-3",
+                    "compatibilityVersion": "1",
+                    "roles": ["test"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
@@ -257,13 +286,21 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle-1" },
+                "attributes": {
+                    "bundleName": "test-bundle-1",
+                    "compatibilityVersion": "1",
+                    "roles": []
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [{"isStarted": true},{"isStarted": true},{"isStarted": true}],
                 "bundleInstallations": [1,2,3]
             },
             {
-                "attributes": { "bundleName": "test-bundle-2" },
+                "attributes": {
+                    "bundleName": "test-bundle-2",
+                    "compatibilityVersion": "1",
+                    "roles": ["beta", "load-test"]
+                },
                 "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54",
                 "bundleExecutions": [],
                 "bundleInstallations": [1,2,3]
@@ -290,7 +327,9 @@ class TestConductInfoCommand(CliTestCase):
             strip_margin("""|[
                             |  {
                             |    "attributes": {
-                            |      "bundleName": "test-bundle-1"
+                            |      "bundleName": "test-bundle-1",
+                            |      "compatibilityVersion": "1",
+                            |      "roles": []
                             |    },
                             |    "bundleExecutions": [
                             |      {
@@ -312,7 +351,12 @@ class TestConductInfoCommand(CliTestCase):
                             |  },
                             |  {
                             |    "attributes": {
-                            |      "bundleName": "test-bundle-2"
+                            |      "bundleName": "test-bundle-2",
+                            |      "compatibilityVersion": "1",
+                            |      "roles": [
+                            |        "beta",
+                            |        "load-test"
+                            |      ]
                             |    },
                             |    "bundleExecutions": [],
                             |    "bundleId": "c52e3f8d0c58d8aa29ae5e3d774c0e54",
@@ -328,9 +372,9 @@ class TestConductInfoCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME           #REP  #STR  #RUN
-                            |45e0c47  test-bundle-1     3     0     3
-                            |c52e3f8  test-bundle-2     3     0     0
+                            |ID       NAME           VER  #REP  #STR  #RUN  ROLES
+                            |45e0c47  test-bundle-1   v1     3     0     3
+                            |c52e3f8  test-bundle-2   v1     3     0     0  beta, load-test
                             |"""),
             self.output(stdout))
 
@@ -338,7 +382,11 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle" },
+                "attributes": {
+                  "bundleName": "test-bundle",
+                  "compatibilityVersion": "1",
+                  "roles": ["front-end", "public-facing", "api"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
@@ -358,14 +406,15 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license.assert_called_once_with(input_args)
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        self.maxDiff = None
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID                                NAME         #REP  #STR  #RUN
-                            |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle     1     0     0
+                            |ID                                NAME         VER  #REP  #STR  #RUN  ROLES
+                            |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle   v1     1     0     0  api, front-end, public-facing
                             |"""),
             self.output(stdout))
 
@@ -404,7 +453,11 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle" },
+                "attributes": {
+                    "bundleName": "test-bundle",
+                    "compatibilityVersion": "1",
+                    "roles": ["test"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -428,8 +481,8 @@ class TestConductInfoCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME         #REP  #STR  #RUN
-                            |45e0c47  test-bundle    10     0     0
+                            |ID       NAME         VER  #REP  #STR  #RUN  ROLES
+                            |45e0c47  test-bundle   v1    10     0     0  test
                             |"""),
             self.output(stdout))
 
@@ -437,7 +490,11 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle" },
+                "attributes": {
+                    "bundleName": "test-bundle",
+                    "compatibilityVersion": "1",
+                    "roles": ["test"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -462,8 +519,8 @@ class TestConductInfoCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID         NAME         #REP  #STR  #RUN
-                            |! 45e0c47  test-bundle    10     0     0
+                            |ID         NAME         VER  #REP  #STR  #RUN  ROLES
+                            |! 45e0c47  test-bundle   v1    10     0     0  test
                             |There are errors: use `conduct events` or `conduct logs` for further information
                             |"""),
             self.output(stdout))
@@ -472,7 +529,11 @@ class TestConductInfoCommand(CliTestCase):
         mock_get_license = MagicMock(return_value=(True, self.license))
         http_method = self.respond_with(text="""[
             {
-                "attributes": { "bundleName": "test-bundle" },
+                "attributes": {
+                    "bundleName": "test-bundle",
+                    "compatibilityVersion": "1",
+                    "roles": ["test"]
+                },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -545,6 +606,6 @@ class TestConductInfoCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID  NAME  #REP  #STR  #RUN
+                            |ID  NAME  VER  #REP  #STR  #RUN  ROLES
                             |"""),
             self.output(stdout))

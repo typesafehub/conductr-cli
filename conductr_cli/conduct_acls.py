@@ -26,12 +26,6 @@ def acls(args):
     if log.is_verbose_enabled():
         log.verbose(validation.pretty_json(response.text))
 
-    def get_system_version(bundle):
-        if 'systemVersion' in bundle['attributes']:
-            return bundle['attributes']['systemVersion']
-        else:
-            return bundle['attributes']['system'].split('-')[-1]
-
     def is_started(bundle_executions):
         for execution in bundle_executions:
             if execution['isStarted']:
@@ -41,9 +35,6 @@ def acls(args):
     all_acls = [
         {
             'acl': acl,
-            'system': bundle['attributes']['system'],
-            'system_version': get_system_version(bundle),
-            'endpoint_name': endpoint_name,
             'bundle_id': bundle['bundleId'] if args.long_ids else bundle_utils.short_id(bundle['bundleId']),
             'bundle_name': bundle['attributes']['bundleName'],
             'status': is_started(bundle['bundleExecutions'])
@@ -71,9 +62,6 @@ def display_tcp_acls(log, tcp_acls):
     data = [
         {
             'tcp_port': 'TCP/PORT',
-            'system': 'SYSTEM',
-            'system_version': 'SYSTEM VERSION',
-            'endpoint_name': 'ENDPOINT NAME',
             'bundle_id': 'BUNDLE ID',
             'bundle_name': 'BUNDLE NAME',
             'status': 'STATUS'
@@ -81,9 +69,6 @@ def display_tcp_acls(log, tcp_acls):
     ] + sorted([
         {
             'tcp_port': tcp_port,
-            'system': tcp_acl['system'],
-            'system_version': tcp_acl['system_version'],
-            'endpoint_name': tcp_acl['endpoint_name'],
             'bundle_id': tcp_acl['bundle_id'],
             'bundle_name': tcp_acl['bundle_name'],
             'status': tcp_acl['status']
@@ -97,9 +82,6 @@ def display_tcp_acls(log, tcp_acls):
     for row in data:
         log.screen(
             '{tcp_port: <{tcp_port_width}}{padding}'
-            '{system: <{system_width}}{padding}'
-            '{system_version: <{system_version_width}}{padding}'
-            '{endpoint_name: <{endpoint_name_width}}{padding}'
             '{bundle_id: <{bundle_id_width}}{padding}'
             '{bundle_name: <{bundle_name_width}}{padding}'
             '{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
@@ -112,9 +94,6 @@ def display_http_acls(log, http_acls):
             'http_rewrite': http_request_mapping['rewrite'] if 'rewrite' in http_request_mapping else '',
             'http_acl': get_http_acl(http_request_mapping),
             'http_acl_type': get_http_acl_type(http_request_mapping),
-            'system': http_acl['system'],
-            'system_version': http_acl['system_version'],
-            'endpoint_name': http_acl['endpoint_name'],
             'bundle_id': http_acl['bundle_id'],
             'bundle_name': http_acl['bundle_name'],
             'status': http_acl['status']
@@ -148,9 +127,6 @@ def display_http_acls(log, http_acls):
         'http_method': 'METHOD',
         'http_acl': 'PATH',
         'http_rewrite': 'REWRITE',
-        'system': 'SYSTEM',
-        'system_version': 'SYSTEM VERSION',
-        'endpoint_name': 'ENDPOINT NAME',
         'bundle_id': 'BUNDLE ID',
         'bundle_name': 'BUNDLE NAME',
         'status': 'STATUS'
@@ -163,9 +139,6 @@ def display_http_acls(log, http_acls):
             '{http_method: <{http_method_width}}{padding}'
             '{http_acl: <{http_acl_width}}{padding}'
             '{http_rewrite: <{http_rewrite_width}}{padding}'
-            '{system: <{system_width}}{padding}'
-            '{system_version: <{system_version_width}}{padding}'
-            '{endpoint_name: <{endpoint_name_width}}{padding}'
             '{bundle_id: <{bundle_id_width}}{padding}'
             '{bundle_name: <{bundle_name_width}}{padding}'
             '{status: <{status_width}}'.format(**dict(row, **column_widths)).rstrip())
