@@ -291,13 +291,13 @@ def find_bind_addrs(nr_of_addrs, addr_range):
     This command will check if 192.168.128.1, 192.168.128.2, and 192.168.128.3 can be bound. The check is done by
     binding a socket to each of these address using a test port.
 
-    If the number of required address is not present, provide the commands so the end user is able to copy-paste and
-    execute these commands.
+    If the number of required address is not present, prompt the user for sudo password so that we can add the aliases.
 
     :param nr_of_addrs: number of address aliases required
     :param addr_range: the range of address which is available to core and agent to bind to.
                        The address is specified in the CIDR format, i.e. 192.168.128.0/24
     """
+
     addrs_to_bind = []
     addrs_unavailable = []
     for ip_addr in addr_range.hosts():
@@ -311,9 +311,27 @@ def find_bind_addrs(nr_of_addrs, addr_range):
 
     if len(addrs_to_bind) < nr_of_addrs:
         nr_of_addr_setup = nr_of_addrs - len(addrs_to_bind)
-        setup_instructions = host.addr_alias_setup_instructions(addrs_unavailable[0:nr_of_addr_setup],
-                                                                addr_range.version)
-        raise BindAddressNotFound(setup_instructions)
+        addr_aliases_commands = host.addr_alias_commands(addrs_unavailable[0:nr_of_addr_setup],
+                                                         addr_range.version)
+        if addr_aliases_commands:
+            log = logging.getLogger(__name__)
+            log.info('Network address aliases are required so that the sandbox can operate as a cluster of machines.'
+                     '\nTo add the network aliases sudo privileges are required.')
+            for command in addr_aliases_commands:
+                try:
+                    subprocess.check_call(command)
+                    log.info(' '.join(command))
+                except CalledProcessError:
+                    commands_str = '\n'.join([' '.join(command) for command in addr_aliases_commands])
+                    raise BindAddressNotFound('Not able to add the network address aliases. Please add them manually:'
+                                              '\n\n{}'.format(commands_str))
+            return find_bind_addrs(nr_of_addrs, addr_range)
+        else:
+            subnet_mask = host.get_subnet_mask(addr_range.version)
+            addrs_formatted = ', '.join(['{}'.format(addr) for addr in addrs_unavailable[0:nr_of_addr_setup]])
+            setup_instructions = 'Setup aliases for {} addresses with {} subnet mask'.format(addrs_formatted,
+                                                                                             subnet_mask)
+            raise BindAddressNotFound(setup_instructions)
     else:
         return addrs_to_bind
 
