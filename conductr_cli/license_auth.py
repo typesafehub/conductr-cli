@@ -2,8 +2,8 @@ from conductr_cli.constants import DEFAULT_AUTH_TOKEN_FILE
 import os
 
 
-AUTH_TOKEN_PROMPT = 'An access token is required. Please visit https://www.lightbend.com/account/access-token to ' \
-                    'obtain your access token, and a free license or your commercial one.\n' \
+AUTH_TOKEN_PROMPT = '\nAn access token is required. Please visit https://www.lightbend.com/account/access-token to \n' \
+                    'obtain one, and a free license or your commercial one.\n' \
                     '\n' \
                     'Please enter your access token: '
 
