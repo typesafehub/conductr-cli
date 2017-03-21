@@ -1,0 +1,299 @@
+[
+    {
+        "bundleId": "3349b6bfbc09e8d88123fee5b33b2717",
+        "bundleDigest": "3349b6bfbc09e8d88123fee5b33b2717e07fb2a91de719c99e0403c9e4b28ea5",
+        "attributes": {
+            "system": "eslite",
+            "nrOfCpus": 0.1,
+            "memory": 402653184,
+            "diskSpace": 200000000,
+            "roles": [
+                "elasticsearch"
+            ],
+            "bundleName": "eslite",
+            "systemVersion": "1",
+            "compatibilityVersion": "1"
+        },
+        "bundleConfig": {
+            "endpoints": {
+                "akka-remote": {
+                    "bindProtocol": "tcp"
+                },
+                "es": {
+                    "bindProtocol": "http",
+                    "serviceName": "elastic-search"
+                }
+            }
+        },
+        "bundleScale": {
+            "scale": 1,
+            "nrOfReschedules": 0
+        },
+        "bundleExecutions": [
+            {
+                "host": "192.168.10.2",
+                "endpoints": {
+                    "akka-remote": {
+                        "bindPort": 10822,
+                        "hostPort": 10822
+                    },
+                    "es": {
+                        "bindPort": 10007,
+                        "hostPort": 10007
+                    }
+                },
+                "isStarted": true
+            }
+        ],
+        "bundleInstallations": [
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.2:9004",
+                    "uid": 1480539637
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/3349b6bfbc09e8d88123fee5b33b2717e07fb2a91de719c99e0403c9e4b28ea5.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.1:9004",
+                    "uid": -430464113
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/3349b6bfbc09e8d88123fee5b33b2717e07fb2a91de719c99e0403c9e4b28ea5.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.3:9004",
+                    "uid": -2501706
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/3349b6bfbc09e8d88123fee5b33b2717e07fb2a91de719c99e0403c9e4b28ea5.zip"
+            }
+        ],
+        "hasError": false
+    },
+    {
+        "bundleId": "85dd2657bf86e5ed817c6cbe9d4c18e3",
+        "bundleDigest": "85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550",
+        "attributes": {
+            "system": "conductr-elasticsearch",
+            "nrOfCpus": 0.1,
+            "memory": 1572864000,
+            "diskSpace": 100000000,
+            "roles": [
+                "elasticsearch"
+            ],
+            "bundleName": "conductr-elasticsearch",
+            "systemVersion": "1",
+            "compatibilityVersion": "1"
+        },
+        "bundleExecutions": [],
+        "bundleInstallations": [
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.2:9004",
+                    "uid": 1480539637
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.1:9004",
+                    "uid": -430464113
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.3:9004",
+                    "uid": -2501706
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550.zip"
+            }
+        ],
+        "hasError": false
+    },
+    {
+        "bundleId": "bdfa43d7ade7456af30a95e9ef4bce86-e5f35046d59c27f4cfeebcc026f3e3b7",
+        "bundleDigest": "bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b",
+        "configurationDigest": "e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2",
+        "attributes": {
+            "system": "conductr-haproxy",
+            "nrOfCpus": 0.1,
+            "memory": 402653184,
+            "diskSpace": 35000000,
+            "roles": [
+                "haproxy"
+            ],
+            "bundleName": "conductr-haproxy",
+            "systemVersion": "2",
+            "compatibilityVersion": "2"
+        },
+        "bundleConfig": {
+            "endpoints": {
+                "status": {
+                    "bindProtocol": "http"
+                }
+            }
+        },
+        "bundleScale": {
+            "scale": 1,
+            "nrOfReschedules": 0
+        },
+        "bundleExecutions": [
+            {
+                "host": "192.168.10.2",
+                "endpoints": {
+                    "status": {
+                        "bindPort": 9009,
+                        "hostPort": 9009
+                    }
+                },
+                "isStarted": true
+            }
+        ],
+        "bundleInstallations": [
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.2:9004",
+                    "uid": 1480539637
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip",
+                "configurationFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.1:9004",
+                    "uid": -430464113
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip",
+                "configurationFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.3:9004",
+                    "uid": -2501706
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip",
+                "configurationFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip"
+            }
+        ],
+        "hasError": false
+    },
+    {
+        "bundleId": "cb96704f739ddfa36ddb9fabdfc42592",
+        "bundleDigest": "cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae",
+        "attributes": {
+            "system": "path-tester",
+            "nrOfCpus": 0.1,
+            "memory": 402653184,
+            "diskSpace": 200000000,
+            "roles": [
+                "ptester"
+            ],
+            "bundleName": "path-tester",
+            "systemVersion": "1",
+            "compatibilityVersion": "1"
+        },
+        "bundleConfig": {
+            "endpoints": {
+                "ptest": {
+                    "bindProtocol": "http",
+                    "serviceName": "path-tester",
+                    "acls": [
+                        {
+                            "http": {
+                                "requests": [
+                                    {
+                                        "pathBeg": "/bacon",
+                                        "method": "GET",
+                                        "rewrite": "/burger"
+                                    },
+                                    {
+                                        "pathBeg": "/tree",
+                                        "method": "GET"
+                                    },
+                                    {
+                                        "pathRegex": "^/fee/(.*)/fi/(.*)/fo/(.*)/fum$",
+                                        "method": "GET",
+                                        "rewrite": "/boom/\\1-\\2-\\3/box"
+                                    },
+                                    {
+                                        "pathRegex": "^/boom/(.*)/box$",
+                                        "method": "GET"
+                                    },
+                                    {
+                                        "path": "/foo",
+                                        "method": "GET",
+                                        "rewrite": "/baz"
+                                    },
+                                    {
+                                        "path": "/baz",
+                                        "method": "GET"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "ptunnel": {
+                    "bindProtocol": "tcp",
+                    "serviceName": "ptunnel",
+                    "acls": [
+                        {
+                            "tcp": {
+                                "requests": [
+                                    3303,
+                                    5601,
+                                    12101
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "bundleScale": {
+            "scale": 1,
+            "nrOfReschedules": 0
+        },
+        "bundleExecutions": [
+            {
+                "host": "192.168.10.1",
+                "endpoints": {
+                    "ptest": {
+                        "bindPort": 10822,
+                        "hostPort": 10822
+                    },
+                    "ptunnel": {
+                        "bindPort": 10007,
+                        "hostPort": 10007
+                    }
+                },
+                "isStarted": true
+            }
+        ],
+        "bundleInstallations": [
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.3:9004",
+                    "uid": -2501706
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.2:9004",
+                    "uid": 1480539637
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip"
+            },
+            {
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.1:9004",
+                    "uid": -430464113
+                },
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip"
+            }
+        ],
+        "hasError": false
+    }
+]

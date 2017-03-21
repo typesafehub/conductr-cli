@@ -1,10 +1,10 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
 from conductr_cli import conduct_info, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from unittest.mock import patch, MagicMock
 
 
-class TestConductInfoCommand(CliTestCase):
+class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     conductr_auth = ('username', 'password')
     server_verification_file = MagicMock(name='server_verification_file')
@@ -20,7 +20,8 @@ class TestConductInfoCommand(CliTestCase):
         'quiet': False,
         'long_ids': False,
         'conductr_auth': conductr_auth,
-        'server_verification_file': server_verification_file
+        'server_verification_file': server_verification_file,
+        'bundle': None
     }
 
     default_url = 'http://127.0.0.1:9005/bundles'
@@ -609,3 +610,615 @@ class TestConductInfoCommand(CliTestCase):
                             |ID  NAME  VER  #REP  #STR  #RUN  ROLES
                             |"""),
             self.output(stdout))
+
+
+class TestConductInfoInspectBundleCommand(CliTestCase):
+    default_url = 'http://127.0.0.1:9005/bundles'
+
+    conductr_auth = ('username', 'password')
+
+    server_verification_file = MagicMock(name='server_verification_file')
+
+    default_args = {
+        'dcos_mode': False,
+        'scheme': 'http',
+        'host': '127.0.0.1',
+        'port': 9005,
+        'base_path': '/',
+        'api_version': '1',
+        'verbose': False,
+        'quiet': False,
+        'long_ids': False,
+        'conductr_auth': conductr_auth,
+        'server_verification_file': server_verification_file
+    }
+
+    def test_running_bundle_with_http_and_tcp_acls(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'path-tester'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              cb96704
+               |Bundle Name            path-tester
+               |Compatibility Version  1
+               |System                 path-tester
+               |System Version         1
+               |Nr of CPUs             0.1
+               |Memory                 402653184
+               |Disk Space             200000000
+               |Roles                  ptester
+               |Bundle Digest          cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae
+               |Error                  No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Nr of Reschedules  0
+               |Scale              1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host    192.168.10.3
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |Host    192.168.10.2
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |Host    192.168.10.1
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1      Yes      10822      10822
+               |ptunnel   192.168.10.1      Yes      10007      10007
+               |
+               |HTTP ACLS
+               |---------
+               |METHOD  PATH                             REWRITE             STATUS
+               |GET     ^/fee/(.*)/fi/(.*)/fo/(.*)/fum$  /boom/\\1-\\2-\\3/box  Running
+               |GET     ^/boom/(.*)/box$                                     Running
+               |GET     ^/bacon                          /burger             Running
+               |GET     ^/tree                                               Running
+               |GET     /foo                             /baz                Running
+               |GET     /baz                                                 Running
+               |
+               |TCP ACLS
+               |--------
+               |TCP/PORT  STATUS
+               |3303      Running
+               |5601      Running
+               |12101     Running
+               |
+               |SERVICE NAMES
+               |-------------
+               |SERVICE NAME  STATUS
+               |path-tester   Running
+               |ptunnel       Running
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_running_bundle_with_service_uris_v1(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_service_uris_v1.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'eslite'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id      55436ba
+               |Bundle Name    eslite
+               |System         eslite
+               |Nr of CPUs     0.1
+               |Memory         33554432
+               |Disk Space     200000000
+               |Roles          elasticsearch
+               |Bundle Digest  55436ba8468dad03313a2bfd6cdd77077a79d8046abb2944c922cfa9e9c5d0b6
+               |Error          No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Scale  1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host    172.17.0.2
+               |Bundle  /tmp/55436ba8468dad03313a2bfd6cdd77077a79d8046abb2944c922cfa9e9c5d0b6.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |ENDPOINT        HOST        STARTED  BIND_PORT  HOST_PORT
+               |akka-remote     172.17.0.2      Yes      10917      10917
+               |elastic-search  172.17.0.2      Yes      10007      10007
+               |
+               |SERVICE NAMES
+               |-------------
+               |SERVICE NAME    STATUS
+               |elastic-search  Running
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_running_bundle_with_service_uris_v2(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_service_uris_v2.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'eslite'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              55436ba
+               |Bundle Name            eslite
+               |Compatibility Version  1
+               |System                 eslite
+               |System Version         1
+               |Nr of CPUs             0.1
+               |Memory                 33554432
+               |Disk Space             200000000
+               |Roles                  elasticsearch
+               |Bundle Digest          55436ba8468dad03313a2bfd6cdd77077a79d8046abb2944c922cfa9e9c5d0b6
+               |Error                  No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Scale  1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host    172.17.0.2
+               |Bundle  /tmp/55436ba8468dad03313a2bfd6cdd77077a79d8046abb2944c922cfa9e9c5d0b6.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |ENDPOINT        HOST        STARTED  BIND_PORT  HOST_PORT
+               |akka-remote     172.17.0.2      Yes      10917      10917
+               |elastic-search  172.17.0.2      Yes      10007      10007
+               |
+               |SERVICE NAMES
+               |-------------
+               |SERVICE NAME    STATUS
+               |elastic-search  Running
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_find_by_bundle_id(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'cb96704'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              cb96704
+               |Bundle Name            path-tester
+               |Compatibility Version  1
+               |System                 path-tester
+               |System Version         1
+               |Nr of CPUs             0.1
+               |Memory                 402653184
+               |Disk Space             200000000
+               |Roles                  ptester
+               |Bundle Digest          cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae
+               |Error                  No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Nr of Reschedules  0
+               |Scale              1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host    192.168.10.3
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |Host    192.168.10.2
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |Host    192.168.10.1
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1      Yes      10822      10822
+               |ptunnel   192.168.10.1      Yes      10007      10007
+               |
+               |HTTP ACLS
+               |---------
+               |METHOD  PATH                             REWRITE             STATUS
+               |GET     ^/fee/(.*)/fi/(.*)/fo/(.*)/fum$  /boom/\\1-\\2-\\3/box  Running
+               |GET     ^/boom/(.*)/box$                                     Running
+               |GET     ^/bacon                          /burger             Running
+               |GET     ^/tree                                               Running
+               |GET     /foo                             /baz                Running
+               |GET     /baz                                                 Running
+               |
+               |TCP ACLS
+               |--------
+               |TCP/PORT  STATUS
+               |3303      Running
+               |5601      Running
+               |12101     Running
+               |
+               |SERVICE NAMES
+               |-------------
+               |SERVICE NAME  STATUS
+               |path-tester   Running
+               |ptunnel       Running
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_find_by_bundle_id_long(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({
+            'bundle': 'cb96704f739ddfa36ddb9fabdfc42592',
+            'long_ids': True,
+        })
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              cb96704f739ddfa36ddb9fabdfc42592
+               |Bundle Name            path-tester
+               |Compatibility Version  1
+               |System                 path-tester
+               |System Version         1
+               |Nr of CPUs             0.1
+               |Memory                 402653184
+               |Disk Space             200000000
+               |Roles                  ptester
+               |Bundle Digest          cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae
+               |Error                  No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Nr of Reschedules  0
+               |Scale              1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host    192.168.10.3
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |Host    192.168.10.2
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |Host    192.168.10.1
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/cb96704f739ddfa36ddb9fabdfc4259238a5b4d8f3d4bc8f1fd34bdcc8e1bcae.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1      Yes      10822      10822
+               |ptunnel   192.168.10.1      Yes      10007      10007
+               |
+               |HTTP ACLS
+               |---------
+               |METHOD  PATH                             REWRITE             STATUS
+               |GET     ^/fee/(.*)/fi/(.*)/fo/(.*)/fum$  /boom/\\1-\\2-\\3/box  Running
+               |GET     ^/boom/(.*)/box$                                     Running
+               |GET     ^/bacon                          /burger             Running
+               |GET     ^/tree                                               Running
+               |GET     /foo                             /baz                Running
+               |GET     /baz                                                 Running
+               |
+               |TCP ACLS
+               |--------
+               |TCP/PORT  STATUS
+               |3303      Running
+               |5601      Running
+               |12101     Running
+               |
+               |SERVICE NAMES
+               |-------------
+               |SERVICE NAME  STATUS
+               |path-tester   Running
+               |ptunnel       Running
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_find_by_bundle_id_config_digest(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'bdfa43d-e5f3504'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              bdfa43d-e5f3504
+               |Bundle Name            conductr-haproxy
+               |Compatibility Version  2
+               |System                 conductr-haproxy
+               |System Version         2
+               |Nr of CPUs             0.1
+               |Memory                 402653184
+               |Disk Space             35000000
+               |Roles                  haproxy
+               |Bundle Digest          bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b
+               |Configuration Digest   e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2
+               |Error                  No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Nr of Reschedules  0
+               |Scale              1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host                  192.168.10.2
+               |Bundle                /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip
+               |Bundle configuration  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip
+               |
+               |Host                  192.168.10.1
+               |Bundle                /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip
+               |Bundle configuration  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip
+               |
+               |Host                  192.168.10.3
+               |Bundle                /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip
+               |Bundle configuration  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
+               |status    192.168.10.2      Yes       9009       9009
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_find_by_bundle_id_config_digest_long(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({
+            'bundle': 'bdfa43d7ade7456af30a95e9ef4bce86-e5f35046d59c27f4cfeebcc026f3e3b7',
+            'long_ids': True
+        })
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              bdfa43d7ade7456af30a95e9ef4bce86-e5f35046d59c27f4cfeebcc026f3e3b7
+               |Bundle Name            conductr-haproxy
+               |Compatibility Version  2
+               |System                 conductr-haproxy
+               |System Version         2
+               |Nr of CPUs             0.1
+               |Memory                 402653184
+               |Disk Space             35000000
+               |Roles                  haproxy
+               |Bundle Digest          bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b
+               |Configuration Digest   e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2
+               |Error                  No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Nr of Reschedules  0
+               |Scale              1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host                  192.168.10.2
+               |Bundle                /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip
+               |Bundle configuration  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip
+               |
+               |Host                  192.168.10.1
+               |Bundle                /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip
+               |Bundle configuration  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip
+               |
+               |Host                  192.168.10.3
+               |Bundle                /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/bdfa43d7ade7456af30a95e9ef4bce863d3029dc58b6824f5783881297d1983b.zip
+               |Bundle configuration  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/e5f35046d59c27f4cfeebcc026f3e3b76e027b15223a8961b59d728e559402e2.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
+               |status    192.168.10.2      Yes       9009       9009
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_stopped_bundle(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'conductr-elasticsearch'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              85dd265
+               |Bundle Name            conductr-elasticsearch
+               |Compatibility Version  1
+               |System                 conductr-elasticsearch
+               |System Version         1
+               |Nr of CPUs             0.1
+               |Memory                 1572864000
+               |Disk Space             100000000
+               |Roles                  elasticsearch
+               |Bundle Digest          85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550
+               |Error                  No
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host    192.168.10.2
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.2/bundles/85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550.zip
+               |
+               |Host    192.168.10.1
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550.zip
+               |
+               |Host    192.168.10.3
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.3/bundles/85dd2657bf86e5ed817c6cbe9d4c18e3a6c30eb3146383fc65357b65f11cb550.zip
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
+    def test_multiple_bundles_found(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'cond'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertFalse(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.assertEqual('', self.output(stdout))
+
+        expected_error = as_error(strip_margin("""|Error: Specified Bundle ID/name: cond resulted in multiple Bundle IDs: ['85dd265', 'bdfa43d-e5f3504']
+                                                  |"""))
+        self.assertEqual(expected_error, self.output(stderr))
+
+    def test_no_bundles_found(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'bundle': 'something-invalid'})
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertFalse(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.assertEqual('', self.output(stdout))
+
+        expected_error = as_error(strip_margin("""|Error: Unable to find bundle something-invalid
+                                                  |"""))
+        self.assertEqual(expected_error, self.output(stderr))
