@@ -94,7 +94,7 @@ def validate_nr_of_agents(nr_of_agent_instances, license_data):
     elif nr_of_agent_instances > nr_of_allowed_agents:
         raise LicenseValidationError([
             'Unable to allocate {} agents'.format(nr_of_agent_instances),
-            'The license allows for {} agents'.format(nr_of_allowed_agents)
+            'The license allows for {} agent(s)'.format(nr_of_allowed_agents)
         ])
 
 
