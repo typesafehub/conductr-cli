@@ -61,7 +61,7 @@ class ProxyingFeature:
         self.proxy_ports = None
 
     def enabled(self):
-        return major_version(self.image_version) > 1
+        return major_version(self.image_version) != 1
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
         pass
