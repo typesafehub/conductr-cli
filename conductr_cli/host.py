@@ -79,42 +79,28 @@ def is_listening(ip_addr, port):
     return result
 
 
-def addr_alias_setup_instructions(addrs, ip_version):
-    info_text = 'Whoops. Network address aliases are required ' \
-                'so that the sandbox can operate as a cluster of machines.' + \
-                '\n\nPlease run the following and then try your command again:'
-
+def addr_alias_commands(addrs, ip_version):
     if_name = loopback_device_name()
 
+    subnet_mask = get_subnet_mask(ip_version)
+
+    commands = []
+    if is_linux():
+        commands = [['sudo', 'ifconfig', '{}:{}'.format(if_name, int(addr.exploded[-1:]) - 1),
+                     addr.exploded, 'netmask', subnet_mask, 'up'] for addr in addrs]
+    elif is_macos():
+        commands = [['sudo', 'ifconfig', if_name, 'alias', addr.exploded, subnet_mask] for addr in addrs]
+
+    return commands
+
+
+def get_subnet_mask(ip_version):
     # Note that the CIDR notation (e.g. /24) is for identifying the subnet to pick an address from.
     # For actually setting up the alias, we want to mask out the entire network so the alias only
     # responds to traffic for its own IP.
-
     masks = {
         4: "255.255.255.255",
         6: "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
     }
 
-    subnet_mask = masks[ip_version]
-
-    if is_linux():
-        commands = ['sudo ifconfig {}:{} {} netmask {} up'
-                    .format(if_name, int(addr.exploded[-1:]) - 1, addr.exploded, subnet_mask) for addr in addrs]
-
-        return '{}\n' \
-               '\n' \
-               '{}\n' \
-               ''.format(info_text, '\n'.join(commands))
-
-    elif is_macos():
-        commands = ['sudo ifconfig {} alias {} {}'.format(if_name, addr.exploded, subnet_mask) for addr in addrs]
-        return '{}\n' \
-               '\n' \
-               '{}\n' \
-               ''.format(info_text, '\n'.join(commands))
-    else:
-        return 'Setup aliases for {} addresses with {} subnet mask'.format(display_addrs(addrs), subnet_mask)
-
-
-def display_addrs(addrs, separator=', '):
-    return separator.join(['{}'.format(addr) for addr in addrs])
+    return masks[ip_version]

@@ -453,12 +453,14 @@ class TestFindBindAddresses(CliTestCase):
     nr_of_instances = 3
     addr_range = ipaddress.ip_network('192.168.1.0/24', strict=True)
 
-    def test_found(self):
+    def test_bind_addrs_exist(self):
         mock_can_bind = MagicMock(return_value=True)
-        mock_addr_alias_setup_instructions = MagicMock(return_value="test")
+        mock_addr_alias_commands = MagicMock(return_value='test')
+        mock_subprocess_check_call = MagicMock()
 
         with patch('conductr_cli.host.can_bind', mock_can_bind), \
-                patch('conductr_cli.host.addr_alias_setup_instructions', mock_addr_alias_setup_instructions):
+                patch('conductr_cli.host.addr_alias_commands', mock_addr_alias_commands), \
+                patch('subprocess.check_call', mock_subprocess_check_call):
             result = sandbox_run_jvm.find_bind_addrs(self.nr_of_instances, self.addr_range)
             self.assertEqual([
                 ipaddress.ip_address('192.168.1.1'),
@@ -472,45 +474,110 @@ class TestFindBindAddresses(CliTestCase):
             call(ipaddress.ip_address('192.168.1.3'), BIND_TEST_PORT)
         ], mock_can_bind.call_args_list)
 
-        mock_addr_alias_setup_instructions.assert_not_called()
+        mock_addr_alias_commands.assert_not_called()
+        mock_subprocess_check_call.assert_not_called()
 
-    def test_not_found(self):
-        mock_can_bind = MagicMock(return_value=False)
-        mock_addr_alias_setup_instructions = MagicMock(return_value="test")
+    def test_no_bind_addrs_exist(self):
+        can_bind_first_iteration_responses = [False] * len(list(self.addr_range.hosts()))
+        can_bind_second_iteration_responses = [True] * len(list(self.addr_range.hosts()))
+        mock_can_bind = MagicMock(side_effect=can_bind_first_iteration_responses + can_bind_second_iteration_responses)
+        mock_addr_alias_commands = MagicMock(return_value=[
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.1', '255.255.255.255'],
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.2', '255.255.255.255'],
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.3', '255.255.255.255']
+        ])
+        mock_subprocess_check_call = MagicMock()
 
         with patch('conductr_cli.host.can_bind', mock_can_bind), \
-                patch('conductr_cli.host.addr_alias_setup_instructions', mock_addr_alias_setup_instructions):
-            self.assertRaises(BindAddressNotFound, sandbox_run_jvm.find_bind_addrs, 3, self.addr_range)
+                patch('conductr_cli.host.addr_alias_commands', mock_addr_alias_commands), \
+                patch('subprocess.check_call', mock_subprocess_check_call):
+            result = sandbox_run_jvm.find_bind_addrs(self.nr_of_instances, self.addr_range)
+            self.assertEqual([
+                ipaddress.ip_address('192.168.1.1'),
+                ipaddress.ip_address('192.168.1.2'),
+                ipaddress.ip_address('192.168.1.3')
+            ], result)
 
-        self.assertEqual([
-            call(addr, BIND_TEST_PORT) for addr in self.addr_range.hosts()
-        ], mock_can_bind.call_args_list)
-
-        mock_addr_alias_setup_instructions.assert_called_once_with(
+        mock_addr_alias_commands.assert_called_once_with(
             [ipaddress.ip_address('192.168.1.1'),
              ipaddress.ip_address('192.168.1.2'),
              ipaddress.ip_address('192.168.1.3')],
             4)
-
-    def test_partial_found(self):
-        mock_can_bind = MagicMock(side_effect=[
-            True if idx == 0 else False
-            for idx, addr in enumerate(self.addr_range.hosts())
+        mock_subprocess_check_call.assert_has_calls([
+            call(['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.1', '255.255.255.255']),
+            call(['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.2', '255.255.255.255']),
+            call(['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.3', '255.255.255.255'])
         ])
-        mock_addr_alias_setup_instructions = MagicMock(return_value="test")
+
+    def test_partial_bind_addrs_exists(self):
+        can_bind_first_iteration_responses = [True] + [False] * (len(list(self.addr_range.hosts())) - 1)
+        can_bind_second_iteration_responses = [True] * len(list(self.addr_range.hosts()))
+        mock_can_bind = MagicMock(side_effect=can_bind_first_iteration_responses + can_bind_second_iteration_responses)
+        mock_addr_alias_commands = MagicMock(return_value=[
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.2', '255.255.255.255'],
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.3', '255.255.255.255']
+        ])
+        mock_subprocess_check_call = MagicMock()
 
         with patch('conductr_cli.host.can_bind', mock_can_bind), \
-                patch('conductr_cli.host.addr_alias_setup_instructions', mock_addr_alias_setup_instructions):
-            self.assertRaises(BindAddressNotFound, sandbox_run_jvm.find_bind_addrs, 3, self.addr_range)
+                patch('conductr_cli.host.addr_alias_commands', mock_addr_alias_commands), \
+                patch('subprocess.check_call', mock_subprocess_check_call):
+            result = sandbox_run_jvm.find_bind_addrs(self.nr_of_instances, self.addr_range)
+            self.assertEqual([
+                ipaddress.ip_address('192.168.1.1'),
+                ipaddress.ip_address('192.168.1.2'),
+                ipaddress.ip_address('192.168.1.3')
+            ], result)
 
-        self.assertEqual([
-            call(addr, BIND_TEST_PORT) for addr in self.addr_range.hosts()
-        ], mock_can_bind.call_args_list)
-
-        mock_addr_alias_setup_instructions.assert_called_once_with(
+        mock_addr_alias_commands.assert_called_once_with(
             [ipaddress.ip_address('192.168.1.2'),
              ipaddress.ip_address('192.168.1.3')],
             4)
+        mock_subprocess_check_call.assert_has_calls([
+            call(['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.2', '255.255.255.255']),
+            call(['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.3', '255.255.255.255'])
+        ])
+
+    def test_password_prompt_exception(self):
+        mock_can_bind = MagicMock(return_value=False)
+        mock_addr_alias_commands = MagicMock(return_value=[
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.1', '255.255.255.255'],
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.2', '255.255.255.255'],
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.3', '255.255.255.255']
+        ])
+        mock_subprocess_check_call = MagicMock(side_effect=subprocess.CalledProcessError(1, 'test'))
+
+        with patch('conductr_cli.host.can_bind', mock_can_bind), \
+                patch('conductr_cli.host.addr_alias_commands', mock_addr_alias_commands), \
+                patch('subprocess.check_call', mock_subprocess_check_call):
+            self.assertRaises(BindAddressNotFound,
+                              sandbox_run_jvm.find_bind_addrs, self.nr_of_instances, self.addr_range)
+
+        mock_addr_alias_commands.assert_called_once_with(
+            [ipaddress.ip_address('192.168.1.1'),
+             ipaddress.ip_address('192.168.1.2'),
+             ipaddress.ip_address('192.168.1.3')],
+            4)
+        mock_subprocess_check_call.assert_called_once_with(
+            ['sudo', 'ifconfig', 'lo0', 'alias', '192.168.10.1', '255.255.255.255'])
+
+    def test_unknown_operation_system(self):
+        mock_can_bind = MagicMock(return_value=False)
+        mock_addr_alias_commands = MagicMock(return_value=[])
+        mock_subprocess_check_call = MagicMock()
+
+        with patch('conductr_cli.host.can_bind', mock_can_bind), \
+                patch('conductr_cli.host.addr_alias_commands', mock_addr_alias_commands), \
+                patch('subprocess.check_call', mock_subprocess_check_call):
+            self.assertRaises(BindAddressNotFound,
+                              sandbox_run_jvm.find_bind_addrs, self.nr_of_instances, self.addr_range)
+
+        mock_addr_alias_commands.assert_called_once_with(
+            [ipaddress.ip_address('192.168.1.1'),
+             ipaddress.ip_address('192.168.1.2'),
+             ipaddress.ip_address('192.168.1.3')],
+            4)
+        mock_subprocess_check_call.assert_not_called()
 
 
 class TestObtainSandboxImage(CliTestCase):
