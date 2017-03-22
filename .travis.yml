@@ -5,7 +5,9 @@ install:
   - pip install virtualenv
   - pip install tox
 script:
+  - pip3 install -e .
   - tox
+  - python3 -m unittest
 deploy:
   provider: pypi
   user: typesafehub
