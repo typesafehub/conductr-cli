@@ -64,10 +64,6 @@ setup(
     version=__version__,
     packages=find_packages(),
 
-    data_files=[
-        ('bin', ['bin/inetTester.jar'])
-    ],
-
     entry_points={
         'console_scripts': [
             'conduct = conductr_cli.conduct:run',

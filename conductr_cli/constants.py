@@ -53,8 +53,3 @@ FEATURE_PROVIDE_LOGGING = 'logging'
 
 # When reading and writing to IO devices, buffer this many bytes at a time
 IO_CHUNK_SIZE = 32768
-
-# Maximum Java hostname lookup time in milliseconds
-# Calculation based on: Akka startup timeout of 5 seconds - 2 seconds to give Akka time to startup
-# The usual hostname lookup time is about 30 ms
-HOSTNAME_LOOKUP_TIMEOUT = 3000

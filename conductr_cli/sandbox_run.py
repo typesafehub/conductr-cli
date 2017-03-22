@@ -18,7 +18,6 @@ import sys
 @validation.handle_bintray_credentials_error
 @validation.handle_bintray_unreachable_error
 @validation.handle_jvm_validation_error
-@validation.handle_hostname_lookup_error
 @validation.handle_docker_validation_error
 @validation.handle_license_validation_error
 @validation.handle_conductr_startup_error
