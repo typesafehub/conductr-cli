@@ -13,7 +13,7 @@ from zipfile import BadZipFile
 from conductr_cli.exceptions import BindAddressNotFound, ConductrStartupError, \
     InstanceCountError, MalformedBundleError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
-    WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, HostnameLookupError, \
+    WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, \
     JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, \
     SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, \
     LicenseLoadError, LicenseValidationError, LicenseDownloadError, NOT_FOUND_ERROR
@@ -433,31 +433,6 @@ def handle_jvm_validation_error(func):
 
         # Do not change the wrapped function name,
         # so argparse configuration can be tested.
-    handler.__name__ = func.__name__
-
-    return handler
-
-
-def handle_hostname_lookup_error(func):
-
-    def handler(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except HostnameLookupError as e:
-            log = get_logger_for_func(func)
-            log.error('Hostname lookup took {} milliseconds which will result in a ConductR startup failure'
-                      .format(e.lookup_time))
-            log.error('This is known Java 8 issue on macOS: http://stackoverflow.com/questions/39636792/'
-                      'jvm-takes-a-long-time-to-resolve-ip-address-for-localhost')
-            log.error('To speed up the hostname lookup add your macOS hostname to /etc/hosts')
-            log.error('Resolves your hostname on the terminal with: hostname')
-            log.error('Sample /etc/hosts file:')
-            log.error('127.0.0.1   localhost mbpro.local')
-            log.error('::1         localhost mbpro.local')
-            return False
-
-            # Do not change the wrapped function name,
-            # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
