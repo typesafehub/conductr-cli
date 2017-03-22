@@ -48,15 +48,37 @@ def bndl_create(args):
 
             return 2
         elif args.format == 'docker':
-            if args.source is None:
-                with tarfile.open(fileobj=buff_in, mode='r|') as tar_in:
-                    name = docker_unpack(oci_image_dir, tar_in, is_dir=False, maybe_name=args.name, maybe_tag=args.tag)
-            elif os.path.isfile(args.source):
-                with tarfile.open(args.source, mode='r') as tar_in:
-                    name = docker_unpack(oci_image_dir, tar_in, is_dir=False, maybe_name=args.name, maybe_tag=args.tag)
-            else:
-                name = docker_unpack(oci_image_dir, args.source, is_dir=True, maybe_name=args.name, maybe_tag=args.tag)
+            must_close = None
+            is_dir = False
 
+            try:
+                if args.source is None:
+                    must_close = tarfile.open(fileobj=buff_in, mode='r|')
+                    data = must_close
+                elif os.path.isfile(args.source):
+                    must_close = tarfile.open(args.source, mode='r')
+                    data = must_close
+                else:
+                    data = args.source
+                    is_dir = True
+
+                name = docker_unpack(
+                    destination=oci_image_dir,
+                    data=data,
+                    is_dir=is_dir,
+                    maybe_name=args.name,
+                    maybe_tag=args.tag,
+                    docker_cmd=args.docker_cmd,
+                    docker_entrypoint=args.docker_entrypoint,
+                    docker_env=args.docker_env
+                )
+            finally:
+                if must_close is not None:
+                    must_close.close()
+
+            if data is None:
+                log.error('bndl: Missing source')
+                return 2
             if name is None:
                 log.error('bndl: Not a Docker image')
                 return 3

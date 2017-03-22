@@ -96,16 +96,31 @@ def docker_parse_cmd(line):
     return args
 
 
-def docker_config_to_oci_image(manifest, config, sizes, layers_to_digests):
+def docker_config_to_oci_image(manifest,
+                               config,
+                               sizes,
+                               layers_to_digests,
+                               docker_cmd,
+                               docker_entrypoint,
+                               docker_env):
+    oci_cmd = docker_cmd if docker_cmd is not None else \
+        config['config']['Cmd'] if 'Cmd' in config['config'] else None
+
+    oci_env = docker_env if docker_env is not None else \
+        config['config']['Env'] if 'Env' in config['config'] else None
+
+    oci_entrypoint = docker_entrypoint if docker_entrypoint is not None else \
+        config['config']['Entrypoint'] if 'Entrypoint' in config['config'] else None
+
     oci_config = {
         'created': config['created'],
         'architecture': config['architecture'],
         'os': config['os'],
         'config': {
             k: v for k, v in {
-                'Env': config['config']['Env'] if 'Env' in config['config'] else None,
-                'Cmd': config['config']['Cmd'] if 'Cmd' in config['config'] else None,
-                'Entrypoint': config['config']['Entrypoint'] if 'Entrypoint' in config['config'] else None
+                'Env': oci_env,
+                'Cmd': oci_cmd,
+                'Entrypoint': oci_entrypoint
             }.items()
 
             if v is not None
@@ -167,7 +182,14 @@ def docker_config_to_oci_image(manifest, config, sizes, layers_to_digests):
     }
 
 
-def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
+def docker_unpack(destination,
+                  data,
+                  is_dir,
+                  maybe_name,
+                  maybe_tag,
+                  docker_cmd,
+                  docker_entrypoint,
+                  docker_env):
     temp_dir = tempfile.mkdtemp()
 
     try:
@@ -255,7 +277,15 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
                 with open(os.path.join(contents_dir, manifest['Config'])) as config_file:
                     config = json.load(config_file)
 
-                    oci_spec = docker_config_to_oci_image(manifest, config, sizes, layers_to_digests)
+                    oci_spec = docker_config_to_oci_image(
+                        manifest,
+                        config,
+                        sizes,
+                        layers_to_digests,
+                        docker_cmd,
+                        docker_entrypoint,
+                        docker_env
+                    )
 
                     file_write_bytes(
                         '{}/blobs/sha256/{}'.format(destination, oci_spec['config_digest']),
