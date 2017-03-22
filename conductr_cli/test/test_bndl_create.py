@@ -23,7 +23,7 @@ class TestBndlCreate(CliTestCase):
 
         with \
                 patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
-                patch('sys.stdout.buffer', stdout_mock):
+                patch('sys.stdout.buffer.write', stdout_mock):
             bndl_create.bndl_create(attributes)
 
         self.assertEqual(
@@ -49,7 +49,7 @@ class TestBndlCreate(CliTestCase):
 
         with \
                 patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
-                patch('sys.stdout.buffer', stdout_mock):
+                patch('sys.stdout.buffer.write', stdout_mock):
             bndl_create.bndl_create(attributes)
 
         self.assertEqual(
@@ -78,7 +78,7 @@ class TestBndlCreate(CliTestCase):
 
         with \
                 patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
-                patch('sys.stdout.buffer', stdout_mock):
+                patch('sys.stdout.buffer.write', stdout_mock):
             bndl_create.bndl_create(attributes)
 
         self.assertEqual(
@@ -108,7 +108,7 @@ class TestBndlCreate(CliTestCase):
 
             with \
                     patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
-                    patch('sys.stdout.buffer', stdout_mock):
+                    patch('sys.stdout.buffer.write', stdout_mock):
                 self.assertEqual(bndl_create.bndl_create(attributes), 0)
 
             self.assertTrue(zipfile.is_zipfile(tmpfile))
@@ -137,7 +137,7 @@ class TestBndlCreate(CliTestCase):
 
             with \
                     patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
-                    patch('sys.stdout.buffer', stdout_mock):
+                    patch('sys.stdout.buffer.write', stdout_mock):
                 self.assertEqual(bndl_create.bndl_create(attributes), 0)
 
             self.assertFalse(zipfile.is_zipfile(tmpfile))

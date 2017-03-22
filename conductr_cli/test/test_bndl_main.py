@@ -77,6 +77,8 @@ class TestBndl(CliTestCase):
 
         with \
                 patch('conductr_cli.bndl_main.bndl', bndl_mock), \
+                patch('sys.stdout.isatty', lambda: False), \
+                patch('sys.stdin.isatty', lambda: False), \
                 patch('sys.exit', exit_mock):
             bndl_main.run(['-o', '-', '-'])
 
