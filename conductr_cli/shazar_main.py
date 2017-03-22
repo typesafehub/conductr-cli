@@ -68,24 +68,7 @@ def shazar(args):
                 try:
                     with tarfile.open(fileobj=sys.stdin.buffer, mode='r|') \
                             if args.source is None else tarfile.open(args.source, mode='r') as tar:
-
-                        for entry in tar:
-                            # this is to work around zip's minimum date, 315705599 is 01/02/1980 @ 11:59pm (UTC)
-                            mtime_to_use = max(entry.mtime, 315705599)
-
-                            if entry.isfile():
-                                with tempfile.NamedTemporaryFile() as entry_file:
-                                    shutil.copyfileobj(tar.extractfile(entry), entry_file)
-                                    entry_file.flush()
-                                    os.utime(entry_file.name, (mtime_to_use, mtime_to_use))
-                                    zip_file.write(entry_file.name, entry.name)
-                            elif entry.isdir():
-                                info = zipfile.ZipInfo(entry.name + '/', date_time=time.localtime(mtime_to_use))
-                                info.create_system = 0
-                                zip_file.writestr(info, '')
-                            else:
-                                log.error('shazar: your archive cannot contain device nodes or symlinks')
-                                sys.exit(1)
+                        tar_to_zip(tar, zip_file)
 
                 except tarfile.ReadError:
                     log.error('shazar: input must be in tar format')
@@ -94,11 +77,7 @@ def shazar(args):
                 source_base_name = os.path.basename(args.source.rstrip('\\/'))
 
                 if os.path.isdir(args.source):
-                    for (dir_path, dir_names, file_names) in os.walk(args.source):
-                        for file_name in file_names:
-                            path = os.path.join(dir_path, file_name)
-                            name = os.path.join(source_base_name, os.path.relpath(path, start=args.source))
-                            zip_file.write(path, name)
+                    dir_to_zip(args.source, zip_file, source_base_name)
                 else:
                     zip_file.write(args.source, source_base_name)
 
@@ -126,6 +105,36 @@ def shazar(args):
 
             if not source_is_tar:
                 sys.stdout.write(dest + os.linesep)
+
+
+def dir_to_zip(dir, zip_file, source_base_name):
+    for (dir_path, dir_names, file_names) in os.walk(dir):
+        for file_name in file_names:
+            path = os.path.join(dir_path, file_name)
+            name = os.path.join(source_base_name, os.path.relpath(path, start=dir))
+            zip_file.write(path, name)
+
+
+def tar_to_zip(tar, zip_file):
+    log = logging.getLogger(__name__)
+
+    for entry in tar:
+        # this is to work around zip's minimum date, 315705599 is 01/02/1980 @ 11:59pm (UTC)
+        mtime_to_use = max(entry.mtime, 315705599)
+
+        if entry.isfile():
+            with tempfile.NamedTemporaryFile() as entry_file:
+                shutil.copyfileobj(tar.extractfile(entry), entry_file)
+                entry_file.flush()
+                os.utime(entry_file.name, (mtime_to_use, mtime_to_use))
+                zip_file.write(entry_file.name, entry.name)
+        elif entry.isdir():
+            info = zipfile.ZipInfo(entry.name + '/', date_time=time.localtime(mtime_to_use))
+            info.create_system = 0
+            zip_file.writestr(info, '')
+        else:
+            log.error('shazar: your archive cannot contain device nodes or symlinks')
+            sys.exit(1)
 
 
 def write_with_digest(input, output):

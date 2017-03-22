@@ -12,7 +12,7 @@ install_requires = [
     'requests-toolbelt>=0.7.0',
     'argcomplete>=0.8.1',
     'psutil>=5.0.1, <6.0',
-    'pyhocon==0.2.1',
+    'pyhocon==0.3.35',
     'arrow>=0.6.0',
     'colorama>=0.3.7',
 
@@ -73,6 +73,7 @@ setup(
             'conduct = conductr_cli.conduct:run',
             'sandbox = conductr_cli.sandbox:run',
             'shazar = conductr_cli.shazar:run',
+            'bndl = conductr_cli.bndl:run',
         ],
     },
 

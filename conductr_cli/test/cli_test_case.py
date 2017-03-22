@@ -96,6 +96,18 @@ def create_temp_bundle_with_contents(contents):
     return tmpdir, shutil.make_archive(os.path.join(tmpdir, 'bundle'), 'zip', unpacked, 'bundle-1.0.0')
 
 
+def create_attributes_object(obj):
+    class Empty(object):
+        pass
+
+    ins = Empty()
+
+    for key in obj:
+        setattr(ins, key, obj[key])
+
+    return ins
+
+
 def create_temp_bundle(bundle_conf):
     return create_temp_bundle_with_contents({'bundle.conf': bundle_conf, 'password.txt': 'monkey'})
 
