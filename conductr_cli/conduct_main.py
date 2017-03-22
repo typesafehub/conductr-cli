@@ -413,6 +413,7 @@ def build_parser(dcos_mode):
     add_custom_settings_file(load_license_parser)
     add_custom_plugins_dir(load_license_parser)
     add_quiet_flag(load_license_parser)
+    add_verbose(load_license_parser)
     load_license_parser.add_argument('--license-download-url',
                                      dest='license_download_url',
                                      help=argparse.SUPPRESS,

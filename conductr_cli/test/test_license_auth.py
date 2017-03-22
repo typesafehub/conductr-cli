@@ -42,8 +42,7 @@ class TestPromptForAuthToken(TestCase):
                 patch('builtins.input', mock_input):
             self.assertEqual(auth_token, license_auth.prompt_for_auth_token())
 
-        mock_print.assert_called_once_with(license_auth.AUTH_TOKEN_PROMPT, end='', flush=False)
-        mock_input.assert_called_once_with()
+        mock_input.assert_called_once_with(license_auth.AUTH_TOKEN_PROMPT)
 
 
 class TestRemoveCachedAuthToken(TestCase):

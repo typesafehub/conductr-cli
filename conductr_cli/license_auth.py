@@ -1,5 +1,6 @@
 from conductr_cli.constants import DEFAULT_AUTH_TOKEN_FILE
 import os
+import readline
 
 
 AUTH_TOKEN_PROMPT = '\nAn access token is required. Please visit https://www.lightbend.com/account/access-token to \n' \
@@ -27,9 +28,12 @@ def prompt_for_auth_token():
     Prompts for cached token from the user. Reads the token stdin keyed in by the user
     :return: cached token
     """
-    print(AUTH_TOKEN_PROMPT, end='', flush=False)
-    auth_token = input()
-    return auth_token
+    readline.clear_history()
+
+    try:
+        return input(AUTH_TOKEN_PROMPT).strip()
+    except EOFError:
+        return ''
 
 
 def remove_cached_auth_token():
@@ -45,5 +49,7 @@ def save_auth_token(auth_token):
     Saves token into local filesystem.
     :param auth_token: The auth token to be saved.
     """
+    os.makedirs(os.path.dirname(DEFAULT_AUTH_TOKEN_FILE), exist_ok=True)
+
     with open(DEFAULT_AUTH_TOKEN_FILE, 'w') as f:
         f.write(auth_token)

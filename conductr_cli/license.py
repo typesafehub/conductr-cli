@@ -6,6 +6,8 @@ import arrow
 import base64
 import datetime
 import json
+import logging
+import os
 
 EXPIRY_DATE_DISPLAY_FORMAT = '%a %d %b %Y %H:%M%p'
 
@@ -20,6 +22,9 @@ def download_license(args, save_to):
     :param save_to: the path where downloaded license will be saved to.
     :return: path to the license file.
     """
+
+    log = logging.getLogger(__name__)
+
     cached_token = license_auth.get_cached_auth_token()
     if cached_token:
         auth_token = cached_token
@@ -35,7 +40,10 @@ def download_license(args, save_to):
                                    headers=auth_header,
                                    verify=args.server_verification_file)
 
-    if response.status_code == 401:
+    if log.is_verbose_enabled():
+        log.verbose(response.text)
+
+    if response.status_code == 401 or response.status_code == 303:
         license_auth.remove_cached_auth_token()
         raise LicenseDownloadError([response.text])
 
@@ -54,6 +62,7 @@ def save_license_data(license_data, save_to):
     :param license_data: The license data in text
     :param save_to: the file where the license will be saved to
     """
+    os.makedirs(os.path.dirname(save_to), exist_ok=True)
     with open(save_to, 'w') as f:
         f.write(license_data)
 
