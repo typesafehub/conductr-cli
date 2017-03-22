@@ -1,5 +1,8 @@
 import os
 
+# Preload this much data in the bndl tool to determine input type of a stream
+BNDL_PEEK_SIZE = 16384
+
 CONDUCTR_SCHEME = 'CONDUCTR_SCHEME'
 
 DEFAULT_SCHEME = os.getenv(CONDUCTR_SCHEME, 'http')
