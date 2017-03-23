@@ -289,12 +289,41 @@ For Linux:
 For Windows:
 - Windows 7
 - Python version ``3.5``.
+- 7Zip executable from http://www.7-zip.org/download.html required to build zip file on the command line. When installing 7Zip, ensure the 7z.exe is available on the Windows ``%PATH%``.
 
 Pyinstaller version ``3.2.1`` or above is required. Please visit http://www.pyinstaller.org/ to obtain instructions on how to install it.
 
 Ensure the native executables are built from tagged release commit.
 
-To build native packages follow the form:
+Continue to build native packages.
+
+For MacOS and Linux:
+
+.. code:: bash
+
+    sh package-native-zip.sh [release-version-number]
+
+
+For Windows perform the following steps.
+
+Open a DOS prompt, and then execute the following command.
+
+.. code:: bash
+
+    set CONDUCTR_HOST=192.168.10.1
+
+For those using Windows VM, the local sandbox address ``192.168.10.1`` can be used - ensure the sandbox on the host machine has been started before proceeding further. This will allow the CLI on the Windows VM to connect to the ConductR running on the host machine.
+
+If you wish to use ConductR running from a different host, replace ``192.168.10.1`` accordingly.
+
+.. code:: bash
+
+    package-native-zip.bat [release-version-number]
+
+
+The ``package-native-zip.sh`` and ``package-native-zip.bat`` follow performs the following steps.
+
+First it builds the native executables.
 
 .. code:: bash
 
@@ -304,7 +333,7 @@ To build native packages follow the form:
     
 This will result in standalone images for your current environment being created in a ``dist`` folder.
 
-Ensure correct versions are built.
+It will ensure correct versions are built. This is done by comparing the version number from the output of the commands below with the input to the script. If there's a mismatch, the script will exit with failure.
 
 .. code:: bash
 
@@ -323,7 +352,7 @@ For Windows, perform the following since the ``sandbox`` command is not supporte
 
 .. code:: bash
 
-    ./dist/conduct info --host [host of some running ConductR]
+    ./dist/conduct info
     ./dist/shazar -h
 
 
