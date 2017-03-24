@@ -1,4 +1,11 @@
 from collections import OrderedDict
+from conductr_cli.constants import \
+    BNDL_DEFAULT_COMPATIBILITY_VERSION, \
+    BNDL_DEFAULT_DISK_SPACE, \
+    BNDL_DEFAULT_MEMORY, \
+    BNDL_DEFAULT_NR_OF_CPUS, \
+    BNDL_DEFAULT_ROLES, \
+    BNDL_DEFAULT_VERSION
 import hashlib
 import os
 import re
@@ -81,7 +88,25 @@ def load_bundle_args_into_conf(config, args):
             config.put(bundle_key, value)
 
     if 'roles' not in config:
-        config.put('roles', [])
+        config.put('roles', BNDL_DEFAULT_ROLES)
+
+    if 'compatibilityVersion' not in config:
+        config.put('compatibilityVersion', BNDL_DEFAULT_COMPATIBILITY_VERSION)
+
+    if 'diskSpace' not in config:
+        config.put('diskSpace', BNDL_DEFAULT_DISK_SPACE)
+
+    if 'memory' not in config:
+        config.put('memory', BNDL_DEFAULT_MEMORY)
+
+    if 'nrOfCpus' not in config:
+        config.put('nrOfCpus', BNDL_DEFAULT_NR_OF_CPUS)
+
+    if 'system' not in config:
+        config.put('system', config.get('name'))
+
+    if 'version' not in config:
+        config.put('version', BNDL_DEFAULT_VERSION)
 
 
 def file_write_bytes(path, bs):
