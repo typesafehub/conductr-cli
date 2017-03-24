@@ -3,6 +3,14 @@ import os
 # Preload this much data in the bndl tool to determine input type of a stream
 BNDL_PEEK_SIZE = 16384
 
+# Defaults for creating bundles without specifying params
+BNDL_DEFAULT_COMPATIBILITY_VERSION = 0
+BNDL_DEFAULT_DISK_SPACE = 1073741824
+BNDL_DEFAULT_MEMORY = 402653184
+BNDL_DEFAULT_NR_OF_CPUS = 0.1
+BNDL_DEFAULT_ROLES = []
+BNDL_DEFAULT_VERSION = 1
+
 CONDUCTR_SCHEME = 'CONDUCTR_SCHEME'
 
 DEFAULT_SCHEME = os.getenv(CONDUCTR_SCHEME, 'http')

@@ -1,7 +1,6 @@
-from conductr_cli import bndl_utils, bndl_oci
+from conductr_cli import bndl_oci
 from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object, strip_margin
 from io import BytesIO
-from pyhocon import ConfigFactory
 import os
 import shutil
 import tarfile
@@ -124,38 +123,16 @@ class TestBndlOci(CliTestCase):
             'tag': 'latest'
         })
 
-        # test that config value is specified
-        simple_config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(simple_config, base_args)
-        self.assertEqual(simple_config.get('name'), 'world')
-
-        # test that config value is overwritten
-        name_config = ConfigFactory.parse_string('name = "hello"')
-        bndl_utils.load_bundle_args_into_conf(name_config, base_args)
-        self.assertEqual(name_config.get('name'), 'world')
-
-        # test that config value is retained
-        cpu_config = ConfigFactory.parse_string('nrOfCpus = 0.1')
-        bndl_utils.load_bundle_args_into_conf(cpu_config, base_args)
-        self.assertEqual(cpu_config.get('nrOfCpus'), 0.1)
-
-        config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(config, extended_args)
-
-        # test that various args are set correctly
-        self.assertEqual(config.get('name'), 'world')
-        self.assertEqual(config.get('version'), '4')
-        self.assertEqual(config.get('compatibilityVersion'), '5')
-        self.assertEqual(config.get('system'), 'myapp')
-        self.assertEqual(config.get('systemVersion'), '3')
-        self.assertEqual(config.get('nrOfCpus'), '8')
-        self.assertEqual(config.get('memory'), '65536')
-        self.assertEqual(config.get('diskSpace'), '16384')
-        self.assertEqual(config.get('roles'), ['web', 'backend'])
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component'),
             strip_margin('''|name = "world"
                             |roles = []
+                            |compatibilityVersion = 0
+                            |diskSpace = 1073741824
+                            |memory = 402653184
+                            |nrOfCpus = 0.1
+                            |system = "world"
+                            |version = 1
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
