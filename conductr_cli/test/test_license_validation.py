@@ -206,7 +206,7 @@ class TestValidateNrOfAgents(TestCase):
         license_no_agents = self.license.copy()
         del license_no_agents['maxConductrAgents']
 
-        self.assertRaises(LicenseValidationError, license_validation.validate_nr_of_agents, 1, license_no_agents)
+        license_validation.validate_nr_of_agents(1, license_no_agents)
 
 
 class TestValidateExpiry(TestCase):
