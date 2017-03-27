@@ -4,13 +4,14 @@ from conductr_cli.constants import DEFAULT_LICENSE_FILE, FEATURE_PROVIDE_PROXYIN
 from conductr_cli.exceptions import BindAddressNotFound, InstanceCountError, BintrayUnreachableError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, \
     SandboxUnsupportedOsArchError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError, LicenseValidationError
+    JavaVersionParseError, LicenseValidationError, HostnameLookupError
 from conductr_cli.sandbox_features import LoggingFeature
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
 from requests.exceptions import HTTPError, ConnectionError
 import ipaddress
 import subprocess
+import io
 
 
 class TestRun(CliTestCase):
@@ -35,6 +36,7 @@ class TestRun(CliTestCase):
 
     def test_default_args(self):
         mock_validate_jvm_support = MagicMock()
+        mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
@@ -62,6 +64,7 @@ class TestRun(CliTestCase):
         features = []
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
@@ -79,6 +82,7 @@ class TestRun(CliTestCase):
 
         mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
@@ -110,6 +114,7 @@ class TestRun(CliTestCase):
     def test_nr_of_core_agent_instances(self):
         mock_validate_jvm_support = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_validate_hostname_lookup = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr1 = MagicMock()
@@ -142,6 +147,7 @@ class TestRun(CliTestCase):
         features = []
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
@@ -159,6 +165,7 @@ class TestRun(CliTestCase):
 
         mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
@@ -189,6 +196,7 @@ class TestRun(CliTestCase):
 
     def test_custom_env_args(self):
         mock_validate_jvm_support = MagicMock()
+        mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
 
         bind_addr1 = MagicMock()
@@ -234,6 +242,7 @@ class TestRun(CliTestCase):
         features = []
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
@@ -250,6 +259,7 @@ class TestRun(CliTestCase):
 
         mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
@@ -279,6 +289,7 @@ class TestRun(CliTestCase):
 
     def test_roles(self):
         mock_validate_jvm_support = MagicMock()
+        mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
@@ -311,6 +322,7 @@ class TestRun(CliTestCase):
         features = [mock_feature]
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
@@ -328,6 +340,7 @@ class TestRun(CliTestCase):
 
         mock_sandbox_stop.assert_called_once_with(input_args)
         mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
@@ -358,6 +371,7 @@ class TestRun(CliTestCase):
 
     def test_license_validation_error(self):
         mock_validate_jvm_support = MagicMock()
+        mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
@@ -384,6 +398,7 @@ class TestRun(CliTestCase):
         features = []
 
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
@@ -396,6 +411,7 @@ class TestRun(CliTestCase):
             self.assertRaises(LicenseValidationError, sandbox_run_jvm.run, input_args, features)
 
         mock_validate_jvm_support.assert_called_once_with()
+        mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
@@ -1402,6 +1418,54 @@ class TestValidateJvm(CliTestCase):
             self.assertRaises(JavaCallError, sandbox_run_jvm.validate_jvm_support)
 
         mock_getoutput.assert_called_once_with('java -version')
+
+
+class TestValidateHostnameLookup(CliTestCase):
+    def test_macos_pass(self):
+        mock_is_mac_os = MagicMock(return_value=True)
+        mock_hostname = MagicMock(return_value='mbpro.local')
+        mock_open = MagicMock(return_value=io.StringIO(
+            '# localhost comment\n'
+            '127.0.0.1	localhost mbpro.local\n'
+            '255.255.255.255	broadcasthost\n'
+            '::1             localhost mbpro.local\n'
+        ))
+
+        with patch('conductr_cli.host.is_macos', mock_is_mac_os), \
+                patch('conductr_cli.host.hostname', mock_hostname), \
+                patch('builtins.open', mock_open):
+            sandbox_run_jvm.validate_hostname_lookup()
+
+        mock_hostname.assert_called_once_with()
+        mock_open.assert_called_once_with('/etc/hosts', 'r')
+
+    def test_macos_fail(self):
+        mock_is_mac_os = MagicMock(return_value=True)
+        mock_hostname = MagicMock(return_value='mbpro.local')
+        mock_open = MagicMock(return_value=io.StringIO(
+            '# localhost comment\n'
+            '127.0.0.1	localhost mbpro.local\n'
+            '255.255.255.255	broadcasthost\n'
+            '::1             localhost\n'
+        ))
+
+        with patch('conductr_cli.host.is_macos', mock_is_mac_os), \
+                patch('conductr_cli.host.hostname', mock_hostname), \
+                patch('builtins.open', mock_open):
+            self.assertRaises(HostnameLookupError, sandbox_run_jvm.validate_hostname_lookup)
+
+        mock_hostname.assert_called_once_with()
+        mock_open.assert_called_once_with('/etc/hosts', 'r')
+
+    def test_non_macos(self):
+        mock_is_mac_os = MagicMock(return_value=False)
+        mock_hostname = MagicMock()
+
+        with patch('conductr_cli.host.is_macos', mock_is_mac_os), \
+                patch('conductr_cli.host.hostname', mock_hostname):
+            sandbox_run_jvm.validate_hostname_lookup()
+
+        mock_hostname.assert_not_called()
 
 
 class TestValidate64BitSupport(CliTestCase):

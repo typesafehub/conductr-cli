@@ -160,6 +160,14 @@ class JavaUnsupportedVersionError(Exception):
         return repr(self.jvm_version)
 
 
+class HostnameLookupError(Exception):
+    def __init__(self):
+        pass
+
+    def __str(self):
+        return repr(self)
+
+
 class DockerValidationError(Exception):
     def __init__(self, messages):
         self.messages = messages

@@ -30,6 +30,10 @@ def resolve_host_from_env():
     return os.getenv(CONDUCTR_HOST, os.getenv(CONDUCTR_IP, None))
 
 
+def hostname():
+    return socket.gethostname()
+
+
 def loopback_device_name():
     return 'lo' if is_linux() else 'lo0'
 
