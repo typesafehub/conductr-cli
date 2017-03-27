@@ -96,7 +96,8 @@ class TestBndlDocker(CliTestCase):
                 },
                 'config': {
                     'Env': ['TEST=123'],
-                    'Cmd': ['/bin']
+                    'Cmd': ['/bin'],
+                    'ExposedPorts': {'80/tcp': {}}
                 }
             },
             sizes={'some digest': 1234},
@@ -114,7 +115,8 @@ class TestBndlDocker(CliTestCase):
             'history': [{'created': '2017-01-13T22:50:55.903893599Z', 'created_by': '/bin/sh'}],
             'config': {
                 'Cmd': ['/bin'],
-                'Env': ['TEST=123']
+                'Env': ['TEST=123'],
+                'ExposedPorts': {'80/tcp': {}}
             },
             'os': 'linux',
             'architecture': 'amd64'
@@ -127,15 +129,15 @@ class TestBndlDocker(CliTestCase):
                 'mediaType': 'application/vnd.oci.image.layer.v1.tar+gzip'
             }],
             'config': {
-                'digest': 'sha256:d1cbc4434ff3dc404a0fe22c7c2d232edb3bf39ced50952144924570878ea043',
-                'size': 339,
+                'digest': 'sha256:45d013d0948874b395f6ec383a30000dea8acf6f57705c5de5ad470c6169ef96',
+                'size': 371,
                 'mediaType': 'application/vnd.oci.image.config.v1+json'
             },
             'schemaVersion': 2
         })
 
         self.assertEqual(json.loads(data['refs'].decode('UTF-8')), {
-            'digest': 'sha256:9dadab903288242e1732b4a4f038d5a9ce57c1e0a9e1398093e7ba1ddd13357d',
+            'digest': 'sha256:94e34dd9b48fd022968081c489b105d55ef9a1a23d29c194f75d7e55ae8ec1ce',
             'mediaType': 'application/vnd.oci.image.manifest.v1+json',
             'size': 307
         })

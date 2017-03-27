@@ -17,6 +17,7 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.name, 'hello')
         self.assertEqual(args.tag, 'latest')
         self.assertTrue(args.use_shazar)
+        self.assertTrue(args.use_default_endpoints)
 
     def test_parser_with_all_params(self):
         args = self.parser.parse_args([
@@ -46,7 +47,9 @@ class TestBndl(CliTestCase):
             '16384',
             '--roles',
             'web',
-            'backend'
+            'backend',
+            '--with-check',
+            '--no-default-endpoints'
         ])
 
         self.assertEqual(args.source, 'oci-image-dir')
@@ -64,6 +67,7 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.memory, 65536)
         self.assertEqual(args.diskSpace, 16384)
         self.assertEqual(args.roles, ['web', 'backend'])
+        self.assertFalse(args.use_default_endpoints)
 
     def test_parser_no_args(self):
         args = self.parser.parse_args([])

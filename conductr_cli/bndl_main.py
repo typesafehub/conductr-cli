@@ -59,6 +59,18 @@ def build_parser():
                         dest='use_shazar',
                         action='store_false')
 
+    parser.add_argument('--no-default-endpoints',
+                        help='If enabled, a bundle will not contain endpoints for ExposedPorts. '
+                             'For use with docker and oci-image formats.',
+                        default=True,
+                        dest='use_default_endpoints',
+                        action='store_false')
+
+    parser.add_argument('--with-check',
+                        help='If enabled, a "check" component will be added to the bundle"',
+                        default=False,
+                        action='store_true')
+
     parser.add_argument('--component-description',
                         help='Description to use for the generated ConductR component',
                         default='')
