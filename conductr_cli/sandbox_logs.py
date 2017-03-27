@@ -78,7 +78,6 @@ def tail(paths, follow, print_file, read_size_kb, follow_sleep_seconds):
                 for i, line in enumerate(lines):
                     if ends_on_line or i < num_lines - 1:
                         print(line, file=print_file)
-                        print(line)
 
                 if ends_on_line:
                     f['buffer'] = ''
