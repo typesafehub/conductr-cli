@@ -52,7 +52,7 @@ def deploy(args):
     # HTTP headers required for deployment request
     hmac_digest = bundle_deploy.generate_hmac_signature(bintray_webhook_secret, resolved_version['package_name'])
     headers = {
-        'X-Bintray-WebHook-Hmac': hmac_digest
+        'X-Bintray-Hook-Hmac': hmac_digest
     }
 
     response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
