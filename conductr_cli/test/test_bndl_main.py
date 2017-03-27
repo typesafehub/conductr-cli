@@ -17,6 +17,9 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.name, 'hello')
         self.assertEqual(args.tag, 'latest')
         self.assertTrue(args.use_shazar)
+        self.assertIsNone(args.docker_env)
+        self.assertIsNone(args.docker_entrypoint)
+        self.assertIsNone(args.docker_cmd)
 
     def test_parser_with_all_params(self):
         args = self.parser.parse_args([
@@ -46,7 +49,13 @@ class TestBndl(CliTestCase):
             '16384',
             '--roles',
             'web',
-            'backend'
+            'backend',
+            '--docker-env',
+            '["PATH=/bin"]',
+            '--docker-entrypoint',
+            '["/bin/sh", "test.sh"]',
+            '--docker-cmd',
+            '["/bin/bash", "test.sh"]'
         ])
 
         self.assertEqual(args.source, 'oci-image-dir')
@@ -64,6 +73,9 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.memory, 65536)
         self.assertEqual(args.diskSpace, 16384)
         self.assertEqual(args.roles, ['web', 'backend'])
+        self.assertEqual(args.docker_env, ['PATH=/bin'])
+        self.assertEqual(args.docker_entrypoint, ['/bin/sh', 'test.sh'])
+        self.assertEqual(args.docker_cmd, ['/bin/bash', 'test.sh'])
 
     def test_parser_no_args(self):
         args = self.parser.parse_args([])

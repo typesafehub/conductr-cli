@@ -1,9 +1,11 @@
+import argparse
+import arrow
 import dcos
 import json
 import logging
-import urllib
-import arrow
 import platform
+import re
+import urllib
 
 from pyhocon.exceptions import ConfigException
 from requests import status_codes
@@ -523,10 +525,14 @@ def get_logger_for_func(func):
 
 
 def argparse_version(value):
-    import argparse
-    import re
-
     if re.match("^[0-9]+([.][0-9]+)*(\\-SNAPSHOT)?$", value):
         return value
 
-    raise argparse.ArgumentTypeError("'%s' is not a valid version number" % value)
+    raise argparse.ArgumentTypeError("'{}' is not a valid version number".format(value))
+
+
+def argparse_json(value):
+    try:
+        return json.loads(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("'{}' is not valid JSON".format(value))

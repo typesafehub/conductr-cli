@@ -1,32 +1,47 @@
 from argparse import ArgumentTypeError
-from conductr_cli.validation import argparse_version
+from conductr_cli.validation import argparse_json, argparse_version
 from conductr_cli.test.cli_test_case import CliTestCase
 
 
 class TestTerminal(CliTestCase):
     def test_argparse_version_number(self):
-        def expect_fail(value):
-            passed = False
+        self.assertEqual(argparse_version('1'), '1')
+        self.assertEqual(argparse_version('1.1'), '1.1')
+        self.assertEqual(argparse_version('1.1.0'), '1.1.0')
+        self.assertEqual(argparse_version('1.1.0-SNAPSHOT'), '1.1.0-SNAPSHOT')
+        self.assertEqual(argparse_version('1.2.3.4.5'), '1.2.3.4.5')
+        self.assertEqual(argparse_version('2'), '2')
+        self.assertEqual(argparse_version('2.0.0'), '2.0.0')
+        self.assertEqual(argparse_version('2.0.0-SNAPSHOT'), '2.0.0-SNAPSHOT')
 
-            try:
-                argparse_version(value)
-            except ArgumentTypeError:
-                passed = True
+        with self.assertRaises(ArgumentTypeError):
+            argparse_version('potato')
 
-            self.assertTrue(passed)
+        with self.assertRaises(ArgumentTypeError):
+            argparse_version('1.')
 
-        def expect_pass(value):
-            self.assertEqual(argparse_version(value), value)
+        with self.assertRaises(ArgumentTypeError):
+            argparse_version(' asdf 1 hello')
 
-        expect_pass('1')
-        expect_pass('1.1')
-        expect_pass('1.1.0')
-        expect_pass('1.1.0-SNAPSHOT')
-        expect_pass('1.2.3.4.5')
-        expect_pass('2')
-        expect_pass('2.0.0')
-        expect_pass('2.0.0-SNAPSHOT')
+    def test_argparse_json(self):
+        self.assertEqual(argparse_json('[]'), [])
+        self.assertEqual(argparse_json('{}'), {})
+        self.assertEqual(argparse_json('["hello", "there"]'), ['hello', 'there'])
+        self.assertEqual(argparse_json('[null]'), [None])
+        self.assertEqual(argparse_json('{"year":2000}'), {'year': 2000})
+        self.assertEqual(argparse_json('1'), 1)
+        self.assertTrue(argparse_json('true'))
+        self.assertFalse(argparse_json('false'))
+        self.assertEqual(argparse_json('0'), 0)
+        self.assertEqual(argparse_json('1.5'), 1.5)
+        self.assertEqual(argparse_json('""'), '')
+        self.assertEqual(argparse_json('null'), None)
 
-        expect_fail('potato')
-        expect_fail('1.')
-        expect_fail(' asdf 1 hello')
+        with self.assertRaises(ArgumentTypeError):
+            argparse_json('potato')
+
+        with self.assertRaises(ArgumentTypeError):
+            argparse_json('1.')
+
+        with self.assertRaises(ArgumentTypeError):
+            argparse_json("{ 'wrong': 'quotes'}")

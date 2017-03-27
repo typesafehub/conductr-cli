@@ -1,4 +1,4 @@
-from conductr_cli import logging_setup
+from conductr_cli import logging_setup, validation
 from conductr_cli.bndl_create import bndl_create
 from conductr_cli.bndl_utils import mappings
 import argcomplete
@@ -58,6 +58,21 @@ def build_parser():
                         default=True,
                         dest='use_shazar',
                         action='store_false')
+
+    parser.add_argument('--docker-cmd',
+                        help='When provided, explicitly overrides "Cmd". For use with docker format',
+                        type=validation.argparse_json,
+                        required=False)
+
+    parser.add_argument('--docker-entrypoint',
+                        help='When provided, explicitly overrides "Entrypoint". For use with docker format',
+                        type=validation.argparse_json,
+                        required=False)
+
+    parser.add_argument('--docker-env',
+                        help='When provided, explicitly overrides "Env". For use with docker format',
+                        type=validation.argparse_json,
+                        required=False)
 
     parser.add_argument('--component-description',
                         help='Description to use for the generated ConductR component',
