@@ -106,7 +106,9 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'name': 'world',
             'component_description': 'testing desc 1',
-            'tag': 'testing'
+            'tag': 'testing',
+            'use_default_endpoints': True,
+            'with_check': False
         })
 
         extended_args = create_attributes_object({
@@ -120,11 +122,13 @@ class TestBndlOci(CliTestCase):
             'memory': '65536',
             'diskSpace': '16384',
             'roles': ['web', 'backend'],
-            'tag': 'latest'
+            'tag': 'latest',
+            'use_default_endpoints': True,
+            'with_check': False
         })
 
         self.assertEqual(
-            bndl_oci.oci_image_bundle_conf(base_args, 'my-component'),
+            bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}),
             strip_margin('''|name = "world"
                             |roles = []
                             |compatibilityVersion = 0
@@ -147,7 +151,7 @@ class TestBndlOci(CliTestCase):
         )
 
         self.assertEqual(
-            bndl_oci.oci_image_bundle_conf(extended_args, 'my-other-component'),
+            bndl_oci.oci_image_bundle_conf(extended_args, 'my-other-component', {}),
             strip_margin('''|name = "world"
                             |version = "4"
                             |compatibilityVersion = "5"
@@ -167,6 +171,155 @@ class TestBndlOci(CliTestCase):
                             |    start-command = [
                             |      "ociImageTag"
                             |      "latest"
+                            |    ]
+                            |    endpoints {}
+                            |  }
+                            |}''')
+        )
+
+    def test_oci_image_bundle_conf_endpoints(self):
+        base_args = create_attributes_object({
+            'name': 'world',
+            'component_description': 'testing desc 1',
+            'tag': 'testing',
+            'use_default_endpoints': True,
+            'with_check': False
+        })
+
+        config = {
+            'config': {
+                'ExposedPorts': {'80/udp': {}}
+            }
+        }
+
+        self.assertEqual(
+            bndl_oci.oci_image_bundle_conf(base_args, 'my-component', config),
+            strip_margin('''|name = "world"
+                            |roles = []
+                            |compatibilityVersion = 0
+                            |diskSpace = 1073741824
+                            |memory = 402653184
+                            |nrOfCpus = 0.1
+                            |system = "world"
+                            |version = 1
+                            |components {
+                            |  my-component {
+                            |    description = "testing desc 1"
+                            |    file-system-type = "oci-image"
+                            |    start-command = [
+                            |      "ociImageTag"
+                            |      "testing"
+                            |    ]
+                            |    endpoints {
+                            |      my-component-udp-80 {
+                            |        bind-protocol = "udp"
+                            |        bind-port = 80
+                            |        service-name = "my-component-udp-80"
+                            |      }
+                            |    }
+                            |  }
+                            |  my-component-status {
+                            |    description = "Status check for oci-image component"
+                            |    file-system-type = "universal"
+                            |    start-command = [
+                            |      "check"
+                            |      "$MY_COMPONENT_UDP_80_HOST"
+                            |    ]
+                            |    endpoints {}
+                            |  }
+                            |}''')
+        )
+
+    def test_oci_image_bundle_conf_no_endpoints(self):
+        base_args = create_attributes_object({
+            'name': 'world',
+            'component_description': 'testing desc 1',
+            'tag': 'testing',
+            'use_default_endpoints': False,
+            'with_check': False
+        })
+
+        config = {
+            'config': {
+                'ExposedPorts': {'80/udp': {}}
+            }
+        }
+
+        self.assertEqual(
+            bndl_oci.oci_image_bundle_conf(base_args, 'my-component', config),
+            strip_margin('''|name = "world"
+                            |roles = []
+                            |compatibilityVersion = 0
+                            |diskSpace = 1073741824
+                            |memory = 402653184
+                            |nrOfCpus = 0.1
+                            |system = "world"
+                            |version = 1
+                            |components {
+                            |  my-component {
+                            |    description = "testing desc 1"
+                            |    file-system-type = "oci-image"
+                            |    start-command = [
+                            |      "ociImageTag"
+                            |      "testing"
+                            |    ]
+                            |    endpoints {}
+                            |  }
+                            |}''')
+        )
+
+    def test_oci_image_with_check(self):
+        base_args = create_attributes_object({
+            'name': 'world',
+            'component_description': 'testing desc 1',
+            'tag': 'testing',
+            'use_default_endpoints': True
+        })
+
+        config = {
+            'config': {
+                'ExposedPorts': {'80/tcp': {}, '8080/udp': {}}
+            }
+        }
+
+        self.assertEqual(
+            bndl_oci.oci_image_bundle_conf(base_args, 'my-component', config),
+            strip_margin('''|name = "world"
+                            |roles = []
+                            |compatibilityVersion = 0
+                            |diskSpace = 1073741824
+                            |memory = 402653184
+                            |nrOfCpus = 0.1
+                            |system = "world"
+                            |version = 1
+                            |components {
+                            |  my-component {
+                            |    description = "testing desc 1"
+                            |    file-system-type = "oci-image"
+                            |    start-command = [
+                            |      "ociImageTag"
+                            |      "testing"
+                            |    ]
+                            |    endpoints {
+                            |      my-component-tcp-80 {
+                            |        bind-protocol = "tcp"
+                            |        bind-port = 80
+                            |        service-name = "my-component-tcp-80"
+                            |      }
+                            |      my-component-udp-8080 {
+                            |        bind-protocol = "udp"
+                            |        bind-port = 8080
+                            |        service-name = "my-component-udp-8080"
+                            |      }
+                            |    }
+                            |  }
+                            |  my-component-status {
+                            |    description = "Status check for oci-image component"
+                            |    file-system-type = "universal"
+                            |    start-command = [
+                            |      "check"
+                            |      "$MY_COMPONENT_TCP_80_HOST"
+                            |      "$MY_COMPONENT_UDP_8080_HOST"
                             |    ]
                             |    endpoints {}
                             |  }

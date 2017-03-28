@@ -105,7 +105,8 @@ def docker_config_to_oci_image(manifest, config, sizes, layers_to_digests):
             k: v for k, v in {
                 'Env': config['config']['Env'] if 'Env' in config['config'] else None,
                 'Cmd': config['config']['Cmd'] if 'Cmd' in config['config'] else None,
-                'Entrypoint': config['config']['Entrypoint'] if 'Entrypoint' in config['config'] else None
+                'Entrypoint': config['config']['Entrypoint'] if 'Entrypoint' in config['config'] else None,
+                'ExposedPorts': config['config']['ExposedPorts'] if 'ExposedPorts' in config['config'] else None
             }.items()
 
             if v is not None
@@ -177,10 +178,11 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
         file_write_bytes(os.path.join(destination, 'oci-layout'), '{"imageLayoutVersion": "1.0.0"}'.encode('UTF-8'))
 
         layers_to_digests = {}
+        symlinks = {}
         digests = {}
         sizes = {}
 
-        def handle_entry(name, fileobj, isdir, isfile):
+        def handle_entry(name, fileobj, isdir, isfile, issym):
             parent_dir = os.path.dirname(name)
             immediate_parent_dir = os.path.basename(parent_dir)
 
@@ -194,6 +196,11 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
             elif isfile and parent_dir == '':
                 with open(os.path.join(temp_dir, file_name), 'wb') as dest:
                     shutil.copyfileobj(fileobj, dest)
+            elif issym and file_name == 'layer.tar':
+                if fileobj.startswith('../'):
+                    symlinks[os.path.join(immediate_parent_dir, file_name)] = fileobj[3:]
+                else:
+                    symlinks[os.path.join(immediate_parent_dir, file_name)] = fileobj
             elif isfile and file_name == 'layer.tar':
                 dest_path = os.path.join(temp_dir, 'layers', parent_dir, 'data')
 
@@ -224,11 +231,16 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
                     name = os.path.join(base, file)
 
                     with open(name, 'rb') as fileobj:
-                        handle_entry(name, fileobj, isdir=False, isfile=True)
+                        handle_entry(name, fileobj, isdir=False, isfile=True, issym=False)
         else:
             for entry in data:
                 if entry.isfile():
-                    handle_entry(entry.name, data.extractfile(entry), isdir=False, isfile=True)
+                    handle_entry(entry.name, data.extractfile(entry), isdir=False, isfile=True, issym=False)
+                elif entry.issym():
+                    handle_entry(entry.name, entry.linkname, isdir=False, isfile=False, issym=True)
+
+        for key in symlinks:
+            layers_to_digests[key] = layers_to_digests[symlinks[key]]
 
         contents_dir = None
 

@@ -99,12 +99,15 @@ class TestBndlCreate(CliTestCase):
                 'tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
-                'use_shazar': True
+                'use_shazar': True,
+                'use_default_endpoints': True
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
             open(os.path.join(tmpdir, 'oci-layout'), 'w').close()
-            open(os.path.join(tmpdir, 'refs/latest'), 'w').close()
+            refs = open(os.path.join(tmpdir, 'refs/latest'), 'w')
+            refs.write('{}')
+            refs.close()
 
             with \
                     patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
@@ -117,6 +120,7 @@ class TestBndlCreate(CliTestCase):
 
     def test_without_shazar(self):
         stdout_mock = MagicMock()
+        extract_config_mock = MagicMock()
         tmpdir = tempfile.mkdtemp()
         tmpfile = os.path.join(tmpdir, 'output')
 
@@ -128,14 +132,18 @@ class TestBndlCreate(CliTestCase):
                 'tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
-                'use_shazar': False
+                'use_shazar': False,
+                'use_default_endpoints': True
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
             open(os.path.join(tmpdir, 'oci-layout'), 'w').close()
-            open(os.path.join(tmpdir, 'refs/latest'), 'w').close()
+            refs = open(os.path.join(tmpdir, 'refs/latest'), 'w')
+            refs.write('{}')
+            refs.close()
 
             with \
+                    patch('conductr_cli.bndl_oci.oci_image_extract_config', extract_config_mock), \
                     patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
                     patch('sys.stdout.buffer.write', stdout_mock):
                 self.assertEqual(bndl_create.bndl_create(attributes), 0)
