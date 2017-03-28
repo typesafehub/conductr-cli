@@ -4,7 +4,7 @@ from conductr_cli.constants import DEFAULT_LICENSE_FILE, FEATURE_PROVIDE_PROXYIN
 from conductr_cli.exceptions import BindAddressNotFound, InstanceCountError, BintrayUnreachableError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, \
     SandboxUnsupportedOsArchError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError, LicenseValidationError, HostnameLookupError
+    JavaVersionParseError, LicenseValidationError, HostnameLookupError, BintrayCredentialsNotFoundError
 from conductr_cli.sandbox_features import LoggingFeature
 from conductr_cli.sandbox_run_jvm import BIND_TEST_PORT
 from unittest.mock import call, patch, MagicMock
@@ -38,6 +38,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support = MagicMock()
         mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_validate_bintray_credentials = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr = MagicMock()
@@ -66,6 +67,7 @@ class TestRun(CliTestCase):
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_bintray_credentials', mock_validate_bintray_credentials), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
@@ -84,6 +86,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_validate_bintray_credentials.assert_called_once_with('2.0.0', False)
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
@@ -115,6 +118,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support = MagicMock()
         mock_validate_64bit_support = MagicMock()
         mock_validate_hostname_lookup = MagicMock()
+        mock_validate_bintray_credentials = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr1 = MagicMock()
@@ -149,6 +153,7 @@ class TestRun(CliTestCase):
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_bintray_credentials', mock_validate_bintray_credentials), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
@@ -167,6 +172,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_validate_bintray_credentials.assert_called_once_with('2.0.0', False)
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(3, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
@@ -198,6 +204,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support = MagicMock()
         mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_validate_bintray_credentials = MagicMock()
 
         bind_addr1 = MagicMock()
         bind_addr2 = MagicMock()
@@ -244,6 +251,7 @@ class TestRun(CliTestCase):
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_bintray_credentials', mock_validate_bintray_credentials), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
@@ -261,6 +269,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_validate_bintray_credentials.assert_called_once_with('2.0.0', False)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
                                                      self.tmp_dir,
@@ -291,6 +300,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support = MagicMock()
         mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_validate_bintray_credentials = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr = MagicMock()
@@ -324,6 +334,7 @@ class TestRun(CliTestCase):
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_bintray_credentials', mock_validate_bintray_credentials), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
@@ -342,6 +353,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_validate_bintray_credentials.assert_called_once_with('2.0.0', False)
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
@@ -373,6 +385,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support = MagicMock()
         mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
+        mock_validate_bintray_credentials = MagicMock()
         mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr = MagicMock()
@@ -400,6 +413,7 @@ class TestRun(CliTestCase):
         with patch('conductr_cli.sandbox_run_jvm.validate_jvm_support', mock_validate_jvm_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
+                patch('conductr_cli.sandbox_run_jvm.validate_bintray_credentials', mock_validate_bintray_credentials), \
                 patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
@@ -413,6 +427,7 @@ class TestRun(CliTestCase):
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_hostname_lookup.assert_called_once_with()
         mock_validate_64bit_support.assert_called_once_with()
+        mock_validate_bintray_credentials.assert_called_once_with('2.0.0', False)
         mock_cleanup_tmp_dir.assert_called_once_with(self.tmp_dir)
         mock_find_bind_addrs.assert_called_with(1, self.addr_range)
         mock_start_core_instances.assert_called_with(mock_core_extracted_dir,
@@ -1503,6 +1518,41 @@ class TestValidate64BitSupport(CliTestCase):
                               sandbox_run_jvm.validate_64bit_support)
 
 
+class TestValidateBintrayCredentials(CliTestCase):
+    def test_check_passed(self):
+        mock_load_bintray_credentials = MagicMock()
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials):
+            sandbox_run_jvm.validate_bintray_credentials('2.0.0', offline_mode=False)
+
+        mock_load_bintray_credentials.assert_called_once_with(disable_instructions=True, raise_error=True)
+
+    def test_check_failed(self):
+        mock_load_bintray_credentials = MagicMock(side_effect=BintrayCredentialsNotFoundError('test only'))
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials):
+            self.assertRaises(BintrayCredentialsNotFoundError,
+                              sandbox_run_jvm.validate_bintray_credentials, '2.0.0', offline_mode=False)
+
+        mock_load_bintray_credentials.assert_called_once_with(disable_instructions=True, raise_error=True)
+
+    def test_no_check_offline_mode(self):
+        mock_load_bintray_credentials = MagicMock()
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials):
+            sandbox_run_jvm.validate_bintray_credentials('2.0.0', offline_mode=True)
+
+        mock_load_bintray_credentials.assert_not_called()
+
+    def test_no_check_conductr_version(self):
+        mock_load_bintray_credentials = MagicMock()
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials):
+            sandbox_run_jvm.validate_bintray_credentials('2.1.0', offline_mode=False)
+
+        mock_load_bintray_credentials.assert_not_called()
+
+
 class TestDownloadSandboxImage(CliTestCase):
     bintray_auth = ('Bintray', 'username', 'password')
 
@@ -1586,7 +1636,7 @@ class TestDownloadSandboxImage(CliTestCase):
                                                                     self.core_artefact_type,
                                                                     self.image_version))
 
-        mock_load_bintray_credentials.assert_called_once_with()
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',
                                                                   'commercial-releases',
@@ -1620,7 +1670,7 @@ class TestDownloadSandboxImage(CliTestCase):
                                                                     self.agent_artefact_type,
                                                                     self.image_version))
 
-        mock_load_bintray_credentials.assert_called_once_with()
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',
                                                                   'commercial-releases',
@@ -1645,7 +1695,7 @@ class TestDownloadSandboxImage(CliTestCase):
                               self.core_artefact_type,
                               self.image_version)
 
-        mock_load_bintray_credentials.assert_called_once_with()
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',
                                                                   'commercial-releases',
@@ -1667,7 +1717,7 @@ class TestDownloadSandboxImage(CliTestCase):
                               self.core_artefact_type,
                               self.image_version)
 
-        mock_load_bintray_credentials.assert_called_once_with()
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',
                                                                   'commercial-releases',
@@ -1692,7 +1742,7 @@ class TestDownloadSandboxImage(CliTestCase):
                               self.core_artefact_type,
                               self.image_version)
 
-        mock_load_bintray_credentials.assert_called_once_with()
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',
                                                                   'commercial-releases',
@@ -1721,7 +1771,7 @@ class TestDownloadSandboxImage(CliTestCase):
                               self.core_artefact_type,
                               self.image_version)
 
-        mock_load_bintray_credentials.assert_called_once_with()
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',
                                                                   'commercial-releases',

@@ -115,7 +115,11 @@ def bundle_http_port():
 
 
 def major_version(version):
-    return int(version[0])
+    return version_parts(version)[0]
+
+
+def version_parts(version):
+    return tuple(map(int, version.split('.')))
 
 
 def resolve_conductr_roles_by_instance(user_conductr_roles, feature_conductr_roles, instance):
