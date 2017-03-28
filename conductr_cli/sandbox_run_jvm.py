@@ -4,7 +4,7 @@ from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PA
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
     SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
     SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError, LicenseValidationError
+    JavaVersionParseError, HostnameLookupError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
 from conductr_cli.sandbox_common import flatten
@@ -73,7 +73,7 @@ def run(args, features):
     nr_of_core_instances, nr_of_agent_instances = instance_count(args.image_version, args.nr_of_instances)
 
     validate_jvm_support()
-
+    validate_hostname_lookup()
     validate_64bit_support()
 
     sandbox_stop.stop(args)
@@ -233,6 +233,22 @@ def validate_jvm_support():
         raise JavaVersionParseError(raw_output)
     except CalledProcessError:
         raise JavaCallError('Failure calling `java -version`')
+
+
+def validate_hostname_lookup():
+    """
+    Validates if the hostname lookup by Java is slow given the issue https://github.com/akka/akka/issues/22160
+    Validation fails if the hostname is not part of the /etc/hosts file and the OS is macOS.
+    A HostnameLookupError is raised if the validation fails
+    """
+    if host.is_macos():
+        with open('/etc/hosts', 'r') as file:
+            hostname = host.hostname()
+            lines = [line for line in file.readlines() if not line.strip().startswith('#')]
+            localhost_lines = [line for line in lines if 'localhost' in line]
+            for line in localhost_lines:
+                if hostname not in line:
+                    raise HostnameLookupError()
 
 
 def validate_64bit_support():
