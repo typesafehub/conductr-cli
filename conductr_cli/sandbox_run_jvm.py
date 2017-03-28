@@ -624,6 +624,9 @@ def start_agent_instances(agent_extracted_dir, tmp_dir,
             '-Dconductr.agent.roles.{}={}'.format(j, role) for j, role in enumerate(agent_roles)
         ]
 
+        if not host.is_linux():
+            commands.append('-Dconductr.agent.run.force-oci-docker=on')
+
         if args:
             commands.extend(args)
         if args_agent:

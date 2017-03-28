@@ -1023,6 +1023,56 @@ class TestStartAgent(CliTestCase):
             ], cwd=self.extract_dir, start_new_session=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, env=merged_env),
         ], mock_popen.call_args_list)
 
+    def test_start_linux(self):
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        with patch('subprocess.Popen', mock_popen), patch('conductr_cli.host.is_linux', lambda: True):
+            sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                  self.tmp_dir,
+                                                  self.envs,
+                                                  self.agent_envs,
+                                                  self.args,
+                                                  self.agent_args,
+                                                  self.addrs,
+                                                  self.addrs,
+                                                  conductr_roles=[],
+                                                  features=[],
+                                                  log_level=self.log_level)
+
+        for c in mock_popen.call_args_list:
+            args, kwargs = c
+
+            self.assertFalse(any(any('-Dconductr.agent.run.force-oci-docker=on' in a for a in c) for c in args))
+
+    def test_start_non_linux(self):
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        with patch('subprocess.Popen', mock_popen), patch('conductr_cli.host.is_linux', lambda: False):
+            sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                  self.tmp_dir,
+                                                  self.envs,
+                                                  self.agent_envs,
+                                                  self.args,
+                                                  self.agent_args,
+                                                  self.addrs,
+                                                  self.addrs,
+                                                  conductr_roles=[],
+                                                  features=[],
+                                                  log_level=self.log_level)
+
+        for c in mock_popen.call_args_list:
+            args, kwargs = c
+
+            self.assertTrue(all(any('-Dconductr.agent.run.force-oci-docker=on' in a for a in c) for c in args))
+
     def test_roles_and_features(self):
         merged_env = {'test': 'only'}
         mock_merge_with_os_envs = MagicMock(return_value=merged_env)
