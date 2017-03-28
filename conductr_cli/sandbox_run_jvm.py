@@ -148,6 +148,15 @@ def log_run_attempt(args, run_result, feature_results, feature_provided):
     log.info('ConductR service locator has been started on:')
     log.info('  {}:{}'.format(run_result.host, DEFAULT_SERVICE_LOCATOR_PORT))
 
+    log.info(h2('Proxy'))
+    if FEATURE_PROVIDE_PROXYING in feature_provided:
+        log.info('HAProxy has been started')
+        log.info('By default, your bundles are accessible on:')
+        log.info('  {}:{}'.format(run_result.host, args.bundle_http_port))
+    else:
+        log.info('HAProxy has not been started')
+        log.info('To enable proxying ensure Docker is running and restart the sandbox')
+
     if feature_results:
         log.info(h2('Features'))
         log.info('The following feature related bundles have been started:')

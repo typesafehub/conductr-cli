@@ -102,22 +102,10 @@ class ProxyingFeature:
         if not self.enabled() or None in [self.host, self.proxy_bind_addr, self.bundle_http_port, self.proxy_ports]:
             return FeatureStartResult(False, [])
         else:
-            log = logging.getLogger(__name__)
-            log.info(h1('Starting proxying feature'))
-
             started = sandbox_proxy.start_proxy(proxy_bind_addr=self.proxy_bind_addr,
                                                 bundle_http_port=self.bundle_http_port,
                                                 proxy_ports=self.proxy_ports,
                                                 all_feature_ports=all_feature_ports())
-
-            if started:
-                log.info('HAProxy has been started')
-                log.info('Your Bundles are by default accessible on:')
-                log.info('  {}:{}'.format(self.host, self.bundle_http_port))
-            else:
-                log.info('HAProxy has not been started')
-                log.info('To enable proxying ensure Docker is running and restart the sandbox')
-
             return FeatureStartResult(started, [])
 
     @staticmethod
