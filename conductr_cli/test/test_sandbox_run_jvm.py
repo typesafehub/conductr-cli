@@ -1196,7 +1196,9 @@ class TestLogRunAttempt(CliTestCase):
     def test_log_output(self):
         run_mock = MagicMock()
         stdout = MagicMock()
-        input_args = MagicMock(**{})
+        input_args = MagicMock(**{
+            'bundle_http_port': 9000
+        })
 
         with patch('conductr_cli.conduct_main.run', run_mock):
             logging_setup.configure_logging(input_args, stdout)
@@ -1220,6 +1222,12 @@ class TestLogRunAttempt(CliTestCase):
                                           |  agent instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
                                           |ConductR service locator has been started on:
                                           |  192.168.1.1:9008
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Proxy                                          |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |HAProxy has been started
+                                          |By default, your bundles are accessible on:
+                                          |  192.168.1.1:9000
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           || Features                                       |
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
@@ -1247,7 +1255,8 @@ class TestLogRunAttempt(CliTestCase):
         run_mock = MagicMock()
         stdout = MagicMock()
         input_args = MagicMock(**{
-            'no_wait': False
+            'no_wait': False,
+            'bundle_http_port': 9000
         })
 
         with patch('conductr_cli.conduct_main.run', run_mock):
@@ -1270,6 +1279,12 @@ class TestLogRunAttempt(CliTestCase):
                                           |  agent instance on 192.168.1.1
                                           |ConductR service locator has been started on:
                                           |  192.168.1.1:9008
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Proxy                                          |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |HAProxy has been started
+                                          |By default, your bundles are accessible on:
+                                          |  192.168.1.1:9000
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           || Features                                       |
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
@@ -1312,6 +1327,11 @@ class TestLogRunAttempt(CliTestCase):
                                           |  agent instances on 192.168.1.1, 192.168.1.2, 192.168.1.3
                                           |ConductR service locator has been started on:
                                           |  192.168.1.1:9008
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          || Proxy                                          |
+                                          ||- - - - - - - - - - - - - - - - - - - - - - - - |
+                                          |HAProxy has not been started
+                                          |To enable proxying ensure Docker is running and restart the sandbox
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
                                           || Features                                       |
                                           ||- - - - - - - - - - - - - - - - - - - - - - - - |
