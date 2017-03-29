@@ -37,7 +37,8 @@ def run(args):
         bundle_scale.wait_for_scale(response_json['bundleId'], args.scale, args)
 
     if not args.disable_instructions:
-        log.info('Stop bundle with: {} stop{} {}'.format(args.command, args.cli_parameters, bundle_id))
+        log.info('Stop bundle with:         {} stop{} {}'.format(args.command, args.cli_parameters, bundle_id))
         log.info('Print ConductR info with: {} info{}'.format(args.command, args.cli_parameters))
+        log.info('Print bundle info with:   {} info{} {}'.format(args.command, args.cli_parameters, bundle_id))
 
     return True

@@ -41,8 +41,9 @@ class TestConductStopCommand(CliTestCase):
     default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=0'
 
     output_template = """|Bundle stop request sent.
-                         |Unload bundle with: conduct unload{params} {bundle_id}
+                         |Unload bundle with:       conduct unload{params} {bundle_id}
                          |Print ConductR info with: conduct info{params}
+                         |Print bundle info with:   conduct info{params} {bundle_id}
                          |"""
 
     def default_output(self, params='', bundle_id='45e0c47'):

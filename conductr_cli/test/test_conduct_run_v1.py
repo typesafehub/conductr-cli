@@ -35,8 +35,9 @@ class TestConductRunCommand(ConductRunTestBase):
         self.default_url = 'http://127.0.0.1:9005/bundles/45e0c477d3e5ea92aa8d85c0d8f3e25c?scale=3'
 
         self.output_template = """|Bundle run request sent.
-                                  |Stop bundle with: conduct stop{params} {bundle_id}
+                                  |Stop bundle with:         conduct stop{params} {bundle_id}
                                   |Print ConductR info with: conduct info{params}
+                                  |Print bundle info with:   conduct info{params} {bundle_id}
                                   |"""
 
     def test_success(self):
