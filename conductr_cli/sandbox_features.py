@@ -22,8 +22,8 @@ Feature attributes:
 
 import conductr_cli
 from conductr_cli import docker, sandbox_proxy
+from conductr_cli.sandbox_version import is_conductr_supportive_of_features, is_cinnamon_grafana_docker_based
 from conductr_cli.constants import FEATURE_PROVIDE_LOGGING, FEATURE_PROVIDE_PROXYING
-from conductr_cli.sandbox_common import major_version
 from conductr_cli.screen_utils import h1
 import logging
 
@@ -61,7 +61,7 @@ class ProxyingFeature:
         self.proxy_ports = None
 
     def enabled(self):
-        return major_version(self.image_version) != 1
+        return is_conductr_supportive_of_features(self.image_version)
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
         pass
@@ -149,10 +149,10 @@ class VisualizationFeature:
         pass
 
     def conductr_feature_envs(self):
-        if major_version(self.image_version) == 1:
-            return [self.name]
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             return []
+        else:
+            return [self.name]
 
     @staticmethod
     def conductr_args():
@@ -163,9 +163,7 @@ class VisualizationFeature:
         return []
 
     def start(self):
-        if major_version(self.image_version) == 1:
-            return FeatureStartResult(False, [])
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             log = logging.getLogger(__name__)
             log.info(h1('Starting visualization feature'))
             visualizer = select_bintray_uri('visualizer', self.version_args)
@@ -176,6 +174,8 @@ class VisualizationFeature:
             conductr_cli.conduct_main.run(['run', visualizer['name'], '--disable-instructions'],
                                           configure_logging=False)
             return FeatureStartResult(True, [BundleStartResult('visualizer', self.ports[0])])
+        else:
+            return FeatureStartResult(False, [])
 
     @staticmethod
     def stop():
@@ -218,27 +218,25 @@ class LoggingFeature:
         pass
 
     def conductr_feature_envs(self):
-        if major_version(self.image_version) == 1:
-            return [self.name]
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             return []
+        else:
+            return [self.name]
 
     def conductr_args(self):
-        if major_version(self.image_version) == 1:
-            return []
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             return ['-Dcontrail.syslog.server.port=9200', '-Dcontrail.syslog.server.elasticsearch.enabled=on']
+        else:
+            return []
 
     def conductr_roles(self):
-        if major_version(self.image_version) == 1:
-            return []
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             return ['elasticsearch', 'kibana']
+        else:
+            return []
 
     def start(self):
-        if major_version(self.image_version) == 1:
-            return FeatureStartResult(False, [])
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             log = logging.getLogger(__name__)
             log.info(h1('Starting logging feature based on elasticsearch and kibana'))
             log.info('conductr-kibana bundle is packaged as a Docker image. Checking Docker requirements..')
@@ -262,6 +260,8 @@ class LoggingFeature:
                 BundleStartResult('conductr-kibana', self.ports[0]),
                 BundleStartResult('conductr-elasticsearch', self.ports[1])
             ])
+        else:
+            return FeatureStartResult(False, [])
 
     @staticmethod
     def stop():
@@ -304,21 +304,19 @@ class LiteLoggingFeature:
         return []
 
     def conductr_args(self):
-        if major_version(self.image_version) == 1:
-            return []
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             return ['-Dcontrail.syslog.server.port=9200', '-Dcontrail.syslog.server.elasticsearch.enabled=on']
+        else:
+            return []
 
     def conductr_roles(self):
-        if major_version(self.image_version) == 1:
-            return []
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             return ['elasticsearch']
+        else:
+            return []
 
     def start(self):
-        if major_version(self.image_version) == 1:
-            return FeatureStartResult(False, [])
-        else:
+        if is_conductr_supportive_of_features(self.image_version):
             log = logging.getLogger(__name__)
             log.info(h1('Starting logging feature based on eslite'))
             eslite = select_bintray_uri('eslite', self.version_args)
@@ -328,6 +326,8 @@ class LiteLoggingFeature:
             conductr_cli.conduct_main.run(load_command, configure_logging=False)
             conductr_cli.conduct_main.run(['run', eslite['name'], '--disable-instructions'], configure_logging=False)
             return FeatureStartResult(True, [])
+        else:
+            return FeatureStartResult(False, [])
 
     @staticmethod
     def stop():
@@ -392,13 +392,17 @@ class MonitoringFeature:
         log.info(h1('Starting monitoring feature'))
         bundle_repo = 'lightbend/commercial-monitoring/' if self.version_args and self.version_args[0] == 'snapshot' \
             else ''
-        bundle_name = 'cinnamon-grafana' if major_version(self.image_version) == 1 else 'cinnamon-grafana-docker'
+        if is_cinnamon_grafana_docker_based(self.image_version):
+            bundle_name = 'cinnamon-grafana-docker'
+        else:
+            bundle_name = 'cinnamon-grafana'
         grafana = select_bintray_uri(bundle_name, self.version_args, bundle_repo)
         log.info('Deploying bundle %s..' % grafana['bundle'])
         load_command = ['load', grafana['bundle'], '--disable-instructions'] + \
             parse_offline_mode_arg(self.offline_mode)
         conductr_cli.conduct_main.run(load_command, configure_logging=False)
-        conductr_cli.conduct_main.run(['run', grafana['name'], '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
+        conductr_cli.conduct_main.run(['run', grafana['name'], '--disable-instructions', '--wait-timeout', '600'],
+                                      configure_logging=False)
         return FeatureStartResult(True, [BundleStartResult(grafana['name'], self.ports[0])])
 
     @staticmethod

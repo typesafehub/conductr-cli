@@ -1,7 +1,8 @@
 from conductr_cli import validation, sandbox_common, sandbox_features, \
     sandbox_run_docker, sandbox_run_jvm
 from conductr_cli.constants import DEFAULT_CLI_TMP_DIR
-from conductr_cli.sandbox_common import major_version, LATEST_SANDBOX_RUN_ARGS_FILE
+from conductr_cli.sandbox_common import LATEST_SANDBOX_RUN_ARGS_FILE
+from conductr_cli.sandbox_version import is_sandbox_docker_based
 
 import os
 import sys
@@ -26,9 +27,8 @@ import sys
 def run(args):
     """`sandbox run` command"""
     write_run_command()
-    is_conductr_v1 = major_version(args.image_version) == 1
     features = sandbox_features.collect_features(args.features, args.no_default_features, args.image_version, args.offline_mode)
-    sandbox = sandbox_run_docker if is_conductr_v1 else sandbox_run_jvm
+    sandbox = sandbox_run_docker if is_sandbox_docker_based(args.image_version) else sandbox_run_jvm
 
     run_result = sandbox.run(args, features)
 

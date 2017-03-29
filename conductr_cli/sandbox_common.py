@@ -114,14 +114,6 @@ def bundle_http_port():
     return int(os.getenv('BUNDLE_HTTP_PORT', 9000))
 
 
-def major_version(version):
-    return version_parts(version)[0]
-
-
-def version_parts(version):
-    return tuple(map(int, version.split('.')))
-
-
 def resolve_conductr_roles_by_instance(user_conductr_roles, feature_conductr_roles, instance):
     if not user_conductr_roles:
         # No ConductR roles have been specified => Return an empty list

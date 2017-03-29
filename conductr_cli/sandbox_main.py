@@ -3,7 +3,8 @@ import argparse
 import ipaddress
 import re
 import sys
-from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, major_version
+from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE
+from conductr_cli.sandbox_version import is_sandbox_docker_based
 from conductr_cli.sandbox_features import feature_conflicts, feature_names
 from conductr_cli.constants import DEFAULT_SANDBOX_ADDR_RANGE, DEFAULT_SANDBOX_IMAGE_DIR, DEFAULT_SANDBOX_TMP_DIR, \
     DEFAULT_OFFLINE_MODE
@@ -294,7 +295,7 @@ def run(_args=[], configure_logging=True):
 
         # Docker VM validation
         args.vm_type = docker.vm_type()
-        if vars(args).get('func').__name__ == 'run' and major_version(args.image_version) == 1:
+        if vars(args).get('func').__name__ == 'run' and is_sandbox_docker_based(args.image_version):
             docker.validate_docker_vm(args.vm_type)
 
         result = args.func(args)
