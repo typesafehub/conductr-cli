@@ -2,6 +2,7 @@ from collections import OrderedDict
 from conductr_cli.constants import \
     BNDL_DEFAULT_COMPATIBILITY_VERSION, \
     BNDL_DEFAULT_DISK_SPACE, \
+    BNDL_IGNORE_TAGS, \
     BNDL_DEFAULT_MEMORY, \
     BNDL_DEFAULT_NR_OF_CPUS, \
     BNDL_DEFAULT_ROLES, \
@@ -107,6 +108,13 @@ def load_bundle_args_into_conf(config, args):
 
     if 'version' not in config:
         config.put('version', BNDL_DEFAULT_VERSION)
+
+    tags = config.get('tags') if 'tags' in config else []
+
+    if args.tag not in tags and args.tag not in BNDL_IGNORE_TAGS:
+        tags.append(args.tag)
+
+    config.put('tags', tags)
 
 
 def file_write_bytes(path, bs):

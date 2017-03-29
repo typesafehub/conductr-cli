@@ -97,7 +97,9 @@ class TestBndlDocker(CliTestCase):
                 'config': {
                     'Env': ['TEST=123'],
                     'Cmd': ['/bin'],
-                    'ExposedPorts': {'80/tcp': {}}
+                    'ExposedPorts': {'80/tcp': {}},
+                    'WorkingDir': '/root',
+                    'Volumes': '/data'
                 }
             },
             sizes={'some digest': 1234},
@@ -116,7 +118,9 @@ class TestBndlDocker(CliTestCase):
             'config': {
                 'Cmd': ['/bin'],
                 'Env': ['TEST=123'],
-                'ExposedPorts': {'80/tcp': {}}
+                'ExposedPorts': {'80/tcp': {}},
+                'WorkingDir': '/root',
+                'Volumes': '/data'
             },
             'os': 'linux',
             'architecture': 'amd64'
@@ -129,18 +133,70 @@ class TestBndlDocker(CliTestCase):
                 'mediaType': 'application/vnd.oci.image.layer.v1.tar+gzip'
             }],
             'config': {
-                'digest': 'sha256:45d013d0948874b395f6ec383a30000dea8acf6f57705c5de5ad470c6169ef96',
-                'size': 371,
+                'digest': 'sha256:689390ae64447c18367e97bc8745c535c9978f4a57006d091be7e3baa081bd2c',
+                'size': 414,
                 'mediaType': 'application/vnd.oci.image.config.v1+json'
             },
             'schemaVersion': 2
         })
 
         self.assertEqual(json.loads(data['refs'].decode('UTF-8')), {
-            'digest': 'sha256:94e34dd9b48fd022968081c489b105d55ef9a1a23d29c194f75d7e55ae8ec1ce',
+            'digest': 'sha256:69dc519502c77183a566955cc6d643df47e17eb185d6ad92a33d279c77485c78',
             'mediaType': 'application/vnd.oci.image.manifest.v1+json',
             'size': 307
         })
+
+    def test_docker_config_empty_data(self):
+        # Tests present but empty values for Env, Cmd, WorkingDir, Volumes
+
+        self.assertEqual(
+            json.loads(
+                bndl_docker.docker_config_to_oci_image(
+                    manifest={
+                        'Config': '4a415e3663882fbc554ee830889c68a33b3585503892cc718a4698e91ef2a526.json',
+                        'RepoTags': ['alpine:latest'],
+                        'Layers': [
+                            '693bdf455e7bf0952f8a4539f9f96aa70c489ca239a7dbed0afb481c87cbe131/layer.tar'
+                        ]
+                    },
+                    config={
+                        'created': '2017-01-13T22:50:56.415736637Z',
+                        'os': 'linux',
+                        'architecture': 'amd64',
+                        'history': [{'created': '2017-01-13T22:50:55.903893599Z', 'created_by': '/bin/sh'}],
+                        'rootfs': {
+                            'type': 'layers',
+                            'diff_ids': [
+                                'sha256:98c944e98de8d35097100ff70a31083ec57704be0991a92c51700465e4544d08'
+                            ]
+                        },
+                        'config': {
+                            'Env': None,
+                            'Cmd': None,
+                            'ExposedPorts': None,
+                            'WorkingDir': '',
+                            'Volumes': None
+                        }
+                    },
+                    sizes={'some digest': 1234},
+                    layers_to_digests={
+                        '693bdf455e7bf0952f8a4539f9f96aa70c489ca239a7dbed0afb481c87cbe131/layer.tar': 'some digest'
+                    }
+                )['config'].decode('UTF-8')
+            ),
+
+            {
+                'rootfs': {
+                    'type': 'layers',
+                    'diff_ids': ['sha256:98c944e98de8d35097100ff70a31083ec57704be0991a92c51700465e4544d08']
+                },
+                'created': '2017-01-13T22:50:56.415736637Z',
+                'history': [{'created': '2017-01-13T22:50:55.903893599Z', 'created_by': '/bin/sh'}],
+                'config': {},
+                'os': 'linux',
+                'architecture': 'amd64'
+            }
+        )
 
     def test_docker_unpack_tar_wrong_format(self):
         file = tempfile.NamedTemporaryFile()
