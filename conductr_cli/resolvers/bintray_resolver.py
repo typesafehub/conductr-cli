@@ -27,15 +27,15 @@ def resolve_bundle(cache_dir, uri):
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Resolving bundle', org, repo, package_name, compatibility_version, digest))
 
-        bintray_auth = load_bintray_credentials()
+        bintray_auth = load_bintray_credentials(raise_error=False)
         resolved_version = bintray_resolve_version(bintray_auth,
                                                    org, repo, package_name,
                                                    compatibility_version, digest)
         return bintray_download_artefact(cache_dir, resolved_version, bintray_auth)
     except MalformedBundleUriError:
         return False, None, None
-    except HTTPError:
-        return False, None, None
+    except HTTPError as http_error:
+        return handle_http_error(http_error, org, repo)
     except ConnectionError:
         return False, None, None
 
@@ -49,7 +49,7 @@ def load_bundle_from_cache(cache_dir, uri):
         try:
             urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
             log.info(log_message('Loading bundle from cache', org, repo, package_name, compatibility_version, digest))
-            bintray_auth = load_bintray_credentials()
+            bintray_auth = load_bintray_credentials(raise_error=False)
             resolved_version = bintray_resolve_version(bintray_auth,
                                                        org, repo, package_name,
                                                        compatibility_version, digest)
@@ -59,8 +59,8 @@ def load_bundle_from_cache(cache_dir, uri):
                 return False, None, None
         except MalformedBundleUriError:
             return False, None, None
-        except HTTPError:
-            return False, None, None
+        except HTTPError as http_error:
+            return handle_http_error(http_error, org, repo)
         except ConnectionError:
             return False, None, None
 
@@ -70,15 +70,15 @@ def resolve_bundle_configuration(cache_dir, uri):
     try:
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
         log.info(log_message('Resolving bundle configuration', org, repo, package_name, compatibility_version, digest))
-        bintray_auth = load_bintray_credentials()
+        bintray_auth = load_bintray_credentials(raise_error=False)
         resolved_version = bintray_resolve_version(bintray_auth,
                                                    org, repo, package_name,
                                                    compatibility_version, digest)
         return bintray_download_artefact(cache_dir, resolved_version, bintray_auth)
     except MalformedBundleUriError:
         return False, None, None
-    except HTTPError:
-        return False, None, None
+    except HTTPError as http_error:
+        return handle_http_error(http_error, org, repo)
     except ConnectionError:
         return False, None, None
 
@@ -93,7 +93,7 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
             urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle_configuration(uri)
             log.info(log_message('Loading bundle configuration from cache',
                                  org, repo, package_name, compatibility_version, digest))
-            bintray_auth = load_bintray_credentials()
+            bintray_auth = load_bintray_credentials(raise_error=False)
             resolved_version = bintray_resolve_version(bintray_auth,
                                                        org, repo, package_name,
                                                        compatibility_version, digest)
@@ -103,16 +103,27 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
                 return False, None, None
         except MalformedBundleUriError:
             return False, None, None
-        except HTTPError:
-            return False, None, None
+        except HTTPError as http_error:
+            return handle_http_error(http_error, org, repo)
         except ConnectionError:
             return False, None, None
+
+
+def handle_http_error(http_error, org, repo):
+    if http_error.response.status_code == requests.codes.not_found:
+        if all(s in http_error.response.text for s in ['Repo', repo, 'was not found']):
+            raise BintrayResolutionError(
+                'Unable to find Bintray repository {}/{}. '
+                'If this is a private repository make sure to setup the Bintray credentials at {}'
+                .format(org, repo, BINTRAY_CREDENTIAL_FILE_PATH))
+
+    return False, None, None
 
 
 def resolve_bundle_version(uri):
     log = logging.getLogger(__name__)
     try:
-        bintray_auth = load_bintray_credentials()
+        bintray_auth = load_bintray_credentials(raise_error=False)
         urn, org, repo, package_name, compatibility_version, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Resolving bundle version', org, repo, package_name, compatibility_version, digest))
         resolved_version = bintray_resolve_version(bintray_auth,
@@ -150,10 +161,13 @@ def bintray_download_artefact(cache_dir, artefact, auth):
         return False, None, None
 
 
-def load_bintray_credentials():
+def load_bintray_credentials(raise_error=True, disable_instructions=False):
     log = logging.getLogger(__name__)
     if not os.path.exists(BINTRAY_CREDENTIAL_FILE_PATH):
-        raise BintrayCredentialsNotFoundError(BINTRAY_CREDENTIAL_FILE_PATH)
+        if raise_error:
+            raise BintrayCredentialsNotFoundError(BINTRAY_CREDENTIAL_FILE_PATH)
+        else:
+            return None, None, None
     else:
         with open(BINTRAY_CREDENTIAL_FILE_PATH, 'r') as cred_file:
             lines = [line.replace('\n', '') for line in cred_file.readlines()]
@@ -168,10 +182,14 @@ def load_bintray_credentials():
                         pass
 
             if 'user' not in data or 'password' not in data:
-                raise MalformedBintrayCredentialsError(BINTRAY_CREDENTIAL_FILE_PATH)
-            log.info('Bintray credentials loaded from {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
-            return (BINTRAY_DOWNLOAD_REALM, data['user'], data['password']) if data['user'] and data['password'] else \
-                (None, None, None)
+                if raise_error:
+                    raise MalformedBintrayCredentialsError(BINTRAY_CREDENTIAL_FILE_PATH)
+                else:
+                    return None, None, None
+
+            if not disable_instructions:
+                log.info('Bintray credentials loaded from {}'.format(BINTRAY_CREDENTIAL_FILE_PATH))
+            return BINTRAY_DOWNLOAD_REALM, data['user'], data['password']
 
 
 def bintray_resolve_version(bintray_auth, org, repo, package_name,

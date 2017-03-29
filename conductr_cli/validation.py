@@ -12,11 +12,12 @@ from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli.exceptions import BindAddressNotFound, ConductrStartupError, \
     InstanceCountError, MalformedBundleError, \
-    BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayUnreachableError, BundleResolutionError, \
-    WaitTimeoutError, InsecureFilePermissions, SandboxImageNotFoundError, JavaCallError, HostnameLookupError, \
-    JavaUnsupportedVendorError, JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, \
-    SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, \
-    LicenseLoadError, LicenseValidationError, LicenseDownloadError, NOT_FOUND_ERROR
+    BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayResolutionError, \
+    BintrayUnreachableError, BundleResolutionError, WaitTimeoutError, InsecureFilePermissions, \
+    SandboxImageNotFoundError, JavaCallError, HostnameLookupError, JavaUnsupportedVendorError, \
+    JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, SandboxImageNotAvailableOfflineError, \
+    SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, LicenseLoadError, LicenseValidationError, \
+    LicenseDownloadError, NOT_FOUND_ERROR
 
 
 def connection_error(log, err, args):
@@ -358,6 +359,23 @@ def handle_sandbox_restart_error(func):
     return handler
 
 
+def handle_bintray_resolution_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BintrayResolutionError as e:
+            log = get_logger_for_func(func)
+            log.error(e.message)
+            return False
+
+            # Do not change the wrapped function name,
+            # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
 def handle_bintray_unreachable_error(func):
 
     def handler(*args, **kwargs):
@@ -384,7 +402,7 @@ def handle_bintray_credentials_error(func):
             return func(*args, **kwargs)
         except BintrayCredentialsNotFoundError as e:
             log = get_logger_for_func(func)
-            log.error('Nearly there! The ConductR artifacts and bundles are hosted on Bintray.')
+            log.error('Nearly there! The ConductR artifacts are hosted on private Bintray repository.')
             log.error('It is therefore necessary to create a Bintray credentials file at {}'
                       .format(e.credential_file_path))
             log.error('For more information how to setup the Lightbend Bintray credentials please follow:')

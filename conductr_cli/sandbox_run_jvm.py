@@ -7,7 +7,7 @@ from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError
     JavaVersionParseError, HostnameLookupError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
-from conductr_cli.sandbox_common import flatten
+from conductr_cli.sandbox_common import flatten, version_parts
 from conductr_cli.screen_utils import h1, h2
 from requests.exceptions import HTTPError, ConnectionError
 from subprocess import CalledProcessError
@@ -75,6 +75,7 @@ def run(args, features):
     validate_jvm_support()
     validate_hostname_lookup()
     validate_64bit_support()
+    validate_bintray_credentials(args.image_version, args.offline_mode)
 
     sandbox_stop.stop(args)
 
@@ -269,6 +270,19 @@ def validate_64bit_support():
         raise SandboxUnsupportedOsArchError()
 
 
+def validate_bintray_credentials(image_version, offline_mode):
+    """
+    Validates if the necessary Bintray credentials exists to start the ConductR cluster.
+    Credentials are necessary prior to ConductR 2.1.0. From onwards 2.1.0, no credentials are needed.
+    :param image_version: the ConductR image version
+    :param offline_mode: the offline mode flag
+    """
+    if not offline_mode:
+        major_version, minor_version, _ = version_parts(image_version)
+        if major_version == 2 and minor_version == 0:
+            bintray_resolver.load_bintray_credentials(raise_error=True, disable_instructions=True)
+
+
 def cleanup_tmp_dir(tmp_dir):
     """
     Clears the content of the sandbox tmp dir
@@ -452,7 +466,7 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
 
 def download_sandbox_image(image_dir, package_name, artefact_type, image_version):
     try:
-        bintray_auth = bintray_resolver.load_bintray_credentials()
+        bintray_auth = bintray_resolver.load_bintray_credentials(raise_error=False)
 
         if artefact_type == 'core':
             file_prefix = 'conductr-{}-{}'.format(image_version, artefact_os_name())
@@ -476,6 +490,7 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
             is_success, _, download_path = bintray_resolver.bintray_download_artefact(image_dir,
                                                                                       artefacts[0],
                                                                                       bintray_auth)
+
             if is_success:
                 return download_path
 

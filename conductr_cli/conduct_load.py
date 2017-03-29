@@ -31,6 +31,7 @@ KEEP_BUNDLE_VERSIONS = 1
 @validation.handle_wait_timeout_error
 @validation.handle_conduct_load_read_timeout_error
 @validation.handle_insecure_file_permissions
+@validation.handle_bintray_resolution_error
 @validation.handle_bintray_credentials_error
 def load(args):
     if args.api_version == '1':

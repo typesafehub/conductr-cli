@@ -15,6 +15,7 @@ import sys
 @validation.handle_sandbox_image_not_available_offline_error
 @validation.handle_sandbox_unsupported_os_error
 @validation.handle_sandbox_unsupported_os_arch_error
+@validation.handle_bintray_resolution_error
 @validation.handle_bintray_credentials_error
 @validation.handle_bintray_unreachable_error
 @validation.handle_jvm_validation_error
