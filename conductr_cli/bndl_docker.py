@@ -106,7 +106,12 @@ def docker_config_to_oci_image(manifest, config, sizes, layers_to_digests):
                 'Env': config['config']['Env'] if 'Env' in config['config'] else None,
                 'Cmd': config['config']['Cmd'] if 'Cmd' in config['config'] else None,
                 'Entrypoint': config['config']['Entrypoint'] if 'Entrypoint' in config['config'] else None,
-                'ExposedPorts': config['config']['ExposedPorts'] if 'ExposedPorts' in config['config'] else None
+                'ExposedPorts': config['config']['ExposedPorts'] if 'ExposedPorts' in config['config'] else None,
+                'Volumes': config['config']['Volumes'] if 'Volumes' in config['config'] and
+                                                          config['config']['Volumes'] else None,
+
+                'WorkingDir': config['config']['WorkingDir'] if 'WorkingDir' in config['config'] and
+                                                                config['config']['WorkingDir'] else None,
             }.items()
 
             if v is not None

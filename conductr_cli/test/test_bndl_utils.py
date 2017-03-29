@@ -129,6 +129,7 @@ class TestBndlUtils(CliTestCase):
         self.assertEqual(simple_config.get('roles'), BNDL_DEFAULT_ROLES)
         self.assertEqual(simple_config.get('system'), 'world')
         self.assertEqual(simple_config.get('version'), BNDL_DEFAULT_VERSION)
+        self.assertEqual(simple_config.get('tags'), ['testing'])
 
         # test that config value is overwritten
         name_config = ConfigFactory.parse_string('name = "hello"')
@@ -153,3 +154,16 @@ class TestBndlUtils(CliTestCase):
         self.assertEqual(config.get('memory'), '65536')
         self.assertEqual(config.get('diskSpace'), '16384')
         self.assertEqual(config.get('roles'), ['web', 'backend'])
+
+        # test that the "latest" tag is ignored
+        self.assertEqual(config.get('tags'), [])
+
+        # test that we add to tags that exist
+        tag_config = ConfigFactory.parse_string('{ tags = ["hello"] }')
+        bndl_utils.load_bundle_args_into_conf(tag_config, base_args)
+        self.assertEqual(tag_config.get('tags'), ['hello', 'testing'])
+
+        # test that we only retain unique tags
+        tag_config = ConfigFactory.parse_string('{ tags = ["testing"] }')
+        bndl_utils.load_bundle_args_into_conf(tag_config, base_args)
+        self.assertEqual(tag_config.get('tags'), ['testing'])

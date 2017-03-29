@@ -137,6 +137,9 @@ class TestBndlOci(CliTestCase):
                             |nrOfCpus = 0.1
                             |system = "world"
                             |version = 1
+                            |tags = [
+                            |  "testing"
+                            |]
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
@@ -164,6 +167,7 @@ class TestBndlOci(CliTestCase):
                             |  "web"
                             |  "backend"
                             |]
+                            |tags = []
                             |components {
                             |  my-other-component {
                             |    description = "testing desc 2"
@@ -202,6 +206,9 @@ class TestBndlOci(CliTestCase):
                             |nrOfCpus = 0.1
                             |system = "world"
                             |version = 1
+                            |tags = [
+                            |  "testing"
+                            |]
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
@@ -255,6 +262,9 @@ class TestBndlOci(CliTestCase):
                             |nrOfCpus = 0.1
                             |system = "world"
                             |version = 1
+                            |tags = [
+                            |  "testing"
+                            |]
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
@@ -292,6 +302,9 @@ class TestBndlOci(CliTestCase):
                             |nrOfCpus = 0.1
                             |system = "world"
                             |version = 1
+                            |tags = [
+                            |  "testing"
+                            |]
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
