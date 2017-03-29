@@ -10,6 +10,9 @@
       "roles": [
         "web"
       ],
+      "tags": [
+        "1.1.0"
+      ],
       "bundleName": "visualizer",
       "systemVersion": "1.1",
       "compatibilityVersion": "1.1"
@@ -60,6 +63,9 @@
       "diskSpace": 200000000,
       "roles": [
         "elasticsearch"
+      ],
+      "tags": [
+        "1.0.0"
       ],
       "bundleName": "eslite",
       "systemVersion": "1",

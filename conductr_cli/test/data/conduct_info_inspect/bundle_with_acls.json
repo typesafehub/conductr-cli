@@ -10,6 +10,9 @@
             "roles": [
                 "elasticsearch"
             ],
+            "tags": [
+                "1.0.0"
+            ],
             "bundleName": "eslite",
             "systemVersion": "1",
             "compatibilityVersion": "1"
@@ -81,6 +84,10 @@
             "roles": [
                 "elasticsearch"
             ],
+            "tags": [
+                "1.0.0",
+                "latest"
+            ],
             "bundleName": "conductr-elasticsearch",
             "systemVersion": "1",
             "compatibilityVersion": "1"
@@ -122,6 +129,9 @@
             "diskSpace": 35000000,
             "roles": [
                 "haproxy"
+            ],
+            "tags": [
+                "2.0.0"
             ],
             "bundleName": "conductr-haproxy",
             "systemVersion": "2",
@@ -188,6 +198,9 @@
             "diskSpace": 200000000,
             "roles": [
                 "ptester"
+            ],
+            "tags": [
+                "1.0.0"
             ],
             "bundleName": "path-tester",
             "systemVersion": "1",

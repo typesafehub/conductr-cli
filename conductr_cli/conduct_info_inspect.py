@@ -47,6 +47,7 @@ def display_bundle_attributes(args, bundle):
             if 'compatibilityVersion' in bundle['attributes'] else None),
         ('System', bundle['attributes']['system']),
         ('System Version', bundle['attributes']['systemVersion'] if 'systemVersion' in bundle['attributes'] else None),
+        ('Tags', ', '.join(bundle['attributes']['tags']) if 'tags' in bundle['attributes'] else None),
         ('Nr of CPUs', bundle['attributes']['nrOfCpus']),
         ('Memory', bundle['attributes']['memory']),
         ('Disk Space', bundle['attributes']['diskSpace']),
