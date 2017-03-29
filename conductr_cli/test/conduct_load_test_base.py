@@ -11,9 +11,10 @@ class ConductLoadTestBase(CliTestCase):
     output_template = """|Retrieving bundle..
                          |{downloading_configuration}Loading bundle to ConductR..
                          |{verbose}Bundle loaded.
-                         |Start bundle with: {command} run{params} {bundle_id}
-                         |Unload bundle with: {command} unload{params} {bundle_id}
+                         |Start bundle with:        {command} run{params} {bundle_id}
+                         |Unload bundle with:       {command} unload{params} {bundle_id}
                          |Print ConductR info with: {command} info{params}
+                         |Print bundle info with:   {command} info{params} {bundle_id}
                          |"""
 
     def __init__(self, method_name):
