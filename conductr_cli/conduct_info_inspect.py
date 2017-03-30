@@ -134,6 +134,7 @@ def display_bundle_executions(bundle):
             {
                 'endpoint': endpoint_name,
                 'host': bundle_execution['host'],
+                'pid': bundle_execution['pid'] if 'pid' in bundle_execution else 'Unknown',
                 'is_started': 'Yes' if bundle_execution['isStarted'] else 'No',
                 'bind_port': endpoint_details['bindPort'],
                 'host_port': endpoint_details['hostPort']
@@ -148,6 +149,7 @@ def display_bundle_executions(bundle):
             rows.insert(0, {
                 'endpoint': 'ENDPOINT',
                 'host': 'HOST',
+                'pid': 'PID',
                 'is_started': 'STARTED',
                 'bind_port': 'BIND_PORT',
                 'host_port': 'HOST_PORT',
@@ -156,6 +158,7 @@ def display_bundle_executions(bundle):
             for row in rows:
                 log.screen('{endpoint: <{endpoint_width}}{padding}'
                            '{host: <{host_width}}{padding}'
+                           '{pid: >{pid_width}}{padding}'
                            '{is_started: >{is_started_width}}{padding}'
                            '{bind_port: >{bind_port_width}}{padding}'
                            '{host_port: >{host_port_width}}'.format(**dict(row, **column_widths)).rstrip())
