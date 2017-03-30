@@ -14,7 +14,13 @@ There are two types of installation:
 Install natively
 ^^^^^^^^^^^^^^^^
 
-Lightbend hosts native images at bintray: https://bintray.com/lightbend/generic/conductr-cli. Download an archive that is suitable for your environment and then place the resultant package in a place accessible from your PATH. For example, on Unix, copy the contents of archive to your /usr/local/bin folder.
+If you use macOS and `brew` then you can quickly:
+
+.. code:: bash
+    
+    brew install typesafehub/conductr/conductr-cli
+    
+Alternatively, Lightbend hosts native images at bintray: https://bintray.com/lightbend/generic/conductr-cli. Download an archive that is suitable for your environment and then place the resultant package in a place accessible from your PATH. For example, on Unix, copy the contents of archive to your /usr/local/bin folder.
 
 Install using Python
 ^^^^^^^^^^^^^^^^^^^^
