@@ -684,9 +684,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
-               |ptest     192.168.10.1      Yes      10822      10822
-               |ptunnel   192.168.10.1      Yes      10007      10007
+               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1    0      Yes      10822      10822
+               |ptunnel   192.168.10.1    0      Yes      10007      10007
                |
                |HTTP ACLS
                |---------
@@ -758,9 +758,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT        HOST        STARTED  BIND_PORT  HOST_PORT
-               |akka-remote     172.17.0.2      Yes      10917      10917
-               |elastic-search  172.17.0.2      Yes      10007      10007
+               |ENDPOINT        HOST            PID  STARTED  BIND_PORT  HOST_PORT
+               |akka-remote     172.17.0.2  Unknown      Yes      10917      10917
+               |elastic-search  172.17.0.2  Unknown      Yes      10007      10007
                |
                |SERVICE NAMES
                |-------------
@@ -816,9 +816,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT        HOST        STARTED  BIND_PORT  HOST_PORT
-               |akka-remote     172.17.0.2      Yes      10917      10917
-               |elastic-search  172.17.0.2      Yes      10007      10007
+               |ENDPOINT        HOST            PID  STARTED  BIND_PORT  HOST_PORT
+               |akka-remote     172.17.0.2  Unknown      Yes      10917      10917
+               |elastic-search  172.17.0.2  Unknown      Yes      10007      10007
                |
                |SERVICE NAMES
                |-------------
@@ -881,9 +881,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
-               |ptest     192.168.10.1      Yes      10822      10822
-               |ptunnel   192.168.10.1      Yes      10007      10007
+               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1    0      Yes      10822      10822
+               |ptunnel   192.168.10.1    0      Yes      10007      10007
                |
                |HTTP ACLS
                |---------
@@ -967,9 +967,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
-               |ptest     192.168.10.1      Yes      10822      10822
-               |ptunnel   192.168.10.1      Yes      10007      10007
+               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1    0      Yes      10822      10822
+               |ptunnel   192.168.10.1    0      Yes      10007      10007
                |
                |HTTP ACLS
                |---------
@@ -1054,8 +1054,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
-               |status    192.168.10.2      Yes       9009       9009
+               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
+               |status    192.168.10.2    0      Yes       9009       9009
                |
                |""")
         self.assertEqual(expected_result, self.output(stdout))
@@ -1120,8 +1120,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          STARTED  BIND_PORT  HOST_PORT
-               |status    192.168.10.2      Yes       9009       9009
+               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
+               |status    192.168.10.2    0      Yes       9009       9009
                |
                |""")
         self.assertEqual(expected_result, self.output(stdout))

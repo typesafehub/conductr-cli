@@ -32,6 +32,7 @@
         "bundleExecutions": [
             {
                 "host": "192.168.10.2",
+                "pid": 0,
                 "endpoints": {
                     "akka-remote": {
                         "bindPort": 10822,
@@ -141,6 +142,7 @@
         "bundleExecutions": [
             {
                 "host": "192.168.10.2",
+                "pid": 0,
                 "endpoints": {
                     "status": {
                         "bindPort": 9009,
@@ -258,6 +260,7 @@
         "bundleExecutions": [
             {
                 "host": "192.168.10.1",
+                "pid": 0,
                 "endpoints": {
                     "ptest": {
                         "bindPort": 10822,
