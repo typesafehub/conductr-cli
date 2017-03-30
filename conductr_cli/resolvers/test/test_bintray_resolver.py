@@ -20,7 +20,7 @@ class TestResolveBundle(TestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'bundle-name',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'digest',
             'version': 'v1-digest',
             'path': 'download.zip',
@@ -140,7 +140,7 @@ class TestResolveBundleConfiguration(TestCase):
             'org': 'typesafe',
             'repo': 'bundle-configuration',
             'package_name': 'bundle-name',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'digest',
             'path': 'download.zip',
             'download_url': 'https://dl.bintray.com/typesafe/bundle-configuration/download.zip'
@@ -296,7 +296,7 @@ class TestLoadBundleFromCache(TestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'bundle-name',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'digest',
             'path': 'download.zip',
             'download_url': 'https://dl.bintray.com/typesafe/bundle/download.zip'
@@ -453,7 +453,7 @@ class TestLoadBundleConfigurationFromCache(TestCase):
             'org': 'typesafe',
             'repo': 'bundle-configuration',
             'package_name': 'bundle-name',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'digest',
             'path': 'download.zip',
             'download_url': 'https://dl.bintray.com/typesafe/bundle-configuration/download.zip'
@@ -609,7 +609,7 @@ class TestBintrayResolveVersion(TestCase):
                 'org': 'typesafe',
                 'repo': 'bundle',
                 'package_name': 'reactive-maps-frontend',
-                'compatibility_version': 'v1',
+                'tag': 'v1',
                 'digest': '023f9da22',
                 'version': 'v1-023f9da22',
                 'path': 'download/path.zip',
@@ -695,7 +695,7 @@ class TestBintrayResolveVersionLatest(TestCase):
                 'org': 'typesafe',
                 'repo': 'bundle',
                 'package_name': 'reactive-maps-frontend',
-                'compatibility_version': 'v1',
+                'tag': 'v1',
                 'digest': '023f9da22',
                 'version': 'v1-023f9da22',
                 'path': 'download/path.zip',
@@ -750,7 +750,7 @@ class TestBintrayResolveVersionLatest(TestCase):
                 'org': 'typesafe',
                 'repo': 'bundle',
                 'package_name': 'reactive-maps-frontend',
-                'compatibility_version': 'v10',
+                'tag': 'v10',
                 'digest': '023f9da22',
                 'version': 'v10-023f9da22',
                 'path': 'download/path.zip',
@@ -831,7 +831,7 @@ class TestBintrayResolveVersionLatestCompatibilityVersion(TestCase):
                 'org': 'typesafe',
                 'repo': 'bundle',
                 'package_name': 'reactive-maps-frontend',
-                'compatibility_version': 'v1',
+                'tag': 'v1',
                 'digest': '023f9da22',
                 'version': 'v1-023f9da22',
                 'path': 'download/path.zip',
@@ -874,7 +874,7 @@ class TestResolveBundleVersion(TestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'bundle-name',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'digest',
             'version': 'v1-digest',
             'path': 'path/to/download.zip'
@@ -890,7 +890,7 @@ class TestResolveBundleVersion(TestCase):
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
         bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
-                                                        compatibility_version='v1', digest='digest')
+                                                        tag='v1', digest='digest')
 
     def test_resolved_version_not_found(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
@@ -906,7 +906,7 @@ class TestResolveBundleVersion(TestCase):
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
         bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
-                                                        compatibility_version='v1', digest='digest')
+                                                        tag='v1', digest='digest')
 
     def test_malformed_bundle_uri_error(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
@@ -922,7 +922,7 @@ class TestResolveBundleVersion(TestCase):
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
         bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
-                                                        compatibility_version='v1', digest='digest')
+                                                        tag='v1', digest='digest')
 
     def test_http_error(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
@@ -938,7 +938,7 @@ class TestResolveBundleVersion(TestCase):
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
         bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
-                                                        compatibility_version='v1', digest='digest')
+                                                        tag='v1', digest='digest')
 
 
 class TestContinuousDeliveryUri(TestCase):

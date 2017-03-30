@@ -14,7 +14,7 @@ class TestConductDeploy(CliTestCase):
         'org': 'typesafe',
         'repo': 'bundle',
         'package_name': 'cassandra',
-        'compatibility_version': 'v1',
+        'tag': 'v1',
         'digest': 'abcabc'
     }
     deploy_uri = '/deployments/typesafe/bundle/typesafe'
@@ -376,7 +376,7 @@ class TestDeployConfirmation(CliTestCase):
         'org': 'typesafe',
         'repo': 'bundle',
         'package_name': 'cassandra',
-        'compatibility_version': 'v1',
+        'tag': 'v1',
         'digest': 'd073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de'
     }
 

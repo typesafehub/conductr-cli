@@ -120,7 +120,7 @@ class VisualizationFeature:
     bundle can also be configured using feature arguments. For example:
 
         `-f visualization`: default latest version of the Visualizer bundle
-        `-f visualization v2`: specify the compatibility version
+        `-f visualization v2`: specify a tag
     """
 
     name = 'visualization'
