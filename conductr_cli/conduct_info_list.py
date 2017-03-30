@@ -54,7 +54,7 @@ def display_bundles_default(args, is_license_success, conductr_license, bundles)
         log.screen('''\
 {id: <{id_width}}{padding}\
 {name: <{name_width}}{padding}\
-{tag: <{tag_width}}{padding}\
+{tag: >{tag_width}}{padding}\
 {replications: >{replications_width}}{padding}\
 {starting: >{starting_width}}{padding}\
 {executions: >{executions_width}}{padding}\

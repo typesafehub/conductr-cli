@@ -165,7 +165,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME         TAG    #REP  #STR  #RUN  ROLES
+                            |ID       NAME           TAG  #REP  #STR  #RUN  ROLES
                             |45e0c47  test-bundle  1.0.0     1     0     0  tester
                             |"""),
             self.output(stdout))
@@ -226,10 +226,10 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID               NAME           TAG     #REP  #STR  #RUN  ROLES
-                            |45e0c47          test-bundle-1  1.0.0      1     0     1
+                            |ID               NAME              TAG  #REP  #STR  #RUN  ROLES
+                            |45e0c47          test-bundle-1   1.0.0     1     0     1
                             |45e0c47-c52e3f8  test-bundle-2  10.0.0     1     1     0  another, load-test, tester
-                            |45e0c47          test-bundle-3  8.0.0      1     0     0  tester
+                            |45e0c47          test-bundle-3   8.0.0     1     0     0  tester
                             |"""),
             self.output(stdout))
 
@@ -388,7 +388,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME           TAG    #REP  #STR  #RUN  ROLES
+                            |ID       NAME             TAG  #REP  #STR  #RUN  ROLES
                             |45e0c47  test-bundle-1  1.0.0     3     0     3
                             |c52e3f8  test-bundle-2  1.0.0     3     0     0  beta, load-test
                             |"""),
@@ -430,7 +430,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID                                NAME         TAG    #REP  #STR  #RUN  ROLES
+                            |ID                                NAME           TAG  #REP  #STR  #RUN  ROLES
                             |45e0c477d3e5ea92aa8d85c0d8f3e25c  test-bundle  1.0.0     1     0     0  api, front-end, public-facing
                             |"""),
             self.output(stdout))
@@ -499,7 +499,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME         TAG    #REP  #STR  #RUN  ROLES
+                            |ID       NAME           TAG  #REP  #STR  #RUN  ROLES
                             |45e0c47  test-bundle  1.0.0    10     0     0  test
                             |"""),
             self.output(stdout))
@@ -537,7 +537,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME         TAG    #REP  #STR  #RUN  ROLES
+                            |ID       NAME           TAG  #REP  #STR  #RUN  ROLES
                             |45e0c47  test-bundle  1.0.0     1     0     0  tester
                             |"""),
             self.output(stdout))
@@ -576,7 +576,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |Grants: akka-sbr, cinnamon, conductr
                             |
                             |ID       NAME         TAG  #REP  #STR  #RUN  ROLES
-                            |45e0c47  test-bundle  v1      1     0     0  tester
+                            |45e0c47  test-bundle          1     0     0  tester
                             |"""),
             self.output(stdout))
 
@@ -612,8 +612,8 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID       NAME         TAG  #REP  #STR  #RUN  ROLES
-                            |45e0c47  test-bundle  v1      1     0     0  tester
+                            |ID       NAME         VER  #REP  #STR  #RUN  ROLES
+                            |45e0c47  test-bundle   v1     1     0     0  tester
                             |"""),
             self.output(stdout))
 
@@ -651,7 +651,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                             |ConductR Version(s): 2.1.*
                             |Grants: akka-sbr, cinnamon, conductr
                             |
-                            |ID         NAME         TAG    #REP  #STR  #RUN  ROLES
+                            |ID         NAME           TAG  #REP  #STR  #RUN  ROLES
                             |! 45e0c47  test-bundle  1.0.0    10     0     0  test
                             |There are errors: use `conduct events` or `conduct logs` for further information
                             |"""),
