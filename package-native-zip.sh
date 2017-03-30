@@ -14,6 +14,11 @@ UNAME_VALUE=`uname`
 
 if [ "$UNAME_VALUE" = "Darwin" ]; then
     PACKAGE_OS_NAME="Mac_OS_X-x86_64"
+
+    if ! brew -v >/dev/null 2>&1; then
+        echo "ERROR: brew must be installed in order to package "
+        exit 1
+    fi
 elif [ "$UNAME_VALUE" = "Linux" ]; then
     PACKAGE_OS_NAME="Linux-amd64"
 else
@@ -27,7 +32,7 @@ echo ""
 echo "Building $PACKAGE_NAME"
 echo ""
 
-rm -f dist/*
+rm -rf dist/*
 
 echo "------------------------------------------------"
 echo "Creating single executable for 'conduct' command"
@@ -83,7 +88,7 @@ echo "Checking 'sandbox' and 'conduct' command is working as expected"
 echo "------------------------------------------------"
 echo ""
 
-dist/sandbox run 2.0.0 -f visualization
+dist/sandbox run 2.0.5 -f visualization
 echo "Checking Visualizer"
 curl http://192.168.10.1:9008/services/visualizer
 echo ""
@@ -102,6 +107,21 @@ echo "Building zip archive for $PACKAGE_NAME"
 echo "------------------------------------------------"
 echo ""
 zip -j dist/$PACKAGE_NAME dist/conduct dist/sandbox dist/shazar
+
+if [ "$UNAME_VALUE" = "Darwin" ]; then
+    echo "------------------------------------------------"
+    echo "Creating the Homebrew package pull request
+    echo "------------------------------------------------"
+    echo ""
+
+    brew tap typesafehub/conductr
+
+    brew bump-formula-pr \
+      --url=https://bintray.com/lightbend/generic/download_file?file_path=${PACKAGE_NAME} \
+      --sha256=$(shasum -a256 dist/$PACKAGE_NAME | cut -d ' ' -f 1) \
+      --version=${PACKAGE_VERSION_NUMBER} \
+      conductr-cli
+fi
 
 echo "------------------------------------------------"
 echo "Success"
