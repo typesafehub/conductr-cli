@@ -7,7 +7,8 @@ from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError
     JavaVersionParseError, HostnameLookupError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
-from conductr_cli.sandbox_common import flatten, version_parts
+from conductr_cli.sandbox_common import flatten
+from conductr_cli.sandbox_version import is_conductr_on_private_bintray
 from conductr_cli.screen_utils import h1, h2
 from requests.exceptions import HTTPError, ConnectionError
 from subprocess import CalledProcessError
@@ -277,10 +278,8 @@ def validate_bintray_credentials(image_version, offline_mode):
     :param image_version: the ConductR image version
     :param offline_mode: the offline mode flag
     """
-    if not offline_mode:
-        major_version, minor_version, _ = version_parts(image_version)
-        if major_version == 2 and minor_version == 0:
-            bintray_resolver.load_bintray_credentials(raise_error=True, disable_instructions=True)
+    if not offline_mode and is_conductr_on_private_bintray(image_version):
+        bintray_resolver.load_bintray_credentials(raise_error=True, disable_instructions=True)
 
 
 def cleanup_tmp_dir(tmp_dir):
