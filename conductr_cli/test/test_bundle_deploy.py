@@ -238,7 +238,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'd073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de',
             'resolver': bintray_resolver.__name__
         }
@@ -419,7 +419,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'd073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de',
             'resolver': bintray_resolver.__name__
         }
@@ -514,7 +514,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'abcdef',
             'resolver': bintray_resolver.__name__
         }
@@ -572,7 +572,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'abcdef',
             'resolver': bintray_resolver.__name__
         }
@@ -714,7 +714,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'abcdef',
             'resolver': bintray_resolver.__name__
         }
@@ -902,7 +902,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'abcdef',
             'resolver': bintray_resolver.__name__
         }
@@ -1000,7 +1000,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'abcdef',
             'resolver': bintray_resolver.__name__
         }
@@ -1127,7 +1127,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'abcdef',
             'resolver': bintray_resolver.__name__
         }
@@ -1184,7 +1184,7 @@ class TestWaitForDeployment(CliTestCase):
             'org': 'typesafe',
             'repo': 'bundle',
             'package_name': 'cassandra',
-            'compatibility_version': 'v1',
+            'tag': 'v1',
             'digest': 'abcdef',
             'resolver': bintray_resolver.__name__
         }

@@ -9,15 +9,15 @@ DEFAULT_REPO_BUNDLE_CONFIGURATION = 'bundle-configuration'
 def parse_bundle(uri):
     urn, rest = split_to_urn_and_rest(uri)
     org, repo, package = split_to_org_repo_package(rest, default_repo=DEFAULT_REPO_BUNDLE)
-    package_name, compatiblity_version, digest = split_package_to_parts(package)
-    return urn, org, repo, package_name, compatiblity_version, digest
+    package_name, tag, digest = split_package_to_parts(package)
+    return urn, org, repo, package_name, tag, digest
 
 
 def parse_bundle_configuration(uri):
     urn, rest = split_to_urn_and_rest(uri)
     org, repo, package = split_to_org_repo_package(rest, default_repo=DEFAULT_REPO_BUNDLE_CONFIGURATION)
-    package_name, compatiblity_version, digest = split_package_to_parts(package)
-    return urn, org, repo, package_name, compatiblity_version, digest
+    package_name, tag, digest = split_package_to_parts(package)
+    return urn, org, repo, package_name, tag, digest
 
 
 def split_to_urn_and_rest(uri):
@@ -46,8 +46,8 @@ def split_package_to_parts(package):
     if ':' in package:
         package_name, version = package.split(':')
         if '-' in version:
-            compatiblity_version, digest = version.split('-')
-            return package_name, compatiblity_version, digest
+            tag, digest = version.rsplit('-', 1)
+            return package_name, tag, digest
         else:
             return package_name, version, None
     else:

@@ -46,7 +46,7 @@ def deploy(args):
     # JSON Payload for deployment request
     payload = {
         'package': resolved_version['package_name'],
-        'version': '{}-{}'.format(resolved_version['compatibility_version'], resolved_version['digest'])
+        'version': '{}-{}'.format(resolved_version['tag'], resolved_version['digest'])
     }
 
     # HTTP headers required for deployment request
@@ -77,7 +77,7 @@ def deploy(args):
 def request_deploy_confirmation(resolved_version, args):
     bundle_id = resolved_version['digest'] if args.long_ids else bundle_utils.short_id(resolved_version['digest'])
     user_input = input('Deploy {}:{}-{}? [Y/n]: '.format(resolved_version['package_name'],
-                                                         resolved_version['compatibility_version'],
+                                                         resolved_version['tag'],
                                                          bundle_id))
     confirmation = (user_input if user_input else 'y').lower().strip()
     return confirmation == 'y' or confirmation == 'yes'

@@ -24,11 +24,13 @@ def display_bundles_default(args, is_license_success, conductr_license, bundles)
 
         log.screen('{}\n'.format(license_to_display))
 
+    has_tags_key = all('tags' in bundle['attributes'] for bundle in bundles)
+
     data = [
         {
             'id': display_bundle_id(args, bundle),
             'name': bundle['attributes']['bundleName'],
-            'compatibility_version': 'v{}'.format(bundle['attributes']['compatibilityVersion']),
+            'tag': display_tag_or_compatibility_version(bundle, has_tags_key),
             'roles': ', '.join(sorted(bundle['attributes']['roles'])),
             'replications': len(bundle['bundleInstallations']),
             'starting': sum([not execution['isStarted'] for execution in bundle['bundleExecutions']]),
@@ -38,7 +40,7 @@ def display_bundles_default(args, is_license_success, conductr_license, bundles)
     data.insert(0, {
         'id': 'ID',
         'name': 'NAME',
-        'compatibility_version': 'VER',
+        'tag': 'TAG' if has_tags_key else 'VER',
         'roles': 'ROLES',
         'replications': '#REP',
         'starting': '#STR',
@@ -52,7 +54,7 @@ def display_bundles_default(args, is_license_success, conductr_license, bundles)
         log.screen('''\
 {id: <{id_width}}{padding}\
 {name: <{name_width}}{padding}\
-{compatibility_version: >{compatibility_version_width}}{padding}\
+{tag: >{tag_width}}{padding}\
 {replications: >{replications_width}}{padding}\
 {starting: >{starting_width}}{padding}\
 {executions: >{executions_width}}{padding}\
@@ -60,6 +62,13 @@ def display_bundles_default(args, is_license_success, conductr_license, bundles)
 
     if has_error:
         log.screen('There are errors: use `conduct events` or `conduct logs` for further information')
+
+
+def display_tag_or_compatibility_version(bundle, has_tags_key):
+    if has_tags_key:
+        return bundle['attributes']['tags'][0] if bundle['attributes']['tags'] else ""
+    else:
+        return 'v{}'.format(bundle['attributes']['compatibilityVersion'])
 
 
 def display_bundles_quiet(args, bundles):

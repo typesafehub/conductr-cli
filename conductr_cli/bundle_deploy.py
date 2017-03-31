@@ -91,9 +91,9 @@ def wait_for_deployment_complete(deployment_id, resolved_version, args):
         return display_deployment_event(latest_event)
 
     package_name = resolved_version['package_name']
-    compatibility_version = resolved_version['compatibility_version']
+    tag = resolved_version['tag']
     bundle_id = display_bundle_id(resolved_version['digest'])
-    bundle_shorthand = '{}:{}-{}'.format(package_name, compatibility_version, bundle_id)
+    bundle_shorthand = '{}:{}-{}'.format(package_name, tag, bundle_id)
 
     log.info('Deploying {}'.format(bundle_shorthand))
 

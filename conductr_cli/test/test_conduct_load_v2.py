@@ -18,6 +18,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.system = 'bundle'
         self.system_version = '2.3'
         self.compatibility_version = '2.0'
+        self.tags = ['2.0.0']
         self.custom_settings = Mock()
         self.bundle_resolve_cache_dir = 'bundle-resolve-cache-dir'
         self.configuration_resolve_cache_dir = 'configuration-resolve-cache-dir'
@@ -31,6 +32,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                             |system                 = {}
                             |systemVersion          = {}
                             |compatibilityVersion   = {}
+                            |tags                   = [{}]
                             |""").format(self.nr_of_cpus,
                                          self.memory,
                                          self.disk_space,
@@ -38,7 +40,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
                                          self.bundle_file_name,
                                          self.system,
                                          self.system_version,
-                                         self.compatibility_version))
+                                         self.compatibility_version,
+                                         self.tags))
 
         self.default_args = {
             'dcos_mode': False,

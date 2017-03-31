@@ -287,10 +287,10 @@ def string_io(input_text):
 
 def cleanup_old_bundles(cache_dir, bundle_file_name, excluded):
     bundle_name_parts = bundle_file_name.split('-')
-    # Remove digest, keeping only bundle name and compatible version
+    # Remove digest, keeping only bundle name and tag
     bundle_name = '-'.join(bundle_name_parts[:-1])
 
-    # List of bundle files having the same name and compatibility version, sorted from oldest to latest.
+    # List of bundle files having the same name and tag, sorted from oldest to latest.
     # This list excludes the file specified as `excluded`, and normally the `excluded` file is the recently loaded
     # bundle.
     older_bundle_files = sorted([
