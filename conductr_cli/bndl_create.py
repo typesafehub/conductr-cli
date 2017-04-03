@@ -1,4 +1,4 @@
-from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_extract_config, oci_image_unpack
+from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_extract_manifest_config, oci_image_unpack
 from conductr_cli.bndl_docker import docker_unpack
 from conductr_cli.bndl_utils import detect_format_dir, detect_format_stream
 from conductr_cli.constants import BNDL_PEEK_SIZE, IO_CHUNK_SIZE
@@ -100,8 +100,8 @@ def bndl_create(args):
 
             return 2
 
-        oci_config = oci_image_extract_config(oci_image_dir, args.tag)
-        bundle_conf = oci_image_bundle_conf(args, component_name, oci_config)
+        oci_manifest, oci_config = oci_image_extract_manifest_config(oci_image_dir, args.tag)
+        bundle_conf = oci_image_bundle_conf(args, component_name, oci_manifest, oci_config)
         bundle_conf_name = os.path.join(args.name, 'bundle.conf')
         bundle_conf_data = bundle_conf.encode('UTF-8')
 

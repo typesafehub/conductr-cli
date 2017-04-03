@@ -7,9 +7,15 @@ import shutil
 import tempfile
 
 
-def oci_image_bundle_conf(args, component_name, oci_config):
+def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     conf = ConfigFactory.parse_string('')
     load_bundle_args_into_conf(conf, args)
+
+    if 'annotations' in oci_manifest and oci_manifest['annotations'] is not None:
+        annotations_tree = conf.get('annotations')
+
+        for key in sorted(oci_manifest['annotations']):
+            annotations_tree.put(key, oci_manifest['annotations'][key])
 
     endpoints_tree = ConfigTree()
 
@@ -56,7 +62,7 @@ def oci_image_bundle_conf(args, component_name, oci_config):
     return HOCONConverter.to_hocon(conf)
 
 
-def oci_image_extract_config(dir, tag):
+def oci_image_extract_manifest_config(dir, tag):
     refs_path = os.path.join(dir, 'refs', tag)
 
     if os.path.isfile(refs_path):
@@ -78,9 +84,9 @@ def oci_image_extract_config(dir, tag):
 
                     if os.path.isfile(config_path):
                         with open(config_path, 'r') as config_file:
-                            return json.load(config_file)
+                            return manifest_json, json.load(config_file)
 
-    return {}
+    return {}, {}
 
 
 def oci_image_unpack(destination, data, is_dir):

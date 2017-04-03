@@ -140,7 +140,9 @@ def docker_config_to_oci_image(manifest, config, sizes, layers_to_digests):
                 'size': sizes[layers_to_digests[layer]],
                 'digest': 'sha256:{}'.format(layers_to_digests[layer])
             } for layer in manifest['Layers']
-        ]
+        ],
+        'annotations': config['config']['Labels'] if 'Labels' in config['config'] and
+                                                     config['config']['Labels'] else None
     }
 
     oci_manifest_data = json.dumps(oci_manifest, sort_keys=True).encode('UTF-8')
