@@ -36,6 +36,7 @@
             {
                 "host": "192.168.10.2",
                 "pid": 0,
+                "startTime" : "2017-04-03T10:04:50.000Z",
                 "endpoints": {
                     "akka-remote": {
                         "bindPort": 10822,
@@ -153,6 +154,7 @@
             {
                 "host": "192.168.10.2",
                 "pid": 0,
+                "startTime" : "2017-04-03T10:04:50.000Z",
                 "endpoints": {
                     "status": {
                         "bindPort": 9009,
@@ -274,6 +276,7 @@
             {
                 "host": "192.168.10.1",
                 "pid": 0,
+                "startTime" : "2017-04-03T10:04:50.000Z",
                 "endpoints": {
                     "ptest": {
                         "bindPort": 10822,

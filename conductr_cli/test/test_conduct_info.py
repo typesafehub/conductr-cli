@@ -2,6 +2,7 @@ from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
 from conductr_cli import conduct_info, logging_setup
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from unittest.mock import patch, MagicMock
+import arrow
 
 
 class TestConductInfoShowAllBundlesCommand(CliTestCase):
@@ -770,12 +771,14 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
         stdout = MagicMock()
         stderr = MagicMock()
+        mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-05T12:15:54.000'))
 
         args = self.default_args.copy()
         args.update({'bundle': 'path-tester'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
@@ -817,9 +820,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
-               |ptest     192.168.10.1    0      Yes      10822      10822
-               |ptunnel   192.168.10.1    0      Yes      10007      10007
+               |ENDPOINT  HOST          PID  STARTED           UPTIME  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1    0      Yes  2d, 2h, 11m, 4s      10822      10822
+               |ptunnel   192.168.10.1    0      Yes  2d, 2h, 11m, 4s      10007      10007
                |
                |HTTP ACLS
                |---------
@@ -891,9 +894,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT        HOST            PID  STARTED  BIND_PORT  HOST_PORT
-               |akka-remote     172.17.0.2  Unknown      Yes      10917      10917
-               |elastic-search  172.17.0.2  Unknown      Yes      10007      10007
+               |ENDPOINT        HOST            PID  STARTED   UPTIME  BIND_PORT  HOST_PORT
+               |akka-remote     172.17.0.2  Unknown      Yes  Unknown      10917      10917
+               |elastic-search  172.17.0.2  Unknown      Yes  Unknown      10007      10007
                |
                |SERVICE NAMES
                |-------------
@@ -909,12 +912,14 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_service_uris_v2.json')
         stdout = MagicMock()
         stderr = MagicMock()
+        mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
 
         args = self.default_args.copy()
         args.update({'bundle': 'eslite'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
@@ -950,9 +955,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT        HOST            PID  STARTED  BIND_PORT  HOST_PORT
-               |akka-remote     172.17.0.2  Unknown      Yes      10917      10917
-               |elastic-search  172.17.0.2  Unknown      Yes      10007      10007
+               |ENDPOINT        HOST        PID  STARTED       UPTIME  BIND_PORT  HOST_PORT
+               |akka-remote     172.17.0.2    0      Yes  2h, 11m, 4s      10917      10917
+               |elastic-search  172.17.0.2    0      Yes  2h, 11m, 4s      10007      10007
                |
                |SERVICE NAMES
                |-------------
@@ -968,12 +973,14 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
         stdout = MagicMock()
         stderr = MagicMock()
+        mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
 
         args = self.default_args.copy()
         args.update({'bundle': 'cb96704'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
@@ -1016,9 +1023,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
-               |ptest     192.168.10.1    0      Yes      10822      10822
-               |ptunnel   192.168.10.1    0      Yes      10007      10007
+               |ENDPOINT  HOST          PID  STARTED       UPTIME  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1    0      Yes  2h, 11m, 4s      10822      10822
+               |ptunnel   192.168.10.1    0      Yes  2h, 11m, 4s      10007      10007
                |
                |HTTP ACLS
                |---------
@@ -1052,6 +1059,7 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
         stdout = MagicMock()
         stderr = MagicMock()
+        mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T10:15:54.000'))
 
         args = self.default_args.copy()
         args.update({
@@ -1060,7 +1068,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         })
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
@@ -1103,9 +1112,9 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
-               |ptest     192.168.10.1    0      Yes      10822      10822
-               |ptunnel   192.168.10.1    0      Yes      10007      10007
+               |ENDPOINT  HOST          PID  STARTED   UPTIME  BIND_PORT  HOST_PORT
+               |ptest     192.168.10.1    0      Yes  11m, 4s      10822      10822
+               |ptunnel   192.168.10.1    0      Yes  11m, 4s      10007      10007
                |
                |HTTP ACLS
                |---------
@@ -1139,12 +1148,14 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
         stdout = MagicMock()
         stderr = MagicMock()
+        mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
 
         args = self.default_args.copy()
         args.update({'bundle': 'bdfa43d-e5f3504'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
@@ -1191,8 +1202,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
-               |status    192.168.10.2    0      Yes       9009       9009
+               |ENDPOINT  HOST          PID  STARTED       UPTIME  BIND_PORT  HOST_PORT
+               |status    192.168.10.2    0      Yes  2h, 11m, 4s       9009       9009
                |
                |""")
         self.assertEqual(expected_result, self.output(stdout))
@@ -1203,6 +1214,7 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
         stdout = MagicMock()
         stderr = MagicMock()
+        mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
 
         args = self.default_args.copy()
         args.update({
@@ -1211,7 +1223,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         })
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('requests.get', http_method), \
+                patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
@@ -1258,8 +1271,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
                |
                |BUNDLE EXECUTIONS
                |-----------------
-               |ENDPOINT  HOST          PID  STARTED  BIND_PORT  HOST_PORT
-               |status    192.168.10.2    0      Yes       9009       9009
+               |ENDPOINT  HOST          PID  STARTED       UPTIME  BIND_PORT  HOST_PORT
+               |status    192.168.10.2    0      Yes  2h, 11m, 4s       9009       9009
                |
                |""")
         self.assertEqual(expected_result, self.output(stdout))
