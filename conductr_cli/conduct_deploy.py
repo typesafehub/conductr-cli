@@ -1,8 +1,9 @@
-from conductr_cli import bundle_deploy, bundle_utils, conduct_request, conduct_url, validation, custom_settings, \
-    resolver
+from conductr_cli import bundle_deploy, bundle_deploy_v2, bundle_deploy_v3, bundle_utils, conduct_request, \
+    conduct_url, validation, custom_settings, resolver
 from conductr_cli.conduct_url import conductr_host
-
+import json
 import logging
+import urllib
 
 
 DEFAULT_WAIT_TIMEOUT = 180  # seconds
@@ -41,6 +42,10 @@ def deploy(args):
         log.info('Abort')
         return
 
+    if args.tags:
+        tags = [('tag', tag) for tag in args.tags]
+        deploy_uri += '?' + urllib.parse.urlencode(tags)
+
     url = conduct_url.url(deploy_uri, args)
 
     # JSON Payload for deployment request
@@ -63,13 +68,17 @@ def deploy(args):
 
     validation.raise_for_status_inc_3xx(response)
 
-    deployment_id = response.text
-
-    log.info('Deployment request sent.')
-    log.info('Deployment id {}'.format(deployment_id))
-
-    if not args.no_wait:
-        bundle_deploy.wait_for_deployment_complete(deployment_id, resolved_version, args)
+    if is_json_response(response):
+        deployment_batch = json.loads(response.text)
+        deployment_batch_id = deployment_batch['value']
+        log.info('Deployment request sent.')
+        if not args.no_wait:
+            bundle_deploy_v3.wait_for_deployment_complete(deployment_batch_id, resolved_version, args)
+    else:
+        deployment_id = response.text
+        log.info('Deployment request sent.')
+        if not args.no_wait:
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, resolved_version, args)
 
     return True
 
@@ -81,3 +90,7 @@ def request_deploy_confirmation(resolved_version, args):
                                                          bundle_id))
     confirmation = (user_input if user_input else 'y').lower().strip()
     return confirmation == 'y' or confirmation == 'yes'
+
+
+def is_json_response(response):
+    return 'Content-Type' in response.headers and response.headers['Content-Type'] == 'application/json'

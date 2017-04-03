@@ -223,6 +223,38 @@ class TestConduct(TestCase):
         self.assertEqual(args.no_wait, False)
         self.assertEqual(args.wait_timeout, 180)
         self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.auto_deploy, False)
+        self.assertEqual(args.tags, [])
+        self.assertEqual(args.bundle, 'cassandra')
+
+    def test_parser_deploy_with_auto_deploy(self):
+        args = self.parser.parse_args('deploy cassandra -y'.split())
+
+        self.assertEqual(args.func.__name__, 'deploy')
+        self.assertEqual(args.ip, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 180)
+        self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.auto_deploy, True)
+        self.assertEqual(args.tags, [])
+        self.assertEqual(args.bundle, 'cassandra')
+
+    def test_parser_deploy_with_tags(self):
+        args = self.parser.parse_args('deploy cassandra -t 1.0.1 --tag 1.0.2'.split())
+
+        self.assertEqual(args.func.__name__, 'deploy')
+        self.assertEqual(args.ip, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.no_wait, False)
+        self.assertEqual(args.wait_timeout, 180)
+        self.assertEqual(args.long_ids, False)
+        self.assertEqual(args.auto_deploy, False)
+        self.assertEqual(args.tags, ['1.0.1', '1.0.2'])
         self.assertEqual(args.bundle, 'cassandra')
 
     def test_parser_load_license(self):

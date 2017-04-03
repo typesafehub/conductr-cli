@@ -80,11 +80,18 @@ def progress(self, message, *args, **kwargs):
     if sys.stdout.isatty():
         flush_required = kwargs.pop('flush')
 
-        line_end = '\r'
         if flush_required:
             line_end = '\n'
+        else:
+            line_end = kwargs.pop('line_end') if 'line_end' in kwargs else '\r'
 
-        self.log(LOG_LEVEL_PROGRESS, '{}{}'.format(message, line_end), *args, **kwargs)
+        next_line_required = kwargs.pop('next_line') if 'next_line' in kwargs else False
+        if next_line_required:
+            display_message = '\n{}{}'.format(message, line_end)
+        else:
+            display_message = '{}{}'.format(message, line_end)
+
+        self.log(LOG_LEVEL_PROGRESS, display_message, *args, **kwargs)
 
 
 def is_verbose_enabled(self):
