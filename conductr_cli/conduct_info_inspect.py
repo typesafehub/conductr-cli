@@ -1,6 +1,7 @@
 from conductr_cli import screen_utils, conduct_acls, conduct_service_names
 from conductr_cli.conduct_info_common import DISPLAY_PADDING, display_bundle_id
 from urllib.parse import urlparse
+import arrow
 import json
 import logging
 
@@ -137,6 +138,7 @@ def display_bundle_executions(bundle):
                 'host': bundle_execution['host'],
                 'pid': bundle_execution['pid'] if 'pid' in bundle_execution else 'Unknown',
                 'is_started': 'Yes' if bundle_execution['isStarted'] else 'No',
+                'uptime': get_uptime(bundle_execution['startTime']) if 'startTime' in bundle_execution else 'Unknown',
                 'bind_port': endpoint_details['bindPort'],
                 'host_port': endpoint_details['hostPort']
             }
@@ -152,6 +154,7 @@ def display_bundle_executions(bundle):
                 'host': 'HOST',
                 'pid': 'PID',
                 'is_started': 'STARTED',
+                'uptime': 'UPTIME',
                 'bind_port': 'BIND_PORT',
                 'host_port': 'HOST_PORT',
             })
@@ -161,6 +164,7 @@ def display_bundle_executions(bundle):
                            '{host: <{host_width}}{padding}'
                            '{pid: >{pid_width}}{padding}'
                            '{is_started: >{is_started_width}}{padding}'
+                           '{uptime: >{uptime_width}}{padding}'
                            '{bind_port: >{bind_port_width}}{padding}'
                            '{host_port: >{host_port_width}}'.format(**dict(row, **column_widths)).rstrip())
 
@@ -204,6 +208,30 @@ def display_title_table(title):
     log.screen(title)
     title_separator = ''.join(['-' for x in title])
     log.screen(title_separator)
+
+
+def get_uptime(start_time):
+    intervals = (
+        ('d', 86400),  # 60 * 60 * 24
+        ('h', 3600),   # 60 * 60
+        ('m', 60),     # 60
+        ('s', 1),
+    )
+
+    def humanize(timestamp_diff):
+        seconds = max(0, timestamp_diff)
+        result = []
+        for name, count in intervals:
+            value = seconds // count
+            if value:
+                seconds -= value * count
+                # if value > 0:
+                if value == 1:
+                    name = name.rstrip('s')
+                result.append("{}{}".format(value, name))
+        return ', '.join(result)
+
+    return humanize(arrow.now().timestamp - arrow.get(start_time).timestamp)
 
 
 def filter_bundles_by_id_or_name(bundles, bundle_id_or_name):

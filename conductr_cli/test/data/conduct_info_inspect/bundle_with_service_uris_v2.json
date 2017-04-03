@@ -92,6 +92,8 @@
     "bundleExecutions": [
       {
         "host": "172.17.0.2",
+        "pid": 0,
+        "startTime" : "2017-04-03T10:04:50.000Z",
         "endpoints": {
           "akka-remote": {
             "bindPort": 10917,
