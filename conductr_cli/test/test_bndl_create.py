@@ -100,7 +100,8 @@ class TestBndlCreate(CliTestCase):
                 'output': tmpfile,
                 'component_description': '',
                 'use_shazar': True,
-                'use_default_endpoints': True
+                'use_default_endpoints': True,
+                'annotations': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -133,7 +134,8 @@ class TestBndlCreate(CliTestCase):
                 'output': tmpfile,
                 'component_description': '',
                 'use_shazar': False,
-                'use_default_endpoints': True
+                'use_default_endpoints': True,
+                'annotations': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -143,7 +145,7 @@ class TestBndlCreate(CliTestCase):
             refs.close()
 
             with \
-                    patch('conductr_cli.bndl_oci.oci_image_extract_config', extract_config_mock), \
+                    patch('conductr_cli.bndl_oci.oci_image_extract_manifest_config', extract_config_mock), \
                     patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
                     patch('sys.stdout.buffer.write', stdout_mock):
                 self.assertEqual(bndl_create.bndl_create(attributes), 0)

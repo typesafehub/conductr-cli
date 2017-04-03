@@ -101,7 +101,8 @@ class TestBndlUtils(CliTestCase):
         base_args = create_attributes_object({
             'name': 'world',
             'component_description': 'testing desc 1',
-            'tag': 'testing'
+            'tag': 'testing',
+            'annotations': {}
         })
 
         extended_args = create_attributes_object({
@@ -115,7 +116,8 @@ class TestBndlUtils(CliTestCase):
             'memory': '65536',
             'diskSpace': '16384',
             'roles': ['web', 'backend'],
-            'tag': 'latest'
+            'tag': 'latest',
+            'annotations': ['com.lightbend.test=hello world', 'description=this is a test']
         })
 
         # test that config value is specified, with defaults etc
@@ -167,3 +169,16 @@ class TestBndlUtils(CliTestCase):
         tag_config = ConfigFactory.parse_string('{ tags = ["testing"] }')
         bndl_utils.load_bundle_args_into_conf(tag_config, base_args)
         self.assertEqual(tag_config.get('tags'), ['testing'])
+
+        # annotations added
+        annotations_config = ConfigFactory.parse_string('{ annotations = { name = "my-name" } }')
+        bndl_utils.load_bundle_args_into_conf(annotations_config, extended_args)
+        self.assertEqual(annotations_config.get('annotations'), {
+            'name': 'my-name',
+            'com': {
+                'lightbend': {
+                    'test': 'hello world'
+                }
+            },
+            'description': 'this is a test'
+        })

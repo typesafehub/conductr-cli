@@ -7,6 +7,7 @@ from conductr_cli.constants import \
     BNDL_DEFAULT_NR_OF_CPUS, \
     BNDL_DEFAULT_ROLES, \
     BNDL_DEFAULT_VERSION
+from pyhocon import ConfigTree
 import hashlib
 import os
 import re
@@ -115,6 +116,17 @@ def load_bundle_args_into_conf(config, args):
         tags.append(args.tag)
 
     config.put('tags', tags)
+
+    annotations_tree = ConfigTree()
+
+    for annotation in args.annotations:
+        if '=' not in annotation:
+            raise ValueError('Invalid annotation format. Specify as name=value')
+
+        annotation_parts = annotation.split('=', 1)
+        annotations_tree.put(annotation_parts[0], annotation_parts[1])
+
+    config.put('annotations', annotations_tree)
 
 
 def file_write_bytes(path, bs):

@@ -99,7 +99,11 @@ class TestBndlDocker(CliTestCase):
                     'Cmd': ['/bin'],
                     'ExposedPorts': {'80/tcp': {}},
                     'WorkingDir': '/root',
-                    'Volumes': '/data'
+                    'Volumes': '/data',
+                    'Labels': {
+                        'description': 'This is a test',
+                        'language': 'English'
+                    }
                 }
             },
             sizes={'some digest': 1234},
@@ -137,13 +141,17 @@ class TestBndlDocker(CliTestCase):
                 'size': 414,
                 'mediaType': 'application/vnd.oci.image.config.v1+json'
             },
-            'schemaVersion': 2
+            'schemaVersion': 2,
+            'annotations': {
+                'description': 'This is a test',
+                'language': 'English'
+            }
         })
 
         self.assertEqual(json.loads(data['refs'].decode('UTF-8')), {
-            'digest': 'sha256:69dc519502c77183a566955cc6d643df47e17eb185d6ad92a33d279c77485c78',
+            'digest': 'sha256:416375dd788642653657622b831d2e1901677dbe6b8184aa036cd8c0f2cc3bb1',
             'mediaType': 'application/vnd.oci.image.manifest.v1+json',
-            'size': 307
+            'size': 380
         })
 
     def test_docker_config_empty_data(self):

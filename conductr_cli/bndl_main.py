@@ -75,6 +75,14 @@ def build_parser():
                         help='Description to use for the generated ConductR component',
                         default='')
 
+    parser.add_argument('--annotation',
+                        action='append',
+                        default=[],
+                        dest='annotations',
+                        help='Annotations to add to bundle.conf\n'
+                             'Example: bndl --annotation my.first=value1 --annotation my.second=value2\n'
+                             'Defaults to []')
+
     zero_or_more_mappings = {'--roles'}
     type_mappings = {'--memory': int, '--disk-space': int, '--nr-of-cpus': float}
 

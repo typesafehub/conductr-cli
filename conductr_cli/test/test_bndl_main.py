@@ -49,7 +49,11 @@ class TestBndl(CliTestCase):
             'web',
             'backend',
             '--with-check',
-            '--no-default-endpoints'
+            '--no-default-endpoints',
+            '--annotation',
+            'com.lightbend.test=hello world',
+            '--annotation',
+            'description=this is a test'
         ])
 
         self.assertEqual(args.source, 'oci-image-dir')
@@ -67,6 +71,7 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.memory, 65536)
         self.assertEqual(args.diskSpace, 16384)
         self.assertEqual(args.roles, ['web', 'backend'])
+        self.assertEqual(args.annotations, ['com.lightbend.test=hello world', 'description=this is a test'])
         self.assertFalse(args.use_default_endpoints)
 
     def test_parser_no_args(self):
