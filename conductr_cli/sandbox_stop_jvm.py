@@ -44,7 +44,7 @@ def kill_processes(core_info, agent_info, pids_info):
     """
     log = logging.getLogger(__name__)
 
-    def wait_for_processes(remaining_pids_info, killed_pids_info=[], attempt=1, max_attempts=5):
+    def wait_for_processes(remaining_pids_info, killed_pids_info=[], attempt=1, max_attempts=10):
         time.sleep(1)
         new_remaining_pids_info = sandbox_common.find_pids(core_info['extraction_dir'], agent_info['extraction_dir'])
         new_killed_pids_info = [info for info in remaining_pids_info if info not in new_remaining_pids_info]
