@@ -5,6 +5,7 @@ from conductr_cli.license import EXPIRY_DATE_DISPLAY_FORMAT
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from requests.exceptions import HTTPError
+from dcos.errors import DCOSHTTPException
 import arrow
 import datetime
 import json
@@ -280,6 +281,55 @@ class TestGetLicense(CliTestCase):
             is_license_success, license_result = license.get_license(input_args)
             self.assertFalse(is_license_success)
             self.assertIsNone(license_result)
+
+        mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
+
+    def test_dcos_error_license_not_found(self):
+        mock_response = MagicMock(**{
+            'status_code': 404,
+            'url': 'dummy',
+            'reason': 'test',
+        })
+        mock_get = MagicMock(side_effect=DCOSHTTPException(mock_response))
+
+        input_args = MagicMock(**self.args)
+
+        with patch('conductr_cli.conduct_request.get', mock_get):
+            is_license_success, license_result = license.get_license(input_args)
+            self.assertFalse(is_license_success)
+            self.assertIsNone(license_result)
+
+        mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
+
+    def test_dcos_error_endpoint_not_supported(self):
+        mock_response = MagicMock(**{
+            'status_code': 503,
+            'url': 'dummy',
+            'reason': 'test',
+        })
+        mock_get = MagicMock(side_effect=DCOSHTTPException(mock_response))
+
+        input_args = MagicMock(**self.args)
+
+        with patch('conductr_cli.conduct_request.get', mock_get):
+            is_license_success, license_result = license.get_license(input_args)
+            self.assertFalse(is_license_success)
+            self.assertIsNone(license_result)
+
+        mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
+
+    def test_dcos_error(self):
+        mock_response = MagicMock(**{
+            'status_code': 500,
+            'url': 'dummy',
+            'reason': 'test',
+        })
+        mock_get = MagicMock(side_effect=DCOSHTTPException(mock_response))
+
+        input_args = MagicMock(**self.args)
+
+        with patch('conductr_cli.conduct_request.get', mock_get):
+            self.assertRaises(DCOSHTTPException, license.get_license, input_args)
 
         mock_get.assert_called_once_with(False, '10.0.0.1', 'https://10.0.0.1:9005/v2/license', auth=self.auth)
 
