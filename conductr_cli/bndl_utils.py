@@ -104,11 +104,14 @@ def load_bundle_args_into_conf(config, args):
     if 'nrOfCpus' not in config:
         config.put('nrOfCpus', BNDL_DEFAULT_NR_OF_CPUS)
 
+    if 'version' not in config:
+        config.put('version', BNDL_DEFAULT_VERSION)
+
     if 'system' not in config:
         config.put('system', config.get('name'))
 
-    if 'version' not in config:
-        config.put('version', BNDL_DEFAULT_VERSION)
+    if 'systemVersion' not in config:
+        config.put('systemVersion', config.get('version'))
 
     tags = config.get('tags') if 'tags' in config else []
 

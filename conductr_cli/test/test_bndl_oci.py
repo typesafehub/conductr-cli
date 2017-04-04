@@ -131,12 +131,13 @@ class TestBndlOci(CliTestCase):
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, {}),
             strip_margin('''|name = "world"
                             |roles = []
-                            |compatibilityVersion = 0
+                            |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
                             |nrOfCpus = 0.1
+                            |version = "1"
                             |system = "world"
-                            |version = 1
+                            |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
@@ -202,12 +203,13 @@ class TestBndlOci(CliTestCase):
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
             strip_margin('''|name = "world"
                             |roles = []
-                            |compatibilityVersion = 0
+                            |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
                             |nrOfCpus = 0.1
+                            |version = "1"
                             |system = "world"
-                            |version = 1
+                            |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
@@ -259,12 +261,13 @@ class TestBndlOci(CliTestCase):
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
             strip_margin('''|name = "world"
                             |roles = []
-                            |compatibilityVersion = 0
+                            |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
                             |nrOfCpus = 0.1
+                            |version = "1"
                             |system = "world"
-                            |version = 1
+                            |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
@@ -301,12 +304,13 @@ class TestBndlOci(CliTestCase):
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
             strip_margin('''|name = "world"
                             |roles = []
-                            |compatibilityVersion = 0
+                            |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
                             |nrOfCpus = 0.1
+                            |version = "1"
                             |system = "world"
-                            |version = 1
+                            |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
@@ -373,12 +377,13 @@ class TestBndlOci(CliTestCase):
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', manifest, config),
             strip_margin('''|name = "world"
                             |roles = []
-                            |compatibilityVersion = 0
+                            |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
                             |nrOfCpus = 0.1
+                            |version = "1"
                             |system = "world"
-                            |version = 1
+                            |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
