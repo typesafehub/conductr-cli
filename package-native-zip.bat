@@ -30,10 +30,10 @@ echo.
 pyinstaller --onefile conductr_cli/shazar.py
 
 echo ------------------------------------------------
-echo Creating single executable for 'sandbox' command
+echo Creating single executable for 'bndl' command
 echo ------------------------------------------------
 echo.
-pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py
+pyinstaller --onefile conductr_cli/bndl.py
 
 echo ------------------------------------------------
 echo Validating version for 'conduct' command
@@ -62,13 +62,19 @@ echo ------------------------------------------------
 echo.
 shazar -h
 
+echo ------------------------------------------------
+echo Checking 'bndl' command is working as expected
+echo ------------------------------------------------
+echo.
+bndl -h
+
 
 echo ------------------------------------------------
 echo Building zip archive for %PACKAGE_NAME%
 echo ------------------------------------------------
 echo.
 cd dist
-7z a %PACKAGE_NAME% conduct.exe shazar.exe sandbox.exe
+7z a %PACKAGE_NAME% conduct.exe shazar.exe bndl.exe
 cd ..
 
 echo ------------------------------------------------

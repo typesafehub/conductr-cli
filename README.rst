@@ -285,17 +285,20 @@ After CI build is finished for the tagged commit, new version will automatically
 Ensure correct system requirement is used for each target platform.
 
 For MacOS:
-- OSX version ``10.11``: native executables built on ``10.11`` will be compatible with ``10.12``, but the reverse is not true.
-- Python version ``3.5``.
+
+* OSX version ``10.11``: native executables built on ``10.11`` will be compatible with ``10.12``, but the reverse is not true.
+* Python version ``3.5``.
 
 For Linux:
-- Ubuntu version ``14.04.5 LTS``.
-- Python version ``3.4``.
+
+* Ubuntu version ``14.04.5 LTS``.
+* Python version ``3.4``.
 
 For Windows:
-- Windows 7
-- Python version ``3.5``.
-- 7Zip executable from http://www.7-zip.org/download.html required to build zip file on the command line. When installing 7Zip, ensure the 7z.exe is available on the Windows ``%PATH%``.
+
+* Windows 7
+* Python version ``3.5``.
+* 7Zip executable from http://www.7-zip.org/download.html required to build zip file on the command line. When installing 7Zip, ensure the 7z.exe is available on the Windows ``%PATH%``.
 
 Pyinstaller version ``3.2.1`` or above is required. Please visit http://www.pyinstaller.org/ to obtain instructions on how to install it.
 

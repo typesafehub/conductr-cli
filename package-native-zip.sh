@@ -41,16 +41,22 @@ echo ""
 pyinstaller --onefile conductr_cli/conduct.py
 
 echo "------------------------------------------------"
+echo "Creating single executable for 'sandbox' command"
+echo "------------------------------------------------"
+echo ""
+pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py
+
+echo "------------------------------------------------"
 echo "Creating single executable for 'shazar' command"
 echo "------------------------------------------------"
 echo ""
 pyinstaller --onefile conductr_cli/shazar.py
 
 echo "------------------------------------------------"
-echo "Creating single executable for 'sandbox' command"
+echo "Creating single executable for 'bndl' command"
 echo "------------------------------------------------"
 echo ""
-pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py
+pyinstaller --onefile conductr_cli/bndl.py
 
 
 echo "------------------------------------------------"
@@ -103,14 +109,21 @@ echo ""
 dist/shazar -h
 
 echo "------------------------------------------------"
+echo "Checking 'bndl' command is working as expected"
+echo "------------------------------------------------"
+echo ""
+
+dist/bndl -h
+
+echo "------------------------------------------------"
 echo "Building zip archive for $PACKAGE_NAME"
 echo "------------------------------------------------"
 echo ""
-zip -j dist/$PACKAGE_NAME dist/conduct dist/sandbox dist/shazar
+zip -j dist/$PACKAGE_NAME dist/conduct dist/sandbox dist/shazar dist/bndl
 
 if [ "$UNAME_VALUE" = "Darwin" ]; then
     echo "------------------------------------------------"
-    echo "Creating the Homebrew package pull request
+    echo "Creating the Homebrew package pull request"
     echo "------------------------------------------------"
     echo ""
 
@@ -127,6 +140,3 @@ echo "------------------------------------------------"
 echo "Success"
 echo "------------------------------------------------"
 echo "Created archive in dist/$PACKAGE_NAME"
-echo ""
-echo ""
-
