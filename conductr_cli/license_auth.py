@@ -1,6 +1,9 @@
 from conductr_cli.constants import DEFAULT_AUTH_TOKEN_FILE
 import os
-import readline
+try:
+    import readline
+except ImportError:
+    import pyreadline as readline
 
 
 AUTH_TOKEN_PROMPT = '\nAn access token is required. Please visit https://www.lightbend.com/account/access-token to \n' \
