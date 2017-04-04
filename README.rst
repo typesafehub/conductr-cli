@@ -334,8 +334,9 @@ First it builds the native executables.
 .. code:: bash
 
     pyinstaller --onefile conductr_cli/conduct.py
+    pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py    
     pyinstaller --onefile conductr_cli/shazar.py
-    pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py
+    pyinstaller --onefile conductr_cli/bndl.py
     
 This will result in standalone images for your current environment being created in a ``dist`` folder.
 
@@ -353,6 +354,7 @@ For MacOS and Linux, perform sanity check by running:
     ./dist/sandbox run 2.0.0 -f visualization
     ./dist/conduct info
     ./dist/shazar -h
+    ./dist/bndl -h    
 
 For Windows, perform the following since the ``sandbox`` command is not supported:
 
@@ -360,6 +362,7 @@ For Windows, perform the following since the ``sandbox`` command is not supporte
 
     ./dist/conduct info
     ./dist/shazar -h
+    ./dist/bndl -h    
 
 
 
