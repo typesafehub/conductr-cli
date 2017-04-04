@@ -2,6 +2,7 @@ from conductr_cli import conduct_request, conduct_url, license_auth, validation
 from conductr_cli.conduct_url import conductr_host
 from conductr_cli.exceptions import LicenseDownloadError
 from urllib.parse import urlparse
+from dcos.errors import DCOSHTTPException
 import arrow
 import base64
 import datetime
@@ -132,12 +133,18 @@ def get_license(args):
     :param args: input args obtained from argparse
     """
     url = conduct_url.url('license', args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth)
-    if response.status_code == 404 or response.status_code == 503:
-        return False, None
-    else:
-        validation.raise_for_status_inc_3xx(response)
-        return True, json.loads(response.text)
+    try:
+        response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth)
+        if response.status_code == 404 or response.status_code == 503:
+            return False, None
+        else:
+            validation.raise_for_status_inc_3xx(response)
+            return True, json.loads(response.text)
+    except DCOSHTTPException as e:
+        if e.response.status_code == 404 or e.response.status_code == 503:
+            return False, None
+        else:
+            raise e
 
 
 def format_expiry(expiry_date):
