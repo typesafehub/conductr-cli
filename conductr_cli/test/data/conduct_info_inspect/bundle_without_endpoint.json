@@ -1,0 +1,109 @@
+[
+    {
+        "attributes": {
+            "bundleName": "eslite",
+            "compatibilityVersion": "1",
+            "diskSpace": 200000000,
+            "memory": 402653184,
+            "nrOfCpus": 0.1,
+            "roles": [
+                "elasticsearch"
+            ],
+            "system": "eslite",
+            "systemVersion": "1",
+            "tags": []
+        },
+        "bundleConfig": {
+            "endpoints": {
+                "akka-remote": {
+                    "bindProtocol": "tcp"
+                },
+                "es": {
+                    "bindProtocol": "http",
+                    "serviceName": "elastic-search"
+                }
+            }
+        },
+        "bundleDigest": "3349b6bfbc09e8d88123fee5b33b2717e07fb2a91de719c99e0403c9e4b28ea5",
+        "bundleExecutions": [
+            {
+                "endpoints": {
+                    "akka-remote": {
+                        "bindPort": 10822,
+                        "hostPort": 10822
+                    },
+                    "es": {
+                        "bindPort": 10007,
+                        "hostPort": 10007
+                    }
+                },
+                "host": "192.168.10.1",
+                "isActive": true,
+                "isStarted": true,
+                "pid": 53518,
+                "startTime": "2017-04-05T03:16:48.861Z"
+            }
+        ],
+        "bundleId": "3349b6bfbc09e8d88123fee5b33b2717",
+        "bundleInstallations": [
+            {
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/3349b6bfbc09e8d88123fee5b33b2717e07fb2a91de719c99e0403c9e4b28ea5.zip",
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.1:9004",
+                    "uid": 479428973
+                }
+            }
+        ],
+        "bundleScale": {
+            "nrOfReschedules": 0,
+            "scale": 1
+        },
+        "hasError": false
+    },
+    {
+        "attributes": {
+            "bundleName": "bundle-no-endpoint",
+            "compatibilityVersion": "1",
+            "diskSpace": 10000000,
+            "memory": 8000000,
+            "nrOfCpus": 1,
+            "roles": [
+                "test"
+            ],
+            "system": "bundle-no-endpoint",
+            "systemVersion": "0.1.0",
+            "tags": [
+                "tag"
+            ]
+        },
+        "bundleConfig": {
+            "endpoints": {}
+        },
+        "bundleDigest": "7f5874760a2a949d1860d4185ab70437c51094821a2e8c229d2ee7e3e8279edf",
+        "bundleExecutions": [
+            {
+                "endpoints": {},
+                "host": "192.168.10.1",
+                "isActive": true,
+                "isStarted": true,
+                "pid": 53684,
+                "startTime": "2017-04-03T03:17:15.961Z"
+            }
+        ],
+        "bundleId": "7f5874760a2a949d1860d4185ab70437",
+        "bundleInstallations": [
+            {
+                "bundleFile": "file:///Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/7f5874760a2a949d1860d4185ab70437c51094821a2e8c229d2ee7e3e8279edf.zip",
+                "uniqueAddress": {
+                    "address": "akka.tcp://conductr@192.168.10.1:9004",
+                    "uid": 479428973
+                }
+            }
+        ],
+        "bundleScale": {
+            "nrOfReschedules": 0,
+            "scale": 1
+        },
+        "hasError": false
+    }
+]
