@@ -1279,6 +1279,64 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
 
         self.assertEqual('', self.output(stderr))
 
+    def test_bundle_no_endpoint(self):
+        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_without_endpoint.json')
+        stdout = MagicMock()
+        stderr = MagicMock()
+        mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
+
+        args = self.default_args.copy()
+        args.update({
+            'bundle': 'bundle-no-endpoint'
+        })
+        input_args = MagicMock(**args)
+
+        with patch('requests.get', http_method), \
+                patch('arrow.now', mock_arrow_now):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            result = conduct_info.info(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.maxDiff = None
+        expected_result = strip_margin(
+            """|BUNDLE ATTRIBUTES
+               |-----------------
+               |Bundle Id              7f58747
+               |Bundle Name            bundle-no-endpoint
+               |Compatibility Version  1
+               |System                 bundle-no-endpoint
+               |System Version         0.1.0
+               |Tags                   tag
+               |Nr of CPUs             1
+               |Memory                 8000000
+               |Disk Space             10000000
+               |Roles                  test
+               |Bundle Digest          7f5874760a2a949d1860d4185ab70437c51094821a2e8c229d2ee7e3e8279edf
+               |Error                  No
+               |
+               |BUNDLE SCALE
+               |------------
+               |Nr of Reschedules  0
+               |Scale              1
+               |
+               |BUNDLE INSTALLATIONS
+               |--------------------
+               |Host    192.168.10.1
+               |Bundle  /Users/felixsatyaputra/.conductr/images/tmp/conductr/192.168.10.1/bundles/7f5874760a2a949d1860d4185ab70437c51094821a2e8c229d2ee7e3e8279edf.zip
+               |
+               |BUNDLE EXECUTIONS
+               |-----------------
+               |HOST            PID  STARTED        UPTIME
+               |192.168.10.1  53684      Yes  8h, 58m, 39s
+               |
+               |""")
+        self.assertEqual(expected_result, self.output(stdout))
+
+        self.assertEqual('', self.output(stderr))
+
     def test_stopped_bundle_multiple_tags(self):
         http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
         stdout = MagicMock()

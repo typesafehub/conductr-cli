@@ -129,6 +129,22 @@ def display_bundle_installations(bundle):
 
 
 def display_bundle_executions(bundle):
+    if bundle_executions_has_endpoint(bundle):
+        display_bundle_executions_with_endpoints(bundle)
+    else:
+        display_bundle_executions_without_endpoints(bundle)
+
+
+def bundle_executions_has_endpoint(bundle):
+    if 'bundleExecutions' in bundle and bundle['bundleExecutions']:
+        for bundle_execution in bundle['bundleExecutions']:
+            if len(bundle_execution['endpoints']) > 0:
+                return True
+
+    return False
+
+
+def display_bundle_executions_with_endpoints(bundle):
     log = logging.getLogger(__name__)
 
     if 'bundleExecutions' in bundle and bundle['bundleExecutions']:
@@ -167,6 +183,39 @@ def display_bundle_executions(bundle):
                            '{uptime: >{uptime_width}}{padding}'
                            '{bind_port: >{bind_port_width}}{padding}'
                            '{host_port: >{host_port_width}}'.format(**dict(row, **column_widths)).rstrip())
+
+            log.screen('')
+
+
+def display_bundle_executions_without_endpoints(bundle):
+    log = logging.getLogger(__name__)
+
+    if 'bundleExecutions' in bundle and bundle['bundleExecutions']:
+        rows = sorted([
+            {
+                'host': bundle_execution['host'],
+                'pid': bundle_execution['pid'] if 'pid' in bundle_execution else 'Unknown',
+                'is_started': 'Yes' if bundle_execution['isStarted'] else 'No',
+                'uptime': get_uptime(bundle_execution['startTime']) if 'startTime' in bundle_execution else 'Unknown'
+            }
+            for bundle_execution in bundle['bundleExecutions']
+        ], key=lambda v: v['host'])
+
+        if rows:
+            display_title_table('BUNDLE EXECUTIONS')
+
+            rows.insert(0, {
+                'host': 'HOST',
+                'pid': 'PID',
+                'is_started': 'STARTED',
+                'uptime': 'UPTIME'
+            })
+            column_widths = dict(screen_utils.calc_column_widths(rows), **{'padding': ' ' * DISPLAY_PADDING})
+            for row in rows:
+                log.screen('{host: <{host_width}}{padding}'
+                           '{pid: >{pid_width}}{padding}'
+                           '{is_started: >{is_started_width}}{padding}'
+                           '{uptime: >{uptime_width}}{padding}'.format(**dict(row, **column_widths)).rstrip())
 
             log.screen('')
 
