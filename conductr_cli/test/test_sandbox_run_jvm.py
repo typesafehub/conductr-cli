@@ -910,7 +910,7 @@ class TestStartCore(CliTestCase):
 
         self.assertEqual(mock_feature.method_calls, [
             call.conductr_pre_core_start(
-                self.envs, self.core_envs, self.args, self.core_args, self.addrs, conductr_roles
+                self.envs, self.core_envs, self.args, self.core_args, self.extract_dir, self.addrs, conductr_roles
             ),
             call.conductr_roles(),
             call.conductr_args()
@@ -984,7 +984,6 @@ class TestStartAgent(CliTestCase):
     def test_start_instances(self):
         merged_env = {'test': 'only'}
         mock_merge_with_os_envs = MagicMock(return_value=merged_env)
-        mock_host_is_linux = MagicMock(return_value=True)
 
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
@@ -993,7 +992,6 @@ class TestStartAgent(CliTestCase):
         ])
 
         with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
-                patch('conductr_cli.host.is_linux', mock_host_is_linux), \
                 patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
                                                            self.tmp_dir,
@@ -1009,7 +1007,6 @@ class TestStartAgent(CliTestCase):
             self.assertEqual([1001, 1002, 1003], result)
 
         mock_merge_with_os_envs.assert_called_once_with([], self.envs, self.agent_envs)
-        mock_host_is_linux.assert_has_calls([call(), call(), call()])
 
         self.assertEqual([
             call([
@@ -1066,14 +1063,21 @@ class TestStartAgent(CliTestCase):
 
             self.assertFalse(any(any('-Dconductr.agent.run.force-oci-docker=on' in a for a in c) for c in args))
 
-    def test_start_non_linux(self):
+    def test_start_non_linux_has_docker(self):
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
             self.mock_pid(1002),
             self.mock_pid(1003)
         ])
 
-        with patch('subprocess.Popen', mock_popen), patch('conductr_cli.host.is_linux', lambda: False):
+        mock_oci_docker_start = MagicMock()
+
+        with \
+                patch('subprocess.Popen', mock_popen), \
+                patch('conductr_cli.docker.is_docker_present', lambda: True), \
+                patch('conductr_cli.host.is_linux', lambda: False), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.start', mock_oci_docker_start), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.extract_image_name', lambda _1, _2: 'image'):
             sandbox_run_jvm.start_agent_instances(self.extract_dir,
                                                   self.tmp_dir,
                                                   self.envs,
@@ -1083,7 +1087,12 @@ class TestStartAgent(CliTestCase):
                                                   self.addrs,
                                                   self.addrs,
                                                   conductr_roles=[],
-                                                  features=[],
+                                                  features=sandbox_features.collect_features(
+                                                      [],
+                                                      no_default_features=False,
+                                                      image_version='2.0.0',
+                                                      offline_mode=False
+                                                  ),
                                                   log_level=self.log_level)
 
         for c in mock_popen.call_args_list:
@@ -1091,10 +1100,46 @@ class TestStartAgent(CliTestCase):
 
             self.assertTrue(all(any('-Dconductr.agent.run.force-oci-docker=on' in a for a in c) for c in args))
 
+    def test_start_non_linux_no_docker(self):
+        mock_popen = MagicMock(side_effect=[
+            self.mock_pid(1001),
+            self.mock_pid(1002),
+            self.mock_pid(1003)
+        ])
+
+        mock_oci_docker_start = MagicMock()
+
+        with \
+                patch('subprocess.Popen', mock_popen), \
+                patch('conductr_cli.docker.is_docker_present', lambda: False), \
+                patch('conductr_cli.host.is_linux', lambda: False), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.extract_image_name', lambda _1, _2: 'image'), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.start', mock_oci_docker_start):
+            sandbox_run_jvm.start_agent_instances(self.extract_dir,
+                                                  self.tmp_dir,
+                                                  self.envs,
+                                                  self.agent_envs,
+                                                  self.args,
+                                                  self.agent_args,
+                                                  self.addrs,
+                                                  self.addrs,
+                                                  conductr_roles=[],
+                                                  features=sandbox_features.collect_features(
+                                                      [],
+                                                      no_default_features=False,
+                                                      image_version='2.0.0',
+                                                      offline_mode=False
+                                                  ),
+                                                  log_level=self.log_level)
+
+        for c in mock_popen.call_args_list:
+            args, kwargs = c
+
+            self.assertFalse(any(any('-Dconductr.agent.run.force-oci-docker=on' in a for a in c) for c in args))
+
     def test_roles_and_features(self):
         merged_env = {'test': 'only'}
         mock_merge_with_os_envs = MagicMock(return_value=merged_env)
-        mock_host_is_linux = MagicMock(return_value=True)
 
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
@@ -1113,7 +1158,6 @@ class TestStartAgent(CliTestCase):
         ]
 
         with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
-                patch('conductr_cli.host.is_linux', mock_host_is_linux), \
                 patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
                                                            self.tmp_dir,
@@ -1133,11 +1177,17 @@ class TestStartAgent(CliTestCase):
             self.envs,
             self.agent_envs
         )
-        mock_host_is_linux.assert_has_calls([call(), call(), call()])
 
         self.assertEqual(mock_feature.method_calls, [
             call.conductr_pre_agent_start(
-                self.envs, self.agent_envs, self.args, self.agent_args, self.addrs, self.addrs, conductr_roles
+                self.envs,
+                self.agent_envs,
+                self.args,
+                self.agent_args,
+                self.extract_dir,
+                self.addrs,
+                self.addrs,
+                conductr_roles
             ),
             call.conductr_roles(),
             call.conductr_args()
@@ -1189,7 +1239,6 @@ class TestStartAgent(CliTestCase):
     def test_start_instances_with_less_number_of_core_nodes(self):
         merged_env = {'test': 'only'}
         mock_merge_with_os_envs = MagicMock(return_value=merged_env)
-        mock_host_is_linux = MagicMock(return_value=True)
 
         mock_popen = MagicMock(side_effect=[
             self.mock_pid(1001),
@@ -1201,7 +1250,6 @@ class TestStartAgent(CliTestCase):
         features = []
 
         with patch('conductr_cli.sandbox_run_jvm.merge_with_os_envs', mock_merge_with_os_envs), \
-                patch('conductr_cli.host.is_linux', mock_host_is_linux), \
                 patch('subprocess.Popen', mock_popen):
             result = sandbox_run_jvm.start_agent_instances(self.extract_dir,
                                                            self.tmp_dir,
@@ -1217,7 +1265,6 @@ class TestStartAgent(CliTestCase):
             self.assertEqual([1001, 1002, 1003], result)
 
         mock_merge_with_os_envs.assert_called_once_with([], self.envs, self.agent_envs)
-        mock_host_is_linux.assert_has_calls([call(), call(), call()])
 
         self.assertEqual([
             call([

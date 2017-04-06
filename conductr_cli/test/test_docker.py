@@ -93,3 +93,27 @@ class TestDocker(CliTestCase):
             '  MacOS:                                         Docker for Mac',
             'For more information checkout: https://www.docker.com/products/overview'
         ], error.exception.messages)
+
+    def test_present(self):
+        mock_vm_type = MagicMock(return_value=docker.DockerVmType.DOCKER_ENGINE)
+        mock_validate_docker_vm = MagicMock()
+
+        with \
+                patch('conductr_cli.docker.vm_type', mock_vm_type), \
+                patch('conductr_cli.docker.validate_docker_vm', mock_validate_docker_vm):
+            self.assertTrue(docker.is_docker_present())
+
+        mock_vm_type.assert_called_once_with()
+        mock_validate_docker_vm.assert_called_once_with(docker.DockerVmType.DOCKER_ENGINE)
+
+    def test_not_present(self):
+        mock_vm_type = MagicMock(return_value=docker.DockerVmType.DOCKER_ENGINE)
+        mock_validate_docker_vm = MagicMock(side_effect=DockerValidationError([]))
+
+        with \
+                patch('conductr_cli.docker.vm_type', mock_vm_type), \
+                patch('conductr_cli.docker.validate_docker_vm', mock_validate_docker_vm):
+            self.assertFalse(docker.is_docker_present())
+
+        mock_vm_type.assert_called_once_with()
+        mock_validate_docker_vm.assert_called_once_with(docker.DockerVmType.DOCKER_ENGINE)

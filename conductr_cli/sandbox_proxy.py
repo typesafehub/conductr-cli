@@ -1,6 +1,6 @@
 from conductr_cli import conduct_main, docker, terminal
 from conductr_cli.constants import DEFAULT_SANDBOX_PROXY_DIR, DEFAULT_SANDBOX_PROXY_CONTAINER_NAME
-from conductr_cli.exceptions import DockerValidationError, NOT_FOUND_ERROR
+from conductr_cli.exceptions import NOT_FOUND_ERROR
 from conductr_cli.screen_utils import h1
 from subprocess import CalledProcessError
 import logging
@@ -32,7 +32,7 @@ DEFAULT_HAPROXY_CFG_ENTRIES = 'defaults\n' \
 
 
 def start_proxy(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_ports):
-    if is_docker_present():
+    if docker.is_docker_present():
         setup_haproxy_dirs()
         stop_proxy()
         start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_ports)
@@ -45,7 +45,7 @@ def start_proxy(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_port
 def stop_proxy():
     log = logging.getLogger(__name__)
 
-    if is_docker_present():
+    if docker.is_docker_present():
         try:
             running_container = get_running_haproxy()
             if running_container:
@@ -59,15 +59,6 @@ def stop_proxy():
     else:
         # Docker is not present, so the proxy feature won't be running in the first place.
         return True
-
-
-def is_docker_present():
-    try:
-        vm_type = docker.vm_type()
-        docker.validate_docker_vm(vm_type)
-        return True
-    except DockerValidationError:
-        return False
 
 
 def setup_haproxy_dirs():

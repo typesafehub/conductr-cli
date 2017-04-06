@@ -44,6 +44,14 @@ def cpu_check(info):
     return existing_cpu_count, has_sufficient_cpu
 
 
+def is_docker_present():
+    try:
+        validate_docker_vm(vm_type())
+        return True
+    except DockerValidationError:
+        return False
+
+
 def validate_docker_vm(vm_type):
     log = logging.getLogger(__name__)
     if vm_type is DockerVmType.DOCKER_ENGINE:

@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
 from conductr_cli import logging_setup
-from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature,\
-    LoggingFeature, MonitoringFeature, ProxyingFeature, \
+from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature, \
+    OciInDockerFeature, LoggingFeature, MonitoringFeature, ProxyingFeature, \
     calculate_features, collect_features, feature_conflicts, select_bintray_uri
 from conductr_cli.docker import DockerVmType
 from conductr_cli.test.cli_test_case import CliTestCase
@@ -116,11 +116,12 @@ class TestProxyingFeature(CliTestCase):
 
         with \
                 patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start), \
-                patch('conductr_cli.sandbox_proxy.is_docker_present', docker_present):
+                patch('conductr_cli.docker.is_docker_present', docker_present):
             logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             feature = ProxyingFeature([], '2.0.0', False)
 
             feature.conductr_pre_agent_start(
+                MagicMock(),
                 MagicMock(),
                 MagicMock(),
                 MagicMock(),
@@ -148,11 +149,12 @@ class TestProxyingFeature(CliTestCase):
 
         with \
                 patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start), \
-                patch('conductr_cli.sandbox_proxy.is_docker_present', docker_present):
+                patch('conductr_cli.docker.is_docker_present', docker_present):
             logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             feature = ProxyingFeature([], '2.0.0', False)
 
             feature.conductr_pre_agent_start(
+                MagicMock(),
                 MagicMock(),
                 MagicMock(),
                 MagicMock(),
@@ -182,6 +184,89 @@ class TestProxyingFeature(CliTestCase):
             self.assertTrue(feature.stop())
 
         proxy_stop.assert_called_once_with()
+
+
+class TestOciInDockerFeature(TestCase):
+    def test_with_docker(self):
+        with \
+                patch('conductr_cli.docker.is_docker_present', lambda: True), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.extract_image_name', lambda _1, _2: 'image'):
+            feature = OciInDockerFeature([], '2.0.0', False)
+            feature.conductr_pre_agent_start(
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            )
+            self.assertEqual(
+                feature.conductr_args(),
+                ['-Dconductr.agent.run.force-oci-docker=on']
+            )
+
+    def test_without_docker(self):
+        with \
+                patch('conductr_cli.docker.is_docker_present', lambda: False), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.extract_image_name', lambda _1, _2: 'image'):
+            feature = OciInDockerFeature([], '2.0.0', False)
+            feature.conductr_pre_agent_start(
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            )
+            self.assertEqual(feature.conductr_args(), [])
+            self.assertFalse(feature.start().started)
+
+    def test_without_image(self):
+        with \
+                patch('conductr_cli.docker.is_docker_present', lambda: True), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.extract_image_name', lambda _1, _2: None):
+            feature = OciInDockerFeature([], '2.0.0', False)
+            self.assertEqual(feature.conductr_args(), [])
+            self.assertFalse(feature.start().started)
+
+    def test_with_docker_does_pull_when_missing(self):
+        docker_pull = MagicMock()
+
+        with \
+                patch('conductr_cli.docker.is_docker_present', lambda: True), \
+                patch('conductr_cli.terminal.docker_images', lambda _: ''), \
+                patch('conductr_cli.terminal.docker_pull', docker_pull), \
+                patch('conductr_cli.sandbox_features.OciInDockerFeature.extract_image_name', lambda _1, _2: 'my-image'):
+            feature = OciInDockerFeature([], '2.0.0', False)
+            feature.conductr_pre_agent_start(
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            )
+            feature.start()
+
+        docker_pull.assert_called_once_with('my-image')
+
+    def test_with_docker_does_not_pull_when_present(self):
+        docker_pull = MagicMock()
+
+        with \
+                patch('conductr_cli.docker.is_docker_present', lambda: True), \
+                patch('conductr_cli.terminal.docker_images', lambda _: 'ok'), \
+                patch('conductr_cli.terminal.docker_pull', docker_pull):
+            feature = OciInDockerFeature([], '2.0.0', False)
+            feature.start()
+
+        docker_pull.assert_not_called()
 
 
 class TestVisualizationFeature(TestCase):

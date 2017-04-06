@@ -21,11 +21,13 @@ Feature attributes:
 """
 
 import conductr_cli
-from conductr_cli import docker, sandbox_proxy
+from conductr_cli import docker, host, sandbox_proxy, terminal
 from conductr_cli.sandbox_version import is_conductr_supportive_of_features, is_cinnamon_grafana_docker_based
 from conductr_cli.constants import FEATURE_PROVIDE_LOGGING, FEATURE_PROVIDE_PROXYING
 from conductr_cli.screen_utils import h1
+from zipfile import ZipFile
 import logging
+import os
 
 
 class FeatureStartResult:
@@ -63,18 +65,18 @@ class ProxyingFeature:
     def enabled(self):
         return is_conductr_supportive_of_features(self.image_version)
 
-    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
         pass
 
     def conductr_core_envs(self):
         return []
 
-    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs, conductr_roles):
         if self.enabled():
             self.proxy_bind_addr = core_addrs[0]
 
     def conductr_agent_envs(self):
-        if self.enabled() and sandbox_proxy.is_docker_present() and self.proxy_bind_addr is not None:
+        if self.enabled() and docker.is_docker_present() and self.proxy_bind_addr is not None:
             return ['HAPROXY_STATS_IP={}'.format(self.proxy_bind_addr)]
         else:
             return []
@@ -113,6 +115,100 @@ class ProxyingFeature:
         return sandbox_proxy.stop_proxy()
 
 
+class OciInDockerFeature:
+    """OciInDocker feature.
+
+    When enabled, this feature will ensure ConductR runs OCI bundles inside of docker. It will also preload the
+    image that ConductR uses for this.
+    """
+
+    name = 'oci-in-docker'
+    ports = []
+    dependencies = []
+    provides = []
+
+    def __init__(self, version_args, image_version, offline_mode):
+        self.version_args = version_args
+        self.image_version = image_version
+        self.offline_mode = offline_mode
+        self.enabled = is_conductr_supportive_of_features(self.image_version)
+        self.docker_present = docker.is_docker_present()
+        self.image_name = None
+
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
+        pass
+
+    def conductr_core_envs(self):
+        return []
+
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs, conductr_roles):
+        self.image_name = self.extract_image_name(dir)
+
+    def conductr_agent_envs(self):
+        return []
+
+    def conductr_post_start(self, args, run_result):
+        pass
+
+    def conductr_args(self):
+        return [] if not self.docker_present or not self.enabled or self.image_name is None else [
+            '-Dconductr.agent.run.force-oci-docker=on'
+        ]
+
+    def conductr_feature_envs(self):
+        return []
+
+    def conductr_roles(self):
+        return []
+
+    def start(self):
+        log = logging.getLogger(__name__)
+
+        if self.enabled and self.image_name is not None:
+            if self.docker_present:
+                log.info(h1('Starting OCI-in-Docker support'))
+                docker_image = terminal.docker_images(self.image_name)
+
+                if not docker_image:
+                    log.info('Pulling docker image {}'.format(self.image_name))
+                    terminal.docker_pull(self.image_name)
+
+                log.info('OCI-in-Docker provided by image {}'.format(self.image_name))
+
+                return FeatureStartResult(True, [])
+            else:
+                log.info(h1('OCI-in-Docker support unavailable.'))
+                log.info(h1('To provide support ensure Docker is running and restart the sandbox'))
+
+                return FeatureStartResult(False, [])
+        else:
+            return FeatureStartResult(False, [])
+
+    @staticmethod
+    def stop():
+        pass
+
+    @staticmethod
+    def extract_image_name(dir):
+        for file in os.listdir(dir):
+            if file.startswith('conductr-agent') and file.endswith('.jar'):
+                try:
+                    with ZipFile(os.path.join(dir, file), 'r') as jar:
+                        conf = jar.read('application.conf').decode('UTF-8')
+
+                        # pyhocon can't parse application.conf due to variable substitutions so we manually
+                        # pull out the oci-docker-image line
+
+                        for l in map(lambda l: l.strip(), conf.splitlines()):
+                            if l.startswith('oci-docker-image'):
+                                image_name = l[l.index('"') + 1:l.rindex('"')]
+                                if image_name != "":
+                                    return image_name
+                finally:
+                    pass
+        return None
+
+
 class VisualizationFeature:
     """Visualization feature.
 
@@ -133,13 +229,13 @@ class VisualizationFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
-    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
         pass
 
     def conductr_core_envs(self):
         return []
 
-    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs, conductr_roles):
         pass
 
     def conductr_agent_envs(self):
@@ -202,13 +298,13 @@ class LoggingFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
-    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
         pass
 
     def conductr_core_envs(self):
         return []
 
-    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs, conductr_roles):
         pass
 
     def conductr_agent_envs(self):
@@ -284,13 +380,13 @@ class LiteLoggingFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
-    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
         pass
 
     def conductr_core_envs(self):
         return []
 
-    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs, conductr_roles):
         pass
 
     def conductr_agent_envs(self):
@@ -360,13 +456,13 @@ class MonitoringFeature:
         self.image_version = image_version
         self.offline_mode = offline_mode
 
-    def conductr_pre_core_start(self, envs, envs_core, args, args_core, bind_addrs, conductr_roles):
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
         pass
 
     def conductr_core_envs(self):
         return []
 
-    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles):
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs, conductr_roles):
         pass
 
     def conductr_agent_envs(self):
@@ -410,7 +506,14 @@ class MonitoringFeature:
         return True
 
 
-feature_classes = [ProxyingFeature, VisualizationFeature, LoggingFeature, LiteLoggingFeature, MonitoringFeature]
+feature_classes = [
+    ProxyingFeature,
+    VisualizationFeature,
+    LoggingFeature,
+    LiteLoggingFeature,
+    MonitoringFeature,
+    OciInDockerFeature
+]
 
 feature_names = [feature.name for feature in feature_classes]
 feature_lookup = {feature.name: feature for feature in feature_classes}
@@ -468,16 +571,23 @@ def collect_features(feature_args, no_default_features, image_version, offline_m
         features.append(feature)
 
     def add_default_features(features):
+        names = [feature.name for feature in features]
+
         def add_proxying(features):
-            features.insert(0, feature_lookup[ProxyingFeature.name]([], image_version, offline_mode))
+            if ProxyingFeature.name not in names:
+                features.insert(0, feature_lookup[ProxyingFeature.name]([], image_version, offline_mode))
 
         def add_logging_lite(features):
-            names = [feature.name for feature in features]
             if LoggingFeature.name not in names:
                 features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version, offline_mode))
 
+        def add_oci_in_docker(features):
+            if OciInDockerFeature.name not in names and not host.is_linux():
+                features.insert(0, feature_lookup[OciInDockerFeature.name]([], image_version, offline_mode))
+
         add_logging_lite(features)
         add_proxying(features)
+        add_oci_in_docker(features)
 
     if not no_default_features:
         add_default_features(features)
