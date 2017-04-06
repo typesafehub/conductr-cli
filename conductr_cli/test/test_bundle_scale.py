@@ -52,7 +52,7 @@ class TestGetScaleIp(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(1, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
@@ -101,7 +101,7 @@ class TestGetScaleIp(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(1, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
@@ -124,7 +124,7 @@ class TestGetScaleIp(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(0, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
@@ -147,7 +147,7 @@ class TestGetScaleIp(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(0, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
@@ -202,7 +202,7 @@ class TestGetScaleHost(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(1, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
@@ -251,7 +251,7 @@ class TestGetScaleHost(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(1, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
@@ -274,7 +274,7 @@ class TestGetScaleHost(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(0, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
@@ -297,7 +297,7 @@ class TestGetScaleHost(CliTestCase):
         }
         input_args = MagicMock(**args)
         with patch('requests.get', http_method):
-            result = bundle_scale.get_scale(bundle_id, input_args)
+            result = bundle_scale.get_scale(bundle_id, True, input_args)
             self.assertEqual(0, result)
 
         http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
@@ -340,14 +340,14 @@ class TestWaitForScale(CliTestCase):
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
-            bundle_scale.wait_for_scale(bundle_id, 3, args)
+            bundle_scale.wait_for_scale(bundle_id, 3, wait_for_is_active=True, args=args)
 
         self.assertEqual(get_scale_mock.call_args_list, [
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args)
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args)
         ])
 
         url_mock.assert_called_with('bundles/events', args)
@@ -414,15 +414,15 @@ class TestWaitForScale(CliTestCase):
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
-            bundle_scale.wait_for_scale(bundle_id, 3, args)
+            bundle_scale.wait_for_scale(bundle_id, 3, wait_for_is_active=True, args=args)
 
         self.assertEqual(get_scale_mock.call_args_list, [
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args)
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args)
         ])
 
         url_mock.assert_called_with('bundles/events', args)
@@ -490,12 +490,12 @@ class TestWaitForScale(CliTestCase):
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
-            self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, args)
+            self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, wait_for_is_active=True, args=args)
 
         self.assertEqual(get_scale_mock.call_args_list, [
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args)
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args)
         ])
 
         url_mock.assert_called_with('bundles/events', args)
@@ -537,10 +537,10 @@ class TestWaitForScale(CliTestCase):
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
-            bundle_scale.wait_for_scale(bundle_id, 3, args)
+            bundle_scale.wait_for_scale(bundle_id, 3, wait_for_is_active=True, args=args)
 
         self.assertEqual(get_scale_mock.call_args_list, [
-            call(bundle_id, args)
+            call(bundle_id, True, args)
         ])
 
         conductr_host_mock.assert_not_called()
@@ -577,10 +577,10 @@ class TestWaitForScale(CliTestCase):
                 patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
-            self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, args)
+            self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, wait_for_is_active=True, args=args)
 
         self.assertEqual(get_scale_mock.call_args_list, [
-            call(bundle_id, args)
+            call(bundle_id, True, args)
         ])
 
         url_mock.assert_called_with('bundles/events', args)
@@ -621,13 +621,13 @@ class TestWaitForScale(CliTestCase):
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
-            self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, args)
+            self.assertRaises(WaitTimeoutError, bundle_scale.wait_for_scale, bundle_id, 3, wait_for_is_active=True, args=args)
 
         self.assertEqual(get_scale_mock.call_args_list, [
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args),
-            call(bundle_id, args)
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args),
+            call(bundle_id, True, args)
         ])
 
         url_mock.assert_called_with('bundles/events', args)

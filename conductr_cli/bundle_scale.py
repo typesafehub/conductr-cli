@@ -6,7 +6,7 @@ import json
 import logging
 
 
-def get_scale(bundle_id, args):
+def get_scale(bundle_id, wait_for_is_active, args):
     bundles_url = conduct_url.url('bundles', args)
     response = conduct_request.get(args.dcos_mode, conduct_url.conductr_host(args), bundles_url,
                                    auth=args.conductr_auth, verify=args.server_verification_file)
@@ -18,17 +18,17 @@ def get_scale(bundle_id, args):
         if 'bundleExecutions' in matching_bundle:
             started_executions = [bundle_execution
                                   for bundle_execution in matching_bundle['bundleExecutions']
-                                  if bundle_execution['isStarted']]
+                                  if not wait_for_is_active or bundle_execution['isStarted']]
             return len(started_executions)
 
     return 0
 
 
-def wait_for_scale(bundle_id, expected_scale, args):
+def wait_for_scale(bundle_id, expected_scale, wait_for_is_active, args):
     log = logging.getLogger(__name__)
     start_time = datetime.now()
 
-    bundle_scale = get_scale(bundle_id, args)
+    bundle_scale = get_scale(bundle_id, wait_for_is_active, args)
     if bundle_scale == expected_scale:
         log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))
         return
@@ -53,7 +53,7 @@ def wait_for_scale(bundle_id, expected_scale, args):
                 if event.event:
                     sse_heartbeat_count_after_event = 0
 
-                bundle_scale = get_scale(bundle_id, args)
+                bundle_scale = get_scale(bundle_id, wait_for_is_active, args)
                 if bundle_scale == expected_scale:
                     # Reprint previous message with flush to go to next line
                     if last_log_message:

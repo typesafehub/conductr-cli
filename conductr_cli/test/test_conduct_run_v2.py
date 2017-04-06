@@ -107,6 +107,6 @@ class TestConductRunCommand(ConductRunTestBase):
 
         http_method.assert_called_with(expected_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
