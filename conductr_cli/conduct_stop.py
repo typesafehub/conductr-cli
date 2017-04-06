@@ -27,7 +27,7 @@ def stop(args):
     log.info('Bundle stop request sent.')
 
     if not args.no_wait:
-        bundle_scale.wait_for_scale(response_json['bundleId'], 0, args)
+        bundle_scale.wait_for_scale(response_json['bundleId'], 0, wait_for_is_active=False, args=args)
 
     if not args.disable_instructions:
         log.info('Unload bundle with:       {} unload{} {}'.format(args.command, args.cli_parameters, bundle_id))

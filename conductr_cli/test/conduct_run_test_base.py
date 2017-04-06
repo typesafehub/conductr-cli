@@ -43,7 +43,7 @@ class ConductRunTestBase(CliTestCase):
 
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
@@ -64,7 +64,7 @@ class ConductRunTestBase(CliTestCase):
 
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(self.default_response + self.default_output(), self.output(stdout))
 
@@ -85,7 +85,7 @@ class ConductRunTestBase(CliTestCase):
 
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(self.default_output(bundle_id='45e0c477d3e5ea92aa8d85c0d8f3e25c'), self.output(stdout))
 
@@ -107,7 +107,7 @@ class ConductRunTestBase(CliTestCase):
 
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(
             self.default_output(params=cli_parameters),
@@ -131,7 +131,7 @@ class ConductRunTestBase(CliTestCase):
 
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(
             self.default_output(params=cli_parameters),
@@ -157,7 +157,7 @@ class ConductRunTestBase(CliTestCase):
 
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(self.default_output(), self.output(stdout))
 
@@ -229,7 +229,7 @@ class ConductRunTestBase(CliTestCase):
 
         http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
                                        headers={'Host': '127.0.0.1'})
-        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, input_args)
+        wait_for_scale_mock.assert_called_with(self.bundle_id, self.scale, wait_for_is_active=True, args=input_args)
 
         self.assertEqual(
             as_error(strip_margin("""|Error: Timed out: test wait timeout error

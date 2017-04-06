@@ -34,7 +34,7 @@ def run(args):
     log.info('Bundle run request sent.')
 
     if not args.no_wait:
-        bundle_scale.wait_for_scale(response_json['bundleId'], args.scale, args)
+        bundle_scale.wait_for_scale(response_json['bundleId'], args.scale, wait_for_is_active=True, args=args)
 
     if not args.disable_instructions:
         log.info('Stop bundle with:         {} stop{} {}'.format(args.command, args.cli_parameters, bundle_id))
