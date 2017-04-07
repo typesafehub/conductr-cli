@@ -186,7 +186,7 @@ class OciInDockerFeature:
 
     @staticmethod
     def stop():
-        pass
+        return True
 
     @staticmethod
     def extract_image_name(dir):
