@@ -19,6 +19,12 @@ If you use macOS and `brew` then you can quickly:
 .. code:: bash
     
     brew install typesafehub/conductr/conductr-cli
+
+Some bundles provided by the ConductR team (e.g. https://github.com/typesafehub/conductr-cassandra) require `python3`, make sure it's installed if you plan on using those bundles.
+ 
+.. code:: bash
+    
+    brew install python3
     
 Alternatively, Lightbend hosts native images at bintray: https://bintray.com/lightbend/generic/conductr-cli. Download an archive that is suitable for your environment and then place the resultant package in a place accessible from your PATH. For example, on Unix, copy the contents of archive to your /usr/local/bin folder.
 
