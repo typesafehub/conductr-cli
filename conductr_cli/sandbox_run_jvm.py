@@ -532,10 +532,14 @@ def start_core_instances(core_extracted_dir, tmp_dir,
 
     pids = []
 
-    [
-        f.conductr_pre_core_start(envs, envs_core, args, args_core, bind_addrs, conductr_roles)
-        for f in features
-    ]
+    for f in features:
+        f.conductr_pre_core_start(envs,
+                                  envs_core,
+                                  args,
+                                  args_core,
+                                  core_extracted_dir,
+                                  bind_addrs,
+                                  conductr_roles)
 
     feature_conductr_roles = flatten([f.conductr_roles() for f in features])
     # Role matching is enabled if there's role present for any of the ConductR agent instances.
@@ -612,10 +616,15 @@ def start_agent_instances(agent_extracted_dir, tmp_dir,
     log = logging.getLogger(__name__)
     pids = []
 
-    [
-        f.conductr_pre_agent_start(envs, envs_agent, args, args_agent, bind_addrs, core_addrs, conductr_roles)
-        for f in features
-    ]
+    for f in features:
+        f.conductr_pre_agent_start(envs,
+                                   envs_agent,
+                                   args,
+                                   args_agent,
+                                   agent_extracted_dir,
+                                   bind_addrs,
+                                   core_addrs,
+                                   conductr_roles)
 
     feature_conductr_roles = flatten([f.conductr_roles() for f in features])
     args_features = flatten([f.conductr_args() for f in features])
@@ -637,9 +646,6 @@ def start_agent_instances(agent_extracted_dir, tmp_dir,
         ] + [
             '-Dconductr.agent.roles.{}={}'.format(j, role) for j, role in enumerate(agent_roles)
         ]
-
-        if not host.is_linux():
-            commands.append('-Dconductr.agent.run.force-oci-docker=on')
 
         if args:
             commands.extend(args)
