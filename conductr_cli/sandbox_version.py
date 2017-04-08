@@ -17,7 +17,7 @@ def is_cinnamon_grafana_docker_based(version):
 
 
 def version_parts(version):
-    return tuple(map(int, version.split('.')))
+    return tuple(map(int, version.split('-')[0].split('.')))
 
 
 def major_version(version):
