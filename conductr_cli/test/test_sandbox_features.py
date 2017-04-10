@@ -67,6 +67,29 @@ class TestFeatures(TestCase):
                              [type(f) for f in collect_features([['monitoring'], ['visualization'], ['logging'], ['monitoring']],
                                                                 False, LATEST_CONDUCTR_VERSION, False)])
 
+    def test_collect_features_oci_mandatory(self):
+        with patch('platform.system', lambda: 'Darwin'):
+            self.assertEqual(
+                [OciInDockerFeature],
+                [type(f) for f in collect_features(
+                    [],
+                    no_default_features=True,
+                    image_version=LATEST_CONDUCTR_VERSION,
+                    offline_mode=False
+                )]
+            )
+
+        with patch('platform.system', lambda: 'Linux'):
+            self.assertEqual(
+                [],
+                [type(f) for f in collect_features(
+                    [],
+                    no_default_features=True,
+                    image_version=LATEST_CONDUCTR_VERSION,
+                    offline_mode=False
+                )]
+            )
+
     def test_select_bintray_uri(self):
         self.assertEqual('cinnamon-grafana', select_bintray_uri('cinnamon-grafana')['name'])
         self.assertEqual('cinnamon-grafana', select_bintray_uri('cinnamon-grafana')['bundle'])
