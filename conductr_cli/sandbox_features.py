@@ -581,16 +581,22 @@ def collect_features(feature_args, no_default_features, image_version, offline_m
             if LoggingFeature.name not in names:
                 features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version, offline_mode))
 
+        add_logging_lite(features)
+        add_proxying(features)
+
+    def add_mandatory_features(features):
+        names = [feature.name for feature in features]
+
         def add_oci_in_docker(features):
             if OciInDockerFeature.name not in names and not host.is_linux():
                 features.insert(0, feature_lookup[OciInDockerFeature.name]([], image_version, offline_mode))
 
-        add_logging_lite(features)
-        add_proxying(features)
         add_oci_in_docker(features)
 
     if not no_default_features:
         add_default_features(features)
+
+    add_mandatory_features(features)
 
     return features
 
