@@ -16,7 +16,8 @@ BINTRAY_DOWNLOAD_REALM = 'Bintray'
 BINTRAY_CREDENTIAL_FILE_PATH = '{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~'))
 BINTRAY_PROPERTIES_RE = re.compile('^(\S+)\s*=\s*([\S]+)$')
 BINTRAY_LIGHTBEND_ORG = 'lightbend'
-BINTRAY_CONDUCTR_REPO = 'commercial-releases'
+BINTRAY_CONDUCTR_COMMERCIAL_REPO = 'commercial-releases'
+BINTRAY_CONDUCTR_GENERIC_REPO = 'generic'
 BINTRAY_CONDUCTR_CORE_PACKAGE_NAME = 'ConductR-Universal'
 BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME = 'ConductR-Agent-Universal'
 

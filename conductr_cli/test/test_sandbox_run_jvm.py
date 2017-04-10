@@ -1738,22 +1738,22 @@ class TestDownloadSandboxImage(CliTestCase):
 
     image_dir = '~/.conductr/images'
 
-    image_version = '2.0.0-rc.2'
+    image_version = '2.1.0-alpha.1'
 
     core_package_name = 'ConductR-Universal'
 
     core_artefact_type = 'core'
 
-    core_artefact_file_name = 'conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+    core_artefact_file_name = 'conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'
 
     core_artefact_mac_os = {
         'package_name': 'ConductR-Universal',
         'resolver': 'conductr_cli.resolvers.bintray_resolver',
         'org': 'lightbend',
         'repo': 'commercial-releases',
-        'version': '2.0.0-rc.2',
-        'path': 'conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
-        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+        'version': '2.1.0-alpha.1',
+        'path': 'conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'
     }
 
     core_artefact_linux = {
@@ -1761,25 +1761,25 @@ class TestDownloadSandboxImage(CliTestCase):
         'resolver': 'conductr_cli.resolvers.bintray_resolver',
         'org': 'lightbend',
         'repo': 'commercial-releases',
-        'version': '2.0.0-rc.2',
-        'path': 'conductr-2.0.0-rc.2-Linux-x86_64.tgz',
-        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.0.0-rc.2-Linux-x86_64.tgz'
+        'version': '2.1.0-alpha.1',
+        'path': 'conductr-2.1.0-alpha.1-Linux-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.1.0-alpha.1-Linux-x86_64.tgz'
     }
 
     agent_package_name = 'ConductR-Agent-Universal'
 
     agent_artefact_type = 'agent'
 
-    agent_artefact_file_name = 'conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+    agent_artefact_file_name = 'conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'
 
     agent_artefact_mac_os = {
         'package_name': 'ConductR-Agent-Universal',
         'resolver': 'conductr_cli.resolvers.bintray_resolver',
         'org': 'lightbend',
         'repo': 'commercial-releases',
-        'version': '2.0.0-rc.2',
-        'path': 'conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
-        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'
+        'version': '2.1.0-alpha.1',
+        'path': 'conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'
     }
 
     agent_artefact_linux = {
@@ -1787,12 +1787,12 @@ class TestDownloadSandboxImage(CliTestCase):
         'resolver': 'conductr_cli.resolvers.bintray_resolver',
         'org': 'lightbend',
         'repo': 'commercial-releases',
-        'version': '2.0.0-rc.2',
-        'path': 'conductr-agent-2.0.0-rc.2-Linux-x86_64.tgz',
-        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.0.0-rc.2-Linux-x86_64.tgz'
+        'version': '2.1.0-alpha.1',
+        'path': 'conductr-agent-2.1.0-alpha.1-Linux-x86_64.tgz',
+        'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.1.0-alpha.1-Linux-x86_64.tgz'
     }
 
-    def test_download_core(self):
+    def test_download_core_from_commercial_releases(self):
         mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
         mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
 
@@ -1800,8 +1800,8 @@ class TestDownloadSandboxImage(CliTestCase):
         mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
-                                                                 'conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'))
+                                                                 'conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -1810,7 +1810,7 @@ class TestDownloadSandboxImage(CliTestCase):
                       mock_bintray_artefacts_by_version), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
                       mock_bintray_download_artefact):
-            self.assertEqual('~/.conductr/images/conductr-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+            self.assertEqual('~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
                              sandbox_run_jvm.download_sandbox_image(self.image_dir,
                                                                     self.core_package_name,
                                                                     self.core_artefact_type,
@@ -1826,16 +1826,17 @@ class TestDownloadSandboxImage(CliTestCase):
                                                                self.core_artefact_mac_os,
                                                                self.bintray_auth)
 
-    def test_download_agent(self):
+    def test_download_core_from_generic(self):
         mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
-        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+        bintray_auth = (None, None, None)
+        mock_load_bintray_credentials = MagicMock(return_value=bintray_auth)
 
-        artefacts = [self.agent_artefact_mac_os, self.agent_artefact_linux]
+        artefacts = [self.core_artefact_mac_os, self.core_artefact_linux]
         mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
-                                                                 'conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz'))
+                                                                 'conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -1844,7 +1845,89 @@ class TestDownloadSandboxImage(CliTestCase):
                       mock_bintray_artefacts_by_version), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
                       mock_bintray_download_artefact):
-            self.assertEqual('~/.conductr/images/conductr-agent-2.0.0-rc.2-Mac_OS_X-x86_64.tgz',
+            self.assertEqual('~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                             sandbox_run_jvm.download_sandbox_image(self.image_dir,
+                                                                    self.core_package_name,
+                                                                    self.core_artefact_type,
+                                                                    self.image_version))
+
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
+        mock_bintray_artefacts_by_version.assert_called_once_with(bintray_auth,
+                                                                  'lightbend',
+                                                                  'generic',
+                                                                  self.core_package_name,
+                                                                  self.image_version)
+        mock_bintray_download_artefact.assert_called_once_with(self.image_dir,
+                                                               self.core_artefact_mac_os,
+                                                               bintray_auth)
+
+    def test_download_core_older_version(self):
+        image_version = '2.0.5'
+
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        core_artefact_mac_os = self.core_artefact_mac_os.copy()
+        core_artefact_mac_os.update({
+            'version': '2.0.5',
+            'path': 'conductr-2.0.5-Mac_OS_X-x86_64.tgz',
+            'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.0.5-Mac_OS_X-x86_64.tgz'
+        })
+        core_artefact_linux = self.core_artefact_linux.copy()
+        core_artefact_linux.update({
+            'version': '2.0.5',
+            'path': 'conductr-2.0.5-Linux-x86_64.tgz',
+            'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-2.0.5-Linux-x86_64.tgz'
+        })
+        artefacts = [core_artefact_mac_os, core_artefact_linux]
+        mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
+
+        mock_bintray_download_artefact = MagicMock(return_value=(True,
+                                                                 'conductr-2.0.5-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-2.0.5-Mac_OS_X-x86_64.tgz'))
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
+                      mock_bintray_download_artefact):
+            self.assertEqual('~/.conductr/images/conductr-2.0.5-Mac_OS_X-x86_64.tgz',
+                             sandbox_run_jvm.download_sandbox_image(self.image_dir,
+                                                                    self.core_package_name,
+                                                                    self.core_artefact_type,
+                                                                    image_version))
+
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
+        mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.core_package_name,
+                                                                  image_version)
+        mock_bintray_download_artefact.assert_called_once_with(self.image_dir,
+                                                               core_artefact_mac_os,
+                                                               self.bintray_auth)
+
+    def test_download_agent_from_commercial_releases(self):
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)
+
+        artefacts = [self.agent_artefact_mac_os, self.agent_artefact_linux]
+        mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
+
+        mock_bintray_download_artefact = MagicMock(return_value=(True,
+                                                                 'conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
+                      mock_bintray_download_artefact):
+            self.assertEqual('~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
                              sandbox_run_jvm.download_sandbox_image(self.image_dir,
                                                                     self.agent_package_name,
                                                                     self.agent_artefact_type,
@@ -1859,6 +1942,90 @@ class TestDownloadSandboxImage(CliTestCase):
         mock_bintray_download_artefact.assert_called_once_with(self.image_dir,
                                                                self.agent_artefact_mac_os,
                                                                self.bintray_auth)
+
+    def test_download_agent_from_generic(self):
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        bintray_auth = (None, None, None)
+        mock_load_bintray_credentials = MagicMock(return_value=bintray_auth)
+
+        artefacts = [self.agent_artefact_mac_os, self.agent_artefact_linux]
+        mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
+
+        mock_bintray_download_artefact = MagicMock(return_value=(True,
+                                                                 'conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
+                      mock_bintray_download_artefact):
+            self.assertEqual('~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                             sandbox_run_jvm.download_sandbox_image(self.image_dir,
+                                                                    self.agent_package_name,
+                                                                    self.agent_artefact_type,
+                                                                    self.image_version))
+
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
+        mock_bintray_artefacts_by_version.assert_called_once_with(bintray_auth,
+                                                                  'lightbend',
+                                                                  'generic',
+                                                                  self.agent_package_name,
+                                                                  self.image_version)
+        mock_bintray_download_artefact.assert_called_once_with(self.image_dir,
+                                                               self.agent_artefact_mac_os,
+                                                               bintray_auth)
+
+    def test_download_agent_older_version(self):
+        image_version = '2.0.5'
+
+        mock_artefact_os_name = MagicMock(return_value='Mac_OS_X')
+        bintray_auth = (None, None, None)
+        mock_load_bintray_credentials = MagicMock(return_value=bintray_auth)
+
+        agent_artefact_mac_os = self.agent_artefact_mac_os.copy()
+        agent_artefact_mac_os.update({
+            'version': '2.0.5',
+            'path': 'conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz',
+            'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz'
+        })
+        agent_artefact_linux = self.agent_artefact_linux.copy()
+        agent_artefact_linux.update({
+            'version': '2.0.5',
+            'path': 'conductr-agent-2.0.5-Linux-x86_64.tgz',
+            'download_url': 'https://dl.bintray.com/lightbend/commercial-releases/conductr-agent-2.0.5-Linux-x86_64.tgz'
+        })
+        artefacts = [agent_artefact_mac_os, agent_artefact_linux]
+        mock_bintray_artefacts_by_version = MagicMock(return_value=artefacts)
+
+        mock_bintray_download_artefact = MagicMock(return_value=(True,
+                                                                 'conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz',
+                                                                 '~/.conductr/images/conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz'))
+
+        with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
+                patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
+                      mock_load_bintray_credentials), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
+                      mock_bintray_artefacts_by_version), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_download_artefact',
+                      mock_bintray_download_artefact):
+            self.assertEqual('~/.conductr/images/conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz',
+                             sandbox_run_jvm.download_sandbox_image(self.image_dir,
+                                                                    self.agent_package_name,
+                                                                    self.agent_artefact_type,
+                                                                    image_version))
+
+        mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
+        mock_bintray_artefacts_by_version.assert_called_once_with(bintray_auth,
+                                                                  'lightbend',
+                                                                  'commercial-releases',
+                                                                  self.agent_package_name,
+                                                                  image_version)
+        mock_bintray_download_artefact.assert_called_once_with(self.image_dir,
+                                                               agent_artefact_mac_os,
+                                                               bintray_auth)
 
     def test_bintray_unreachable(self):
         mock_load_bintray_credentials = MagicMock(return_value=self.bintray_auth)

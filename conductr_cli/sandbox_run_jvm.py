@@ -1,4 +1,4 @@
-from conductr_cli import conduct_main, host, license_validation, sandbox_stop, sandbox_common
+from conductr_cli import conduct_main, host, license_validation, sandbox_stop, sandbox_common, sandbox_version
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, \
     DEFAULT_LICENSE_FILE, DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING, DEFAULT_SANDBOX_IMAGE_DIR
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
@@ -6,7 +6,8 @@ from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError
     SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
     JavaVersionParseError, HostnameLookupError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
-from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_REPO
+from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_COMMERCIAL_REPO, \
+    BINTRAY_CONDUCTR_GENERIC_REPO
 from conductr_cli.sandbox_common import flatten
 from conductr_cli.sandbox_version import is_conductr_on_private_bintray
 from conductr_cli.screen_utils import h1, h2
@@ -473,6 +474,11 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
     try:
         bintray_auth = bintray_resolver.load_bintray_credentials(raise_error=False)
 
+        if sandbox_version.is_conductr_on_private_bintray(image_version):
+            bintray_repo = BINTRAY_CONDUCTR_COMMERCIAL_REPO
+        else:
+            bintray_repo = BINTRAY_CONDUCTR_COMMERCIAL_REPO if bintray_auth[0] else BINTRAY_CONDUCTR_GENERIC_REPO
+
         if artefact_type == 'core':
             file_prefix = 'conductr-{}-{}'.format(image_version, artefact_os_name())
         else:
@@ -486,7 +492,7 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
             artefact
             for artefact in bintray_resolver.bintray_artefacts_by_version(bintray_auth,
                                                                           BINTRAY_LIGHTBEND_ORG,
-                                                                          BINTRAY_CONDUCTR_REPO,
+                                                                          bintray_repo,
                                                                           package_name,
                                                                           image_version)
             if is_matching_artefact(artefact['download_url'])
