@@ -205,6 +205,7 @@ class TestRun(CliTestCase):
         mock_validate_hostname_lookup = MagicMock()
         mock_validate_64bit_support = MagicMock()
         mock_validate_bintray_credentials = MagicMock()
+        mock_cleanup_tmp_dir = MagicMock()
 
         bind_addr1 = MagicMock()
         bind_addr2 = MagicMock()
@@ -252,6 +253,7 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.validate_hostname_lookup', mock_validate_hostname_lookup), \
                 patch('conductr_cli.sandbox_run_jvm.validate_64bit_support', mock_validate_64bit_support), \
                 patch('conductr_cli.sandbox_run_jvm.validate_bintray_credentials', mock_validate_bintray_credentials), \
+                patch('conductr_cli.sandbox_run_jvm.cleanup_tmp_dir', mock_cleanup_tmp_dir), \
                 patch('conductr_cli.sandbox_run_jvm.find_bind_addrs', mock_find_bind_addrs), \
                 patch('conductr_cli.sandbox_run_jvm.obtain_sandbox_image', mock_obtain_sandbox_image), \
                 patch('conductr_cli.sandbox_stop.stop', mock_sandbox_stop), \
