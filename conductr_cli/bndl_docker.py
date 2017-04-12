@@ -218,7 +218,7 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
                     # bundles are packaged into zips, so we don't want to compress, but OCI tooling
                     # as of 2017-03-14 is broken for plain tar files; they must be gzip
 
-                    with gzip.GzipFile(fileobj=dest_file_digest, mode='wb', compresslevel=0) as dest:
+                    with gzip.GzipFile(fileobj=dest_file_digest, mode='wb', compresslevel=0, mtime=0) as dest:
                         shutil.copyfileobj(fileobj, dest)
 
                     dest_file_hexdigest = dest_file_digest.digest_out.hexdigest()

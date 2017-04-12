@@ -1,15 +1,18 @@
-from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_extract_manifest_config, oci_image_unpack
+from conductr_cli import bndl_oci
+from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_unpack
 from conductr_cli.bndl_docker import docker_unpack
-from conductr_cli.bndl_utils import detect_format_dir, detect_format_stream
+from conductr_cli.bndl_utils import detect_format_dir, detect_format_stream, first_mtime
 from conductr_cli.constants import BNDL_PEEK_SIZE, IO_CHUNK_SIZE
 from conductr_cli.shazar_main import dir_to_zip, write_with_digest
 from io import BufferedReader, BytesIO
+import arrow
 import logging
 import os
 import shutil
 import sys
 import tarfile
 import tempfile
+import time
 import zipfile
 
 
@@ -21,7 +24,7 @@ def bndl_create(args):
 
         return 2
 
-    buff_in = BufferedReader(sys.stdin.buffer, IO_CHUNK_SIZE)
+    buff_in = BufferedReader(sys.stdin.buffer, IO_CHUNK_SIZE) if args.source is None else None
 
     if args.format is None:
         if args.source is None:
@@ -100,18 +103,27 @@ def bndl_create(args):
 
             return 2
 
-        oci_manifest, oci_config = oci_image_extract_manifest_config(oci_image_dir, args.tag)
+        oci_manifest, oci_config = bndl_oci.oci_image_extract_manifest_config(oci_image_dir, args.tag)
         bundle_conf = oci_image_bundle_conf(args, component_name, oci_manifest, oci_config)
         bundle_conf_name = os.path.join(args.name, 'bundle.conf')
         bundle_conf_data = bundle_conf.encode('UTF-8')
+
+        # bundle data timestamps can vary based on how it's acquired (docker save, our own resolver, etc) so we
+        # deterministically set the mtime of the files to be based on the OCI config 'created' value if available
+
+        if oci_config and 'created' in oci_config:
+            mtime = arrow.get(oci_config['created']).timestamp
+        else:
+            mtime = first_mtime(temp_dir)
 
         # bundle.conf must be written first, so we explicitly do that for zip and tar
 
         if args.use_shazar:
             with tempfile.NamedTemporaryFile() as zip_file_data:
                 with zipfile.ZipFile(zip_file_data, 'w') as zip_file:
-                    zip_file.writestr(bundle_conf_name, bundle_conf_data)
-                    dir_to_zip(temp_dir, zip_file, args.name)
+                    bundle_conf_zinfo = zipfile.ZipInfo(filename=bundle_conf_name, date_time=time.localtime(mtime)[:6])
+                    zip_file.writestr(bundle_conf_zinfo, bundle_conf_data)
+                    dir_to_zip(temp_dir, zip_file, args.name, mtime)
 
                 zip_file_data.flush()
                 zip_file_data.seek(0)
@@ -121,12 +133,14 @@ def bndl_create(args):
             with tarfile.open(fileobj=output, mode='w|') as tar:
                 info = tarfile.TarInfo(name=bundle_conf_name)
                 info.size = len(bundle_conf_data)
+                info.mtime = mtime
                 tar.addfile(tarinfo=info, fileobj=BytesIO(bundle_conf_data))
 
                 for (dir_path, dir_names, file_names) in os.walk(temp_dir):
                     for file_name in file_names:
                         path = os.path.join(dir_path, file_name)
                         name = os.path.join(args.name, os.path.relpath(path, start=temp_dir))
+                        os.utime(path, (mtime, mtime))
                         tar.add(path, arcname=name)
 
         output.flush()

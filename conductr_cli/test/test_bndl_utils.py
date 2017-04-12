@@ -97,6 +97,18 @@ class TestBndlUtils(CliTestCase):
         self.assertEqual(writer.size_in, 0)
         self.assertEqual(writer.size_out, 9)
 
+    def test_first_mtime(self):
+        tmpdir = tempfile.mkdtemp()
+
+        try:
+            open(os.path.join(tmpdir, 'one'), 'w').close()
+            os.mkdir(os.path.join(tmpdir, 'sub'))
+            open(os.path.join(tmpdir, 'sub', 'two'), 'w').close()
+            os.utime(os.path.join(tmpdir, 'one'), (1234, 1234))
+            self.assertEqual(bndl_utils.first_mtime(os.path.join(tmpdir)), 1234)
+        finally:
+            shutil.rmtree(tmpdir)
+
     def test_load_bundle_args_into_conf(self):
         base_args = create_attributes_object({
             'name': 'world',
