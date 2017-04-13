@@ -107,11 +107,15 @@ def shazar(args):
                 sys.stdout.write(dest + os.linesep)
 
 
-def dir_to_zip(dir, zip_file, source_base_name):
+def dir_to_zip(dir, zip_file, source_base_name, mtime=None):
     for (dir_path, dir_names, file_names) in os.walk(dir):
         for file_name in file_names:
             path = os.path.join(dir_path, file_name)
             name = os.path.join(source_base_name, os.path.relpath(path, start=dir))
+
+            if mtime is not None:
+                os.utime(path, (mtime, mtime))
+
             zip_file.write(path, name)
 
 

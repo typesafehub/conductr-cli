@@ -137,6 +137,14 @@ def file_write_bytes(path, bs):
         file.write(bs)
 
 
+def first_mtime(path):
+    for (dir_path, dir_names, file_names) in os.walk(path):
+        for file_name in file_names:
+            return os.path.getmtime(os.path.join(dir_path, file_name))
+
+    return 0
+
+
 class DigestReaderWriter(object):
     def __init__(self, fileobj):
         self.digest_in = hashlib.sha256()
