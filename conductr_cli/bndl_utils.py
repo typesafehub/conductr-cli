@@ -126,6 +126,7 @@ def load_bundle_args_into_conf(config, args, with_defaults):
 
     args_compatibility_version = getattr(args, 'compatibility_version', None)
     args_disk_space = getattr(args, 'disk_space', None)
+    args_endpoints = getattr(args, 'endpoints', None)
     args_memory = getattr(args, 'memory', None)
     args_name = getattr(args, 'name', None)
     args_nr_of_cpus = getattr(args, 'nr_of_cpus', None)
@@ -164,6 +165,17 @@ def load_bundle_args_into_conf(config, args, with_defaults):
         config.put('diskSpace', args_disk_space)
     if with_defaults and 'diskSpace' not in config:
         config.put('diskSpace', BNDL_DEFAULT_DISK_SPACE)
+
+    if args_endpoints is not None:
+        # Delete existing endpoints if exist in configuration
+        for endpoint in args_endpoints:
+            endpoint_key = 'components.{}.endpoints'.format(endpoint.component)
+            if endpoint_key in config:
+                config.put(endpoint_key, None)
+        # Add endpoints to bundle components based on the --endpoint argument
+        for endpoint in args_endpoints:
+            endpoint_key = 'components.{}.endpoints'.format(endpoint.component)
+            config.put(endpoint_key, endpoint.hocon())
 
     if args_memory is not None:
         config.put('memory', args_memory)

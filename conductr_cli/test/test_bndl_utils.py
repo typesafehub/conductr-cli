@@ -1,4 +1,5 @@
 from conductr_cli import bndl_utils
+from conductr_cli.endpoint import Endpoint
 from conductr_cli.constants import \
     BNDL_DEFAULT_ANNOTATIONS, \
     BNDL_DEFAULT_NAME, \
@@ -9,7 +10,7 @@ from conductr_cli.constants import \
     BNDL_DEFAULT_ROLES, \
     BNDL_DEFAULT_TAGS, \
     BNDL_DEFAULT_VERSION
-from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object
+from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object, strip_margin
 from io import BytesIO
 from pyhocon import ConfigFactory
 import os
@@ -167,7 +168,23 @@ class TestBndlUtils(CliTestCase):
             'disk_space': '16384',
             'roles': ['web', 'backend'],
             'image_tag': 'latest',
-            'annotations': ['com.lightbend.test=hello world', 'description=this is a test']
+            'annotations': ['com.lightbend.test=hello world', 'description=this is a test'],
+            'endpoints': [
+                Endpoint({
+                    'name': 'web',
+                    'component': 'test-bundle',
+                    'service-name': 'web',
+                    'acls': [
+                        'http:/',
+                        'http:/subpath'
+                    ]
+                }),
+                Endpoint({
+                    'name': 'akka-remote',
+                    'component': 'test-bundle',
+                    'bind-port': 2345
+                })
+            ]
         })
 
         # empty
@@ -238,3 +255,49 @@ class TestBndlUtils(CliTestCase):
             },
             'description': 'this is a test'
         })
+
+        # endpoints replaced in existing component
+        endpoints_config = ConfigFactory.parse_string(strip_margin(
+            """|{
+               |  components {
+               |    test-bundle {
+               |      description = "test-bundle"
+               |      file-system-type = "universal"
+               |      start-command = [
+               |        "test-bundle/bin/test-bundle"
+               |      ]
+               |      endpoints {
+               |        test {
+               |          bind-protocol = "tcp"
+               |          bind-port = 0
+               |        }
+               |      }
+               |    }
+               |  }
+               |}"""))
+        bndl_utils.load_bundle_args_into_conf(endpoints_config, extended_args, with_defaults=True)
+        expected_endpoints_config = ConfigFactory.parse_string(strip_margin(
+            """|web {
+               |  bind-protocol = "http"
+               |  bind-port = 0
+               |  service-name = "web"
+               |  acls = [
+               |    {
+               |      http {
+               |        requests = [
+               |          {
+               |            path-beg = "/"
+               |          }
+               |          {
+               |            path-beg = "/subpath"
+               |          }
+               |        ]
+               |      }
+               |    }
+               |  ]
+               |}
+               |akka-remote {
+               |  bind-protocol = "tcp"
+               |  bind-port = 2345
+               |}"""))
+        self.assertEqual(endpoints_config.get('components.test-bundle.endpoints'), expected_endpoints_config)

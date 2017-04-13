@@ -1,4 +1,5 @@
 from conductr_cli import logging_setup
+from conductr_cli.endpoint import Endpoint
 from conductr_cli.bndl_create import bndl_create
 import argcomplete
 import argparse
@@ -9,6 +10,7 @@ import sys
 def invoke(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+    set_endpoints(args)
     return args.func(args)
 
 
@@ -17,6 +19,7 @@ def run(argv=None):
     parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args(argv)
+    set_endpoints(args)
 
     if args.source == '-':
         args.source = None
@@ -33,6 +36,40 @@ def run(argv=None):
         logging_setup.configure_logging(args)
 
         sys.exit(args.func(args))
+
+
+class EndpointAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_strings):
+        log = logging.getLogger(__name__)
+        if option_strings == '--endpoint':
+            namespace.endpoint_dicts.append({'name': value})
+        elif not namespace.endpoint_dicts:
+            log.error('bndl: argument {} needs to be specified after the argument --endpoint'
+                      .format(option_strings))
+            sys.exit(2)
+        elif option_strings == '--acl':
+            last_endpoint = namespace.endpoint_dicts[-1]
+            if 'acls' in last_endpoint:
+                last_endpoint['acls'].append(value)
+            else:
+                last_endpoint['acls'] = [value]
+        else:
+            dict_key = option_strings[2:]
+            namespace.endpoint_dicts[-1][dict_key] = value
+
+
+def set_endpoints(args):
+    def validate(endpoint):
+        if 'component' not in endpoint:
+            log.error('bndl: argument --component is required when specifying argument --endpoint')
+            sys.exit(2)
+
+    log = logging.getLogger(__name__)
+    if args.endpoint_dicts:
+        args.endpoints = []
+        for endpoint_dict in args.endpoint_dicts:
+            validate(endpoint_dict)
+            args.endpoints.append(Endpoint(endpoint_dict))
 
 
 def build_parser():
@@ -80,6 +117,54 @@ def build_parser():
                         default=True,
                         dest='use_default_endpoints',
                         action='store_false')
+
+    endpoint_args = parser.add_argument_group('endpoints')
+    endpoint_args.add_argument('-e', '--endpoint',
+                               help='Endpoints to add to bundle.conf\n'
+                                    'If specified, existing endpoints are removed\n'
+                                    'Example: bndl --endpoint web --component web --bind-protocol http '
+                                    '--service-name web --acl http:/subpath',
+                               metavar='ENDPOINT [OPTS]',
+                               dest='endpoint_dicts',
+                               default=[],
+                               action=EndpointAction)
+    endpoint_args.add_argument('--component',
+                               help='Component to which an endpoint should be added\n'
+                                    'Used in conjunction with the --endpoint option\n'
+                                    'Required when specifying the --endpoint option',
+                               metavar='COMPONENT',
+                               dest='endpoint_dicts',
+                               action=EndpointAction)
+    endpoint_args.add_argument('--bind-protocol',
+                               help='Bind protocol of an endpoint\n'
+                                    'Used in conjunction with the --endpoint option\n'
+                                    'When absent, tcp is used',
+                               metavar='BIND_PROTOCOL',
+                               dest='endpoint_dicts',
+                               choices=['tcp', 'http'],
+                               action=EndpointAction)
+    endpoint_args.add_argument('--bind-port',
+                               help='Bind port of an endpoint\n'
+                                    'Used in conjunction with the --endpoint option\n'
+                                    'When absent, 0 is used, meaning a bind port is selected by ConductR',
+                               metavar='BIND_PORT',
+                               type=int,
+                               dest='endpoint_dicts',
+                               action=EndpointAction)
+    endpoint_args.add_argument('--service-name',
+                               help='Service name of an endpoint\n'
+                                    'Used in conjunction with the --endpoint option\n'
+                                    'When absent, the endpoint is not locatable via the service name',
+                               metavar='SERVICE_NAME',
+                               dest='endpoint_dicts',
+                               action=EndpointAction)
+    endpoint_args.add_argument('--acl',
+                               help='Request ACL of an endpoint\n'
+                                    'Used in conjunction with the --endpoint option\n'
+                                    'When absent, the endpoint will not be accessible via the Proxy',
+                               metavar='ACL',
+                               dest='endpoint_dicts',
+                               action=EndpointAction)
 
     parser.add_argument('--with-check',
                         help='If enabled, a "check" component will be added to the bundle',
