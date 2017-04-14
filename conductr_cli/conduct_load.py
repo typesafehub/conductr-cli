@@ -1,6 +1,6 @@
 from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
-from conductr_cli import bundle_utils, conduct_request, conduct_url, screen_utils, validation
+from conductr_cli import bndl_main, bundle_utils, conduct_request, conduct_url, screen_utils, validation
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
 from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
@@ -13,9 +13,11 @@ import glob
 import io
 import os
 import stat
+import sys
 import json
 import logging
-
+import tempfile
+import zipfile
 
 # The number of old bundle versions to keep when performing housekeeping, apart from the recently loaded bundle.
 KEEP_BUNDLE_VERSIONS = 1
@@ -155,6 +157,26 @@ def validate_cache_dir_permissions(bundle_cache_dir, configuration_cache_dir, lo
     validate(configuration_cache_dir, DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR)
 
 
+def is_bundle(input):
+    return os.path.isfile(input) and zipfile.is_zipfile(input)
+
+
+def invoke_bndl(input, format=None):
+    temp_file = tempfile.NamedTemporaryFile()
+    args = [input, '-o', temp_file.name]
+
+    if format is not None:
+        args.append('-f')
+        args.append(format)
+
+    return_code = bndl_main.invoke(args)
+
+    if return_code != 0:
+        sys.exit(return_code)
+
+    return temp_file.name
+
+
 def load_v2(args):
     log = logging.getLogger(__name__)
 
@@ -167,6 +189,10 @@ def load_v2(args):
 
     initial_bundle_file_name, bundle_file = resolver.resolve_bundle(custom_settings, bundle_resolve_cache_dir,
                                                                     args.bundle, args.offline_mode)
+
+    if not is_bundle(bundle_file):
+        bundle_file = invoke_bndl(bundle_file)
+
     bundle_conf = bundle_utils.conf(bundle_file)
 
     if bundle_conf is None:
@@ -180,6 +206,9 @@ def load_v2(args):
         configuration_file_name, configuration_file = \
             resolver.resolve_bundle_configuration(custom_settings, configuration_cache_dir,
                                                   args.configuration, args.offline_mode)
+        if not is_bundle(configuration_file):
+            configuration_file = invoke_bndl(configuration_file, 'bundle')
+            configuration_file_name = os.path.basename(configuration_file)
         bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
     files = [('bundleConf', ('bundle.conf', string_io(bundle_conf)))]
@@ -188,6 +217,9 @@ def load_v2(args):
     files.append(('bundle', (bundle_file_name, bundle_open_file)))
     if configuration_file is not None:
         open_configuration_file, config_digest = bundle_utils.digest_extract_and_open(configuration_file)
+        if config_digest is not None and not configuration_file_name.endswith('-{}.zip'.format(config_digest)):
+            configuration_file_name = 'config-{}.zip'.format(config_digest[1])
+
         files.append(('configuration', (configuration_file_name, open_configuration_file)))
 
     # TODO: Delete the bundle configuration file.

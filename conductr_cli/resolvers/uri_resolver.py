@@ -20,7 +20,14 @@ def resolve_file(cache_dir, uri, auth=None):
         os.makedirs(cache_dir, mode=0o700)
 
     try:
+        file_protocol = 'file://'
         file_name, file_url = get_url(uri)
+
+        if file_url.startswith(file_protocol):
+            file_path = file_url[len(file_protocol):]
+
+            if os.path.exists(file_path):
+                return True, file_name, file_path
 
         cached_file = cache_path(cache_dir, uri)
         tmp_download_path = '{}.tmp'.format(cached_file)
