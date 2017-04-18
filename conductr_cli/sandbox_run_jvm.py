@@ -30,7 +30,7 @@ SUPPORTED_JVM_VERSION = (1, 8)  # Supports JVM version 1.8 and above.
 
 
 class SandboxRunResult:
-    def __init__(self, core_pids, core_addrs, agent_pids, agent_addrs, wait_for_conductr):
+    def __init__(self, core_pids, core_addrs, agent_pids, agent_addrs, wait_for_conductr, license_validation_error):
         self.core_pids = core_pids
         self.core_addrs = core_addrs
         self.agent_pids = agent_pids
@@ -38,6 +38,7 @@ class SandboxRunResult:
         self.host = str(core_addrs[0])
         self.wait_for_conductr = wait_for_conductr
         self.conductr_log_file = '{}/core/logs/conductr.log'.format(DEFAULT_SANDBOX_IMAGE_DIR)
+        self.license_validation_error = license_validation_error
 
     scheme = DEFAULT_SCHEME
     port = DEFAULT_PORT
@@ -104,14 +105,14 @@ def run(args, features):
 
     sandbox_common.wait_for_start(WaitForConductrArgs(core_addrs[0]))
 
+    license_validation_error = None
     try:
         license_validation.validate_license(args.image_version,
                                             core_addrs[0],
                                             nr_of_agent_instances,
                                             DEFAULT_LICENSE_FILE)
     except LicenseValidationError as e:
-        sandbox_stop.stop(args)
-        raise e
+        license_validation_error = e
 
     agent_addrs = bind_addrs[0:nr_of_agent_instances]
     agent_pids = start_agent_instances(agent_extracted_dir,
@@ -125,7 +126,8 @@ def run(args, features):
                                        args.conductr_roles,
                                        features,
                                        args.log_level)
-    return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs, wait_for_conductr=False)
+    return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs,
+                            wait_for_conductr=False, license_validation_error=license_validation_error)
 
 
 def log_run_attempt(args, run_result, feature_results, feature_provided):
@@ -175,6 +177,10 @@ def log_run_attempt(args, run_result, feature_results, feature_provided):
     log.info('  conduct info')
     log.info('Current bundle status:')
     conduct_main.run(['info', '--host', run_result.host], configure_logging=False)
+
+    if run_result.license_validation_error:
+        for message in run_result.license_validation_error.messages:
+            log.warning(message)
 
 
 def instance_count(image_version, instance_expression):

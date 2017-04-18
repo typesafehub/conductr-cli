@@ -267,25 +267,31 @@ class TestValidateGrants(TestCase):
 
 class TestCanRunVersion(TestCase):
     def test_major_version(self):
+        self.assertTrue(license_validation.can_run_version('2.*.*', '2.1.5-alpha.1'))
         self.assertTrue(license_validation.can_run_version('2.*.*', '2.1.5'))
         self.assertTrue(license_validation.can_run_version('2.*.*', '2.0.1'))
         self.assertTrue(license_validation.can_run_version('2.*.*', '2.0.0'))
 
+        self.assertTrue(license_validation.can_run_version('2.*', '2.1.5-alpha.1'))
         self.assertTrue(license_validation.can_run_version('2.*', '2.1.5'))
         self.assertTrue(license_validation.can_run_version('2.*', '2.0.1'))
         self.assertTrue(license_validation.can_run_version('2.*', '2.0.0'))
 
+        self.assertFalse(license_validation.can_run_version('1.*.*', '2.1.5-alpha.1'))
         self.assertFalse(license_validation.can_run_version('1.*.*', '2.1.5'))
         self.assertFalse(license_validation.can_run_version('1.*.*', '2.0.1'))
         self.assertFalse(license_validation.can_run_version('1.*.*', '2.0.0'))
 
+        self.assertFalse(license_validation.can_run_version('1.*', '2.1.5-alpha.1'))
         self.assertFalse(license_validation.can_run_version('1.*', '2.1.5'))
         self.assertFalse(license_validation.can_run_version('1.*', '2.0.1'))
         self.assertFalse(license_validation.can_run_version('1.*', '2.0.0'))
 
     def test_major_minor_version(self):
+        self.assertTrue(license_validation.can_run_version('2.1.*', '2.1.5-alpha.1'))
         self.assertTrue(license_validation.can_run_version('2.1.*', '2.1.5'))
 
+        self.assertFalse(license_validation.can_run_version('2.1.*', '2.2.1-alpha.1'))
         self.assertFalse(license_validation.can_run_version('2.1.*', '2.2.1'))
         self.assertFalse(license_validation.can_run_version('2.1.*', '2.1'))
         self.assertFalse(license_validation.can_run_version('2.1.*', '2'))
@@ -293,6 +299,12 @@ class TestCanRunVersion(TestCase):
     def test_major_minor_patch_version(self):
         self.assertTrue(license_validation.can_run_version('2.1.5', '2.1.5'))
         self.assertFalse(license_validation.can_run_version('2.1.5', '2.2.1'))
+
+    def test_major_minor_patch_label(self):
+        self.assertTrue(license_validation.can_run_version('2.1.5-alpha.1', '2.1.5-alpha.1'))
+
+        self.assertFalse(license_validation.can_run_version('2.1.5-alpha.1', '2.1.5-alpha.2'))
+        self.assertFalse(license_validation.can_run_version('2.1.5-alpha.1', '2.2.1-alpha.1'))
 
     def test_any_version(self):
         self.assertTrue(license_validation.can_run_version('*.*.*', '2.1.5'))

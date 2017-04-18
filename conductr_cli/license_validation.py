@@ -79,7 +79,7 @@ def validate_version(conductr_version, license_data):
                 return
 
         raise LicenseValidationError([
-            'Unable to run sandbox version {}'.format(conductr_version),
+            'Sandbox version {} requested'.format(conductr_version),
             'The license allows for version {}'.format(', '.join(versions))
         ])
 
@@ -88,7 +88,7 @@ def validate_nr_of_agents(nr_of_agent_instances, license_data):
     nr_of_allowed_agents = get_value(license_data, 'maxConductrAgents')
     if nr_of_allowed_agents and nr_of_agent_instances > nr_of_allowed_agents:
         raise LicenseValidationError([
-            'Unable to allocate {} agents'.format(nr_of_agent_instances),
+            '{} agents requested'.format(nr_of_agent_instances),
             'The license allows for {} agent(s)'.format(nr_of_allowed_agents)
         ])
 
@@ -129,17 +129,32 @@ def get_value(license_data, key):
 
 
 def can_run_version(version_pattern, version_number):
-    version_pattern_parts = version_pattern.split('.')
-    version_number_parts = version_number.split('.')
+    if version_pattern != version_number:
+        if '-' in version_pattern:
+            version_pattern_parts = version_pattern.split('-')[0].split('.')
+            version_pattern_suffix = version_pattern.split('-')[-1]
+        else:
+            version_pattern_parts = version_pattern.split('.')
+            version_pattern_suffix = None
 
-    for idx, pattern in enumerate(version_pattern_parts):
-        if idx >= len(version_number_parts):
-            return False
-        elif pattern == '*':
-            return True
+        if '-' in version_number:
+            version_number_parts = version_number.split('-')[0].split('.')
+            version_number_suffix = version_number.split('-')[-1]
+        else:
+            version_number_parts = version_number.split('.')
+            version_number_suffix = None
 
-        number_part = version_number_parts[idx]
-        if int(pattern) != int(number_part):
+        if version_pattern_suffix and version_number_suffix and version_pattern_suffix != version_number_suffix:
             return False
+
+        for idx, pattern in enumerate(version_pattern_parts):
+            if idx >= len(version_number_parts):
+                return False
+            elif pattern == '*':
+                return True
+
+            number_part = version_number_parts[idx]
+            if int(pattern) != int(number_part):
+                return False
 
     return True
