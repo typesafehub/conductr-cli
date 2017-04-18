@@ -16,8 +16,7 @@ from conductr_cli.exceptions import BindAddressNotFound, ConductrStartupError, \
     BintrayUnreachableError, BundleResolutionError, WaitTimeoutError, InsecureFilePermissions, \
     SandboxImageNotFoundError, JavaCallError, HostnameLookupError, JavaUnsupportedVendorError, \
     JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, SandboxImageNotAvailableOfflineError, \
-    SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, LicenseLoadError, LicenseValidationError, \
-    LicenseDownloadError, NOT_FOUND_ERROR
+    SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, LicenseLoadError, LicenseDownloadError, NOT_FOUND_ERROR
 
 
 def connection_error(log, err, args):
@@ -508,25 +507,6 @@ def handle_license_load_error(func):
             log = get_logger_for_func(func)
             log.error('Error loading license into ConductR')
             log.error(e.message)
-            return False
-
-        # Do not change the wrapped function name,
-        # so argparse configuration can be tested.
-    handler.__name__ = func.__name__
-
-    return handler
-
-
-def handle_license_validation_error(func):
-
-    def handler(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except LicenseValidationError as e:
-            log = get_logger_for_func(func)
-            log.error('Unable to start ConductR due to license validation failure')
-            for message in e.messages:
-                log.error(message)
             return False
 
         # Do not change the wrapped function name,

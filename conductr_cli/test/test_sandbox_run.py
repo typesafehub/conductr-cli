@@ -2,7 +2,7 @@ from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
 from conductr_cli import logging_setup, sandbox_run, sandbox_run_docker, sandbox_run_jvm, sandbox_features
 from conductr_cli.docker import DockerVmType
 from conductr_cli.exceptions import InstanceCountError, JavaCallError, JavaUnsupportedVendorError, \
-    JavaUnsupportedVersionError, JavaVersionParseError, LicenseValidationError
+    JavaUnsupportedVersionError, JavaVersionParseError
 from conductr_cli.sandbox_common import CONDUCTR_DEV_IMAGE, DEFAULT_WAIT_RETRIES, DEFAULT_WAIT_RETRY_INTERVAL
 from unittest.mock import patch, MagicMock
 
@@ -89,7 +89,7 @@ class TestSandboxRunCommand(CliTestCase):
         mock_collect_features = MagicMock(return_value=features)
 
         sandbox_run_result = sandbox_run_jvm.SandboxRunResult([1001], ['192.168.1.1'], [1002], ['192.168.1.1'],
-                                                              wait_for_conductr=True)
+                                                              wait_for_conductr=True, license_validation_error=None)
         mock_sandbox_run_jvm = MagicMock(return_value=sandbox_run_result)
         mock_wait_for_conductr = MagicMock(return_value=True)
         mock_log_run_attempt = MagicMock()
@@ -265,34 +265,5 @@ class TestSandboxRunCommand(CliTestCase):
 
         expected_output = strip_margin(as_error("""|Error: Unable to obtain java version from the `java -version` command.
                                                    |Error: Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.
-                                                   |"""))
-        self.assertEqual(expected_output, self.output(stderr))
-
-    def test_jvm_license_validation_error(self):
-        conductr_version = '2.1.0'
-
-        stdout = MagicMock()
-        stderr = MagicMock()
-
-        mock_feature = MagicMock()
-        features = [mock_feature]
-        mock_collect_features = MagicMock(return_value=features)
-        mock_sandbox_run_jvm = MagicMock(side_effect=LicenseValidationError(['test']))
-
-        args = self.default_args.copy()
-        args.update({
-            'image_version': conductr_version
-        })
-        input_args = MagicMock(**args)
-        with \
-                patch('conductr_cli.sandbox_features.collect_features', mock_collect_features), \
-                patch('conductr_cli.sandbox_run_jvm.run', mock_sandbox_run_jvm):
-            logging_setup.configure_logging(input_args, stdout, stderr)
-            self.assertFalse(sandbox_run.run(input_args))
-
-        mock_sandbox_run_jvm.assert_called_once_with(input_args, features)
-
-        expected_output = strip_margin(as_error("""|Error: Unable to start ConductR due to license validation failure
-                                                   |Error: test
                                                    |"""))
         self.assertEqual(expected_output, self.output(stderr))

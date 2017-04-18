@@ -79,7 +79,8 @@ class TestRun(CliTestCase):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
                                                                mock_agent_pids, bind_addrs,
-                                                               wait_for_conductr=False)
+                                                               wait_for_conductr=False,
+                                                               license_validation_error=None)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -165,7 +166,8 @@ class TestRun(CliTestCase):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
                                                                mock_agent_pids, [bind_addr1, bind_addr2, bind_addr3],
-                                                               wait_for_conductr=False)
+                                                               wait_for_conductr=False,
+                                                               license_validation_error=None)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -262,7 +264,8 @@ class TestRun(CliTestCase):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, [bind_addr1],
                                                                mock_agent_pids, [bind_addr1],
-                                                               wait_for_conductr=False)
+                                                               wait_for_conductr=False,
+                                                               license_validation_error=None)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -346,7 +349,8 @@ class TestRun(CliTestCase):
             result = sandbox_run_jvm.run(input_args, features)
             expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
                                                                mock_agent_pids, bind_addrs,
-                                                               wait_for_conductr=False)
+                                                               wait_for_conductr=False,
+                                                               license_validation_error=None)
             self.assertEqual(expected_result, result)
 
         mock_sandbox_stop.assert_called_once_with(input_args)
@@ -402,7 +406,8 @@ class TestRun(CliTestCase):
         mock_core_pids = MagicMock()
         mock_start_core_instances = MagicMock(return_value=mock_core_pids)
 
-        mock_validate_license = MagicMock(side_effect=LicenseValidationError('test only'))
+        license_validation_error = LicenseValidationError('test only')
+        mock_validate_license = MagicMock(side_effect=license_validation_error)
 
         mock_agent_pids = MagicMock()
         mock_start_agent_instances = MagicMock(return_value=mock_agent_pids)
@@ -422,7 +427,12 @@ class TestRun(CliTestCase):
                 patch('conductr_cli.sandbox_run_jvm.start_core_instances', mock_start_core_instances), \
                 patch('conductr_cli.license_validation.validate_license', mock_validate_license), \
                 patch('conductr_cli.sandbox_run_jvm.start_agent_instances', mock_start_agent_instances):
-            self.assertRaises(LicenseValidationError, sandbox_run_jvm.run, input_args, features)
+            result = sandbox_run_jvm.run(input_args, features)
+            expected_result = sandbox_run_jvm.SandboxRunResult(mock_core_pids, bind_addrs,
+                                                               mock_agent_pids, bind_addrs,
+                                                               wait_for_conductr=False,
+                                                               license_validation_error=license_validation_error)
+            self.assertEqual(expected_result, result)
 
         mock_validate_jvm_support.assert_called_once_with()
         mock_validate_hostname_lookup.assert_called_once_with()
@@ -443,11 +453,17 @@ class TestRun(CliTestCase):
         expected_args = sandbox_run_jvm.WaitForConductrArgs(bind_addr)
         mock_wait_for_start.assert_called_once_with(expected_args)
         mock_validate_license.assert_called_once_with('2.0.0', bind_addr, 1, DEFAULT_LICENSE_FILE)
-        mock_start_agent_instances.assert_not_called()
-        self.assertEqual([
-            call(input_args),
-            call(input_args)
-        ], mock_sandbox_stop.call_args_list)
+        mock_start_agent_instances.assert_called_with(mock_agent_extracted_dir,
+                                                      self.tmp_dir,
+                                                      [],
+                                                      [],
+                                                      [],
+                                                      [],
+                                                      bind_addrs,
+                                                      bind_addrs,
+                                                      [],
+                                                      features,
+                                                      'info')
 
 
 class TestInstanceCount(CliTestCase):
@@ -1309,7 +1325,8 @@ class TestLogRunAttempt(CliTestCase):
         [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
         [2001, 2002, 2003],
         [ipaddress.ip_address('192.168.1.1'), ipaddress.ip_address('192.168.1.2'), ipaddress.ip_address('192.168.1.3')],
-        wait_for_conductr=True
+        wait_for_conductr=True,
+        license_validation_error=None
     )
     feature_results = [sandbox_features.BundleStartResult('bundle-a', 1001),
                        sandbox_features.BundleStartResult('bundle-b', 1002)]
@@ -1370,7 +1387,8 @@ class TestLogRunAttempt(CliTestCase):
             [ipaddress.ip_address('192.168.1.1')],
             [2001],
             [ipaddress.ip_address('192.168.1.1')],
-            wait_for_conductr=False
+            wait_for_conductr=False,
+            license_validation_error=None
         )
 
         run_mock = MagicMock()

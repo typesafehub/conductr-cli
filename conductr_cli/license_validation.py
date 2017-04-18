@@ -79,7 +79,7 @@ def validate_version(conductr_version, license_data):
                 return
 
         raise LicenseValidationError([
-            'Unable to run sandbox version {}'.format(conductr_version),
+            'Sandbox version {} requested'.format(conductr_version),
             'The license allows for version {}'.format(', '.join(versions))
         ])
 
@@ -88,7 +88,7 @@ def validate_nr_of_agents(nr_of_agent_instances, license_data):
     nr_of_allowed_agents = get_value(license_data, 'maxConductrAgents')
     if nr_of_allowed_agents and nr_of_agent_instances > nr_of_allowed_agents:
         raise LicenseValidationError([
-            'Unable to allocate {} agents'.format(nr_of_agent_instances),
+            '{} agents requested'.format(nr_of_agent_instances),
             'The license allows for {} agent(s)'.format(nr_of_allowed_agents)
         ])
 
