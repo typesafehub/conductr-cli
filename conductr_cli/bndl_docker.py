@@ -269,28 +269,31 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
                         manifest = m
                         break
 
-                image_name, image_tag = docker_parse_image_name(manifest['RepoTags'][0])
+                if manifest is None:
+                    return None
+                else:
+                    image_name, image_tag = docker_parse_image_name(manifest['RepoTags'][0])
 
-                with open(os.path.join(contents_dir, manifest['Config'])) as config_file:
-                    config = json.load(config_file)
+                    with open(os.path.join(contents_dir, manifest['Config'])) as config_file:
+                        config = json.load(config_file)
 
-                    oci_spec = docker_config_to_oci_image(manifest, config, sizes, layers_to_digests)
+                        oci_spec = docker_config_to_oci_image(manifest, config, sizes, layers_to_digests)
 
-                    file_write_bytes(
-                        '{}/blobs/sha256/{}'.format(destination, oci_spec['config_digest']),
-                        oci_spec['config']
-                    )
+                        file_write_bytes(
+                            '{}/blobs/sha256/{}'.format(destination, oci_spec['config_digest']),
+                            oci_spec['config']
+                        )
 
-                    file_write_bytes(
-                        '{}/blobs/sha256/{}'.format(destination, oci_spec['manifest_digest']),
-                        oci_spec['manifest']
-                    )
+                        file_write_bytes(
+                            '{}/blobs/sha256/{}'.format(destination, oci_spec['manifest_digest']),
+                            oci_spec['manifest']
+                        )
 
-                    file_write_bytes(
-                        '{}/refs/{}'.format(destination, image_tag),
-                        oci_spec['refs']
-                    )
+                        file_write_bytes(
+                            '{}/refs/{}'.format(destination, image_tag),
+                            oci_spec['refs']
+                        )
 
-                return image_name
+                    return image_name
     finally:
         shutil.rmtree(temp_dir)

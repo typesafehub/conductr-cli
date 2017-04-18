@@ -1,10 +1,15 @@
 from conductr_cli import logging_setup
 from conductr_cli.bndl_create import bndl_create
-from conductr_cli.bndl_utils import mappings
 import argcomplete
 import argparse
 import logging
 import sys
+
+
+def invoke(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return args.func(args)
 
 
 def run(argv=None):
@@ -34,15 +39,21 @@ def build_parser():
     parser = argparse.ArgumentParser('bndl', formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('-f', '--format',
-                        choices=['docker', 'oci-image'],
+                        choices=['docker', 'oci-image', 'bundle'],
                         required=False,
                         help='The input format. When absent, auto-detection is attempted')
 
-    parser.add_argument('-t', '--tag',
+    parser.add_argument('--image-tag',
                         required=False,
                         help='The name of the tag to create a ConductR bundle from. '
-                             'For use with docker and oci-image formats. When absent,'
-                             'the first tag present is used.')
+                             'For use with docker and oci-image formats. When absent, '
+                             'the first tag present is used')
+
+    parser.add_argument('--image-name',
+                        required=False,
+                        help='The name of the image to create a ConductR bundle from. '
+                             'For use with docker and oci-image formats. When absent, '
+                             'the first image present is used.')
 
     parser.add_argument('-o', '--output',
                         nargs='?',
@@ -60,8 +71,8 @@ def build_parser():
                         action='store_false')
 
     parser.add_argument('--no-default-endpoints',
-                        help='If enabled, a bundle will not contain endpoints for ExposedPorts. '
-                             'For use with docker and oci-image formats.',
+                        help='If provided, a bundle will not contain endpoints for ExposedPorts. '
+                             'For use with docker and oci-image formats',
                         default=True,
                         dest='use_default_endpoints',
                         action='store_false')
@@ -72,7 +83,8 @@ def build_parser():
                         action='store_true')
 
     parser.add_argument('--component-description',
-                        help='Description to use for the generated ConductR component',
+                        help='Description to use for the generated ConductR component. '
+                             'For use with docker and oci-image formats',
                         default='')
 
     parser.add_argument('--annotation',
@@ -83,18 +95,70 @@ def build_parser():
                              'Example: bndl --annotation my.first=value1 --annotation my.second=value2\n'
                              'Defaults to []')
 
-    zero_or_more_mappings = {'--roles'}
-    type_mappings = {'--memory': int, '--disk-space': int, '--nr-of-cpus': float}
+    parser.add_argument('--compatibility-version',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "compatibilityVersion" bundle.conf value',
+                        dest='compatibility_version')
 
-    for argument, bundle_key in mappings.items():
-        help_text = 'Sets the "{}" bundle.conf value'.format(bundle_key)
+    parser.add_argument('--disk-space',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "diskSpace" bundle.conf value',
+                        dest='disk_space',
+                        type=int)
 
-        parser.add_argument(argument,
-                            nargs='*' if argument in zero_or_more_mappings else '?',
-                            type=type_mappings[argument] if argument in type_mappings else None,
-                            required=False,
-                            help=help_text,
-                            dest=bundle_key)
+    parser.add_argument('--memory',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "memory" bundle.conf value',
+                        dest='memory',
+                        type=int)
+
+    parser.add_argument('--name',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "name" bundle.conf value',
+                        dest='name')
+
+    parser.add_argument('--nr-of-cpus',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "nrOfCpus" bundle.conf value',
+                        dest='nr_of_cpus',
+                        type=float)
+
+    parser.add_argument('--roles',
+                        nargs='*',
+                        required=False,
+                        help='Sets the "roles" bundle.conf value',
+                        dest='roles')
+
+    parser.add_argument('--system',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "system" bundle.conf value',
+                        dest='system')
+
+    parser.add_argument('--system-version',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "systemVersion" bundle.conf value',
+                        dest='system_version')
+
+    parser.add_argument('--tag',
+                        action='append',
+                        default=[],
+                        dest='tags',
+                        help='Tags to add to bundle.conf\n'
+                             'Example: bndl --tag 16.04 --tag xenial\n'
+                             'Defaults to []')
+
+    parser.add_argument('--version',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "version" bundle.conf value',
+                        dest='version')
 
     parser.set_defaults(func=bndl)
 

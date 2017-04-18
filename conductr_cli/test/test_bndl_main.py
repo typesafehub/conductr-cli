@@ -11,11 +11,11 @@ class TestBndl(CliTestCase):
     parser = bndl_main.build_parser()
 
     def test_parser_with_min_params(self):
-        args = self.parser.parse_args(['--name', 'hello', '-t', 'latest'])
+        args = self.parser.parse_args(['--name', 'hello', '--image-tag', 'latest'])
 
         self.assertEqual(args.func.__name__, 'bndl')
         self.assertEqual(args.name, 'hello')
-        self.assertEqual(args.tag, 'latest')
+        self.assertEqual(args.image_tag, 'latest')
         self.assertTrue(args.use_shazar)
         self.assertTrue(args.use_default_endpoints)
 
@@ -24,8 +24,10 @@ class TestBndl(CliTestCase):
             'oci-image-dir',
             '--name',
             'world',
-            '-t',
+            '--image-tag',
             'earliest',
+            '--image-name',
+            'test',
             '-o',
             '/dev/null',
             '--no-shazar',
@@ -59,17 +61,18 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.source, 'oci-image-dir')
         self.assertEqual(args.func.__name__, 'bndl')
         self.assertEqual(args.name, 'world')
-        self.assertEqual(args.tag, 'earliest')
+        self.assertEqual(args.image_tag, 'earliest')
+        self.assertEqual(args.image_name, 'test')
         self.assertEqual(args.output, '/dev/null')
         self.assertFalse(args.use_shazar)
         self.assertEqual(args.component_description, 'some description')
         self.assertEqual(args.version, '4')
-        self.assertEqual(args.compatibilityVersion, '5')
+        self.assertEqual(args.compatibility_version, '5')
         self.assertEqual(args.system, 'myapp')
-        self.assertEqual(args.systemVersion, '3')
-        self.assertEqual(args.nrOfCpus, 8.0)
+        self.assertEqual(args.system_version, '3')
+        self.assertEqual(args.nr_of_cpus, 8.0)
         self.assertEqual(args.memory, 65536)
-        self.assertEqual(args.diskSpace, 16384)
+        self.assertEqual(args.disk_space, 16384)
         self.assertEqual(args.roles, ['web', 'backend'])
         self.assertEqual(args.annotations, ['com.lightbend.test=hello world', 'description=this is a test'])
         self.assertFalse(args.use_default_endpoints)
@@ -95,27 +98,6 @@ class TestBndl(CliTestCase):
         self.assertIsNone(bndl_mock.call_args[0][0].output)
         self.assertIsNone(bndl_mock.call_args[0][0].source)
 
-    def test_bndl_oci_image_missing_args(self):
-        stdout_mock = MagicMock()
-        stderr_mock = MagicMock()
-        exit_mock = MagicMock()
-        configure_logging_mock = MagicMock()
-        bndl_main.logging_setup.configure_logging(MagicMock(), stdout_mock, stderr_mock)
-
-        with \
-                patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
-                patch('sys.stdout.isatty', lambda: False), \
-                patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
-                patch('sys.exit', exit_mock):
-            bndl_main.run(['-f', 'oci-image'])
-
-        self.assertEqual(
-            self.output(stderr_mock),
-            as_error('Error: bndl: OCI Image support requires that you provide a --name argument\n')
-        )
-
-        exit_mock.assert_called_once_with(2)
-
     def test_warn_output_tty(self):
         stdout_mock = MagicMock()
         stderr_mock = MagicMock()
@@ -128,7 +110,7 @@ class TestBndl(CliTestCase):
                 patch('sys.stdout.isatty', lambda: True), \
                 patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
                 patch('sys.exit', exit_mock):
-            bndl_main.run(['--name', 'test', '--tag', 'latest'])
+            bndl_main.run(['--name', 'test', '--image-tag', 'latest'])
 
         self.assertEqual(
             self.output(stderr_mock),
@@ -172,7 +154,7 @@ class TestBndl(CliTestCase):
                     patch('sys.stdout.isatty', lambda: False), \
                     patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
                     patch('sys.exit', exit_mock):
-                bndl_main.run(['--name', 'test', '-f', 'oci-image', '-t', 'latest', temp])
+                bndl_main.run(['--name', 'test', '-f', 'oci-image', '--image-tag', 'latest', temp])
 
             self.assertEqual(
                 self.output(stderr_mock),
@@ -200,7 +182,7 @@ class TestBndl(CliTestCase):
                     patch('sys.stdout.isatty', lambda: False), \
                     patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
                     patch('sys.exit', exit_mock):
-                bndl_main.run(['--name', 'test', '-f', 'oci-image', '-t', 'latest', temp])
+                bndl_main.run(['--name', 'test', '-f', 'oci-image', '--image-tag', 'latest', temp])
 
             self.assertEqual(
                 self.output(stderr_mock),

@@ -1,10 +1,13 @@
 from conductr_cli import bndl_utils
 from conductr_cli.constants import \
+    BNDL_DEFAULT_ANNOTATIONS, \
+    BNDL_DEFAULT_NAME, \
     BNDL_DEFAULT_COMPATIBILITY_VERSION, \
     BNDL_DEFAULT_DISK_SPACE, \
     BNDL_DEFAULT_MEMORY, \
     BNDL_DEFAULT_NR_OF_CPUS, \
     BNDL_DEFAULT_ROLES, \
+    BNDL_DEFAULT_TAGS, \
     BNDL_DEFAULT_VERSION
 from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object
 from io import BytesIO
@@ -21,6 +24,9 @@ class TestBndlUtils(CliTestCase):
             bndl_utils.detect_format_stream(b''),
             None
         )
+
+        # parsable as hocon is bundle
+        self.assertEqual(bndl_utils.detect_format_stream(b'name = "test"'), 'bundle')
 
         # unrelated stream is none
         self.assertEqual(
@@ -54,9 +60,14 @@ class TestBndlUtils(CliTestCase):
             'oci-image'
         )
 
+        # zips are bundles
+        self.assertEqual(bndl_utils.detect_format_stream(b'PK\x03\x04'), 'bundle')
+
     def test_detect_format_dir(self):
         docker_dir = tempfile.mkdtemp()
         oci_image_dir = tempfile.mkdtemp()
+        bundle_dir = tempfile.mkdtemp()
+        bundle_conf_dir = tempfile.mkdtemp()
         nothing_dir = tempfile.mkdtemp()
 
         try:
@@ -67,13 +78,19 @@ class TestBndlUtils(CliTestCase):
             open(os.path.join(docker_dir, 'repositories'), 'a').close()
             open(os.path.join(docker_dir, 'manifest.json'), 'a').close()
             open(os.path.join(nothing_dir, 'hello'), 'a').close()
+            open(os.path.join(bundle_dir, 'bundle.conf'), 'a').close()
+            open(os.path.join(bundle_conf_dir, 'runtime-config.sh'), 'a').close()
 
             self.assertEqual(bndl_utils.detect_format_dir(oci_image_dir), 'oci-image')
             self.assertEqual(bndl_utils.detect_format_dir(docker_dir), 'docker')
             self.assertEqual(bndl_utils.detect_format_dir(nothing_dir), None)
+            self.assertEqual(bndl_utils.detect_format_dir(bundle_dir), 'bundle')
+            self.assertEqual(bndl_utils.detect_format_dir(bundle_conf_dir), 'bundle')
         finally:
             shutil.rmtree(docker_dir)
             shutil.rmtree(oci_image_dir)
+            shutil.rmtree(bundle_dir)
+            shutil.rmtree(bundle_conf_dir)
             shutil.rmtree(nothing_dir)
 
     def test_digest_reader_writer(self):
@@ -109,11 +126,32 @@ class TestBndlUtils(CliTestCase):
         finally:
             shutil.rmtree(tmpdir)
 
+    def test_load_bundle_args_into_conf_with_defaults(self):
+        simple_config = ConfigFactory.parse_string('')
+        bndl_utils.load_bundle_args_into_conf(simple_config, {}, with_defaults=True)
+        self.assertEqual(simple_config.get('name'), BNDL_DEFAULT_NAME)
+        self.assertEqual(simple_config.get('compatibilityVersion'), BNDL_DEFAULT_COMPATIBILITY_VERSION)
+        self.assertEqual(simple_config.get('diskSpace'), BNDL_DEFAULT_DISK_SPACE)
+        self.assertEqual(simple_config.get('memory'), BNDL_DEFAULT_MEMORY)
+        self.assertEqual(simple_config.get('nrOfCpus'), BNDL_DEFAULT_NR_OF_CPUS)
+        self.assertEqual(simple_config.get('roles'), BNDL_DEFAULT_ROLES)
+        self.assertEqual(simple_config.get('system'), BNDL_DEFAULT_NAME)
+        self.assertEqual(simple_config.get('version'), BNDL_DEFAULT_VERSION)
+        self.assertEqual(simple_config.get('tags'), BNDL_DEFAULT_TAGS)
+        self.assertEqual(simple_config.get('annotations'), BNDL_DEFAULT_ANNOTATIONS)
+
     def test_load_bundle_args_into_conf(self):
         base_args = create_attributes_object({
             'name': 'world',
             'component_description': 'testing desc 1',
-            'tag': 'testing',
+            'tags': ['testing'],
+            'annotations': {}
+        })
+
+        base_args_dup_tags = create_attributes_object({
+            'name': 'world',
+            'component_description': 'testing desc 1',
+            'tags': ['testing', 'testing', 'testing'],
             'annotations': {}
         })
 
@@ -121,20 +159,26 @@ class TestBndlUtils(CliTestCase):
             'name': 'world',
             'component_description': 'testing desc 2',
             'version': '4',
-            'compatibilityVersion': '5',
+            'compatibility_version': '5',
             'system': 'myapp',
-            'systemVersion': '3',
-            'nrOfCpus': '8',
+            'system_version': '3',
+            'nr_of_cpus': '8',
             'memory': '65536',
-            'diskSpace': '16384',
+            'disk_space': '16384',
             'roles': ['web', 'backend'],
-            'tag': 'latest',
+            'image_tag': 'latest',
             'annotations': ['com.lightbend.test=hello world', 'description=this is a test']
         })
 
+        # empty
+        no_defaults = ConfigFactory.parse_string('')
+        bndl_utils.load_bundle_args_into_conf(no_defaults, create_attributes_object({}), with_defaults=False)
+
+        self.assertEqual(no_defaults, ConfigFactory.parse_string(''))
+
         # test that config value is specified, with defaults etc
         simple_config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(simple_config, base_args)
+        bndl_utils.load_bundle_args_into_conf(simple_config, base_args, with_defaults=True)
         self.assertEqual(simple_config.get('name'), 'world')
         self.assertEqual(simple_config.get('compatibilityVersion'), BNDL_DEFAULT_COMPATIBILITY_VERSION)
         self.assertEqual(simple_config.get('diskSpace'), BNDL_DEFAULT_DISK_SPACE)
@@ -147,16 +191,16 @@ class TestBndlUtils(CliTestCase):
 
         # test that config value is overwritten
         name_config = ConfigFactory.parse_string('name = "hello"')
-        bndl_utils.load_bundle_args_into_conf(name_config, base_args)
+        bndl_utils.load_bundle_args_into_conf(name_config, base_args, with_defaults=True)
         self.assertEqual(name_config.get('name'), 'world')
 
         # test that config value is retained
         cpu_config = ConfigFactory.parse_string('nrOfCpus = 0.1')
-        bndl_utils.load_bundle_args_into_conf(cpu_config, base_args)
+        bndl_utils.load_bundle_args_into_conf(cpu_config, base_args, with_defaults=True)
         self.assertEqual(cpu_config.get('nrOfCpus'), 0.1)
 
         config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(config, extended_args)
+        bndl_utils.load_bundle_args_into_conf(config, extended_args, with_defaults=True)
 
         # test that various args are set correctly
         self.assertEqual(config.get('name'), 'world')
@@ -172,19 +216,19 @@ class TestBndlUtils(CliTestCase):
         # test that the "latest" tag is ignored
         self.assertEqual(config.get('tags'), [])
 
-        # test that we add to tags that exist
+        # test that we add replace tags that exist
         tag_config = ConfigFactory.parse_string('{ tags = ["hello"] }')
-        bndl_utils.load_bundle_args_into_conf(tag_config, base_args)
-        self.assertEqual(tag_config.get('tags'), ['hello', 'testing'])
+        bndl_utils.load_bundle_args_into_conf(tag_config, base_args, with_defaults=True)
+        self.assertEqual(tag_config.get('tags'), ['testing'])
 
         # test that we only retain unique tags
-        tag_config = ConfigFactory.parse_string('{ tags = ["testing"] }')
-        bndl_utils.load_bundle_args_into_conf(tag_config, base_args)
+        tag_config = ConfigFactory.parse_string('{}')
+        bndl_utils.load_bundle_args_into_conf(tag_config, base_args_dup_tags, with_defaults=True)
         self.assertEqual(tag_config.get('tags'), ['testing'])
 
         # annotations added
         annotations_config = ConfigFactory.parse_string('{ annotations = { name = "my-name" } }')
-        bndl_utils.load_bundle_args_into_conf(annotations_config, extended_args)
+        bndl_utils.load_bundle_args_into_conf(annotations_config, extended_args, with_defaults=True)
         self.assertEqual(annotations_config.get('annotations'), {
             'name': 'my-name',
             'com': {
