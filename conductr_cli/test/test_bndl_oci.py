@@ -105,43 +105,47 @@ class TestBndlOci(CliTestCase):
     def test_oci_image_bundle_conf(self):
         base_args = create_attributes_object({
             'name': 'world',
+            'tags': [],
             'component_description': 'testing desc 1',
-            'tag': 'testing',
+            'image_tag': 'testing',
             'use_default_endpoints': True,
             'annotations': []
         })
 
         extended_args = create_attributes_object({
             'name': 'world',
+            'tags': [],
+            'annotations': [],
             'component_description': 'testing desc 2',
             'version': '4',
-            'compatibilityVersion': '5',
+            'compatibility_version': '5',
             'system': 'myapp',
-            'systemVersion': '3',
-            'nrOfCpus': '8',
+            'system_version': '3',
+            'nr_of_cpus': '8',
             'memory': '65536',
-            'diskSpace': '16384',
+            'disk_space': '16384',
             'roles': ['web', 'backend'],
-            'tag': 'latest',
+            'image_tag': 'latest',
             'use_default_endpoints': True,
-            'annotations': []
         })
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, {}),
-            strip_margin('''|name = "world"
-                            |roles = []
+            strip_margin('''|annotations {}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
+                            |name = "world"
                             |nrOfCpus = 0.1
-                            |version = "1"
+                            |roles = [
+                            |  "web"
+                            |]
                             |system = "world"
                             |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
-                            |annotations {}
+                            |version = "1"
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
@@ -155,22 +159,24 @@ class TestBndlOci(CliTestCase):
                             |}''')
         )
 
+        self.maxDiff = None
+
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(extended_args, 'my-other-component', {}, {}),
-            strip_margin('''|name = "world"
-                            |version = "4"
+            strip_margin('''|annotations {}
                             |compatibilityVersion = "5"
-                            |system = "myapp"
-                            |systemVersion = "3"
-                            |nrOfCpus = "8"
-                            |memory = "65536"
                             |diskSpace = "16384"
+                            |memory = "65536"
+                            |name = "world"
+                            |nrOfCpus = "8"
                             |roles = [
                             |  "web"
                             |  "backend"
                             |]
+                            |system = "myapp"
+                            |systemVersion = "3"
                             |tags = []
-                            |annotations {}
+                            |version = "4"
                             |components {
                             |  my-other-component {
                             |    description = "testing desc 2"
@@ -188,7 +194,7 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'name': 'world',
             'component_description': 'testing desc 1',
-            'tag': 'testing',
+            'image_tag': 'testing',
             'use_default_endpoints': True,
             'annotations': []
         })
@@ -201,19 +207,21 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
-            strip_margin('''|name = "world"
-                            |roles = []
+            strip_margin('''|annotations {}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
+                            |name = "world"
                             |nrOfCpus = 0.1
-                            |version = "1"
+                            |roles = [
+                            |  "web"
+                            |]
                             |system = "world"
                             |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
-                            |annotations {}
+                            |version = "1"
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
@@ -246,7 +254,7 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'name': 'world',
             'component_description': 'testing desc 1',
-            'tag': 'testing',
+            'image_tag': 'testing',
             'use_default_endpoints': False,
             'annotations': []
         })
@@ -259,19 +267,21 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
-            strip_margin('''|name = "world"
-                            |roles = []
+            strip_margin('''|annotations {}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
+                            |name = "world"
                             |nrOfCpus = 0.1
-                            |version = "1"
+                            |roles = [
+                            |  "web"
+                            |]
                             |system = "world"
                             |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
-                            |annotations {}
+                            |version = "1"
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
@@ -289,7 +299,7 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'name': 'world',
             'component_description': 'testing desc 1',
-            'tag': 'testing',
+            'image_tag': 'testing',
             'use_default_endpoints': True,
             'annotations': {}
         })
@@ -302,19 +312,21 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
-            strip_margin('''|name = "world"
-                            |roles = []
+            strip_margin('''|annotations {}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
+                            |name = "world"
                             |nrOfCpus = 0.1
-                            |version = "1"
+                            |roles = [
+                            |  "web"
+                            |]
                             |system = "world"
                             |systemVersion = "1"
                             |tags = [
                             |  "testing"
                             |]
-                            |annotations {}
+                            |version = "1"
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"
@@ -355,7 +367,7 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'name': 'world',
             'component_description': 'testing desc 1',
-            'tag': 'testing',
+            'image_tag': 'testing',
             'use_default_endpoints': True,
             'annotations': []
         })
@@ -375,19 +387,7 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', manifest, config),
-            strip_margin('''|name = "world"
-                            |roles = []
-                            |compatibilityVersion = "0"
-                            |diskSpace = 1073741824
-                            |memory = 402653184
-                            |nrOfCpus = 0.1
-                            |version = "1"
-                            |system = "world"
-                            |systemVersion = "1"
-                            |tags = [
-                            |  "testing"
-                            |]
-                            |annotations {
+            strip_margin('''|annotations {
                             |  com {
                             |    lightbend {
                             |      test = 123
@@ -395,6 +395,20 @@ class TestBndlOci(CliTestCase):
                             |  }
                             |  description = "hello world"
                             |}
+                            |compatibilityVersion = "0"
+                            |diskSpace = 1073741824
+                            |memory = 402653184
+                            |name = "world"
+                            |nrOfCpus = 0.1
+                            |roles = [
+                            |  "web"
+                            |]
+                            |system = "world"
+                            |systemVersion = "1"
+                            |tags = [
+                            |  "testing"
+                            |]
+                            |version = "1"
                             |components {
                             |  my-component {
                             |    description = "testing desc 1"

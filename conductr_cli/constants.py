@@ -1,14 +1,19 @@
 import os
 
-# Preload this much data in the bndl tool to determine input type of a stream
-BNDL_PEEK_SIZE = 16384
+# Preload this much data in the bndl tool to determine input type of a stream. Since we use this to determine
+# if a stream is a plain bundle conf, this should be set to hold the maximum size of a reasonable bundle.conf
+# or else auto-detection will fail.
+BNDL_PEEK_SIZE = 65536
 
 # Defaults for creating bundles without specifying params
+BNDL_DEFAULT_ANNOTATIONS = {}
 BNDL_DEFAULT_COMPATIBILITY_VERSION = '0'
 BNDL_DEFAULT_DISK_SPACE = 1073741824
 BNDL_DEFAULT_MEMORY = 402653184
+BNDL_DEFAULT_NAME = 'bundle'
 BNDL_DEFAULT_NR_OF_CPUS = 0.1
-BNDL_DEFAULT_ROLES = []
+BNDL_DEFAULT_ROLES = ['web']
+BNDL_DEFAULT_TAGS = []
 BNDL_DEFAULT_VERSION = '1'
 BNDL_IGNORE_TAGS = ['latest']
 
@@ -62,3 +67,14 @@ FEATURE_PROVIDE_LOGGING = 'logging'
 
 # When reading and writing to IO devices, buffer this many bytes at a time
 IO_CHUNK_SIZE = 32768
+
+# ZIP has a minimum date for timestamps - 315705599 is 01/02/1980 @ 11:59pm (UTC)
+SHAZAR_TIMESTAMP_MIN = 315705599
+
+# For auto-detection of input streams, per:
+# https://en.wikipedia.org/wiki/Tar_(computing)
+# https://en.wikipedia.org/wiki/Zip_(file_format)
+
+MAGIC_NUMBER_TAR = b'ustar'
+MAGIC_NUMBER_TAR_OFFSET = 257
+MAGIC_NUMBERS_ZIP = [b'PK\x03\x04', b'PK\x05\x06', b'PK\x07\x08']

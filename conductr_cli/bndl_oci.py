@@ -9,7 +9,7 @@ import tempfile
 
 def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     conf = ConfigFactory.parse_string('')
-    load_bundle_args_into_conf(conf, args)
+    load_bundle_args_into_conf(conf, args, with_defaults=True)
 
     if 'annotations' in oci_manifest and oci_manifest['annotations'] is not None:
         annotations_tree = conf.get('annotations')
@@ -22,7 +22,7 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     oci_tree = ConfigTree()
     oci_tree.put('description', args.component_description)
     oci_tree.put('file-system-type', 'oci-image')
-    oci_tree.put('start-command', ['ociImageTag', args.tag])
+    oci_tree.put('start-command', ['ociImageTag', args.image_tag])
     oci_tree.put('endpoints', endpoints_tree)
 
     components_tree = ConfigTree()

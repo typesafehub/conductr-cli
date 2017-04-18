@@ -1,10 +1,20 @@
 from conductr_cli import bndl_oci
 from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_unpack
 from conductr_cli.bndl_docker import docker_unpack
-from conductr_cli.bndl_utils import detect_format_dir, detect_format_stream, first_mtime
-from conductr_cli.constants import BNDL_PEEK_SIZE, IO_CHUNK_SIZE
+from conductr_cli.bndl_utils import \
+    data_is_bundle_conf, \
+    data_is_tar, \
+    data_is_zip, \
+    detect_format_dir, \
+    detect_format_stream, \
+    find_bundle_conf_dir, \
+    first_mtime, \
+    load_bundle_args_into_conf, \
+    zip_extract_with_dates
+from conductr_cli.constants import BNDL_PEEK_SIZE, IO_CHUNK_SIZE, SHAZAR_TIMESTAMP_MIN
 from conductr_cli.shazar_main import dir_to_zip, write_with_digest
 from io import BufferedReader, BytesIO
+from pyhocon import ConfigException, ConfigFactory, HOCONConverter
 import arrow
 import logging
 import os
@@ -38,92 +48,167 @@ def bndl_create(args):
     output = sys.stdout.buffer if args.output is None else open(args.output, 'wb')
 
     temp_dir = tempfile.mkdtemp()
-
-    component_name = 'oci-image'
-
-    oci_image_dir = os.path.join(temp_dir, component_name)
-
-    os.mkdir(oci_image_dir)
+    input_dir = temp_dir
+    component_name = 'component'
+    component_dir = os.path.join(temp_dir, component_name)
+    mtime = None
+    bundle_conf_data = b''
 
     try:
+        process_oci = False
+
         if args.format is None:
             log.error('bndl: Unable to detect format. Provide a -f or --format argument')
 
             return 2
         elif args.format == 'docker':
+            component_name = 'oci-image'
+            component_dir = os.path.join(temp_dir, component_name)
+            os.mkdir(component_dir)
+
             if args.source is None:
                 with tarfile.open(fileobj=buff_in, mode='r|') as tar_in:
-                    name = docker_unpack(oci_image_dir, tar_in, is_dir=False, maybe_name=args.name, maybe_tag=args.tag)
+                    name = docker_unpack(component_dir, tar_in, is_dir=False, maybe_name=args.image_name, maybe_tag=args.image_tag)
             elif os.path.isfile(args.source):
                 with tarfile.open(args.source, mode='r') as tar_in:
-                    name = docker_unpack(oci_image_dir, tar_in, is_dir=False, maybe_name=args.name, maybe_tag=args.tag)
+                    name = docker_unpack(component_dir, tar_in, is_dir=False, maybe_name=args.image_name, maybe_tag=args.image_tag)
             else:
-                name = docker_unpack(oci_image_dir, args.source, is_dir=True, maybe_name=args.name, maybe_tag=args.tag)
+                name = docker_unpack(component_dir, args.source, is_dir=True, maybe_name=args.image_name, maybe_tag=args.image_tag)
 
             if name is None:
                 log.error('bndl: Not a Docker image')
                 return 3
             elif args.name is None:
                 args.name = name
+
+            process_oci = True
         elif args.format == 'oci-image':
-            if args.name is None:
-                log.error('bndl: OCI Image support requires that you provide a --name argument')
-                return 2
-            elif args.source is None:
+            component_name = 'oci-image'
+            component_dir = os.path.join(temp_dir, component_name)
+            os.mkdir(component_dir)
+
+            if args.source is None:
                 with tarfile.open(fileobj=buff_in, mode='r|') as tar_in:
-                    valid_image = oci_image_unpack(oci_image_dir, tar_in, is_dir=False)
+                    valid_image = oci_image_unpack(component_dir, tar_in, is_dir=False)
             elif os.path.isfile(args.source):
                 with tarfile.open(args.source, mode='r') as tar_in:
-                    valid_image = oci_image_unpack(oci_image_dir, tar_in, is_dir=False)
+                    valid_image = oci_image_unpack(component_dir, tar_in, is_dir=False)
             else:
-                valid_image = oci_image_unpack(oci_image_dir, args.source, is_dir=True)
+                valid_image = oci_image_unpack(component_dir, args.source, is_dir=True)
 
             if not valid_image:
                 log.error('bndl: Not an OCI Image')
                 return 2
 
-        has_oci_layout = os.path.isfile(os.path.join(oci_image_dir, 'oci-layout'))
+            process_oci = True
+        elif args.format == 'bundle':
+            peek = buff_in.peek(BNDL_PEEK_SIZE) if args.source is None else None
+            peek_file = None
 
-        refs_dir = os.path.join(oci_image_dir, 'refs')
+            if args.source is not None and os.path.isfile(args.source):
+                with open(args.source, 'rb') as file:
+                    peek_file = file.read(BNDL_PEEK_SIZE)
 
-        if args.tag is None and os.path.isdir(refs_dir):
-            for ref in os.listdir(refs_dir):
-                args.tag = ref
-                break
+            if args.source is None and data_is_zip(peek):
+                with tempfile.NamedTemporaryFile() as temp:
+                    shutil.copyfileobj(buff_in, temp)
+                    temp.seek(0)
+                    zip_extract_with_dates(temp, temp_dir)
+            elif args.source is None and data_is_tar(peek):
+                with tarfile.open(fileobj=buff_in, mode='r|') as tar:
+                    tar.extractall(temp_dir)
+            elif args.source is None and data_is_bundle_conf(peek):
+                with open(os.path.join(temp_dir, 'bundle.conf'), 'wb') as bundle_conf_fileobj:
+                    shutil.copyfileobj(buff_in, bundle_conf_fileobj)
+            elif os.path.isdir(args.source):
+                os.rmdir(temp_dir)
+                shutil.copytree(args.source, temp_dir)
+            elif os.path.isfile(args.source) and zipfile.is_zipfile(args.source):
+                zip_extract_with_dates(args.source, temp_dir)
+            elif os.path.isfile(args.source) and tarfile.is_tarfile(args.source):
+                with tarfile.open(args.source) as tar:
+                    tar.extractall(temp_dir)
+            elif os.path.isfile(args.source) and data_is_bundle_conf(peek_file):
+                shutil.copyfile(args.source, os.path.join(temp_dir, 'bundle.conf'))
+                mtime = os.path.getmtime(args.source)
+            else:
+                log.error('bndl: Not a ConductR Bundle')
+                return 2
 
-        ref_exists = args.tag is not None and os.path.isfile(os.path.join(refs_dir, args.tag))
+            input_dir = find_bundle_conf_dir(temp_dir)
 
-        if not ref_exists:
-            log.error('bndl: Invalid OCI Image. Cannot find requested tag "{}" in OCI Image'.format(args.tag))
+            if input_dir is None:
+                log.error('bndl: Missing bundle.conf')
+                return 2
 
-            return 2
+            bundle_conf_path = os.path.join(input_dir, 'bundle.conf')
 
-        if not has_oci_layout:
-            log.error('bndl: Invalid OCI Image. Missing oci-layout')
+            with open(bundle_conf_path, 'rb') as bundle_conf_fileobj:
+                bundle_conf_data = bundle_conf_fileobj.read()
 
-            return 2
+            os.unlink(bundle_conf_path)
 
-        oci_manifest, oci_config = bndl_oci.oci_image_extract_manifest_config(oci_image_dir, args.tag)
-        bundle_conf = oci_image_bundle_conf(args, component_name, oci_manifest, oci_config)
-        bundle_conf_name = os.path.join(args.name, 'bundle.conf')
-        bundle_conf_data = bundle_conf.encode('UTF-8')
+            if args.name is None:
+                try:
+                    bundle_conf = ConfigFactory.parse_string(bundle_conf_data.decode('UTF-8'))
 
-        # bundle data timestamps can vary based on how it's acquired (docker save, our own resolver, etc) so we
-        # deterministically set the mtime of the files to be based on the OCI config 'created' value if available
+                    if 'name' in bundle_conf:
+                        args.name = bundle_conf['name']
+                except:
+                    pass  # ignore exceptions - we'll catch the bad config below
 
-        if oci_config and 'created' in oci_config:
-            mtime = arrow.get(oci_config['created']).timestamp
-        else:
-            mtime = first_mtime(temp_dir)
+        mtime = first_mtime(input_dir, SHAZAR_TIMESTAMP_MIN) if mtime is None else mtime
 
-        # bundle.conf must be written first, so we explicitly do that for zip and tar
+        if process_oci:
+            has_oci_layout = os.path.isfile(os.path.join(component_dir, 'oci-layout'))
+
+            refs_dir = os.path.join(component_dir, 'refs')
+
+            if args.image_tag is None and os.path.isdir(refs_dir):
+                for ref in os.listdir(refs_dir):
+                    args.image_tag = ref
+                    break
+
+            ref_exists = args.image_tag is not None and os.path.isfile(os.path.join(refs_dir, args.image_tag))
+
+            if not ref_exists:
+                log.error('bndl: Invalid OCI Image. Cannot find requested tag "{}" in OCI Image'.format(args.image_tag))
+
+                return 2
+
+            if not has_oci_layout:
+                log.error('bndl: Invalid OCI Image. Missing oci-layout')
+
+                return 2
+
+            oci_manifest, oci_config = bndl_oci.oci_image_extract_manifest_config(component_dir, args.image_tag)
+            bundle_conf = oci_image_bundle_conf(args, component_name, oci_manifest, oci_config)
+            bundle_conf_data = bundle_conf.encode('UTF-8')
+
+            # bundle data timestamps can vary based on how it's acquired (docker save, our own resolver, etc) so we
+            # deterministically set the mtime of the files to be based on the OCI config 'created' value if available
+
+            if oci_config and 'created' in oci_config:
+                mtime = arrow.get(oci_config['created']).timestamp
+
+        try:
+            bundle_conf = ConfigFactory.parse_string(bundle_conf_data.decode('UTF-8'))
+        except ConfigException:
+            log.error('bndl: Unable to parse bundle.conf')
+            return 1
+
+        load_bundle_args_into_conf(bundle_conf, args, with_defaults=False)
+
+        bundle_conf_data = HOCONConverter.to_hocon(bundle_conf).encode('UTF-8')
+        archive_name = bundle_conf['name'] if 'name' in bundle_conf else 'bundle'
+        bundle_conf_name = os.path.join(archive_name, 'bundle.conf')
 
         if args.use_shazar:
             with tempfile.NamedTemporaryFile() as zip_file_data:
                 with zipfile.ZipFile(zip_file_data, 'w') as zip_file:
                     bundle_conf_zinfo = zipfile.ZipInfo(filename=bundle_conf_name, date_time=time.localtime(mtime)[:6])
                     zip_file.writestr(bundle_conf_zinfo, bundle_conf_data)
-                    dir_to_zip(temp_dir, zip_file, args.name, mtime)
+                    dir_to_zip(input_dir, zip_file, args.name, mtime)
 
                 zip_file_data.flush()
                 zip_file_data.seek(0)
@@ -136,10 +221,10 @@ def bndl_create(args):
                 info.mtime = mtime
                 tar.addfile(tarinfo=info, fileobj=BytesIO(bundle_conf_data))
 
-                for (dir_path, dir_names, file_names) in os.walk(temp_dir):
+                for (dir_path, dir_names, file_names) in os.walk(input_dir):
                     for file_name in file_names:
                         path = os.path.join(dir_path, file_name)
-                        name = os.path.join(args.name, os.path.relpath(path, start=temp_dir))
+                        name = os.path.join(args.name, os.path.relpath(path, start=input_dir))
                         os.utime(path, (mtime, mtime))
                         tar.add(path, arcname=name)
 

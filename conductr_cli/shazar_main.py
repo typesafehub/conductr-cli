@@ -2,7 +2,7 @@ import argcomplete
 import argparse
 from functools import partial
 from conductr_cli import logging_setup
-from conductr_cli.constants import IO_CHUNK_SIZE
+from conductr_cli.constants import IO_CHUNK_SIZE, SHAZAR_TIMESTAMP_MIN
 import hashlib
 import logging
 import os
@@ -123,8 +123,7 @@ def tar_to_zip(tar, zip_file):
     log = logging.getLogger(__name__)
 
     for entry in tar:
-        # this is to work around zip's minimum date, 315705599 is 01/02/1980 @ 11:59pm (UTC)
-        mtime_to_use = max(entry.mtime, 315705599)
+        mtime_to_use = max(entry.mtime, SHAZAR_TIMESTAMP_MIN)
 
         if entry.isfile():
             with tempfile.NamedTemporaryFile() as entry_file:
