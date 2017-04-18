@@ -255,17 +255,17 @@ def validate_jvm_support():
 def validate_hostname_lookup():
     """
     Validates if the hostname lookup by Java is slow given the issue https://github.com/akka/akka/issues/22160
-    Validation fails if the hostname is not part of the /etc/hosts file and the OS is macOS.
+    Validation fails if the hostname is not part of at least one localhost entry in the /etc/hosts file
+    and the OS is macOS.
     A HostnameLookupError is raised if the validation fails
     """
     if host.is_macos():
         with open('/etc/hosts', 'r') as file:
             hostname = host.hostname()
-            lines = [line for line in file.readlines() if not line.strip().startswith('#')]
+            lines = [line.split('#')[0] for line in file.readlines() if not line.strip().startswith('#')]
             localhost_lines = [line for line in lines if 'localhost' in line]
-            for line in localhost_lines:
-                if hostname not in line:
-                    raise HostnameLookupError()
+            if not any(hostname in words for words in (line.split() for line in localhost_lines)):
+                raise HostnameLookupError()
 
 
 def validate_64bit_support():

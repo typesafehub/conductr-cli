@@ -1582,7 +1582,7 @@ class TestValidateJvm(CliTestCase):
 
 
 class TestValidateHostnameLookup(CliTestCase):
-    def test_macos_pass(self):
+    def test_macos_hostname_on_each_localhost_line(self):
         mock_is_mac_os = MagicMock(return_value=True)
         mock_hostname = MagicMock(return_value='mbpro.local')
         mock_open = MagicMock(return_value=io.StringIO(
@@ -1600,12 +1600,66 @@ class TestValidateHostnameLookup(CliTestCase):
         mock_hostname.assert_called_once_with()
         mock_open.assert_called_once_with('/etc/hosts', 'r')
 
-    def test_macos_fail(self):
+    def test_macos_hostname_on_one_localhost_line(self):
         mock_is_mac_os = MagicMock(return_value=True)
         mock_hostname = MagicMock(return_value='mbpro.local')
         mock_open = MagicMock(return_value=io.StringIO(
             '# localhost comment\n'
             '127.0.0.1	localhost mbpro.local\n'
+            '255.255.255.255	broadcasthost\n'
+            '::1             localhost\n'
+        ))
+
+        with patch('conductr_cli.host.is_macos', mock_is_mac_os), \
+                patch('conductr_cli.host.hostname', mock_hostname), \
+                patch('builtins.open', mock_open):
+            sandbox_run_jvm.validate_hostname_lookup()
+
+        mock_hostname.assert_called_once_with()
+        mock_open.assert_called_once_with('/etc/hosts', 'r')
+
+    def test_macos_fail_no_hostname(self):
+        mock_is_mac_os = MagicMock(return_value=True)
+        mock_hostname = MagicMock(return_value='mbpro.local')
+        mock_open = MagicMock(return_value=io.StringIO(
+            '# localhost comment\n'
+            '127.0.0.1	localhost\n'
+            '255.255.255.255	broadcasthost\n'
+            '::1             localhost\n'
+        ))
+
+        with patch('conductr_cli.host.is_macos', mock_is_mac_os), \
+                patch('conductr_cli.host.hostname', mock_hostname), \
+                patch('builtins.open', mock_open):
+            self.assertRaises(HostnameLookupError, sandbox_run_jvm.validate_hostname_lookup)
+
+        mock_hostname.assert_called_once_with()
+        mock_open.assert_called_once_with('/etc/hosts', 'r')
+
+    def test_macos_fail_hostname_commented_out(self):
+        mock_is_mac_os = MagicMock(return_value=True)
+        mock_hostname = MagicMock(return_value='mbpro.local')
+        mock_open = MagicMock(return_value=io.StringIO(
+            '# localhost comment\n'
+            '127.0.0.1	localhost # mbpro.local\n'
+            '255.255.255.255	broadcasthost\n'
+            '::1             localhost\n'
+        ))
+
+        with patch('conductr_cli.host.is_macos', mock_is_mac_os), \
+                patch('conductr_cli.host.hostname', mock_hostname), \
+                patch('builtins.open', mock_open):
+            self.assertRaises(HostnameLookupError, sandbox_run_jvm.validate_hostname_lookup)
+
+        mock_hostname.assert_called_once_with()
+        mock_open.assert_called_once_with('/etc/hosts', 'r')
+
+    def test_macos_fail_invalid_hostname(self):
+        mock_is_mac_os = MagicMock(return_value=True)
+        mock_hostname = MagicMock(return_value='mbpro.local')
+        mock_open = MagicMock(return_value=io.StringIO(
+            '# localhost comment\n'
+            '127.0.0.1	localhost mbpro.local1\n'
             '255.255.255.255	broadcasthost\n'
             '::1             localhost\n'
         ))
