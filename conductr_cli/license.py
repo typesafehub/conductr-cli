@@ -1,13 +1,13 @@
 from conductr_cli import conduct_request, conduct_url, license_auth, validation
 from conductr_cli.conduct_url import conductr_host
 from conductr_cli.exceptions import LicenseDownloadError
-from urllib.parse import urlparse
 from dcos.errors import DCOSHTTPException
 import arrow
 import base64
 import datetime
 import json
 import logging
+import requests
 import os
 
 EXPIRY_DATE_DISPLAY_FORMAT = '%a %d %b %Y %H:%M%p'
@@ -32,14 +32,13 @@ def download_license(args, save_to):
     else:
         auth_token = license_auth.prompt_for_auth_token()
 
-    license_download_host = urlparse(args.license_download_url).hostname
     auth_token_b64_bytes = base64.b64encode(bytes(auth_token, 'UTF-8'))
     auth_token_b64 = auth_token_b64_bytes.decode('UTF-8')
 
     auth_header = {'Authorization': 'Bearer {}'.format(auth_token_b64)}
-    response = conduct_request.get(args.dcos_mode, license_download_host, args.license_download_url,
-                                   headers=auth_header,
-                                   verify=args.server_verification_file)
+    response = requests.get(args.license_download_url,
+                            headers=auth_header,
+                            verify=args.server_verification_file)
 
     if log.is_verbose_enabled():
         log.verbose(response.text)
