@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
-from conductr_cli import license
+from conductr_cli import license, logging_setup
 from conductr_cli.exceptions import LicenseDownloadError
 from conductr_cli.license import EXPIRY_DATE_DISPLAY_FORMAT
 from unittest import TestCase
@@ -27,6 +27,8 @@ class TestDownloadLicense(CliTestCase):
     }
 
     def test_download_with_cached_token(self):
+        stdout = MagicMock()
+
         mock_get_cached_auth_token = MagicMock(return_value=self.cached_token)
         mock_prompt_for_auth_token = MagicMock()
         mock_get = self.respond_with(200, self.license_text)
@@ -37,20 +39,22 @@ class TestDownloadLicense(CliTestCase):
 
         with patch('conductr_cli.license_auth.get_cached_auth_token', mock_get_cached_auth_token), \
                 patch('conductr_cli.license_auth.prompt_for_auth_token', mock_prompt_for_auth_token), \
-                patch('conductr_cli.conduct_request.get', mock_get), \
+                patch('requests.get', mock_get), \
                 patch('conductr_cli.license_auth.save_auth_token', mock_save_auth_token),\
                 patch('conductr_cli.license.save_license_data', mock_save_license_data):
+            logging_setup.configure_logging(input_args, stdout)
             license.download_license(input_args, save_to=self.license_file)
 
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_not_called()
-        mock_get.assert_called_once_with(False, 'test.com', self.license_download_url,
+        mock_get.assert_called_once_with(self.license_download_url,
                                          headers={'Authorization': 'Bearer {}'.format(self.cached_token_b64)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_called_once_with(self.cached_token)
         mock_save_license_data.assert_called_once_with(self.license_text, self.license_file)
 
     def test_download_with_new_token(self):
+        stdout = MagicMock()
         mock_get_cached_auth_token = MagicMock(return_value=None)
 
         prompted_token = 'prompted-token'
@@ -65,20 +69,22 @@ class TestDownloadLicense(CliTestCase):
 
         with patch('conductr_cli.license_auth.get_cached_auth_token', mock_get_cached_auth_token), \
                 patch('conductr_cli.license_auth.prompt_for_auth_token', mock_prompt_for_auth_token), \
-                patch('conductr_cli.conduct_request.get', mock_get), \
+                patch('requests.get', mock_get), \
                 patch('conductr_cli.license_auth.save_auth_token', mock_save_auth_token), \
                 patch('conductr_cli.license.save_license_data', mock_save_license_data):
+            logging_setup.configure_logging(input_args, stdout)
             license.download_license(input_args, save_to=self.license_file)
 
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_called_once_with()
-        mock_get.assert_called_once_with(False, 'test.com', self.license_download_url,
+        mock_get.assert_called_once_with(self.license_download_url,
                                          headers={'Authorization': 'Bearer {}'.format(prompted_token_b64)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_called_once_with(prompted_token)
         mock_save_license_data.assert_called_once_with(self.license_text, self.license_file)
 
     def test_expired_token(self):
+        stdout = MagicMock()
         mock_get_cached_auth_token = MagicMock(return_value=self.cached_token)
         mock_prompt_for_auth_token = MagicMock()
         mock_get = self.respond_with(401, 'test expired')
@@ -89,20 +95,22 @@ class TestDownloadLicense(CliTestCase):
 
         with patch('conductr_cli.license_auth.get_cached_auth_token', mock_get_cached_auth_token), \
                 patch('conductr_cli.license_auth.prompt_for_auth_token', mock_prompt_for_auth_token), \
-                patch('conductr_cli.conduct_request.get', mock_get), \
+                patch('requests.get', mock_get), \
                 patch('conductr_cli.license_auth.save_auth_token', mock_save_auth_token), \
                 patch('conductr_cli.license.save_license_data', mock_save_license_data):
+            logging_setup.configure_logging(input_args, stdout)
             self.assertRaises(LicenseDownloadError, license.download_license, input_args, self.license_file)
 
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_not_called()
-        mock_get.assert_called_once_with(False, 'test.com', self.license_download_url,
+        mock_get.assert_called_once_with(self.license_download_url,
                                          headers={'Authorization': 'Bearer {}'.format(self.cached_token_b64)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_not_called()
         mock_save_license_data.assert_not_called()
 
     def test_invalid_terms_token(self):
+        stdout = MagicMock()
         mock_get_cached_auth_token = MagicMock(return_value=self.cached_token)
         mock_prompt_for_auth_token = MagicMock()
         mock_get = self.respond_with(401, 'terms not accepted')
@@ -113,14 +121,15 @@ class TestDownloadLicense(CliTestCase):
 
         with patch('conductr_cli.license_auth.get_cached_auth_token', mock_get_cached_auth_token), \
                 patch('conductr_cli.license_auth.prompt_for_auth_token', mock_prompt_for_auth_token), \
-                patch('conductr_cli.conduct_request.get', mock_get), \
+                patch('requests.get', mock_get), \
                 patch('conductr_cli.license_auth.save_auth_token', mock_save_auth_token), \
                 patch('conductr_cli.license.save_license_data', mock_save_license_data):
+            logging_setup.configure_logging(input_args, stdout)
             self.assertRaises(LicenseDownloadError, license.download_license, input_args, self.license_file)
 
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_not_called()
-        mock_get.assert_called_once_with(False, 'test.com', self.license_download_url,
+        mock_get.assert_called_once_with(self.license_download_url,
                                          headers={'Authorization': 'Bearer {}'.format(self.cached_token_b64)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_not_called()
