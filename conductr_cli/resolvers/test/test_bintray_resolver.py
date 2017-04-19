@@ -83,8 +83,7 @@ class TestResolveBundle(TestCase):
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.resolve_bundle,
-                              '/cache-dir', 'bundle-name:v1')
+            self.assertEqual(bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1'), (False, None, None))
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -207,8 +206,8 @@ class TestResolveBundleConfiguration(TestCase):
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.resolve_bundle_configuration,
-                              '/cache-dir', 'bundle-name:v1')
+            self.assertEqual(bintray_resolver.resolve_bundle_configuration('/cache-dir', 'bundle-name:v1'),
+                             (False, None, None))
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
@@ -371,8 +370,8 @@ class TestLoadBundleFromCache(TestCase):
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.load_bundle_from_cache,
-                              '/cache-dir', 'bundle-name:v1')
+            self.assertEqual(bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1'),
+                             (False, None, None))
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -530,8 +529,10 @@ class TestLoadBundleConfigurationFromCache(TestCase):
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            self.assertRaises(BintrayResolutionError, bintray_resolver.load_bundle_configuration_from_cache,
-                              '/cache-dir', 'bundle-name:v1')
+            self.assertEquals(
+                bintray_resolver.load_bundle_configuration_from_cache('/cache-dir', 'bundle-name:v1'),
+                (False, None, None)
+            )
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)

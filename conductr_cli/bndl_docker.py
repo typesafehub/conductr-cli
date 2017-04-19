@@ -189,18 +189,18 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
         digests = {}
         sizes = {}
 
-        def handle_entry(name, fileobj, isdir, isfile, issym):
+        def handle_entry(name, fileobj, isdir, isfile, issym, top):
             parent_dir = os.path.dirname(name)
             immediate_parent_dir = os.path.basename(parent_dir)
 
-            if parent_dir != '':
+            if parent_dir != top:
                 os.makedirs(os.path.join(temp_dir, 'layers', parent_dir), exist_ok=True)
 
             file_name = os.path.basename(name)
 
             if isdir:
                 os.makedirs(os.path.join(temp_dir, 'layers', file_name))
-            elif isfile and parent_dir == '':
+            elif isfile and parent_dir == top:
                 with open(os.path.join(temp_dir, file_name), 'wb') as dest:
                     shutil.copyfileobj(fileobj, dest)
             elif issym and file_name == 'layer.tar':
@@ -238,13 +238,13 @@ def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):
                     name = os.path.join(base, file)
 
                     with open(name, 'rb') as fileobj:
-                        handle_entry(name, fileobj, isdir=False, isfile=True, issym=False)
+                        handle_entry(name, fileobj, isdir=False, isfile=True, issym=False, top=data)
         else:
             for entry in data:
                 if entry.isfile():
-                    handle_entry(entry.name, data.extractfile(entry), isdir=False, isfile=True, issym=False)
+                    handle_entry(entry.name, data.extractfile(entry), isdir=False, isfile=True, issym=False, top='')
                 elif entry.issym():
-                    handle_entry(entry.name, entry.linkname, isdir=False, isfile=False, issym=True)
+                    handle_entry(entry.name, entry.linkname, isdir=False, isfile=False, issym=True, top='')
 
         for key in symlinks:
             layers_to_digests[key] = layers_to_digests[symlinks[key]]
