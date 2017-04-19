@@ -1,5 +1,6 @@
 from conductr_cli import license, validation
 from conductr_cli.constants import DEFAULT_LICENSE_FILE
+from conductr_cli.conduct_url import conductr_host
 from conductr_cli.exceptions import LicenseLoadError
 import logging
 import os
@@ -28,7 +29,8 @@ def load_license(args):
             license.download_license(args, save_to=license_file)
 
         if os.path.exists(license_file):
-            log.info('Loading license into ConductR at {}'.format(args.host))
+            host = conductr_host(args)
+            log.info('Loading license into ConductR at {}'.format(host))
             license.post_license(args, license_file)
 
             _, uploaded_license = license.get_license(args)
