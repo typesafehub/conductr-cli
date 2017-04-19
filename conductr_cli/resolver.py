@@ -1,12 +1,13 @@
 from conductr_cli.exceptions import BundleResolutionError, ContinuousDeliveryError
-from conductr_cli.resolvers import bintray_resolver, stdin_resolver, uri_resolver, offline_resolver
+from conductr_cli.resolvers import \
+    bintray_resolver, docker_offline_resolver, docker_resolver, stdin_resolver, uri_resolver, offline_resolver
 import importlib
 import logging
 
 
 # Try to resolve from local file system before we attempting resolution using bintray
-DEFAULT_RESOLVERS = [stdin_resolver, uri_resolver, bintray_resolver]
-OFFLINE_RESOLVERS = [stdin_resolver, offline_resolver]
+DEFAULT_RESOLVERS = [stdin_resolver, uri_resolver, bintray_resolver, docker_resolver]
+OFFLINE_RESOLVERS = [stdin_resolver, offline_resolver, docker_offline_resolver]
 
 
 def resolve_bundle(custom_settings, cache_dir, uri, offline_mode=False):

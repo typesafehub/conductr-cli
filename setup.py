@@ -16,6 +16,7 @@ install_requires = [
     'arrow>=0.6.0',
     'colorama>=0.3.7',
     'pyreadline>=2.1',
+    'www-authenticate==0.9.2',
 
     # FIXME: Remove the following dependencies when dcos can be depended on
     'jsonschema==2.4',  # pin the exact version, jsonschema 2.5 broke py3

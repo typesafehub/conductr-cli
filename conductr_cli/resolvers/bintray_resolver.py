@@ -103,12 +103,14 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
 
 
 def handle_http_error(http_error, org, repo):
+    log = logging.getLogger(__name__)
     if http_error.response.status_code == requests.codes.not_found:
         if all(s in http_error.response.text for s in ['Repo', repo, 'was not found']):
-            raise BintrayResolutionError(
+            log.debug(
                 'Unable to find Bintray repository {}/{}. '
                 'If this is a private repository make sure to setup the Bintray credentials at {}'
-                .format(org, repo, BINTRAY_CREDENTIAL_FILE_PATH))
+                .format(org, repo, BINTRAY_CREDENTIAL_FILE_PATH)
+            )
 
     return False, None, None
 
