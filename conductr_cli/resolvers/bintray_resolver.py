@@ -142,7 +142,7 @@ def continuous_delivery_uri(resolved_version):
 
 def is_local_file(uri):
     parsed = urlparse(uri, scheme='file')
-    return parsed.scheme == 'file' and parsed.path.endswith('.zip') and os.path.exists(uri)
+    return parsed.scheme == 'file' and os.path.exists(parsed.path)
 
 
 def bintray_download_artefact(cache_dir, artefact, auth):
@@ -231,7 +231,6 @@ def bintray_resolve_version(bintray_auth, org, repo, package_name,
         else:
             matching_version = matching_versions[0]
             matching_tag, matching_digest = matching_version.rsplit('-', 1)
-            print('MJ: matching tag {}, digest {}'.format(matching_tag, matching_digest))
             return bintray_resolve_version(bintray_auth, org, repo, package_name,
                                            tag=matching_tag, digest=matching_digest)
     else:

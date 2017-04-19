@@ -286,7 +286,7 @@ class TestLoadBundleFromCache(TestCase):
             bintray_resolver.load_bundle_from_cache(
                 '/cache-dir', '/tmp/bundle')
 
-        exists_mock.assert_not_called()
+        exists_mock.assert_called_once_with('/tmp/bundle')
 
     def test_bintray_version_found(self):
         exists_mock = MagicMock(return_value=False)

@@ -77,8 +77,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -86,8 +88,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_dcos_mode(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_dcos_mode()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -95,8 +99,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_verbose(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_verbose()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -104,8 +110,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_quiet(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_quiet()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -113,8 +121,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_long_ids(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_long_ids()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -122,8 +132,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_custom_ip_port(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_custom_ip_port()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -131,8 +143,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_custom_host_port(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_custom_host_port()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -140,8 +154,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_ip(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_ip()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -168,7 +184,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
         args.update({'configuration': config_file})
         input_args = MagicMock(**args)
 
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+        with \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock), \
                 patch('conductr_cli.bundle_utils.conf', conf_mock), \
                 patch('conductr_cli.conduct_load.string_io', string_io_mock), \
@@ -176,7 +193,8 @@ class TestConductLoadCommand(ConductLoadTestBase):
                 patch('requests.post', http_method), \
                 patch('conductr_cli.bundle_utils.digest_extract_and_open', open_mock), \
                 patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
-                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
             self.assertTrue(result)
@@ -259,6 +277,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
                 patch('requests.post', http_method), \
                 patch('conductr_cli.bundle_utils.digest_extract_and_open', open_mock), \
                 patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True), \
                 patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_load.load(input_args)
@@ -310,8 +329,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_no_wait(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_no_wait()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -319,8 +340,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_success_offline_mode(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_success_offline_mode()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -328,8 +351,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_failure(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_failure()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -337,8 +362,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_failure_invalid_address(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_failure_invalid_address()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -346,8 +373,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_failure_no_response(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_failure_no_response()
         conf_mock.assert_called_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')
@@ -369,8 +398,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
         conf_mock = MagicMock(return_value=None)
         stderr = MagicMock()
 
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
-                patch('conductr_cli.bundle_utils.conf', conf_mock):
+        with \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             args = self.default_args.copy()
             logging_setup.configure_logging(MagicMock(**args), err_output=stderr)
             result = conduct_load.load(MagicMock(**args))
@@ -388,8 +419,100 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_failure_install_timeout(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        with patch('conductr_cli.bundle_utils.conf', conf_mock), \
-                patch('conductr_cli.conduct_load.string_io', string_io_mock):
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: True):
             self.base_test_failure_install_timeout()
         conf_mock.assert_called_with(self.bundle_file)
+        string_io_mock.assert_called_with('mock bundle.conf')
+
+    def test_not_bundle_invoke_bndl(self):
+        tmpdir, config_file = create_temp_bundle_with_contents({
+            'config.sh': 'echo configuring'
+        })
+
+        resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
+        resolve_bundle_configuration_mock = MagicMock(return_value=('config.zip', config_file))
+        conf_mock = MagicMock(side_effect=['mock bundle.conf', None])
+        string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
+        create_multipart_mock = MagicMock(return_value=self.multipart_mock)
+
+        http_method = self.respond_with(200, self.default_response)
+        stdout = MagicMock()
+        open_mock = MagicMock(return_value=(1, None))
+        bundle_open_mock = MagicMock(side_effect=lambda p1, p2, p3: (p1, 1))
+        wait_for_installation_mock = MagicMock()
+
+        args = self.default_args.copy()
+        args.update({'configuration': config_file})
+        input_args = MagicMock(**args)
+
+        bndl_mock = MagicMock(side_effect=['/my/bundle', '/my/config'])
+
+        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+                patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock), \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
+                patch('requests.post', http_method), \
+                patch('conductr_cli.bundle_utils.digest_extract_and_open', open_mock), \
+                patch('conductr_cli.conduct_load.open_bundle', bundle_open_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: False), \
+                patch('conductr_cli.bundle_installation.wait_for_installation', wait_for_installation_mock), \
+                patch('conductr_cli.conduct_load.invoke_bndl', bndl_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_load.load(input_args)
+            self.assertTrue(result)
+
+        resolve_bundle_mock.assert_called_with(self.custom_settings, self.bundle_resolve_cache_dir,
+                                               self.bundle_file, self.offline_mode)
+        resolve_bundle_configuration_mock.assert_called_with(self.custom_settings, self.configuration_resolve_cache_dir,
+                                                             config_file, self.offline_mode)
+
+        self.assertEqual(
+            bndl_mock.call_args_list,
+            [
+                call(self.bundle_file),
+                call(config_file, 'bundle')
+            ]
+        )
+
+        self.assertEqual(
+            conf_mock.call_args_list,
+            [
+                call('/my/bundle'),
+                call('/my/config')
+            ]
+        )
+
+        string_io_mock.assert_called_with('mock bundle.conf')
+
+        self.assertEqual(
+            bundle_open_mock.call_args_list,
+            [call(self.bundle_file_name, '/my/bundle', 'mock bundle.conf')]
+        )
+
+        self.assertEqual(
+            open_mock.call_args_list,
+            [call('/my/config')]
+        )
+
+        wait_for_installation_mock.assert_called_with(self.bundle_id, input_args)
+
+        self.assertEqual(self.default_output(downloading_configuration='Retrieving configuration..\n'),
+                         self.output(stdout))
+
+    def test_not_bundle_no_config_invoke_bndl(self):
+        conf_mock = MagicMock(return_value='mock bundle.conf')
+        string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
+        bndl_mock = MagicMock(return_value=self.bundle_file)
+        with \
+                patch('conductr_cli.bundle_utils.conf', conf_mock), \
+                patch('conductr_cli.conduct_load.string_io', string_io_mock), \
+                patch('conductr_cli.conduct_load.is_bundle', lambda _: False), \
+                patch('conductr_cli.conduct_load.invoke_bndl', bndl_mock):
+            self.base_test_success_offline_mode()
+        conf_mock.assert_called_with(self.bundle_file)
+        bndl_mock.assert_called_once_with(self.bundle_file)
         string_io_mock.assert_called_with('mock bundle.conf')

@@ -147,7 +147,8 @@ class ConductLoadTestBase(CliTestCase):
         args.update({'verbose': True})
         input_args = MagicMock(**args)
 
-        with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
+        with \
+                patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.conduct_load.create_multipart', create_multipart_mock), \
                 patch('conductr_cli.conduct_load.cleanup_old_bundles', cleanup_old_bundles_mock), \
                 patch('requests.post', http_method), \
