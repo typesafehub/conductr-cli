@@ -392,7 +392,7 @@ class TestResolverDocker(TestCase):
                     open(one.name, 'r') as one_in, \
                     patch('os.path.exists', MagicMock(return_value=True)), \
                     patch('builtins.open', MagicMock(return_value=one_in)):
-                self.assertEquals(
+                self.assertEqual(
                     resolver.docker_resolver.load_docker_credentials('test'),
                     ('one', 'one-password')
                 )
@@ -401,7 +401,7 @@ class TestResolverDocker(TestCase):
                     open(two.name, 'r') as two_in, \
                     patch('os.path.exists', MagicMock(return_value=True)), \
                     patch('builtins.open', MagicMock(return_value=two_in)):
-                self.assertEquals(
+                self.assertEqual(
                     resolver.docker_resolver.load_docker_credentials('test'),
                     ('two', 'two-password')
                 )
@@ -410,7 +410,7 @@ class TestResolverDocker(TestCase):
                     open(three.name, 'r') as three_in, \
                     patch('os.path.exists', MagicMock(return_value=True)), \
                     patch('builtins.open', MagicMock(return_value=three_in)):
-                self.assertEquals(
+                self.assertEqual(
                     resolver.docker_resolver.load_docker_credentials('test'),
                     None
                 )

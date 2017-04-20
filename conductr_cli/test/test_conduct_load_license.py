@@ -64,6 +64,44 @@ class TestConductLoadLicense(CliTestCase):
                                           |""".format(self.host, self.license_formatted))
         self.assertEqual(expected_output, self.output(stdout))
 
+    def test_success_by_ip(self):
+        mock_download_license = MagicMock()
+        mock_exists = MagicMock(return_value=True)
+        mock_post_license = MagicMock(return_value=True)
+        mock_get_license = MagicMock(return_value=(True, self.license))
+        mock_format_license = MagicMock(return_value=self.license_formatted)
+
+        args = {
+            'offline_mode': False,
+            'ip': self.host
+        }
+
+        input_args = MagicMock(**args)
+
+        stdout = MagicMock()
+
+        with patch('conductr_cli.license.download_license', mock_download_license), \
+                patch('os.path.exists', mock_exists), \
+                patch('conductr_cli.license.post_license', mock_post_license), \
+                patch('conductr_cli.license.get_license', mock_get_license), \
+                patch('conductr_cli.license.format_license', mock_format_license):
+            logging_setup.configure_logging(input_args, stdout)
+            self.assertTrue(conduct_load_license.load_license(input_args))
+
+        mock_download_license.assert_called_once_with(input_args, save_to=DEFAULT_LICENSE_FILE)
+        mock_exists.assert_called_once_with(DEFAULT_LICENSE_FILE)
+        mock_post_license.assert_called_once_with(input_args, DEFAULT_LICENSE_FILE)
+        mock_get_license.assert_has_calls([call(input_args), call(input_args)])
+        mock_format_license.assert_called_once_with(self.license)
+
+        expected_output = strip_margin("""|Loading license into ConductR at {}
+                                          |
+                                          |{}
+                                          |
+                                          |License successfully loaded
+                                          |""".format(self.host, self.license_formatted))
+        self.assertEqual(expected_output, self.output(stdout))
+
     def test_offline_mode(self):
         mock_download_license = MagicMock()
         mock_exists = MagicMock(return_value=True)
