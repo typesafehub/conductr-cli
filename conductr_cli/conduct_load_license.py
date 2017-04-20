@@ -26,7 +26,7 @@ def load_license(args):
         if args.offline_mode:
             log.info('Skipping downloading license from Lightbend.com')
         else:
-            license.download_license(args, save_to=license_file)
+            license.download_license(args, save_to=license_file, use_cached_auth_token=(not args.force_flag_enabled))
 
         if os.path.exists(license_file):
             host = conductr_host(args)

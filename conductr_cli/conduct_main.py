@@ -414,6 +414,12 @@ def build_parser(dcos_mode):
     add_custom_plugins_dir(load_license_parser)
     add_quiet_flag(load_license_parser)
     add_verbose(load_license_parser)
+    load_license_parser.add_argument('-f', '--force',
+                                     dest='force_flag_enabled',
+                                     default=False,
+                                     action='store_true',
+                                     help='Always prompts for authentication token when specified,\n'
+                                          'use this option to change authentication token between different users')
     load_license_parser.add_argument('--license-download-url',
                                      dest='license_download_url',
                                      help=argparse.SUPPRESS,

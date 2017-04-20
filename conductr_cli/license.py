@@ -16,7 +16,7 @@ UNLICENSED_DISPLAY_TEXT = 'UNLICENSED - please use "conduct load-license" to use
                           'Additional agents are freely available for registered users.'
 
 
-def download_license(args, save_to):
+def download_license(args, save_to, use_cached_auth_token):
     """
     Downloads license from Lightbend.com.
     :param args: input args obtained from argparse.
@@ -26,10 +26,11 @@ def download_license(args, save_to):
 
     log = logging.getLogger(__name__)
 
-    cached_token = license_auth.get_cached_auth_token()
-    if cached_token:
-        auth_token = cached_token
-    else:
+    auth_token = None
+    if use_cached_auth_token:
+        auth_token = license_auth.get_cached_auth_token()
+
+    if not auth_token:
         auth_token = license_auth.prompt_for_auth_token()
 
     auth_token_b64_bytes = base64.b64encode(bytes(auth_token, 'UTF-8'))
