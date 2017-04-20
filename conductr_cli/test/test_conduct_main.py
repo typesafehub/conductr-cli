@@ -232,6 +232,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
         self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
         self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+        self.assertFalse(args.force_flag_enabled)
         self.assertEqual(args.license_download_url, DEFAULT_LICENSE_DOWNLOAD_URL)
         self.assertEqual(args.local_connection, True)
 
@@ -244,6 +245,7 @@ class TestConduct(TestCase):
                                       '--settings-dir /tmp '
                                       '--custom-settings-file /tmp/foo.conf '
                                       '--custom-plugins-dir /tmp/plugins '
+                                      '--force '
                                       '--license-download-url http://example.org'.split())
 
         self.assertEqual(args.func.__name__, 'load_license')
@@ -254,6 +256,7 @@ class TestConduct(TestCase):
         self.assertEqual(args.cli_settings_dir, '/tmp')
         self.assertEqual(args.custom_settings_file, '/tmp/foo.conf')
         self.assertEqual(args.custom_plugins_dir, '/tmp/plugins')
+        self.assertTrue(args.force_flag_enabled)
         self.assertEqual(args.license_download_url, 'http://example.org')
         self.assertEqual(args.local_connection, True)
 
