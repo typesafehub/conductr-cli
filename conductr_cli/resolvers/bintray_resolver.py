@@ -40,7 +40,7 @@ def resolve_bundle(cache_dir, uri):
 
 def load_bundle_from_cache(cache_dir, uri):
     # When the supplied uri points to a local file, don't load from cache so file can be used as is.
-    if is_local_file(uri):
+    if is_local_file(uri, require_bundle_conf=True):
         return False, None, None
     else:
         log = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ def resolve_bundle_configuration(cache_dir, uri):
 
 def load_bundle_configuration_from_cache(cache_dir, uri):
     # When the supplied uri points to a local file, don't load from cache so file can be used as is.
-    if is_local_file(uri):
+    if is_local_file(uri, require_bundle_conf=False):
         return False, None, None
     else:
         log = logging.getLogger(__name__)
@@ -142,9 +142,22 @@ def continuous_delivery_uri(resolved_version):
         return None
 
 
-def is_local_file(uri):
+def any_subdir_contains(dir, name):
+    for dir, sub_dirs, files in os.walk(dir):
+        if name in files:
+            return True
+
+    return False
+
+
+def is_local_file(uri, require_bundle_conf):
     parsed = urlparse(uri, scheme='file')
-    return parsed.scheme == 'file' and os.path.exists(parsed.path)
+
+    return parsed.scheme == 'file' and os.path.exists(parsed.path) and (
+        not require_bundle_conf or os.path.isfile(parsed.path) or (
+            os.path.isdir(parsed.path) and any_subdir_contains(parsed.path, 'bundle.conf')
+        )
+    )
 
 
 def bintray_download_artefact(cache_dir, artefact, auth):

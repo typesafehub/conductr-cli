@@ -136,12 +136,16 @@ def bndl_create(args):
                 return 2
 
             input_dir = find_bundle_conf_dir(temp_dir)
-
-            if input_dir is None:
-                log.error('bndl: Missing bundle.conf')
-                return 2
-
             bundle_conf_path = os.path.join(input_dir, 'bundle.conf')
+
+            if input_dir is None or not os.path.exists(bundle_conf_path):
+                log.error(
+                    'bndl: Missing bundle.conf (for source {})'.format(
+                        'stdin' if args.source is None else args.source
+                    )
+                )
+
+                return 2
 
             with open(bundle_conf_path, 'rb') as bundle_conf_fileobj:
                 bundle_conf_data = bundle_conf_fileobj.read()
