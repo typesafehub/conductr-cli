@@ -3,6 +3,7 @@ from urllib.parse import ParseResult, urlparse, urlunparse
 from urllib.error import URLError
 from pathlib import Path
 from conductr_cli import screen_utils
+from conductr_cli.resolvers.resolvers_util import is_local_file
 import os
 import logging
 import shutil
@@ -13,7 +14,7 @@ def resolve_bundle(cache_dir, uri, auth=None):
     return resolve_file(cache_dir, uri, auth)
 
 
-def resolve_file(cache_dir, uri, auth=None):
+def resolve_file(cache_dir, uri, auth=None, require_bundle_conf=True):
     log = logging.getLogger(__name__)
 
     if not os.path.exists(cache_dir):
@@ -26,7 +27,7 @@ def resolve_file(cache_dir, uri, auth=None):
         if file_url.startswith(file_protocol):
             file_path = file_url[len(file_protocol):]
 
-            if os.path.exists(file_path):
+            if is_local_file(file_path, require_bundle_conf=require_bundle_conf):
                 return True, file_name, file_path
 
         cached_file = cache_path(cache_dir, uri)
@@ -62,7 +63,7 @@ def load_bundle_from_cache(cache_dir, uri):
 
 
 def resolve_bundle_configuration(cache_dir, uri, auth=None):
-    return resolve_bundle(cache_dir, uri, auth)
+    return resolve_file(cache_dir, uri, auth, require_bundle_conf=False)
 
 
 def load_bundle_configuration_from_cache(cache_dir, uri):
