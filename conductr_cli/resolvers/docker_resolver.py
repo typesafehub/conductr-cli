@@ -1,9 +1,10 @@
 from collections import OrderedDict
 from conductr_cli import screen_utils
 from conductr_cli.constants import IO_CHUNK_SIZE
+from conductr_cli.resolvers.resolvers_util import is_local_file
 from functools import partial
 from requests.auth import HTTPBasicAuth
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode
 import gzip
 import hashlib
 import logging
@@ -169,7 +170,7 @@ def resolve_bundle(cache_dir, uri, auth=None):
 def do_resolve_bundle(cache_dir, uri, auth, offline_mode):
     log = logging.getLogger(__name__)
 
-    if is_local_file(uri):
+    if is_local_file(uri, require_bundle_conf=True):
         return False, None, None
 
     (provided_url, url), (provided_ns, ns), (provided_image, image), (provided_tag, tag) = parse_uri(uri)
@@ -276,11 +277,6 @@ def continuous_delivery_uri(resolved_version):
 
 def is_bundle_name(uri):
     return uri.count('/') == 0 and uri.count('.') == 0
-
-
-def is_local_file(uri):
-    parsed = urlparse(uri, scheme='file')
-    return parsed.scheme == 'file' and os.path.exists(parsed.path)
 
 
 def load_docker_credentials(server):

@@ -1,9 +1,9 @@
 from conductr_cli.exceptions import MalformedBundleUriError, BintrayResolutionError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError
 from conductr_cli.resolvers import uri_resolver
+from conductr_cli.resolvers.resolvers_util import is_local_file
 from conductr_cli import bundle_shorthand
 from requests.exceptions import HTTPError, ConnectionError
-from urllib.parse import urlparse
 import json
 import logging
 import os
@@ -140,24 +140,6 @@ def continuous_delivery_uri(resolved_version):
         return 'deployments/{}/{}/{}'.format(resolved_version['org'], resolved_version['repo'], resolved_version['org'])
     else:
         return None
-
-
-def any_subdir_contains(dir, name):
-    for dir, sub_dirs, files in os.walk(dir):
-        if name in files:
-            return True
-
-    return False
-
-
-def is_local_file(uri, require_bundle_conf):
-    parsed = urlparse(uri, scheme='file')
-
-    return parsed.scheme == 'file' and os.path.exists(parsed.path) and (
-        not require_bundle_conf or os.path.isfile(parsed.path) or (
-            os.path.isdir(parsed.path) and any_subdir_contains(parsed.path, 'bundle.conf')
-        )
-    )
 
 
 def bintray_download_artefact(cache_dir, artefact, auth):
