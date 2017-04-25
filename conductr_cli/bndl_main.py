@@ -36,31 +36,35 @@ def run(argv=None):
 
 
 def build_parser():
-    parser = argparse.ArgumentParser('bndl', formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(prog='bndl',
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     description='Create or modify a bundle')
 
     parser.add_argument('-f', '--format',
                         choices=['docker', 'oci-image', 'bundle'],
                         required=False,
-                        help='The input format. When absent, auto-detection is attempted')
+                        help='The input format\n'
+                             'When absent, auto-detection is attempted')
 
     parser.add_argument('--image-tag',
                         required=False,
-                        help='The name of the tag to create a ConductR bundle from. '
-                             'For use with docker and oci-image formats. When absent, '
-                             'the first tag present is used')
+                        help='The name of the tag to create a ConductR bundle from\n'
+                             'For use with docker and oci-image formats\n'
+                             'When absent, the first tag present is used')
 
     parser.add_argument('--image-name',
                         required=False,
-                        help='The name of the image to create a ConductR bundle from. '
-                             'For use with docker and oci-image formats. When absent, '
-                             'the first image present is used.')
+                        help='The name of the image to create a ConductR bundle from\n'
+                             'For use with docker and oci-image formats\n'
+                             'When absent, the first image present is used')
 
     parser.add_argument('-o', '--output',
                         nargs='?',
-                        help='The target output file. When absent, stdout is used')
+                        help='The target output file\n'
+                             'When absent, stdout is used')
 
     parser.add_argument('source',
-                        help='Optional path to a directory or tar file'
+                        help='Optional path to a directory or tar file\n'
                              'When absent, stdin is used',
                         nargs='?')
 
@@ -71,19 +75,19 @@ def build_parser():
                         action='store_false')
 
     parser.add_argument('--no-default-endpoints',
-                        help='If provided, a bundle will not contain endpoints for ExposedPorts. '
+                        help='If provided, a bundle will not contain endpoints for ExposedPorts\n'
                              'For use with docker and oci-image formats',
                         default=True,
                         dest='use_default_endpoints',
                         action='store_false')
 
     parser.add_argument('--with-check',
-                        help='If enabled, a "check" component will be added to the bundle"',
+                        help='If enabled, a "check" component will be added to the bundle',
                         default=False,
                         action='store_true')
 
     parser.add_argument('--component-description',
-                        help='Description to use for the generated ConductR component. '
+                        help='Description to use for the generated ConductR component\n'
                              'For use with docker and oci-image formats',
                         default='')
 
