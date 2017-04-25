@@ -65,8 +65,15 @@ FEATURE_PROVIDE_PROXYING = 'proxying'
 
 FEATURE_PROVIDE_LOGGING = 'logging'
 
+
 # When reading and writing to IO devices, buffer this many bytes at a time
 IO_CHUNK_SIZE = 32768
+
+# Time to wait when retrieving logs (in follow mode) results in an error
+LOGS_FOLLOW_ERROR_SLEEP_SECONDS = 10.0
+
+# Time to wait between log requests (in follow mode)
+LOGS_FOLLOW_SLEEP_SECONDS = 1.0
 
 # ZIP has a minimum date for timestamps - 315705599 is 01/02/1980 @ 11:59pm (UTC)
 SHAZAR_TIMESTAMP_MIN = 315705599

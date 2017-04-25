@@ -338,6 +338,11 @@ def build_parser(dcos_mode):
                              default=10,
                              help='The number of logs to fetch\n'
                                   'Defaults to 10')
+    logs_parser.add_argument('-f', '--follow',
+                             help='Outputs log events as they occur. Analogous to UNIX\'s `tail -F`',
+                             default=False,
+                             dest='follow',
+                             action='store_true')
     add_date_args(logs_parser)
     logs_parser.add_argument('bundle',
                              help='The ID or name of the bundle')
