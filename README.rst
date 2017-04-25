@@ -165,6 +165,16 @@ When the switch ``enabled`` is set to ``true``, HTTP Basic Authentication is ena
 
 If HTTP Basic Authentication is enabled then the CLI will send HTTP requests using HTTPS instead of HTTP.
 
+bndl
+^^^^
+
+The ``bndl`` command is used to create or modify bundles. It can be used for the following:
+
+- Creating a bundle from Docker and OCI images
+- Modifying a bundle's ``bundle.conf`` properties to add annotations, roles, etc.
+
+To learn more, see ``bndl -h``.
+
 shazar
 ^^^^^^
 
