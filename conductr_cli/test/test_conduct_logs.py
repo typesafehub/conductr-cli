@@ -1,7 +1,8 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+from conductr_cli.test.cli_test_case import as_warn, CliTestCase, strip_margin
 from conductr_cli import conduct_logs, logging_setup
+from conductr_cli.constants import LOGS_FOLLOW_SLEEP_SECONDS
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
-from unittest.mock import patch, MagicMock
+from unittest.mock import call, patch, MagicMock
 
 
 class TestConductLogsCommand(CliTestCase):
@@ -24,7 +25,8 @@ class TestConductLogsCommand(CliTestCase):
         'lines': 1,
         'utc': True,
         'conductr_auth': conductr_auth,
-        'server_verification_file': server_verification_file
+        'server_verification_file': server_verification_file,
+        'follow': False
     }
 
     default_url = 'http://127.0.0.1:9005/bundles/{}/logs?count=1'.format(bundle_id_urlencoded)
@@ -123,4 +125,98 @@ class TestConductLogsCommand(CliTestCase):
         self.assertEqual(
             strip_margin("""|TIME  HOST  LOG
                             |"""),
+            self.output(stdout))
+
+    def test_new_lines(self):
+        self.assertEqual(conduct_logs.new_lines([], ['hello']), (['hello'], False))
+        self.assertEqual(conduct_logs.new_lines(['hello'], []), ([], False))
+        self.assertEqual(conduct_logs.new_lines(['hello'], ['hello']), ([], False))
+        self.assertEqual(conduct_logs.new_lines(['good bye'], ['hello']), (['hello'], True))
+        self.assertEqual(conduct_logs.new_lines(['one', 'two', 'three', 'four'], ['two', 'three', 'four', 'five', 'six']), (['five', 'six'], False))
+        self.assertEqual(conduct_logs.new_lines(['dup', 'dup'], ['dup', 'dup']), ([], False))
+
+    def test_follow(self):
+        args = {}
+        args.update(self.default_args)
+        args.update({'follow': True})
+        input_args = MagicMock(**args)
+        fetch_log_data_mock = MagicMock(side_effect=[
+            [
+                {'time': 1, 'host': 'one', 'log': 'test one'}
+            ],
+            [
+                {'time': 1, 'host': 'one', 'log': 'test one'},
+                {'time': 2, 'host': 'two', 'log': 'test two'}
+            ],
+            [
+                {'time': 2, 'host': 'two', 'log': 'test two'},
+                {'time': 3, 'host': 'three', 'log': 'test three'},
+                {'time': 4, 'host': 'four', 'log': 'test four'}
+            ],
+            []
+        ])
+        time_sleep_mock = MagicMock()
+        stdout = MagicMock()
+
+        with \
+                patch('conductr_cli.conduct_logs.fetch_log_data', fetch_log_data_mock), \
+                patch('itertools.count', lambda: [0, 1, 2]), \
+                patch('time.sleep', time_sleep_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            self.assertTrue(conduct_logs.logs(input_args))
+
+        self.assertEqual(
+            time_sleep_mock.call_args_list,
+            [call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS)]
+        )
+
+        self.assertEqual(
+            strip_margin("""|1 one test one
+                            |2 two test two
+                            |3 three test three
+                            |4 four test four
+                            |"""),
+            self.output(stdout))
+
+    def test_follow_truncated(self):
+        args = {}
+        args.update(self.default_args)
+        args.update({'follow': True})
+        input_args = MagicMock(**args)
+        fetch_log_data_mock = MagicMock(side_effect=[
+            [
+                {'time': 1, 'host': 'one', 'log': 'test one'}
+            ],
+            [
+                {'time': 2, 'host': 'two', 'log': 'test two'}
+            ],
+            [
+                {'time': 2, 'host': 'two', 'log': 'test two'},
+                {'time': 3, 'host': 'three', 'log': 'test three'},
+                {'time': 4, 'host': 'four', 'log': 'test four'}
+            ],
+            []
+        ])
+        time_sleep_mock = MagicMock()
+        stdout = MagicMock()
+
+        with \
+                patch('conductr_cli.conduct_logs.fetch_log_data', fetch_log_data_mock), \
+                patch('itertools.count', lambda: [0, 1, 2]), \
+                patch('time.sleep', time_sleep_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            self.assertTrue(conduct_logs.logs(input_args))
+
+        self.assertEqual(
+            time_sleep_mock.call_args_list,
+            [call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS)]
+        )
+
+        self.assertEqual(
+            strip_margin("""|1 one test one
+                            |{}
+                            |2 two test two
+                            |3 three test three
+                            |4 four test four
+                            |""".format(as_warn('Warning: Unable to reconcile logs; some lines may not be shown'))),
             self.output(stdout))
