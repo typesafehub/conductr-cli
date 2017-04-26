@@ -245,6 +245,9 @@ def zip_extract_with_dates(zip_file, into):
             zip.extract(info, into)
             t = time.mktime(info.date_time + (0, 0, -1))
             os.utime(os.path.join(into, info.filename), (t, t))
+            # Preserve bits 0-8 only: rwxrwxrwx
+            mode = info.external_attr >> 16 & 0x1FF
+            os.chmod(os.path.join(into, info.filename), mode)
 
 
 class DigestReaderWriter(object):
