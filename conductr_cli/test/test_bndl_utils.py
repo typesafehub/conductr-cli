@@ -336,7 +336,7 @@ class TestBndlUtils(CliTestCase):
                |  ]
                |}
                |udp {
-               |  bind-protocol = "tcp"
+               |  bind-protocol = "udp"
                |  bind-port = 0
                |  service-name = "udp"
                |  acls = [

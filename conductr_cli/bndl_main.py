@@ -1,5 +1,5 @@
 from conductr_cli import logging_setup
-from conductr_cli.endpoint import Endpoint
+from conductr_cli.endpoint import Endpoint, AmbigousBindProtocolError
 from conductr_cli.bndl_create import bndl_create
 import argcomplete
 import argparse
@@ -59,18 +59,24 @@ class EndpointAction(argparse.Action):
 
 
 def set_endpoints(args):
-    def validate(endpoint):
-        if 'component' not in endpoint:
-            log.error('bndl: argument --component is required when specifying argument --endpoint {}'
-                      .format(endpoint['name']))
-            sys.exit(2)
-
     log = logging.getLogger(__name__)
     if args.endpoint_dicts:
         args.endpoints = []
         for endpoint_dict in args.endpoint_dicts:
-            validate(endpoint_dict)
-            args.endpoints.append(Endpoint(endpoint_dict))
+            try:
+                endpoint = Endpoint(endpoint_dict)
+            except ValueError:
+                log.error('bndl: argument --component is required when specifying argument --endpoint {}'
+                          .format(endpoint_dict['name']))
+                sys.exit(2)
+            except AmbigousBindProtocolError:
+                log.error('bndl: argument --bind-protocol is required '
+                          'when acls with different protocol families are specified\n'
+                          'endpoint: {}\n'
+                          'acls: {}'
+                          .format(endpoint_dict['name'], ', '.join(endpoint_dict['acls'])))
+                sys.exit(2)
+            args.endpoints.append(endpoint)
 
 
 def build_parser():
