@@ -61,7 +61,8 @@ class EndpointAction(argparse.Action):
 def set_endpoints(args):
     def validate(endpoint):
         if 'component' not in endpoint:
-            log.error('bndl: argument --component is required when specifying argument --endpoint')
+            log.error('bndl: argument --component is required when specifying argument --endpoint {}'
+                      .format(endpoint['name']))
             sys.exit(2)
 
     log = logging.getLogger(__name__)

@@ -180,9 +180,27 @@ class TestBndlUtils(CliTestCase):
                     ]
                 }),
                 Endpoint({
-                    'name': 'akka-remote',
+                    'name': 'no-acls',
                     'component': 'test-bundle',
                     'bind-port': 2345
+                }),
+                Endpoint({
+                    'name': 'tcp',
+                    'component': 'test-bundle',
+                    'service-name': 'tcp',
+                    'acls': [
+                        'tcp:[5000, 5001]',
+                        'tcp:[5002, 5003]'
+                    ]
+                }),
+                Endpoint({
+                    'name': 'udp',
+                    'component': 'test-bundle',
+                    'service-name': 'udp',
+                    'acls': [
+                        'udp:[6000, 6001]',
+                        'udp:[6002, 6003]'
+                    ]
                 })
             ]
         })
@@ -286,18 +304,52 @@ class TestBndlUtils(CliTestCase):
                |      http {
                |        requests = [
                |          {
-               |            path-beg = "/"
+               |            path = "/"
                |          }
                |          {
-               |            path-beg = "/subpath"
+               |            path = "/subpath"
                |          }
                |        ]
                |      }
                |    }
                |  ]
                |}
-               |akka-remote {
+               |no-acls {
                |  bind-protocol = "tcp"
                |  bind-port = 2345
+               |}
+               |tcp {
+               |  bind-protocol = "tcp"
+               |  bind-port = 0
+               |  service-name = "tcp"
+               |  acls = [
+               |    {
+               |      tcp {
+               |        requests = [
+               |          5000,
+               |          5001,
+               |          5002,
+               |          5003
+               |        ]
+               |      }
+               |    }
+               |  ]
+               |}
+               |udp {
+               |  bind-protocol = "tcp"
+               |  bind-port = 0
+               |  service-name = "udp"
+               |  acls = [
+               |    {
+               |      udp {
+               |        requests = [
+               |          6000,
+               |          6001,
+               |          6002,
+               |          6003
+               |        ]
+               |      }
+               |    }
+               |  ]
                |}"""))
         self.assertEqual(endpoints_config.get('components.test-bundle.endpoints'), expected_endpoints_config)

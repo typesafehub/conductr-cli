@@ -1,5 +1,7 @@
+import json
 from enum import Enum
 from pyhocon import ConfigTree, ConfigList
+from collections import defaultdict
 
 
 class Endpoint:
@@ -24,10 +26,14 @@ class Endpoint:
 
         self.acls = []
         if 'acls' in endpoint_dict:
+            grouped_acls = defaultdict(list)
             for acl in endpoint_dict['acls']:
-                if acl.startswith('http'):
-                    self.bind_protocol = 'http'
-                self.acls.append(RequestAcl(acl))
+                protocol_family, request_mapping = RequestAcl.split_acl_string(acl)
+                grouped_acls[protocol_family].append(request_mapping)
+            if ProtocolFamily.http in grouped_acls:
+                self.bind_protocol = 'http'
+            for protocol_family, request_mappings in grouped_acls.items():
+                self.acls.append(RequestAcl(protocol_family, request_mappings))
 
     def hocon(self):
         endpoint_tree = ConfigTree()
@@ -43,21 +49,23 @@ class Endpoint:
 
 
 class RequestAcl:
-    request_mappings = []
+    def __init__(self, protocol_family, request_mappings):
+        self.request_mappings = []
+        for mapping in request_mappings:
+            if mapping.startswith('[') and mapping.endswith(']'):
+                ports = json.loads(mapping)
+                if protocol_family is ProtocolFamily.tcp:
+                    self.request_mappings.append(TcpRequest(ports))
+                elif protocol_family is ProtocolFamily.udp:
+                    self.request_mappings.append(UdpRequest(ports))
+            elif mapping.startswith('/'):
+                if protocol_family is ProtocolFamily.http:
+                    self.request_mappings.append(HttpRequest(mapping))
 
-    def __init__(self, shorthand_string):
-        protocol_family_string, other_parts = shorthand_string.split(':', 1)
-        protocol_family = ProtocolFamily[protocol_family_string]
-
-        if other_parts.startswith('[') and other_parts.endswith(']'):
-            ports = [int(port.strip()) for port in other_parts[1:-1].split(',')]
-            if protocol_family is ProtocolFamily.tcp:
-                self.request_mappings.append(TcpRequest(ports))
-            elif protocol_family is ProtocolFamily.udp:
-                self.request_mappings.append(UdpRequest(ports))
-        elif other_parts.startswith('/'):
-            if protocol_family is ProtocolFamily.http:
-                self.request_mappings.append(HttpRequest(other_parts))
+    @staticmethod
+    def split_acl_string(acl_string):
+        protocol_family_string, request_mapping = acl_string.split(':', 1)
+        return ProtocolFamily[protocol_family_string], request_mapping
 
     def hocon(self):
         acl_tree = ConfigTree()
@@ -74,7 +82,6 @@ class ProtocolFamily(Enum):
 
 class TcpRequest:
     protocol_family = ProtocolFamily.tcp
-    ports = []
 
     def __init__(self, ports):
         self.ports = ports
@@ -85,7 +92,6 @@ class TcpRequest:
 
 class UdpRequest:
     protocol_family = ProtocolFamily.udp
-    ports = []
 
     def __init__(self, ports):
         self.ports = ports
@@ -96,16 +102,15 @@ class UdpRequest:
 
 class HttpRequest:
     protocol_family = ProtocolFamily.http
-    method = None
-    path_beg = None
-    rewrite = None
 
-    def __init__(self, path_beg):
-        self.path_beg = path_beg
+    def __init__(self, path):
+        self.path = path
+        self.method = None
+        self.rewrite = None
 
     def hocon(self):
         request_tree = ConfigTree()
-        request_tree.put('path-beg', self.path_beg)
+        request_tree.put('path', self.path)
         if self.method:
             request_tree.put('method', self.method)
         if self.rewrite:

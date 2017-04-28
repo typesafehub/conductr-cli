@@ -231,5 +231,5 @@ class TestBndl(CliTestCase):
 
         self.assertEqual(
             self.output(stderr_mock),
-            as_error('Error: bndl: argument --component is required when specifying argument --endpoint\n')
+            as_error('Error: bndl: argument --component is required when specifying argument --endpoint web\n')
         )
