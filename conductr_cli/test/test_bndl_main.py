@@ -52,6 +52,18 @@ class TestBndl(CliTestCase):
             'backend',
             '--with-check',
             '--no-default-endpoints',
+            '--endpoint',
+            'web',
+            '--component',
+            'web-component',
+            '--bind-protocol',
+            'http',
+            '--bind-port',
+            '8080',
+            '--service-name',
+            'web',
+            '--acl',
+            'http:/subpath',
             '--annotation',
             'com.lightbend.test=hello world',
             '--annotation',
@@ -76,6 +88,16 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.roles, ['web', 'backend'])
         self.assertEqual(args.annotations, ['com.lightbend.test=hello world', 'description=this is a test'])
         self.assertFalse(args.use_default_endpoints)
+        self.assertEqual(args.endpoint_dicts, [
+            {
+                'name': 'web',
+                'component': 'web-component',
+                'bind-protocol': 'http',
+                'bind-port': 8080,
+                'service-name': 'web',
+                'acls': ['http:/subpath']
+            }
+        ])
 
     def test_parser_no_args(self):
         args = self.parser.parse_args([])
@@ -192,3 +214,46 @@ class TestBndl(CliTestCase):
             exit_mock.assert_called_once_with(2)
         finally:
             shutil.rmtree(temp)
+
+    def test_warn_no_endpoint_component(self):
+        bndl_mock = MagicMock()
+        stdout_mock = MagicMock()
+        stderr_mock = MagicMock()
+        configure_logging_mock = MagicMock()
+        bndl_main.logging_setup.configure_logging(MagicMock(), stdout_mock, stderr_mock)
+
+        with \
+                patch('conductr_cli.bndl_main.bndl', bndl_mock), \
+                patch('sys.stdout.isatty', lambda: False), \
+                patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
+                patch('sys.stdin.isatty', lambda: False):
+            self.assertRaises(SystemExit, bndl_main.run, ['-o', '-', '-', '--endpoint', 'web'])
+
+        self.assertEqual(
+            self.output(stderr_mock),
+            as_error('Error: bndl: argument --component is required when specifying argument --endpoint web\n')
+        )
+
+    def test_warn_ambigous_bind_protocol(self):
+        bndl_mock = MagicMock()
+        stdout_mock = MagicMock()
+        stderr_mock = MagicMock()
+        configure_logging_mock = MagicMock()
+        bndl_main.logging_setup.configure_logging(MagicMock(), stdout_mock, stderr_mock)
+
+        with \
+                patch('conductr_cli.bndl_main.bndl', bndl_mock), \
+                patch('sys.stdout.isatty', lambda: False), \
+                patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
+                patch('sys.stdin.isatty', lambda: False):
+            self.assertRaises(SystemExit, bndl_main.run, ['-o', '-', '-', '--endpoint', 'web',
+                                                          '--component', 'test',
+                                                          '--acl', 'http:/', '--acl', 'tcp:[3000]'])
+
+        self.assertEqual(
+            self.output(stderr_mock),
+            as_error('Error: bndl: argument --bind-protocol is required '
+                     'when acls with different protocol families are specified\n'
+                     'endpoint: web\n'
+                     'acls: http:/, tcp:[3000]\n')
+        )
