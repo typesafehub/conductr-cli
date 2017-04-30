@@ -2,12 +2,14 @@ import collections
 import concurrent.futures
 import contextlib
 import functools
+import hashlib
 import json
 import logging
 import os
 import platform
 import re
 import shutil
+import stat
 import sys
 import tempfile
 import time
@@ -158,7 +160,48 @@ def read_file(path):
     :rtype: str
     """
     if not os.path.isfile(path):
+        raise DCOSException('path [{}] is not a file'.format(path))
+
+    with open_file(path) as file_:
+        return file_.read()
+
+
+def enforce_file_permissions(path):
+    """Enforce 400 or 600 permissions on file
+
+    :param path: Path to the TOML file
+    :type path: str
+    :rtype: None
+    """
+
+    if not os.path.isfile(path):
         raise DCOSException('Path [{}] is not a file'.format(path))
+
+    # Unix permissions are incompatible with windows
+    # TODO: https://github.com/dcos/dcos-cli/issues/662
+    if sys.platform == 'win32':
+        return
+    else:
+        permissions = oct(stat.S_IMODE(os.lstat(path).st_mode))
+        if permissions not in ['0o600', '0600', '0o400', '0400']:
+            msg = (
+                "Permissions '{}' for configuration file '{}' are too open. "
+                "File must only be accessible by owner. "
+                "Aborting...".format(permissions, path))
+            raise DCOSException(msg)
+
+
+def read_file_secure(path):
+    """
+    Enforce 400 or 600 permissions when reading file
+
+    :param path: path to file
+    :type path: str
+    :returns: contents of file
+    :rtype: str
+    """
+
+    enforce_file_permissions(path)
 
     with open_file(path) as file_:
         return file_.read()
@@ -253,17 +296,22 @@ def configure_logger(log_level):
         msg.format(log_level, constants.VALID_LOG_LEVEL_VALUES))
 
 
-def load_json(reader):
+def load_json(reader, keep_order=False):
     """Deserialize a reader into a python object
 
     :param reader: the json reader
     :type reader: a :code:`.read()`-supporting object
+    :param keep_order: whether the return should be an ordered dictionary
+    :type keep_order: bool
     :returns: the deserialized JSON object
     :rtype: dict | list | str | int | float | bool
     """
 
     try:
-        return json.load(reader)
+        if keep_order:
+            return json.load(reader, object_pairs_hook=collections.OrderedDict)
+        else:
+            return json.load(reader)
     except Exception as error:
         logger.error(
             'Unhandled exception while loading JSON: %r',
@@ -506,11 +554,11 @@ def humanize_bytes(b):
         if b >= factor:
             break
 
-    return "{0:.2f} {1}".format(b / float(factor), suffix)
+    return "{0:.2f} {1}".format(b/float(factor), suffix)
 
 
 @contextlib.contextmanager
-def open_file(path, *args):
+def open_file(path,  *args):
     """Context manager that opens a file, and raises a DCOSException if
     it fails.
 
@@ -610,3 +658,38 @@ def normalize_marathon_id_path(id_path):
 
 
 logger = get_logger(__name__)
+
+
+def md5_hash_file(file):
+    """Calculates the md5 of a file. Will set the
+    file pointer to beginning of the file after being
+    called.
+
+   :param file: file to hash, file pointer
+    must be at the beginning of the file.
+   :type file: file
+   :returns: digest in hexadecimal
+   :rtype: str
+   """
+    hasher = hashlib.md5()
+    for chunk in iter(lambda: file.read(4096), b''):
+        hasher.update(chunk)
+    file.seek(0)
+    return hasher.hexdigest()
+
+
+def read_file_json(path):
+    """ Read the options at the given file path.
+
+    :param path: file path
+    :type path: None | str
+    :returns: options
+    :rtype: dict
+    """
+    if path is None:
+        return {}
+    else:
+        # Expand ~ in the path
+        path = os.path.expanduser(path)
+        with open_file(path) as options_file:
+            return load_json(options_file)

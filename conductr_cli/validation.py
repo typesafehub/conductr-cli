@@ -53,11 +53,14 @@ def handle_http_error(func):
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (HTTPError, dcos.errors.DCOSHTTPException) as err:
+        except HTTPError as err:
             log = get_logger_for_func(func)
             log.error('{} {}'.format(err.response.status_code, err.response.reason))
             if err.response.text != '':
                 log.error(err.response.text)
+        except dcos.errors.DCOSHTTPException as err:
+            log = get_logger_for_func(func)
+            log.error(err)
             return False
 
     # Do not change the wrapped function name,

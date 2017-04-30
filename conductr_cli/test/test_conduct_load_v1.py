@@ -75,6 +75,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         self.base_test_success()
 
     def test_success_dcos_mode(self):
+        self.default_url = 'http://127.0.0.1/bundles'
         self.base_test_success_dcos_mode()
 
     def test_success_verbose(self):

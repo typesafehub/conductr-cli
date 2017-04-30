@@ -86,6 +86,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
         string_io_mock.assert_called_with('mock bundle.conf')
 
     def test_success_dcos_mode(self):
+        self.default_url = 'http://127.0.0.1/v2/bundles'
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
         with \
