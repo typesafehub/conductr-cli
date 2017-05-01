@@ -12,6 +12,7 @@ import zipfile
 from distutils.version import LooseVersion
 
 import requests
+
 from dcos import constants, util
 from dcos.errors import DCOSException
 from dcos.subprocess import Subproc
@@ -141,7 +142,7 @@ def default_subcommands():
     :returns: list of all the default dcos cli subcommands
     :rtype: [str]
     """
-    return ["auth", "config", "help", "job", "marathon",
+    return ["auth", "config", "experimental", "help", "job", "marathon",
             "node", "package", "service", "task"]
 
 
@@ -679,7 +680,7 @@ class SubcommandProcess():
         """
 
         subproc = Subproc().popen(
-            [self._executable, self._command] + self._args,
+            [self._executable,  self._command] + self._args,
             stderr=subprocess.PIPE)
 
         err = ''
