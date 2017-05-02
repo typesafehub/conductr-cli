@@ -537,6 +537,22 @@ def handle_license_download_error(func):
     return handler
 
 
+def handle_bndl_create_error(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (ValueError, SyntaxError) as e:
+            log = get_logger_for_func(func)
+            log.error('bndl: {}'.format(e))
+            return 2
+
+            # Do not change the wrapped function name,
+            # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
 def format_timestamp(timestamp, args):
     date = arrow.get(timestamp)
     date_display = date.to('UTC') if args.utc else date.to('local')
