@@ -10,8 +10,6 @@ class Endpoint:
 
         if 'component' in endpoint_dict:
             self.component = endpoint_dict['component']
-        else:
-            raise ValueError('could not find {} in {}'.format('component', endpoint_dict))
 
         self.acls = []
         grouped_acls = defaultdict(list)

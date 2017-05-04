@@ -192,15 +192,20 @@ def load_bundle_args_into_conf(config, args, with_defaults, validate_components)
         config.put('diskSpace', BNDL_DEFAULT_DISK_SPACE)
 
     if args_endpoints is not None:
-        # Delete existing endpoints if exist in configuration
-        for endpoint in args_endpoints:
-            endpoint_key = 'components.{}.endpoints'.format(endpoint.component)
-            if endpoint_key in config:
-                config.put(endpoint_key, None)
-        # Add endpoints to bundle components based on the --endpoint argument
-        for endpoint in args_endpoints:
-            endpoint_key = 'components.{}.endpoints'.format(endpoint.component)
-            config.put(endpoint_key, endpoint.hocon())
+        if 'components' in config:
+            # Delete existing endpoints if exist in configuration
+            for endpoint in args_endpoints:
+                component_name = detect_endpoint_component(config, endpoint)
+                endpoint_key = 'components.{}.endpoints'.format(component_name)
+                if endpoint_key in config:
+                    config.put(endpoint_key, None)
+            # Add endpoints to bundle components based on the --endpoint argument
+            for endpoint in args_endpoints:
+                component_name = detect_endpoint_component(config, endpoint)
+                endpoint_key = 'components.{}.endpoints'.format(component_name)
+                config.put(endpoint_key, endpoint.hocon())
+        elif validate_components:
+            raise SyntaxError('Unable to add endpoints. bundle.conf does not contain any components')
 
     if args_memory is not None:
         config.put('memory', args_memory)
@@ -262,6 +267,25 @@ def create_check_hocon(check_args):
     check_tree.put('start-command', ['check'] + check_args)
     check_tree.put('endpoints', {})  # Necessary to be backward compatible with ConductR 2.0.x and below
     return check_tree
+
+
+def detect_endpoint_component(config, endpoint):
+    if hasattr(endpoint, 'component'):
+        if endpoint.component in config.get('components'):
+            return endpoint.component
+        else:
+            component_names = [component for component in config.get('components')]
+            raise ValueError('Component {} does not exist in the bundle.conf. Available components: {}'
+                             .format(endpoint.component, component_names))
+    else:
+        non_status_component_names = [component for component in config.get('components')
+                                      if not component.endswith('-status')]
+        if len(non_status_component_names) == 1:
+            return non_status_component_names[0]
+        else:
+            raise SyntaxError('Unable to auto-detect the endpoint component. '
+                              'Component not specified and bundle.conf contains multiple components: {}'
+                              .format(non_status_component_names))
 
 
 def file_write_bytes(path, bs):
