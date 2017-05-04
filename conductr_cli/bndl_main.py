@@ -127,7 +127,7 @@ def build_parser():
 
     endpoint_args = parser.add_argument_group('endpoints')
     endpoint_args.add_argument('-e', '--endpoint',
-                               help='Endpoints to add to bundle.conf\n'
+                               help='Endpoints to add to bundle\n'
                                     'If specified, existing endpoints are removed\n'
                                     'Example: bndl --endpoint web --component web --bind-protocol http '
                                     '--service-name web --acl http:/subpath',
@@ -173,10 +173,34 @@ def build_parser():
                                dest='endpoint_dicts',
                                action=EndpointAction)
 
-    parser.add_argument('--with-check',
-                        help='If enabled, a "check" component will be added to the bundle',
-                        default=False,
-                        action='store_true')
+    check_args = parser.add_argument_group('check')
+    check_args.add_argument('--check',
+                            help='Check command that is added to the bundle\n'
+                                 'Specify one or multiple addresses that are used to check for bundle connectivity\n'
+                                 'As an address, environment variables can be specified that are available '
+                                 'during Bundle startup, e.g. $MY_BUNDLE_HOST\n'
+                                 'If specified, the existing check command is removed\n'
+                                 'Example: bndl --check \$WEB_BUNDLE_HOST \$BACKEND_BUNDLE_HOST\n'
+                                 'Accepted address formats:\n'
+                                 '  \$ENV/<path>?<params>\n'
+                                 '  [docker+]http://<address>:<port>/<path>?<params>\n'
+                                 '  [docker+]tcp://<address>:<port>?<params>\n'
+                                 'Accepted params:\n'
+                                 '  retry-count=<int> - Number of retries\n'
+                                 '  retry-delay=<int> - Delay in seconds between retries\n'
+                                 '  docker-timeout=<int> - Timeout in seconds for docker container start',
+                            nargs='+',
+                            dest='check_addresses')
+    check_args.add_argument('--connection-timeout',
+                            help='Connection timeout in seconds\n'
+                                 'Used in conjunction with the --check option',
+                            type=int,
+                            dest='check_connection_timeout')
+    check_args.add_argument('--initial-delay',
+                            help='Initial delay in seconds\n'
+                                 'Used in conjunction with the --check option',
+                            type=int,
+                            dest='check_initial_delay')
 
     parser.add_argument('--component-description',
                         help='Description to use for the generated ConductR component\n'

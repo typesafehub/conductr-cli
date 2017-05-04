@@ -50,7 +50,13 @@ class TestBndl(CliTestCase):
             '--roles',
             'web',
             'backend',
-            '--with-check',
+            '--check',
+            '\$MY_ENV/path',
+            'http://192.168.10.1:9999',
+            '--connection-timeout',
+            '4',
+            '--initial-delay',
+            '5',
             '--no-default-endpoints',
             '--endpoint',
             'web',
@@ -87,6 +93,9 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.disk_space, 16384)
         self.assertEqual(args.roles, ['web', 'backend'])
         self.assertEqual(args.annotations, ['com.lightbend.test=hello world', 'description=this is a test'])
+        self.assertEqual(args.check_addresses, ['\\$MY_ENV/path', 'http://192.168.10.1:9999'])
+        self.assertEqual(args.check_connection_timeout, 4)
+        self.assertEqual(args.check_initial_delay, 5)
         self.assertFalse(args.use_default_endpoints)
         self.assertEqual(args.endpoint_dicts, [
             {

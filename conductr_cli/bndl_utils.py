@@ -120,10 +120,11 @@ def data_is_zip(data):
     return any(data.startswith(number) for number in MAGIC_NUMBERS_ZIP)
 
 
-def load_bundle_args_into_conf(config, args, with_defaults):
+def load_bundle_args_into_conf(config, args, with_defaults, validate_components):
     # this is unrolled because it's actually pretty complicated to get the order
     # correct given that some attributes need special handling and defaults
 
+    args_check_addresses = getattr(args, 'check_addresses', None)
     args_compatibility_version = getattr(args, 'compatibility_version', None)
     args_disk_space = getattr(args, 'disk_space', None)
     args_endpoints = getattr(args, 'endpoints', None)
@@ -155,6 +156,30 @@ def load_bundle_args_into_conf(config, args, with_defaults):
         config.put('annotations', annotations_tree)
     if with_defaults and 'annotations' not in config:
         config.put('annotations', ConfigTree(BNDL_DEFAULT_ANNOTATIONS.copy()))
+
+    if args_check_addresses is not None:
+        check_args = []
+        if hasattr(args, 'check_initial_delay') and args.check_initial_delay:
+            check_args += ['--initial-delay', str(args.check_initial_delay)]
+        if hasattr(args, 'check_connection_timeout') and args.check_connection_timeout:
+            check_args += ['--connection-timeout', str(args.check_connection_timeout)]
+        check_args += args_check_addresses
+
+        if 'components' in config:
+            status_component_names = [component for component in config.get('components')
+                                      if component.endswith('-status')]
+            if not status_component_names:
+                first_component_name = [component for component in config.get('components')][0]
+                check_tree = create_check_hocon(check_args)
+                config.put('components.{}-status'.format(first_component_name), check_tree)
+            elif len(status_component_names) == 1:
+                config.put('components.{}.start-command'.format(status_component_names[0]), ['check'] + check_args)
+            else:
+                raise SyntaxError('Unable to add check command. '
+                                  'bundle.conf contains multiple components that are ending with -status: {}'
+                                  .format(status_component_names))
+        elif validate_components:
+            raise SyntaxError('Unable to add check command. bundle.conf does not contain any components')
 
     if args_compatibility_version is not None:
         config.put('compatibilityVersion', args_compatibility_version)
@@ -228,6 +253,15 @@ def load_bundle_args_into_conf(config, args, with_defaults):
         config.put('version', args_version)
     if with_defaults and 'version' not in config:
         config.put('version', BNDL_DEFAULT_VERSION)
+
+
+def create_check_hocon(check_args):
+    check_tree = ConfigTree()
+    check_tree.put('description', 'Status check for the bundle component')
+    check_tree.put('file-system-type', 'universal')
+    check_tree.put('start-command', ['check'] + check_args)
+    check_tree.put('endpoints', {})  # Necessary to be backward compatible with ConductR 2.0.x and below
+    return check_tree
 
 
 def file_write_bytes(path, bs):

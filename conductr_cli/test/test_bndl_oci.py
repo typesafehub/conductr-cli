@@ -239,7 +239,7 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |  my-component-status {
-                            |    description = "Status check for oci-image component"
+                            |    description = "Status check for the bundle component"
                             |    file-system-type = "universal"
                             |    start-command = [
                             |      "check"
@@ -349,7 +349,7 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |  my-component-status {
-                            |    description = "Status check for oci-image component"
+                            |    description = "Status check for the bundle component"
                             |    file-system-type = "universal"
                             |    start-command = [
                             |      "check"
@@ -431,7 +431,7 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |  my-component-status {
-                            |    description = "Status check for oci-image component"
+                            |    description = "Status check for the bundle component"
                             |    file-system-type = "universal"
                             |    start-command = [
                             |      "check"
