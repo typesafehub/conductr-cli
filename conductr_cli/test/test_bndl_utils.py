@@ -284,7 +284,7 @@ class TestBndlUtils(CliTestCase):
         })
 
         # test that endpoints are replaced in existing component
-        endpoints_config = ConfigFactory.parse_string(strip_margin(
+        existing_endpoints_config = ConfigFactory.parse_string(strip_margin(
             """|{
                |  components {
                |    test-bundle {
@@ -302,9 +302,9 @@ class TestBndlUtils(CliTestCase):
                |    }
                |  }
                |}"""))
-        bndl_utils.load_bundle_args_into_conf(endpoints_config, extended_args,
+        bndl_utils.load_bundle_args_into_conf(existing_endpoints_config, extended_args,
                                               with_defaults=True, validate_components=True)
-        expected_endpoints_config = ConfigFactory.parse_string(strip_margin(
+        expected_replaced_endpoints_config = ConfigFactory.parse_string(strip_margin(
             """|web {
                |  bind-protocol = "http"
                |  bind-port = 0
@@ -362,7 +362,155 @@ class TestBndlUtils(CliTestCase):
                |    }
                |  ]
                |}"""))
-        self.assertEqual(endpoints_config.get('components.test-bundle.endpoints'), expected_endpoints_config)
+        self.assertEqual(existing_endpoints_config.get('components.test-bundle.endpoints'),
+                         expected_replaced_endpoints_config)
+
+        # test that endpoints are added when component is auto-detected
+        auto_detect_endpoint_args = create_attributes_object({
+            'endpoints': [
+                Endpoint({
+                    'name': 'web',
+                    'service-name': 'web',
+                    'acls': [
+                        'http:/'
+                    ]
+                })
+            ]
+        })
+        auto_detect_endpoints_config = ConfigFactory.parse_string(strip_margin(
+            """|{
+               |  components {
+               |    test-bundle {
+               |      description = "test-bundle"
+               |      file-system-type = "universal"
+               |      start-command = [
+               |        "test-bundle/bin/test-bundle"
+               |      ]
+               |      endpoints {
+               |        test {
+               |          bind-protocol = "tcp"
+               |          bind-port = 0
+               |        }
+               |      }
+               |    }
+               |    bundle-status {
+               |      description = "bundle-status"
+               |      file-system-type = "universal"
+               |      start-command = [
+               |        "check",
+               |        "$SOME_BUNDLE_HOST"
+               |      ]
+               |    }
+               |  }
+               |}"""))
+        bndl_utils.load_bundle_args_into_conf(auto_detect_endpoints_config, auto_detect_endpoint_args,
+                                              with_defaults=True, validate_components=True)
+        expected_replaced_endpoints_config = ConfigFactory.parse_string(strip_margin(
+            """|web {
+               |  bind-protocol = "http"
+               |  bind-port = 0
+               |  service-name = "web"
+               |  acls = [
+               |    {
+               |      http {
+               |        requests = [
+               |          {
+               |            path = "/"
+               |          }
+               |        ]
+               |      }
+               |    }
+               |  ]
+               |}"""))
+        self.assertEqual(auto_detect_endpoints_config.get('components.test-bundle.endpoints'),
+                         expected_replaced_endpoints_config)
+
+        # test that endpoints cannot be added when no component exist
+        no_components_config = ConfigFactory.parse_string(strip_margin("""|{}"""))
+        self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, no_components_config, extended_args,
+                          False, True)
+
+        # test that endpoints cannot be added when the specified component does not exist
+        invalid_endpoint_component_args = create_attributes_object({
+            'endpoints': [
+                Endpoint({
+                    'name': 'web',
+                    'component': 'invalid-component',
+                    'service-name': 'web',
+                    'acls': [
+                        'http:/',
+                        'http:/subpath'
+                    ]
+                })
+            ]
+        })
+        invalid_component_endpoints_config = ConfigFactory.parse_string(strip_margin(
+            """|{
+               |  components {
+               |    test-bundle {
+               |      description = "test-bundle"
+               |      file-system-type = "universal"
+               |      start-command = [
+               |        "test-bundle/bin/test-bundle"
+               |      ]
+               |      endpoints {
+               |        test {
+               |          bind-protocol = "tcp"
+               |          bind-port = 0
+               |        }
+               |      }
+               |    }
+               |  }
+               |}"""))
+        self.assertRaises(ValueError, bndl_utils.load_bundle_args_into_conf, invalid_component_endpoints_config,
+                          invalid_endpoint_component_args, False, True)
+
+        # test that endpoints cannot be added when auto detection of component failed due to multiple components
+        # in the config
+        multiple_endpoint_components_args = create_attributes_object({
+            'endpoints': [
+                Endpoint({
+                    'name': 'web',
+                    'service-name': 'web',
+                    'acls': [
+                        'http:/'
+                    ]
+                })
+            ]
+        })
+        multiple_endpoint_components_config = ConfigFactory.parse_string(strip_margin(
+            """|{
+               |  components {
+               |    test-bundle1 {
+               |      description = "test-bundle1"
+               |      file-system-type = "universal"
+               |      start-command = [
+               |        "test-bundle/bin/test-bundle1"
+               |      ]
+               |      endpoints {
+               |        test1 {
+               |          bind-protocol = "tcp"
+               |          bind-port = 0
+               |        }
+               |      }
+               |    }
+               |    test-bundle2 {
+               |      description = "test-bundle2"
+               |      file-system-type = "universal"
+               |      start-command = [
+               |        "test-bundle/bin/test-bundle2"
+               |      ]
+               |      endpoints {
+               |        test2 {
+               |          bind-protocol = "tcp"
+               |          bind-port = 0
+               |        }
+               |      }
+               |    }
+               |  }
+               |}"""))
+        self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, multiple_endpoint_components_config,
+                          multiple_endpoint_components_args, False, True)
 
         # test that check command is replaced in existing component
         existing_check_config = ConfigFactory.parse_string(strip_margin(
@@ -425,8 +573,7 @@ class TestBndlUtils(CliTestCase):
         self.assertEqual(without_check_config.get('components.bundle-status'), expected_new_check_config)
 
         # test that check component cannot be added because bundle.conf does not contain any components
-        no_components_config = ConfigFactory.parse_string(strip_margin(
-            """|{}"""))
+        no_components_config = ConfigFactory.parse_string(strip_margin("""|{}"""))
         self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, no_components_config, check_args,
                           False, True)
 

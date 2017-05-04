@@ -224,25 +224,6 @@ class TestBndl(CliTestCase):
         finally:
             shutil.rmtree(temp)
 
-    def test_warn_no_endpoint_component(self):
-        bndl_mock = MagicMock()
-        stdout_mock = MagicMock()
-        stderr_mock = MagicMock()
-        configure_logging_mock = MagicMock()
-        bndl_main.logging_setup.configure_logging(MagicMock(), stdout_mock, stderr_mock)
-
-        with \
-                patch('conductr_cli.bndl_main.bndl', bndl_mock), \
-                patch('sys.stdout.isatty', lambda: False), \
-                patch('conductr_cli.logging_setup.configure_logging', configure_logging_mock), \
-                patch('sys.stdin.isatty', lambda: False):
-            self.assertRaises(SystemExit, bndl_main.run, ['-o', '-', '-', '--endpoint', 'web'])
-
-        self.assertEqual(
-            self.output(stderr_mock),
-            as_error('Error: bndl: argument --component is required when specifying argument --endpoint web\n')
-        )
-
     def test_warn_ambigous_bind_protocol(self):
         bndl_mock = MagicMock()
         stdout_mock = MagicMock()

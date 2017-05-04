@@ -65,10 +65,6 @@ def set_endpoints(args):
         for endpoint_dict in args.endpoint_dicts:
             try:
                 endpoint = Endpoint(endpoint_dict)
-            except ValueError:
-                log.error('bndl: argument --component is required when specifying argument --endpoint {}'
-                          .format(endpoint_dict['name']))
-                sys.exit(2)
             except AmbigousBindProtocolError:
                 log.error('bndl: argument --bind-protocol is required '
                           'when acls with different protocol families are specified\n'
@@ -127,18 +123,20 @@ def build_parser():
 
     endpoint_args = parser.add_argument_group('endpoints')
     endpoint_args.add_argument('-e', '--endpoint',
-                               help='Endpoints to add to bundle\n'
+                               help='Endpoints that are added to the bundle\n'
                                     'If specified, existing endpoints are removed\n'
                                     'Example: bndl --endpoint web --component web --bind-protocol http '
                                     '--service-name web --acl http:/subpath',
-                               metavar='ENDPOINT [OPTS]',
+                               metavar='ENDPOINT',
                                dest='endpoint_dicts',
                                default=[],
                                action=EndpointAction)
     endpoint_args.add_argument('--component',
                                help='Component to which an endpoint should be added\n'
                                     'Used in conjunction with the --endpoint option\n'
-                                    'Required when specifying the --endpoint option',
+                                    'When absent, the endpoints of the first component are replaced\n'
+                                    'Required when a bundle has more than one component\n'
+                                    'The component bundle-status is not counted',
                                metavar='COMPONENT',
                                dest='endpoint_dicts',
                                action=EndpointAction)
