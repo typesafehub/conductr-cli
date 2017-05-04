@@ -81,7 +81,7 @@ def build_parser():
                                      description='Create or modify a bundle')
 
     parser.add_argument('-f', '--format',
-                        choices=['docker', 'oci-image', 'bundle'],
+                        choices=['docker', 'oci-bundle', 'oci-image', 'bundle'],
                         required=False,
                         help='The input format\n'
                              'When absent, auto-detection is attempted')
@@ -202,7 +202,7 @@ def build_parser():
 
     parser.add_argument('--component-description',
                         help='Description to use for the generated ConductR component\n'
-                             'For use with docker and oci-image formats',
+                             'For use with docker, oci-image, oci-bundle formats',
                         default='')
 
     parser.add_argument('--annotation',
