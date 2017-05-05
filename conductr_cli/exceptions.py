@@ -120,6 +120,16 @@ class SandboxImageNotFoundError(Exception):
         return repr('{} {}'.format(self.component_type, self.image_version))
 
 
+class SandboxImageFetchError(Exception):
+    def __init__(self, component_type, image_version, cause):
+        self.component_type = component_type
+        self.image_version = image_version
+        self.cause = cause
+
+    def __str(self):
+        return repr('{} {} {}'.format(self.component_type, self.image_version, self.cause))
+
+
 class SandboxImageNotAvailableOfflineError(Exception):
     def __init__(self, image_version):
         self.image_version = image_version

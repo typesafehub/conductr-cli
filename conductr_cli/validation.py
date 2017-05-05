@@ -14,7 +14,7 @@ from conductr_cli.exceptions import BindAddressNotFound, ConductrStartupError, \
     InstanceCountError, MalformedBundleError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayResolutionError, \
     BintrayUnreachableError, BundleResolutionError, WaitTimeoutError, InsecureFilePermissions, \
-    SandboxImageNotFoundError, JavaCallError, HostnameLookupError, JavaUnsupportedVendorError, \
+    SandboxImageFetchError, SandboxImageNotFoundError, JavaCallError, HostnameLookupError, JavaUnsupportedVendorError, \
     JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, SandboxImageNotAvailableOfflineError, \
     SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, LicenseLoadError, LicenseDownloadError, NOT_FOUND_ERROR
 
@@ -278,9 +278,27 @@ def handle_sandbox_image_not_found_error(func):
             return func(*args, **kwargs)
         except SandboxImageNotFoundError as e:
             log = get_logger_for_func(func)
-            log.error('ConductR {} artifact {} cannot be found on Bintray.'.format(e.component_type, e.image_version))
+            log.error('Unable to fetch ConductR {} artifact {} from Bintray.'.format(e.component_type, e.image_version))
             log.error('Please specify a valid ConductR version.')
             log.error('The latest version can be found on: https://www.lightbend.com/product/conductr/developer')
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_sandbox_image_fetch_error(func):
+
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except SandboxImageFetchError as e:
+            log = get_logger_for_func(func)
+            log.error('Failure to fetch ConductR {} artifact {} from Bintray.'.format(e.component_type, e.image_version))
+            log.error('{}'.format(e.cause))
             return False
 
     # Do not change the wrapped function name,

@@ -258,6 +258,81 @@ class TestResolveConductrBinary(TestCase):
         get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
         log_mock.info.assert_called_with('Retrieving conductr-binary-uri')
 
+    def test_resolve_raise_url_error(self):
+        os_path_exists_mock = MagicMock(side_effect=[True, True])
+        os_remove_mock = MagicMock()
+        os_chmod_mock = MagicMock()
+        file_move_mock = MagicMock()
+        cache_path_mock = MagicMock(return_value='/images/conductr-1.0.0.tgz')
+        url_error = URLError('test')
+        get_url_mock = MagicMock(return_value=('conductr-1.0.0.tgz', 'conductr-binary-uri'))
+        urlretrieve_mock = MagicMock(side_effect=url_error)
+
+        get_logger_mock, log_mock = create_mock_logger()
+
+        with patch('os.path.exists', os_path_exists_mock), \
+                patch('os.remove', os_remove_mock), \
+                patch('os.chmod', os_chmod_mock), \
+                patch('shutil.move', file_move_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.urlretrieve', urlretrieve_mock), \
+                patch('logging.getLogger', get_logger_mock),\
+                self.assertRaises(URLError) as e:
+            uri_resolver.resolve_file('/images', 'conductr-binary-uri', raise_error=True)
+            self.assertEqual(e.cause, url_error)
+
+        self.assertEqual([
+            call('/images'),
+            call('/images/conductr-1.0.0.tgz.tmp')
+        ], os_path_exists_mock.call_args_list)
+        cache_path_mock.assert_called_with('/images', 'conductr-binary-uri')
+        get_url_mock.assert_called_with('conductr-binary-uri')
+        os_remove_mock.assert_called_with('/images/conductr-1.0.0.tgz.tmp')
+        urlretrieve_mock.assert_called_with('conductr-binary-uri', '/images/conductr-1.0.0.tgz.tmp')
+        file_move_mock.assert_not_called()
+
+        get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
+        log_mock.info.assert_called_with('Retrieving conductr-binary-uri')
+
+    def test_resolve_unraised_url_error(self):
+        os_path_exists_mock = MagicMock(side_effect=[True, True])
+        os_remove_mock = MagicMock()
+        os_chmod_mock = MagicMock()
+        file_move_mock = MagicMock()
+        cache_path_mock = MagicMock(return_value='/images/conductr-1.0.0.tgz')
+        url_error = URLError('test')
+        get_url_mock = MagicMock(return_value=('conductr-1.0.0.tgz', 'conductr-binary-uri'))
+        urlretrieve_mock = MagicMock(side_effect=url_error)
+
+        get_logger_mock, log_mock = create_mock_logger()
+
+        with patch('os.path.exists', os_path_exists_mock), \
+                patch('os.remove', os_remove_mock), \
+                patch('os.chmod', os_chmod_mock), \
+                patch('shutil.move', file_move_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.cache_path', cache_path_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.get_url', get_url_mock), \
+                patch('conductr_cli.resolvers.uri_resolver.urlretrieve', urlretrieve_mock), \
+                patch('logging.getLogger', get_logger_mock):
+            is_resolved, file_name, cached_file = uri_resolver.resolve_file('/images', 'conductr-binary-uri')
+            self.assertFalse(is_resolved)
+            self.assertIsNone(file_name)
+            self.assertIsNone(cached_file)
+
+        self.assertEqual([
+            call('/images'),
+            call('/images/conductr-1.0.0.tgz.tmp')
+        ], os_path_exists_mock.call_args_list)
+        cache_path_mock.assert_called_with('/images', 'conductr-binary-uri')
+        get_url_mock.assert_called_with('conductr-binary-uri')
+        os_remove_mock.assert_called_with('/images/conductr-1.0.0.tgz.tmp')
+        urlretrieve_mock.assert_called_with('conductr-binary-uri', '/images/conductr-1.0.0.tgz.tmp')
+        file_move_mock.assert_not_called()
+
+        get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
+        log_mock.info.assert_called_with('Retrieving conductr-binary-uri')
+
 
 class TestLoadBundleFromCache(TestCase):
     def test_file(self):

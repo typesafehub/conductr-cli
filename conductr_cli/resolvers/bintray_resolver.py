@@ -143,9 +143,9 @@ def continuous_delivery_uri(resolved_version):
         return None
 
 
-def bintray_download_artefact(cache_dir, artefact, auth):
+def bintray_download_artefact(cache_dir, artefact, auth, raise_error=False):
     if artefact:
-        return uri_resolver.resolve_file(cache_dir, artefact['download_url'], auth)
+        return uri_resolver.resolve_file(cache_dir, artefact['download_url'], auth, raise_error)
     else:
         return False, None, None
 

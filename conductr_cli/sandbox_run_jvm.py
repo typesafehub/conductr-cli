@@ -2,9 +2,9 @@ from conductr_cli import conduct_main, host, license_validation, sandbox_stop, s
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, \
     DEFAULT_LICENSE_FILE, DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING, DEFAULT_SANDBOX_IMAGE_DIR
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
-    SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, SandboxUnsupportedOsArchError, \
-    SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, JavaUnsupportedVersionError, \
-    JavaVersionParseError, HostnameLookupError, LicenseValidationError
+    SandboxImageFetchError, SandboxImageNotFoundError, SandboxImageNotAvailableOfflineError, \
+    SandboxUnsupportedOsArchError, SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, \
+    JavaUnsupportedVersionError, JavaVersionParseError, HostnameLookupError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_COMMERCIAL_REPO, \
     BINTRAY_CONDUCTR_GENERIC_REPO
@@ -13,6 +13,7 @@ from conductr_cli.sandbox_version import is_conductr_on_private_bintray
 from conductr_cli.screen_utils import h1, h2
 from requests.exceptions import HTTPError, ConnectionError
 from subprocess import CalledProcessError
+from urllib.error import URLError
 
 import glob
 import logging
@@ -500,7 +501,8 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
         if len(artefacts) == 1:
             is_success, _, download_path = bintray_resolver.bintray_download_artefact(image_dir,
                                                                                       artefacts[0],
-                                                                                      bintray_auth)
+                                                                                      bintray_auth,
+                                                                                      raise_error=True)
 
             if is_success:
                 return download_path
@@ -509,8 +511,14 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
     except ConnectionError:
         raise BintrayUnreachableError('Bintray is unreachable.')
 
-    except HTTPError:
-        raise SandboxImageNotFoundError(artefact_type, image_version)
+    except HTTPError as e:
+        if e.response.status_code == 404:
+            raise SandboxImageNotFoundError(artefact_type, image_version)
+        else:
+            raise SandboxImageFetchError(artefact_type, image_version, e)
+
+    except URLError as e:
+        raise SandboxImageFetchError(artefact_type, image_version, e)
 
 
 def start_core_instances(core_extracted_dir, tmp_dir,
