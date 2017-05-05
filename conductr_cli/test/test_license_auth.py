@@ -39,10 +39,24 @@ class TestPromptForAuthToken(TestCase):
         mock_input = MagicMock(return_value=auth_token)
 
         with patch('builtins.print', mock_print), \
-                patch('builtins.input', mock_input):
+                patch('builtins.input', mock_input), \
+                patch('sys.stdin.isatty', lambda: True):
             self.assertEqual(auth_token, license_auth.prompt_for_auth_token())
 
         mock_input.assert_called_once_with(license_auth.AUTH_TOKEN_PROMPT)
+
+    def test_no_tty_dont_prompt_for_auth_token(self):
+        auth_token = 'test auth token'
+
+        mock_print = MagicMock()
+        mock_input = MagicMock(return_value=auth_token)
+
+        with patch('builtins.print', mock_print), \
+                patch('builtins.input', mock_input), \
+                patch('sys.stdin.isatty', lambda: False):
+            self.assertEqual(auth_token, license_auth.prompt_for_auth_token())
+
+        mock_input.assert_called_once_with()
 
 
 class TestRemoveCachedAuthToken(TestCase):

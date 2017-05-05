@@ -1,5 +1,6 @@
 from conductr_cli.constants import DEFAULT_AUTH_TOKEN_FILE
 import os
+import sys
 try:
     import readline
 except ImportError:
@@ -7,7 +8,7 @@ except ImportError:
 
 
 AUTH_TOKEN_PROMPT = '\nAn access token is required. Please visit https://www.lightbend.com/account/access-token to \n' \
-                    'obtain one, and a free license or your commercial one.\n' \
+                    'obtain one for free and commercial licenses.\n' \
                     '\n' \
                     'Please enter your access token: '
 
@@ -34,7 +35,10 @@ def prompt_for_auth_token():
     readline.clear_history()
 
     try:
-        return input(AUTH_TOKEN_PROMPT).strip()
+        if sys.stdin.isatty():
+            return input(AUTH_TOKEN_PROMPT).strip()
+        else:
+            return input().strip()
     except EOFError:
         return ''
 
