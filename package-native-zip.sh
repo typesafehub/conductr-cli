@@ -38,25 +38,25 @@ echo "------------------------------------------------"
 echo "Creating single executable for 'conduct' command"
 echo "------------------------------------------------"
 echo ""
-pyinstaller --onefile conductr_cli/conduct.py
+pyinstaller --onefile conduct.spec
 
 echo "------------------------------------------------"
 echo "Creating single executable for 'sandbox' command"
 echo "------------------------------------------------"
 echo ""
-pyinstaller --hidden-import psutil --onefile conductr_cli/sandbox.py
+pyinstaller --onefile sandbox.spec
 
 echo "------------------------------------------------"
 echo "Creating single executable for 'shazar' command"
 echo "------------------------------------------------"
 echo ""
-pyinstaller --onefile conductr_cli/shazar.py
+pyinstaller --onefile shazar.spec
 
 echo "------------------------------------------------"
 echo "Creating single executable for 'bndl' command"
 echo "------------------------------------------------"
 echo ""
-pyinstaller --onefile conductr_cli/bndl.py
+pyinstaller --onefile bndl.spec
 
 
 echo "------------------------------------------------"
