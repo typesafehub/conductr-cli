@@ -12,6 +12,7 @@ import sys
 @validation.handle_http_error
 @validation.handle_instance_count_error
 @validation.handle_bind_address_not_found
+@validation.handle_sandbox_image_fetch_error
 @validation.handle_sandbox_image_not_found_error
 @validation.handle_sandbox_image_not_available_offline_error
 @validation.handle_sandbox_unsupported_os_error

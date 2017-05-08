@@ -42,7 +42,7 @@ class TestResolveBundle(TestCase):
         bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
                                                         'v1', 'digest')
         resolve_bundle_mock.assert_called_with('/cache-dir', 'https://dl.bintray.com/typesafe/bundle/download.zip',
-                                               self.bintray_auth)
+                                               self.bintray_auth, False)
 
     def test_bintray_version_not_found(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
@@ -162,7 +162,8 @@ class TestResolveBundleConfiguration(TestCase):
                                                         'bundle-name', 'v1', 'digest')
         resolve_bundle_mock.assert_called_with('/cache-dir',
                                                'https://dl.bintray.com/typesafe/bundle-configuration/download.zip',
-                                               self.bintray_auth)
+                                               self.bintray_auth,
+                                               False)
 
     def test_bintray_version_not_found(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)

@@ -14,7 +14,7 @@ def resolve_bundle(cache_dir, uri, auth=None):
     return resolve_file(cache_dir, uri, auth)
 
 
-def resolve_file(cache_dir, uri, auth=None, require_bundle_conf=True):
+def resolve_file(cache_dir, uri, auth=None, require_bundle_conf=True, raise_error=False):
     log = logging.getLogger(__name__)
 
     if not os.path.exists(cache_dir):
@@ -41,8 +41,11 @@ def resolve_file(cache_dir, uri, auth=None, require_bundle_conf=True):
         os.chmod(tmp_download_path, 0o600)
         shutil.move(tmp_download_path, cached_file)
         return True, file_name, cached_file
-    except URLError:
-        return False, None, None
+    except URLError as e:
+        if raise_error:
+            raise e
+        else:
+            return False, None, None
 
 
 def load_bundle_from_cache(cache_dir, uri):
