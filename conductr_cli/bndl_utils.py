@@ -166,18 +166,11 @@ def load_bundle_args_into_conf(config, args, with_defaults, validate_components)
         check_args += args_check_addresses
 
         if 'components' in config:
-            status_component_names = [component for component in config.get('components')
-                                      if component.endswith('-status')]
-            if not status_component_names:
-                first_component_name = [component for component in config.get('components')][0]
-                check_tree = create_check_hocon(check_args)
-                config.put('components.{}-status'.format(first_component_name), check_tree)
-            elif len(status_component_names) == 1:
-                config.put('components.{}.start-command'.format(status_component_names[0]), ['check'] + check_args)
+            if 'bundle-status' in config.get('components'):
+                config.put('components.bundle-status.start-command', ['check'] + check_args)
             else:
-                raise SyntaxError('Unable to add check command. '
-                                  'bundle.conf contains multiple components that are ending with -status: {}'
-                                  .format(status_component_names))
+                check_tree = create_check_hocon(check_args)
+                config.put('components.bundle-status', check_tree)
         elif validate_components:
             raise SyntaxError('Unable to add check command. bundle.conf does not contain any components')
 
@@ -279,7 +272,7 @@ def detect_endpoint_component(config, endpoint):
                              .format(endpoint.component, component_names))
     else:
         non_status_component_names = [component for component in config.get('components')
-                                      if not component.endswith('-status')]
+                                      if component != 'bundle-status']
         if len(non_status_component_names) == 1:
             return non_status_component_names[0]
         else:

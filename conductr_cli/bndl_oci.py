@@ -51,7 +51,7 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
 
             components_tree = ConfigTree()
             components_tree.put(component_name, oci_tree)
-            components_tree.put('{}-status'.format(component_name), oci_check_tree)
+            components_tree.put('bundle-status', oci_check_tree)
 
     conf.put('components', components_tree)
 

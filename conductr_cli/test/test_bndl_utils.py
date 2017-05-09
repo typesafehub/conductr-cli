@@ -576,28 +576,3 @@ class TestBndlUtils(CliTestCase):
         no_components_config = ConfigFactory.parse_string(strip_margin("""|{}"""))
         self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, no_components_config, check_args,
                           False, True)
-
-        # test that check component cannot be added because multiple status components were found
-        multiple_check_config = ConfigFactory.parse_string(strip_margin(
-            """|{
-               |  components {
-               |    bundle-status {
-               |      description = "bundle-status"
-               |      file-system-type = "universal"
-               |      start-command = [
-               |        "check",
-               |        "$SOME_BUNDLE_HOST"
-               |      ]
-               |    },
-               |    my-status {
-               |      description = "my-status"
-               |      file-system-type = "universal"
-               |      start-command = [
-               |        "check",
-               |        "$MY_BUNDLE_HOST"
-               |      ]
-               |    }
-               |  }
-               |}"""))
-        self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, multiple_check_config, check_args,
-                          False, True)

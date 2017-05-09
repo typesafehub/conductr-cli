@@ -239,7 +239,7 @@ class TestBndlOci(CliTestCase):
                             |      }
                             |    }
                             |  }
-                            |  my-component-status {
+                            |  bundle-status {
                             |    description = "Status check for the bundle component"
                             |    file-system-type = "universal"
                             |    start-command = [
@@ -350,7 +350,7 @@ class TestBndlOci(CliTestCase):
                             |      }
                             |    }
                             |  }
-                            |  my-component-status {
+                            |  bundle-status {
                             |    description = "Status check for the bundle component"
                             |    file-system-type = "universal"
                             |    start-command = [
@@ -490,7 +490,7 @@ class TestBndlOci(CliTestCase):
                             |      }
                             |    }
                             |  }
-                            |  my-component-status {
+                            |  bundle-status {
                             |    description = "Status check for the bundle component"
                             |    file-system-type = "universal"
                             |    start-command = [
