@@ -46,7 +46,7 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
 
             endpoints_tree.put(name, entry_tree)
 
-        if check_arguments:
+        if args.use_default_check and check_arguments:
             oci_check_tree = create_check_hocon(check_arguments)
 
             components_tree = ConfigTree()

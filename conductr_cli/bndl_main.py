@@ -121,6 +121,13 @@ def build_parser():
                         dest='use_default_endpoints',
                         action='store_false')
 
+    parser.add_argument('--no-default-check',
+                        help='If provided, a bundle will not contain a default check command\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_check',
+                        action='store_false')
+
     endpoint_args = parser.add_argument_group('endpoints')
     endpoint_args.add_argument('-e', '--endpoint',
                                help='Endpoints that are added to the bundle\n'

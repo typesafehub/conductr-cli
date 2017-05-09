@@ -196,6 +196,7 @@ class TestBndlOci(CliTestCase):
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
+            'use_default_check': True,
             'annotations': []
         })
 
@@ -301,6 +302,7 @@ class TestBndlOci(CliTestCase):
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
+            'use_default_check': True,
             'annotations': {}
         })
 
@@ -361,6 +363,63 @@ class TestBndlOci(CliTestCase):
                             |}''')
         )
 
+    def test_oci_image_with_default_endpoints_no_check(self):
+        base_args = create_attributes_object({
+            'name': 'world',
+            'component_description': 'testing desc 1',
+            'image_tag': 'testing',
+            'use_default_endpoints': True,
+            'use_default_check': False,
+            'annotations': {}
+        })
+
+        config = {
+            'config': {
+                'ExposedPorts': {'80/tcp': {}, '8080/udp': {}}
+            }
+        }
+
+        self.assertEqual(
+            bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
+            strip_margin('''|annotations {}
+                            |compatibilityVersion = "0"
+                            |diskSpace = 1073741824
+                            |memory = 402653184
+                            |name = "world"
+                            |nrOfCpus = 0.1
+                            |roles = [
+                            |  "web"
+                            |]
+                            |system = "world"
+                            |systemVersion = "1"
+                            |tags = [
+                            |  "testing"
+                            |]
+                            |version = "1"
+                            |components {
+                            |  my-component {
+                            |    description = "testing desc 1"
+                            |    file-system-type = "oci-image"
+                            |    start-command = [
+                            |      "ociImageTag"
+                            |      "testing"
+                            |    ]
+                            |    endpoints {
+                            |      my-component-tcp-80 {
+                            |        bind-protocol = "tcp"
+                            |        bind-port = 80
+                            |        service-name = "my-component-tcp-80"
+                            |      }
+                            |      my-component-udp-8080 {
+                            |        bind-protocol = "udp"
+                            |        bind-port = 8080
+                            |        service-name = "my-component-udp-8080"
+                            |      }
+                            |    }
+                            |  }
+                            |}''')
+        )
+
     def test_oci_image_annotations(self):
         self.maxDiff = None
 
@@ -369,6 +428,7 @@ class TestBndlOci(CliTestCase):
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
+            'use_default_check': True,
             'annotations': []
         })
 
