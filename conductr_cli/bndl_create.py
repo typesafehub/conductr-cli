@@ -212,6 +212,7 @@ def bndl_create(args):
             with tempfile.NamedTemporaryFile() as zip_file_data:
                 with zipfile.ZipFile(zip_file_data, 'w') as zip_file:
                     bundle_conf_zinfo = zipfile.ZipInfo(filename=bundle_conf_name, date_time=time.localtime(mtime)[:6])
+                    bundle_conf_zinfo.external_attr = 0o644 << 16
                     zip_file.writestr(bundle_conf_zinfo, bundle_conf_data)
                     dir_to_zip(input_dir, zip_file, args.name, mtime)
 
