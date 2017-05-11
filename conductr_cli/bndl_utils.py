@@ -41,6 +41,9 @@ def detect_format_dir(dir):
     elif \
             os.path.isfile(os.path.join(dir, 'bundle.conf')):
         return 'bundle'
+    elif \
+            os.path.isfile(os.path.join(dir, 'config.json')):
+        return 'oci-bundle'
     else:
         return None
 

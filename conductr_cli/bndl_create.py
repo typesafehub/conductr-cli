@@ -1,5 +1,5 @@
 from conductr_cli import bndl_oci, validation
-from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_unpack
+from conductr_cli.bndl_oci import oci_bundle_bundle_conf, oci_bundle_unpack, oci_image_bundle_conf, oci_image_unpack
 from conductr_cli.bndl_docker import docker_unpack
 from conductr_cli.bndl_utils import \
     data_is_bundle_conf, \
@@ -56,7 +56,7 @@ def bndl_create(args):
     bundle_conf_data = b''
 
     try:
-        process_oci = False
+        process_oci_image = False
 
         if not args.format:
             log.error('bndl: Unable to detect format. Provide a -f or --format argument')
@@ -82,7 +82,7 @@ def bndl_create(args):
             elif not args.name:
                 args.name = name
 
-            process_oci = True
+            process_oci_image = True
         elif args.format == 'oci-image':
             component_name = 'oci-image'
             component_dir = os.path.join(temp_dir, component_name)
@@ -101,7 +101,7 @@ def bndl_create(args):
                 log.error('bndl: Not an OCI Image')
                 return 2
 
-            process_oci = True
+            process_oci_image = True
         elif args.format == 'bundle':
             peek = buff_in.peek(BNDL_PEEK_SIZE) if args.source is None else None
             peek_file = None
@@ -161,10 +161,34 @@ def bndl_create(args):
                         args.name = bundle_conf['name']
                 except:
                     pass  # ignore exceptions - we'll catch the bad config below
+        elif args.format == 'oci-bundle':
+            component_name = 'oci-bundle'
+            component_dir = os.path.join(temp_dir, component_name)
+            os.mkdir(component_dir)
+
+            if not args.source:
+                with tarfile.open(fileobj=buff_in, mode='r|') as tar_in:
+                    valid_bundle = oci_bundle_unpack(component_dir, tar_in, is_dir=False)
+            elif os.path.isfile(args.source):
+                with tarfile.open(args.source, mode='r') as tar_in:
+                    valid_bundle = oci_bundle_unpack(component_dir, tar_in, is_dir=False)
+            else:
+                valid_bundle = oci_bundle_unpack(component_dir, args.source, is_dir=True)
+
+            if not valid_bundle:
+                log.error('bndl: Not an OCI Runtime Bundle')
+                return 2
+
+            if not args.name:
+                log.error('bndl: OCI Runtime Bundles require a --name argument to be provided')
+                return 2
+
+            bundle_conf = oci_bundle_bundle_conf(args, component_name)
+            bundle_conf_data = bundle_conf.encode('UTF-8')
 
         mtime = first_mtime(input_dir, SHAZAR_TIMESTAMP_MIN) if mtime is None else mtime
 
-        if process_oci:
+        if process_oci_image:
             has_oci_layout = os.path.isfile(os.path.join(component_dir, 'oci-layout'))
 
             refs_dir = os.path.join(component_dir, 'refs')
@@ -231,7 +255,8 @@ def bndl_create(args):
                     for file_name in file_names:
                         path = os.path.join(dir_path, file_name)
                         name = os.path.join(args.name, os.path.relpath(path, start=input_dir))
-                        os.utime(path, (mtime, mtime))
+                        if not os.path.islink(path):
+                            os.utime(path, (mtime, mtime))
                         tar.add(path, arcname=name)
 
         output.flush()

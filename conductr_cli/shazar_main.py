@@ -114,9 +114,17 @@ def dir_to_zip(dir, zip_file, source_base_name, mtime=None):
             name = os.path.join(source_base_name, os.path.relpath(path, start=dir))
 
             if mtime is not None:
-                os.utime(path, (mtime, mtime))
+                if not os.path.islink(path):
+                    os.utime(path, (mtime, mtime))
 
-            zip_file.write(path, name)
+            if os.path.islink(path):
+                zip_info = zipfile.ZipInfo(path)
+                zip_info.create_system = 3
+                zip_info.external_attr = 2716663808  # symlink magic
+                zip_file.writestr(zip_info, os.readlink(path))
+                pass # @TODO
+            else:
+                zip_file.write(path, name)
 
 
 def tar_to_zip(tar, zip_file):
