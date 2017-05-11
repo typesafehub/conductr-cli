@@ -475,7 +475,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             bndl_mock.call_args_list,
             [
                 call(self.bundle_file),
-                call(config_file, 'bundle')
+                call(config_file, 'bundle', input_args)
             ]
         )
 

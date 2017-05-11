@@ -54,6 +54,7 @@ def bndl_create(args):
     component_dir = os.path.join(temp_dir, component_name)
     mtime = None
     bundle_conf_data = b''
+    runtime_conf_data = b''
 
     try:
         process_oci = False
@@ -137,7 +138,7 @@ def bndl_create(args):
                 return 2
 
             input_dir = find_bundle_conf_dir(temp_dir)
-            bundle_conf_path = os.path.join(input_dir, 'bundle.conf')
+            bundle_conf_path = '' if not input_dir else os.path.join(input_dir, 'bundle.conf')
 
             if not input_dir or not os.path.exists(bundle_conf_path):
                 log.error(
@@ -153,7 +154,23 @@ def bndl_create(args):
 
             os.unlink(bundle_conf_path)
 
-            if not args.name:
+            runtime_conf_path = os.path.join(input_dir, 'runtime-config.sh')
+
+            runtime_conf_str = ''
+
+            if os.path.exists(runtime_conf_path):
+                with open(runtime_conf_path, 'r') as runtime_conf_fileobj:
+                    runtime_conf_str = runtime_conf_fileobj.read()
+
+            for env in args.envs if hasattr(args, 'envs') else []:
+                if runtime_conf_str:
+                    runtime_conf_str += '\n'
+                runtime_conf_str += 'export \'{}\''.format(env.replace('\'', ''))
+
+            if runtime_conf_str:
+                runtime_conf_data = runtime_conf_str.encode('UTF-8')
+
+        if not args.name:
                 try:
                     bundle_conf = ConfigFactory.parse_string(bundle_conf_data.decode('UTF-8'))
 
@@ -208,13 +225,19 @@ def bndl_create(args):
         archive_name = bundle_conf['name'] if 'name' in bundle_conf else 'bundle'
         bundle_conf_name = os.path.join(archive_name, 'bundle.conf')
 
+        if runtime_conf_data:
+            runtime_conf_name = os.path.join(input_dir, 'runtime-config.sh')
+
+            with open(runtime_conf_name, 'wb') as runtime_conf_fileobj:
+                runtime_conf_fileobj.write(runtime_conf_data)
+
         if args.use_shazar:
             with tempfile.NamedTemporaryFile() as zip_file_data:
                 with zipfile.ZipFile(zip_file_data, 'w') as zip_file:
                     bundle_conf_zinfo = zipfile.ZipInfo(filename=bundle_conf_name, date_time=time.localtime(mtime)[:6])
                     bundle_conf_zinfo.external_attr = 0o644 << 16
                     zip_file.writestr(bundle_conf_zinfo, bundle_conf_data)
-                    dir_to_zip(input_dir, zip_file, args.name, mtime)
+                    dir_to_zip(input_dir, zip_file, archive_name, mtime)
 
                 zip_file_data.flush()
                 zip_file_data.seek(0)
@@ -230,7 +253,7 @@ def bndl_create(args):
                 for (dir_path, dir_names, file_names) in os.walk(input_dir):
                     for file_name in file_names:
                         path = os.path.join(dir_path, file_name)
-                        name = os.path.join(args.name, os.path.relpath(path, start=input_dir))
+                        name = os.path.join(archive_name, os.path.relpath(path, start=input_dir))
                         os.utime(path, (mtime, mtime))
                         tar.add(path, arcname=name)
 

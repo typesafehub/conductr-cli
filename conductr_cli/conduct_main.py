@@ -1,9 +1,9 @@
 import argcomplete
 import argparse
 from conductr_cli import \
-    conduct_agents, conduct_deploy, conduct_info, conduct_load, conduct_members, conduct_run, conduct_service_names, \
-    conduct_stop, conduct_unload, version, conduct_logs, conduct_events, conduct_acls, conduct_dcos, \
-    conduct_load_license, host, logging_setup, conduct_url, custom_settings
+    bndl_main, conduct_agents, conduct_deploy, conduct_info, conduct_load, conduct_members, conduct_run, \
+    conduct_service_names, conduct_stop, conduct_unload, version, conduct_logs, conduct_events, conduct_acls, \
+    conduct_dcos, conduct_load_license, host, logging_setup, conduct_url, custom_settings
 from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
@@ -269,6 +269,7 @@ def build_parser(dcos_mode):
     add_configuration_resolve_cache_dir(load_parser)
     add_wait_timeout(load_parser)
     add_no_wait(load_parser)
+    bndl_main.add_conf_arguments(load_parser)
     load_parser.set_defaults(func=conduct_load.load)
 
     # Sub-parser for `run` sub-command
@@ -429,6 +430,7 @@ def build_parser(dcos_mode):
                                      dest='license_download_url',
                                      help=argparse.SUPPRESS,
                                      default=DEFAULT_LICENSE_DOWNLOAD_URL)
+
     load_license_parser.set_defaults(func=conduct_load_license.load_license)
 
     return parser

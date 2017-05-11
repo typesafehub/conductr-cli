@@ -73,7 +73,9 @@ class TestBndl(CliTestCase):
             '--annotation',
             'com.lightbend.test=hello world',
             '--annotation',
-            'description=this is a test'
+            'description=this is a test',
+            '--env',
+            'MESSAGE=hello world'
         ])
 
         self.assertEqual(args.source, 'oci-image-dir')
@@ -107,6 +109,7 @@ class TestBndl(CliTestCase):
                 'acls': ['http:/subpath']
             }
         ])
+        self.assertEqual(args.envs, ['MESSAGE=hello world'])
 
     def test_parser_no_args(self):
         args = self.parser.parse_args([])

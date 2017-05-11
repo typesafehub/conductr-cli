@@ -7,11 +7,14 @@ import logging
 import sys
 
 
-def invoke(argv=None):
+def invoke(argv=None, args=None):
     parser = build_parser()
-    args = parser.parse_args(argv)
-    set_endpoints(args)
-    return args.func(args)
+    parsed_args = parser.parse_args(argv)
+    if args is not None:
+        for arg_name in args:
+            setattr(parsed_args, arg_name, args[arg_name])
+    set_endpoints(parsed_args)
+    return parsed_args.func(parsed_args)
 
 
 def run(argv=None):
@@ -75,61 +78,9 @@ def set_endpoints(args):
             args.endpoints.append(endpoint)
 
 
-def build_parser():
-    parser = argparse.ArgumentParser(prog='bndl',
-                                     formatter_class=argparse.RawTextHelpFormatter,
-                                     description='Create or modify a bundle')
-
-    parser.add_argument('-f', '--format',
-                        choices=['docker', 'oci-image', 'bundle'],
-                        required=False,
-                        help='The input format\n'
-                             'When absent, auto-detection is attempted')
-
-    parser.add_argument('--image-tag',
-                        required=False,
-                        help='The name of the tag to create a ConductR bundle from\n'
-                             'For use with docker and oci-image formats\n'
-                             'When absent, the first tag present is used')
-
-    parser.add_argument('--image-name',
-                        required=False,
-                        help='The name of the image to create a ConductR bundle from\n'
-                             'For use with docker and oci-image formats\n'
-                             'When absent, the first image present is used')
-
-    parser.add_argument('-o', '--output',
-                        nargs='?',
-                        help='The target output file\n'
-                             'When absent, stdout is used')
-
-    parser.add_argument('source',
-                        help='Optional path to a directory or tar file\n'
-                             'When absent, stdin is used',
-                        nargs='?')
-
-    parser.add_argument('--no-shazar',
-                        help='If enabled, a bundle will not be run through shazar',
-                        default=True,
-                        dest='use_shazar',
-                        action='store_false')
-
-    parser.add_argument('--no-default-endpoints',
-                        help='If provided, a bundle will not contain endpoints for ExposedPorts\n'
-                             'For use with docker and oci-image formats',
-                        default=True,
-                        dest='use_default_endpoints',
-                        action='store_false')
-
-    parser.add_argument('--no-default-check',
-                        help='If provided, a bundle will not contain a default check command\n'
-                             'For use with docker and oci-image formats',
-                        default=True,
-                        dest='use_default_check',
-                        action='store_false')
-
+def add_conf_arguments(parser):
     endpoint_args = parser.add_argument_group('endpoints')
-    endpoint_args.add_argument('-e', '--endpoint',
+    endpoint_args.add_argument('--endpoint',
                                help='Endpoints that are added to the bundle\n'
                                     'If specified, existing endpoints are removed\n'
                                     'Example: bndl --endpoint web --component web --bind-protocol http '
@@ -178,6 +129,14 @@ def build_parser():
                                dest='endpoint_dicts',
                                action=EndpointAction)
 
+    endpoint_args.add_argument('--env',
+                               dest='envs',
+                               action='append',
+                               default=[],
+                               help='Additional environment variables for the bundle\'s runtime-config.sh\n'
+                                    'Defaults to [].',
+                               metavar='')
+
     check_args = parser.add_argument_group('check')
     check_args.add_argument('--check',
                             help='Check command that is added to the bundle\n'
@@ -206,11 +165,6 @@ def build_parser():
                                  'Used in conjunction with the --check option',
                             type=int,
                             dest='check_initial_delay')
-
-    parser.add_argument('--component-description',
-                        help='Description to use for the generated ConductR component\n'
-                             'For use with docker and oci-image formats',
-                        default='')
 
     parser.add_argument('--annotation',
                         action='append',
@@ -284,6 +238,67 @@ def build_parser():
                         required=False,
                         help='Sets the "version" bundle.conf value',
                         dest='version')
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(prog='bndl',
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     description='Create or modify a bundle')
+
+    parser.add_argument('-f', '--format',
+                        choices=['docker', 'oci-image', 'bundle'],
+                        required=False,
+                        help='The input format\n'
+                             'When absent, auto-detection is attempted')
+
+    parser.add_argument('--image-tag',
+                        required=False,
+                        help='The name of the tag to create a ConductR bundle from\n'
+                             'For use with docker and oci-image formats\n'
+                             'When absent, the first tag present is used')
+
+    parser.add_argument('--image-name',
+                        required=False,
+                        help='The name of the image to create a ConductR bundle from\n'
+                             'For use with docker and oci-image formats\n'
+                             'When absent, the first image present is used')
+
+    parser.add_argument('-o', '--output',
+                        nargs='?',
+                        help='The target output file\n'
+                             'When absent, stdout is used')
+
+    parser.add_argument('source',
+                        help='Optional path to a directory or tar file\n'
+                             'When absent, stdin is used',
+                        nargs='?')
+
+    parser.add_argument('--no-shazar',
+                        help='If enabled, a bundle will not be run through shazar',
+                        default=True,
+                        dest='use_shazar',
+                        action='store_false')
+
+    parser.add_argument('--component-description',
+                        help='Description to use for the generated ConductR component\n'
+                             'For use with docker and oci-image formats',
+                        default='')
+
+    parser.add_argument('--no-default-endpoints',
+                        help='If provided, a bundle will not contain endpoints for ExposedPorts\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_endpoints',
+                        action='store_false')
+
+    parser.add_argument('--no-default-check',
+                        help='If provided, a bundle will not contain a default check command\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_check',
+                        action='store_false')
+
+    add_conf_arguments(parser)
 
     parser.set_defaults(func=bndl)
 

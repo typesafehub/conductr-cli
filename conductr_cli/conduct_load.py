@@ -19,6 +19,27 @@ import logging
 import tempfile
 import zipfile
 
+
+# A mapping of respected `bndl` arguments to their defaults
+BNDL_ARGS = {
+    'endpoint_dicts': [],
+    'envs': [],
+    'check_addresses': None,
+    'check_connection_timeout': None,
+    'check_initial_delay': None,
+    'annotations': [],
+    'compatibility_version': None,
+    'disk_space': None,
+    'memory': None,
+    'name': None,
+    'nr_of_cpus': None,
+    'roles': None,
+    'system': None,
+    'system_version': None,
+    'tags': [],
+    'version': None
+}
+
 # The number of old bundle versions to keep when performing housekeeping, apart from the recently loaded bundle.
 KEEP_BUNDLE_VERSIONS = 1
 
@@ -161,15 +182,34 @@ def is_bundle(input):
     return os.path.isfile(input) and zipfile.is_zipfile(input)
 
 
-def invoke_bndl(input, format=None):
+def bndl_arguments_present(args):
+    # This is a bit of a hack. The tests use MagicMock extensively which causes getattr() to always
+    # evaluate to True. We check for an attribute that normally isn't present to detect this.
+    if hasattr(args, '_no_bndl_') and getattr(args, '_no_bndl_'):
+        return False
+
+    for arg in BNDL_ARGS:
+        if hasattr(args, arg) and getattr(args, arg) != BNDL_ARGS[arg]:
+            return True
+
+    return False
+
+
+def invoke_bndl(input, format=None, additional_args=None):
     temp_file = tempfile.NamedTemporaryFile()
     args = [input, '-o', temp_file.name]
+    arg_keys = {}
 
     if format is not None:
         args.append('-f')
         args.append(format)
 
-    return_code = bndl_main.invoke(args)
+    if additional_args is not None:
+        for arg in BNDL_ARGS:
+            if hasattr(additional_args, arg):
+                arg_keys[arg] = getattr(additional_args, arg)
+
+    return_code = bndl_main.invoke(args, arg_keys)
 
     if return_code != 0:
         sys.exit(return_code)
@@ -206,10 +246,17 @@ def load_v2(args):
         configuration_file_name, configuration_file = \
             resolver.resolve_bundle_configuration(custom_settings, configuration_cache_dir,
                                                   args.configuration, args.offline_mode)
-        if not is_bundle(configuration_file):
-            configuration_file = invoke_bndl(configuration_file, 'bundle')
+        if not is_bundle(configuration_file) or bndl_arguments_present(args):
+            configuration_file = invoke_bndl(configuration_file, 'bundle', args)
             configuration_file_name = os.path.basename(configuration_file)
         bundle_conf_overlay = bundle_utils.conf(configuration_file)
+    elif bndl_arguments_present(args):
+        with tempfile.NamedTemporaryFile() as empty_file:
+            bundle_mtime = os.path.getmtime(bundle_file)
+            os.utime(empty_file.name, (bundle_mtime, bundle_mtime))
+            configuration_file = invoke_bndl(empty_file.name, 'bundle', args)
+            configuration_file_name = os.path.basename(configuration_file)
+            bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
     files = [('bundleConf', ('bundle.conf', string_io(bundle_conf)))]
     if bundle_conf_overlay is not None:
@@ -277,10 +324,10 @@ def open_bundle(bundle_file_name, bundle_file, bundle_conf):
         raise MalformedBundleError('Unable to name bundle due to missing digest. '
                                    'Ensure file is produced with latest shazar')
     elif digest is not None:
-        bundle_conf = ConfigFactory.parse_string(bundle_conf)
+        parsed_bundle_conf = ConfigFactory.parse_string(bundle_conf)
 
-        if 'name' in bundle_conf:
-            bundle_file_name = bundle_conf['name'] + '-' + digest[1] + '.zip'
+        if 'name' in parsed_bundle_conf:
+            bundle_file_name = parsed_bundle_conf['name'] + '-' + digest[1] + '.zip'
         elif bundle_file_name is None:
             raise MalformedBundleError('Unable to name bundle. Add a "name" value to bundle.conf')
 
