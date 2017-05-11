@@ -525,3 +525,101 @@ class TestBndlCreate(CliTestCase):
                         )
         finally:
             shutil.rmtree(temp_dir)
+
+    def test_bundle_envs(self):
+        temp_dir = tempfile.mkdtemp()
+
+        try:
+            with tempfile.NamedTemporaryFile() as file_out:
+                args = create_attributes_object({
+                    'name': None,
+                    'format': 'bundle',
+                    'source': temp_dir,
+                    'output': file_out.name,
+                    'use_shazar': False,
+                    'envs': [
+                        'ENV1=123',
+                        'ENV2=456'
+                    ]
+                })
+
+                open(os.path.join(temp_dir, 'bundle.conf'), 'wb').close()
+
+                self.assertEqual(bndl_create.bndl_create(args), 0)
+                self.assertTrue(tarfile.is_tarfile(file_out.name))
+
+                with tarfile.open(file_out.name, 'r') as tar:
+                    saw_bundle = False
+                    saw_config = False
+
+                    for entry in tar:
+                        if entry.name == 'bundle/bundle.conf':
+                            saw_bundle = True
+                            self.assertEqual(tar.extractfile(entry).read().decode("UTF-8"), '{}')
+
+                        elif entry.name == 'bundle/runtime-config.sh':
+                            saw_config = True
+                            self.assertEqual(
+                                tar.extractfile(entry).read().decode("UTF-8"),
+                                strip_margin(
+                                    '''|export 'ENV1=123'
+                                       |export 'ENV2=456\'''')
+                            )
+
+                    self.assertTrue(saw_bundle)
+                    self.assertTrue(saw_config)
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_bundle_envs_append(self):
+        temp_dir = tempfile.mkdtemp()
+
+        try:
+            with tempfile.NamedTemporaryFile() as file_out:
+                args = create_attributes_object({
+                    'name': None,
+                    'format': 'bundle',
+                    'source': temp_dir,
+                    'output': file_out.name,
+                    'use_shazar': False,
+                    'envs': [
+                        'ENV1=123',
+                        'ENV2=456'
+                    ]
+                })
+
+                open(os.path.join(temp_dir, 'bundle.conf'), 'wb').close()
+
+                with open(os.path.join(temp_dir, 'runtime-config.sh'), 'w') as config:
+                    config.write(
+                        strip_margin(
+                            '''|export MY_ENV=hello'''
+                        )
+                    )
+
+                self.assertEqual(bndl_create.bndl_create(args), 0)
+                self.assertTrue(tarfile.is_tarfile(file_out.name))
+
+                with tarfile.open(file_out.name, 'r') as tar:
+                    saw_bundle = False
+                    saw_config = False
+
+                    for entry in tar:
+                        if entry.name == 'bundle/bundle.conf':
+                            saw_bundle = True
+                            self.assertEqual(tar.extractfile(entry).read().decode("UTF-8"), '{}')
+
+                        elif entry.name == 'bundle/runtime-config.sh':
+                            saw_config = True
+                            self.assertEqual(
+                                tar.extractfile(entry).read().decode("UTF-8"),
+                                strip_margin(
+                                    '''|export MY_ENV=hello
+                                       |export 'ENV1=123'
+                                       |export 'ENV2=456\'''')
+                            )
+
+                    self.assertTrue(saw_bundle)
+                    self.assertTrue(saw_config)
+        finally:
+            shutil.rmtree(temp_dir)
