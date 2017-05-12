@@ -29,7 +29,7 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     components_tree.put(component_name, oci_tree)
 
     if args.use_default_endpoints and 'config' in oci_config and 'ExposedPorts' in oci_config['config']:
-        check_arguments = []
+        check_arguments = ['--any-address']
 
         for exposed_port in sorted(oci_config['config']['ExposedPorts']):
             type_parts = exposed_port.split('/', 1)

@@ -244,6 +244,7 @@ class TestBndlOci(CliTestCase):
                             |    file-system-type = "universal"
                             |    start-command = [
                             |      "check"
+                            |      "--any-address"
                             |      "$MY_COMPONENT_UDP_80_HOST"
                             |    ]
                             |    endpoints {}
@@ -355,6 +356,7 @@ class TestBndlOci(CliTestCase):
                             |    file-system-type = "universal"
                             |    start-command = [
                             |      "check"
+                            |      "--any-address"
                             |      "$MY_COMPONENT_TCP_80_HOST"
                             |      "$MY_COMPONENT_UDP_8080_HOST"
                             |    ]
@@ -495,6 +497,7 @@ class TestBndlOci(CliTestCase):
                             |    file-system-type = "universal"
                             |    start-command = [
                             |      "check"
+                            |      "--any-address"
                             |      "$MY_COMPONENT_TCP_80_HOST"
                             |      "$MY_COMPONENT_UDP_8080_HOST"
                             |    ]
