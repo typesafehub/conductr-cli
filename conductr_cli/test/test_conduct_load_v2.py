@@ -1,5 +1,5 @@
 from conductr_cli.test.cli_test_case import create_temp_bundle, strip_margin, as_error, \
-    create_temp_bundle_with_contents
+    create_temp_bundle_with_contents, create_attributes_object
 from conductr_cli.test.conduct_load_test_base import ConductLoadTestBase
 from conductr_cli import conduct_load, logging_setup
 from unittest.mock import call, patch, MagicMock, Mock
@@ -449,7 +449,10 @@ class TestConductLoadCommand(ConductLoadTestBase):
         args.update({'configuration': config_file})
         input_args = MagicMock(**args)
 
-        bndl_mock = MagicMock(side_effect=['/my/bundle', '/my/config'])
+        bndl_mock = MagicMock(side_effect=[
+            create_attributes_object({'name': '/my/bundle'}),
+            create_attributes_object({'name': '/my/config'})
+        ])
 
         with patch('conductr_cli.resolver.resolve_bundle', resolve_bundle_mock), \
                 patch('conductr_cli.resolver.resolve_bundle_configuration', resolve_bundle_configuration_mock), \
@@ -507,7 +510,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
     def test_not_bundle_no_config_invoke_bndl(self):
         conf_mock = MagicMock(return_value='mock bundle.conf')
         string_io_mock = MagicMock(return_value='mock bundle.conf - string i/o')
-        bndl_mock = MagicMock(return_value=self.bundle_file)
+        bndl_mock = MagicMock(return_value=create_attributes_object({'name': self.bundle_file}))
         with \
                 patch('conductr_cli.bundle_utils.conf', conf_mock), \
                 patch('conductr_cli.conduct_load.string_io', string_io_mock), \

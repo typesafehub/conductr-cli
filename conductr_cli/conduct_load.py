@@ -1,6 +1,6 @@
 from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
-from conductr_cli import bndl_main, bundle_utils, conduct_request, conduct_url, screen_utils, validation
+from conductr_cli import bndl_main, bundle_utils, conduct_request, conduct_url, constants, screen_utils, validation
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
 from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
@@ -214,7 +214,7 @@ def invoke_bndl(input, format=None, additional_args=None):
     if return_code != 0:
         sys.exit(return_code)
 
-    return temp_file.name
+    return temp_file
 
 
 def load_v2(args):
@@ -231,7 +231,8 @@ def load_v2(args):
                                                                     args.bundle, args.offline_mode)
 
     if not is_bundle(bundle_file):
-        bundle_file = invoke_bndl(bundle_file)
+        bundle_fileobj = invoke_bndl(bundle_file)
+        bundle_file = bundle_fileobj.name
 
     bundle_conf = bundle_utils.conf(bundle_file)
 
@@ -247,14 +248,15 @@ def load_v2(args):
             resolver.resolve_bundle_configuration(custom_settings, configuration_cache_dir,
                                                   args.configuration, args.offline_mode)
         if not is_bundle(configuration_file) or bndl_arguments_present(args):
-            configuration_file = invoke_bndl(configuration_file, 'bundle', args)
+            configuration_fileobj = invoke_bndl(configuration_file, 'bundle', args)
+            configuration_file = configuration_fileobj.name
             configuration_file_name = os.path.basename(configuration_file)
         bundle_conf_overlay = bundle_utils.conf(configuration_file)
     elif bndl_arguments_present(args):
         with tempfile.NamedTemporaryFile() as empty_file:
-            bundle_mtime = os.path.getmtime(bundle_file)
-            os.utime(empty_file.name, (bundle_mtime, bundle_mtime))
-            configuration_file = invoke_bndl(empty_file.name, 'bundle', args)
+            os.utime(empty_file.name, (constants.SHAZAR_TIMESTAMP_MIN, constants.SHAZAR_TIMESTAMP_MIN))
+            configuration_fileobj = invoke_bndl(empty_file.name, 'bundle', args)
+            configuration_file = configuration_fileobj.name
             configuration_file_name = os.path.basename(configuration_file)
             bundle_conf_overlay = bundle_utils.conf(configuration_file)
 
