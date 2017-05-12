@@ -4,6 +4,7 @@ import logging
 import urllib
 import arrow
 import platform
+import socket
 
 from pyhocon.exceptions import ConfigException
 from requests import status_codes
@@ -482,6 +483,8 @@ def handle_hostname_lookup_error(func):
         try:
             return func(*args, **kwargs)
         except HostnameLookupError:
+            machine_hostname = socket.gethostname()
+
             log = get_logger_for_func(func)
             log.error('Hostname lookup on your machine will take more than 5 seconds '
                       'which will result in a ConductR startup failure')
@@ -490,8 +493,8 @@ def handle_hostname_lookup_error(func):
             log.error('To speed up the hostname lookup add your macOS hostname to /etc/hosts')
             log.error('Resolves your hostname on the terminal with: hostname')
             log.error('Sample /etc/hosts file:')
-            log.error('127.0.0.1   localhost mbpro.local')
-            log.error('::1         localhost mbpro.local')
+            log.error('127.0.0.1   localhost {}'.format(machine_hostname))
+            log.error('::1         localhost {}'.format(machine_hostname))
             return False
 
             # Do not change the wrapped function name,
