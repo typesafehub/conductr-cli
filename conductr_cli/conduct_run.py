@@ -7,6 +7,7 @@ import logging
 @validation.handle_connection_error
 @validation.handle_http_error
 @validation.handle_wait_timeout_error
+@validation.handle_bundle_scale_error
 def run(args):
     """`conduct run` command"""
 

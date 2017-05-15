@@ -124,3 +124,34 @@ class TestConductEventsCommand(CliTestCase):
             strip_margin("""|TIME  EVENT  DESC
                             |"""),
             self.output(stdout))
+
+
+class TestGetBundleEvents(CliTestCase):
+    def test_get_bundle_events(self):
+        request_url = 'http://url'
+        url_mock = MagicMock(return_value=request_url)
+
+        bundle_id = 'bundle-id'
+        dcos_mode = True
+        host = '10.0.1.1'
+        conductr_auth = ('username', 'password')
+        server_verification_file = MagicMock()
+        args = MagicMock(**{
+            'dcos_mode': dcos_mode,
+            'host': host,
+            'conductr_auth': conductr_auth,
+            'server_verification_file': server_verification_file,
+            'bundle': bundle_id
+        })
+
+        mock_get = self.respond_with(200, '[]')
+
+        count = 3
+
+        with patch('conductr_cli.conduct_url.url', url_mock), \
+                patch('conductr_cli.conduct_request.get', mock_get):
+            self.assertEqual([], conduct_events.get_bundle_events(args, count))
+
+        url_mock.assert_called_once_with('bundles/{}/events?count={}'.format(bundle_id, count), args)
+        mock_get.assert_called_once_with(dcos_mode, host, request_url, auth=conductr_auth, timeout=5,
+                                         verify=server_verification_file)

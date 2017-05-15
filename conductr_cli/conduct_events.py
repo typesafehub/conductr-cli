@@ -12,17 +12,13 @@ def events(args):
     """`conduct events` command"""
 
     log = logging.getLogger(__name__)
-    request_url = conduct_url.url('bundles/{}/events?count={}'.format(quote_plus(args.bundle), args.lines), args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), request_url, auth=args.conductr_auth,
-                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
-    validation.raise_for_status_inc_3xx(response)
-
+    bundle_events = get_bundle_events(args, args.lines)
     data = [
         {
             'time': validation.format_timestamp(event['timestamp'], args),
             'event': event['event'],
             'description': event['description']
-        } for event in json.loads(response.text)
+        } for event in bundle_events
     ]
     data.insert(0, {'time': 'TIME', 'event': 'EVENT', 'description': 'DESC'})
 
@@ -36,3 +32,11 @@ def events(args):
 {description: <{description_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
 
     return True
+
+
+def get_bundle_events(args, count):
+    request_url = conduct_url.url('bundles/{}/events?count={}'.format(quote_plus(args.bundle), count), args)
+    response = conduct_request.get(args.dcos_mode, conductr_host(args), request_url, auth=args.conductr_auth,
+                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
+    validation.raise_for_status_inc_3xx(response)
+    return json.loads(response.text)

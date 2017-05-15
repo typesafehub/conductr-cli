@@ -179,6 +179,10 @@ class TestConduct(TestCase):
         self.assertEqual(args.wait_timeout, 60)
         self.assertEqual(args.scale, 5)
         self.assertEqual(args.bundle, 'path-to-bundle')
+        # These args are for displaying bundle events and logs when error occurs during scale.
+        self.assertEqual(args.lines, 10)
+        self.assertEqual(args.utc, False)
+        self.assertEqual(args.follow, False)
 
     def test_parser_stop(self):
         args = self.parser.parse_args('stop path-to-bundle'.split())

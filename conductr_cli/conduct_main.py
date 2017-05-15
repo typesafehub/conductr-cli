@@ -172,10 +172,27 @@ def add_dcos_mode_args(sub_parser, dcos_mode):
         add_dcos_settings(sub_parser)
 
 
-def add_date_args(sub_parser):
+def add_date_args(sub_parser, show_help=True):
     sub_parser.add_argument('--utc',
                             action='store_true',
-                            help='Convert the date/time of the events to UTC')
+                            help='Convert the date/time of the events to UTC' if show_help else argparse.SUPPRESS)
+
+
+def add_lines_args(subparser, show_help=True):
+    subparser.add_argument('-n', '--lines',
+                           type=int,
+                           default=10,
+                           help='The number of logs to fetch\n'
+                                'Defaults to 10' if show_help else argparse.SUPPRESS)
+
+
+def add_follow_args(subparser, show_help=True):
+    subparser.add_argument('-f', '--follow',
+                           help='Outputs log events as they occur. Analogous to UNIX\'s `tail -F`' if show_help
+                           else argparse.SUPPRESS,
+                           default=False,
+                           dest='follow',
+                           action='store_true')
 
 
 def add_offline_mode(sub_parser):
@@ -290,6 +307,13 @@ def build_parser(dcos_mode):
     add_default_arguments(run_parser, dcos_mode)
     add_wait_timeout(run_parser)
     add_no_wait(run_parser)
+
+    # These are the arguments to display the bundle events and logs when error occurs during waiting for bundle scale.
+    # As such, the help text for these arguments are not displayed.
+    add_date_args(run_parser, show_help=False)
+    add_lines_args(run_parser, show_help=False)
+    add_follow_args(run_parser, show_help=False)
+
     run_parser.set_defaults(func=conduct_run.run)
 
     # Sub-parser for `stop` sub-command
@@ -319,11 +343,7 @@ def build_parser(dcos_mode):
                                           help='Show bundle events',
                                           formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(events_parser, dcos_mode)
-    events_parser.add_argument('-n', '--lines',
-                               type=int,
-                               default=10,
-                               help='The number of events to fetch\n'
-                                    'Defaults to 10')
+    add_lines_args(events_parser)
     add_date_args(events_parser)
     events_parser.add_argument('bundle',
                                help='The ID or name of the bundle')
@@ -334,16 +354,8 @@ def build_parser(dcos_mode):
                                         help='Show bundle logs',
                                         formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(logs_parser, dcos_mode)
-    logs_parser.add_argument('-n', '--lines',
-                             type=int,
-                             default=10,
-                             help='The number of logs to fetch\n'
-                                  'Defaults to 10')
-    logs_parser.add_argument('-f', '--follow',
-                             help='Outputs log events as they occur. Analogous to UNIX\'s `tail -F`',
-                             default=False,
-                             dest='follow',
-                             action='store_true')
+    add_lines_args(logs_parser)
+    add_follow_args(logs_parser)
     add_date_args(logs_parser)
     logs_parser.add_argument('bundle',
                              help='The ID or name of the bundle')
