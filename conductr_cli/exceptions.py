@@ -66,7 +66,7 @@ class MalformedBintrayCredentialsError(Exception):
         self.credential_file_path = credential_file_path
 
     def __str__(self):
-        return repr(self.value)
+        return repr(self.credential_file_path)
 
 
 class InsecureFilePermissions(Exception):
@@ -83,6 +83,14 @@ class WaitTimeoutError(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+
+class BundleScaleError(Exception):
+    def __init__(self, bundle_id):
+        self.bundle_id = bundle_id
+
+    def __str__(self):
+        return repr(self.bundle_id)
 
 
 class ContinuousDeliveryError(Exception):

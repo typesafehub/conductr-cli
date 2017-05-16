@@ -11,7 +11,7 @@ from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
-from conductr_cli.exceptions import BindAddressNotFound, ConductrStartupError, \
+from conductr_cli.exceptions import BindAddressNotFound, BundleScaleError, ConductrStartupError, \
     InstanceCountError, MalformedBundleError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayResolutionError, \
     BintrayUnreachableError, BundleResolutionError, WaitTimeoutError, InsecureFilePermissions, \
@@ -390,8 +390,8 @@ def handle_bintray_resolution_error(func):
             log.error(e.message)
             return False
 
-            # Do not change the wrapped function name,
-            # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -409,8 +409,8 @@ def handle_bintray_unreachable_error(func):
             log.error('Please check your internet connection and try again.')
             return False
 
-            # Do not change the wrapped function name,
-            # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -436,8 +436,8 @@ def handle_bintray_credentials_error(func):
             log.error('  http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html')
             return False
 
-        # Do not change the wrapped function name,
-        # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -470,8 +470,8 @@ def handle_jvm_validation_error(func):
             log.error('Please ensure Oracle or OpenJDK JVM 1.8 and above is installed.')
             return False
 
-        # Do not change the wrapped function name,
-        # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -497,8 +497,8 @@ def handle_hostname_lookup_error(func):
             log.error('::1         localhost {}'.format(machine_hostname))
             return False
 
-            # Do not change the wrapped function name,
-            # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -515,8 +515,8 @@ def handle_docker_validation_error(func):
                 log.error(message)
             return False
 
-        # Do not change the wrapped function name,
-        # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -533,8 +533,8 @@ def handle_license_load_error(func):
             log.error(e.message)
             return False
 
-        # Do not change the wrapped function name,
-        # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -551,8 +551,8 @@ def handle_license_download_error(func):
                 log.error(message)
             return False
 
-        # Do not change the wrapped function name,
-        # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
@@ -567,8 +567,22 @@ def handle_bndl_create_error(func):
             log.error('bndl: {}'.format(e))
             return 2
 
-            # Do not change the wrapped function name,
-            # so argparse configuration can be tested.
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
+
+
+def handle_bundle_scale_error(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except BundleScaleError:
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
     handler.__name__ = func.__name__
 
     return handler
