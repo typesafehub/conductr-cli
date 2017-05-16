@@ -131,7 +131,17 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, {}),
-            strip_margin('''|annotations {}
+            strip_margin('''|annotations {
+                            |  com {
+                            |    lightbend {
+                            |      conductr {
+                            |        oci-image-tags {
+                            |          my-component = "testing"
+                            |        }
+                            |      }
+                            |    }
+                            |  }
+                            |}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
@@ -150,10 +160,7 @@ class TestBndlOci(CliTestCase):
                             |  my-component {
                             |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
-                            |    start-command = [
-                            |      "ociImageTag"
-                            |      "testing"
-                            |    ]
+                            |    start-command = []
                             |    endpoints {}
                             |  }
                             |}''')
@@ -163,7 +170,17 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(extended_args, 'my-other-component', {}, {}),
-            strip_margin('''|annotations {}
+            strip_margin('''|annotations {
+                            |  com {
+                            |    lightbend {
+                            |      conductr {
+                            |        oci-image-tags {
+                            |          my-other-component = "latest"
+                            |        }
+                            |      }
+                            |    }
+                            |  }
+                            |}
                             |compatibilityVersion = "5"
                             |diskSpace = "16384"
                             |memory = "65536"
@@ -181,10 +198,7 @@ class TestBndlOci(CliTestCase):
                             |  my-other-component {
                             |    description = "testing desc 2"
                             |    file-system-type = "oci-image"
-                            |    start-command = [
-                            |      "ociImageTag"
-                            |      "latest"
-                            |    ]
+                            |    start-command = []
                             |    endpoints {}
                             |  }
                             |}''')
@@ -208,7 +222,17 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
-            strip_margin('''|annotations {}
+            strip_margin('''|annotations {
+                            |  com {
+                            |    lightbend {
+                            |      conductr {
+                            |        oci-image-tags {
+                            |          my-component = "testing"
+                            |        }
+                            |      }
+                            |    }
+                            |  }
+                            |}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
@@ -227,10 +251,7 @@ class TestBndlOci(CliTestCase):
                             |  my-component {
                             |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
-                            |    start-command = [
-                            |      "ociImageTag"
-                            |      "testing"
-                            |    ]
+                            |    start-command = []
                             |    endpoints {
                             |      my-component-udp-80 {
                             |        bind-protocol = "udp"
@@ -269,7 +290,17 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
-            strip_margin('''|annotations {}
+            strip_margin('''|annotations {
+                            |  com {
+                            |    lightbend {
+                            |      conductr {
+                            |        oci-image-tags {
+                            |          my-component = "testing"
+                            |        }
+                            |      }
+                            |    }
+                            |  }
+                            |}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
@@ -288,10 +319,7 @@ class TestBndlOci(CliTestCase):
                             |  my-component {
                             |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
-                            |    start-command = [
-                            |      "ociImageTag"
-                            |      "testing"
-                            |    ]
+                            |    start-command = []
                             |    endpoints {}
                             |  }
                             |}''')
@@ -315,7 +343,17 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
-            strip_margin('''|annotations {}
+            strip_margin('''|annotations {
+                            |  com {
+                            |    lightbend {
+                            |      conductr {
+                            |        oci-image-tags {
+                            |          my-component = "testing"
+                            |        }
+                            |      }
+                            |    }
+                            |  }
+                            |}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
@@ -334,10 +372,7 @@ class TestBndlOci(CliTestCase):
                             |  my-component {
                             |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
-                            |    start-command = [
-                            |      "ociImageTag"
-                            |      "testing"
-                            |    ]
+                            |    start-command = []
                             |    endpoints {
                             |      my-component-tcp-80 {
                             |        bind-protocol = "tcp"
@@ -383,7 +418,17 @@ class TestBndlOci(CliTestCase):
 
         self.assertEqual(
             bndl_oci.oci_image_bundle_conf(base_args, 'my-component', {}, config),
-            strip_margin('''|annotations {}
+            strip_margin('''|annotations {
+                            |  com {
+                            |    lightbend {
+                            |      conductr {
+                            |        oci-image-tags {
+                            |          my-component = "testing"
+                            |        }
+                            |      }
+                            |    }
+                            |  }
+                            |}
                             |compatibilityVersion = "0"
                             |diskSpace = 1073741824
                             |memory = 402653184
@@ -402,10 +447,7 @@ class TestBndlOci(CliTestCase):
                             |  my-component {
                             |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
-                            |    start-command = [
-                            |      "ociImageTag"
-                            |      "testing"
-                            |    ]
+                            |    start-command = []
                             |    endpoints {
                             |      my-component-tcp-80 {
                             |        bind-protocol = "tcp"
@@ -453,6 +495,11 @@ class TestBndlOci(CliTestCase):
                             |  com {
                             |    lightbend {
                             |      test = 123
+                            |      conductr {
+                            |        oci-image-tags {
+                            |          my-component = "testing"
+                            |        }
+                            |      }
                             |    }
                             |  }
                             |  description = "hello world"
@@ -475,10 +522,7 @@ class TestBndlOci(CliTestCase):
                             |  my-component {
                             |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
-                            |    start-command = [
-                            |      "ociImageTag"
-                            |      "testing"
-                            |    ]
+                            |    start-command = []
                             |    endpoints {
                             |      my-component-tcp-80 {
                             |        bind-protocol = "tcp"

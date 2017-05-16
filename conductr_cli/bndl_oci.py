@@ -11,18 +11,20 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     conf = ConfigFactory.parse_string('')
     load_bundle_args_into_conf(conf, args, with_defaults=True, validate_components=False)
 
-    if 'annotations' in oci_manifest and oci_manifest['annotations'] is not None:
-        annotations_tree = conf.get('annotations')
+    annotations_tree = conf.get('annotations')
 
+    if 'annotations' in oci_manifest and oci_manifest['annotations'] is not None:
         for key in sorted(oci_manifest['annotations']):
             annotations_tree.put(key, oci_manifest['annotations'][key])
+
+    annotations_tree.put('com.lightbend.conductr.oci-image-tags.{}'.format(component_name), args.image_tag)
 
     endpoints_tree = ConfigTree()
 
     oci_tree = ConfigTree()
     oci_tree.put('description', args.component_description)
     oci_tree.put('file-system-type', 'oci-image')
-    oci_tree.put('start-command', ['ociImageTag', args.image_tag])
+    oci_tree.put('start-command', [])
     oci_tree.put('endpoints', endpoints_tree)
 
     components_tree = ConfigTree()
