@@ -2247,7 +2247,10 @@ class TestMergeWithOsEnv(CliTestCase):
         os_env = {'os': 'env'}
         mock_copy = MagicMock(return_value=os_env)
 
-        with patch('os.environ.copy', mock_copy):
+        mock_sys_meipass = MagicMock(return_value=None)
+
+        with patch('os.environ.copy', mock_copy), \
+                patch('conductr_cli.pyinstaller_info.sys_meipass', mock_sys_meipass):
             result = sandbox_run_jvm.merge_with_os_envs(['a=1', 'b=2'], ['c=3'])
             self.assertEqual({
                 'a': '1',
@@ -2256,5 +2259,136 @@ class TestMergeWithOsEnv(CliTestCase):
                 'os': 'env',
             }, result)
 
-    def test_return_none_if_empty_inputs(self):
-        self.assertIsNone(sandbox_run_jvm.merge_with_os_envs([], []))
+    def test_return_os_env_if_empty_inputs(self):
+        os_env = {'os': 'env'}
+        mock_copy = MagicMock(return_value=os_env)
+
+        mock_sys_meipass = MagicMock(return_value=None)
+
+        with patch('os.environ.copy', mock_copy), \
+                patch('conductr_cli.pyinstaller_info.sys_meipass', mock_sys_meipass):
+            result = sandbox_run_jvm.merge_with_os_envs([], [])
+            self.assertEqual(os_env, result)
+
+    def test_cleanup_pyinstaller_paths(self):
+        pyinstaller_path = '/tmp/_MEIkhfrhw'
+
+        os_env = {
+            'os': 'env',
+            'PATH': pyinstaller_path,
+            'LD_LIBRARY_PATH': pyinstaller_path,
+        }
+        mock_copy = MagicMock(return_value=os_env)
+
+        mock_sys_meipass = MagicMock(return_value=pyinstaller_path)
+
+        with patch('os.environ.copy', mock_copy), \
+                patch('conductr_cli.pyinstaller_info.sys_meipass', mock_sys_meipass):
+            result = sandbox_run_jvm.merge_with_os_envs(['a=1', 'b=2'], ['c=3'])
+            self.assertEqual({
+                'a': '1',
+                'b': '2',
+                'c': '3',
+                'os': 'env',
+            }, result)
+
+    def test_cleanup_pyinstaller_paths_should_not_clear_overrides(self):
+        pyinstaller_path = '/tmp/_MEIkhfrhw'
+
+        os_env = {
+            'os': 'env',
+            'PATH': pyinstaller_path,
+            'LD_LIBRARY_PATH': pyinstaller_path,
+        }
+        mock_copy = MagicMock(return_value=os_env)
+
+        mock_sys_meipass = MagicMock(return_value=pyinstaller_path)
+
+        with patch('os.environ.copy', mock_copy), \
+                patch('conductr_cli.pyinstaller_info.sys_meipass', mock_sys_meipass):
+            result = sandbox_run_jvm.merge_with_os_envs(['LD_LIBRARY_PATH=/my/path'], ['PATH=/other/path'])
+            self.assertEqual({
+                'LD_LIBRARY_PATH': '/my/path',
+                'PATH': '/other/path',
+                'os': 'env',
+            }, result)
+
+    def test_cleanup_pyinstaller_paths_if_empty_inputs(self):
+        pyinstaller_path = '/tmp/_MEIkhfrhw'
+
+        os_env = {
+            'os': 'env',
+            'PATH': pyinstaller_path,
+            'LD_LIBRARY_PATH': pyinstaller_path,
+        }
+        mock_copy = MagicMock(return_value=os_env)
+
+        mock_sys_meipass = MagicMock(return_value=pyinstaller_path)
+
+        with patch('os.environ.copy', mock_copy), \
+                patch('conductr_cli.pyinstaller_info.sys_meipass', mock_sys_meipass):
+            result = sandbox_run_jvm.merge_with_os_envs([], [])
+            self.assertEqual({
+                'os': 'env',
+            }, result)
+
+
+class TestRemovePathFromEnv(CliTestCase):
+    def test_leaving_input_as_is(self):
+        env = {
+            'USER': 'john'
+        }
+        result = sandbox_run_jvm.remove_path_from_env(env, 'PATH', '/tmp/_MEIkhfrhw')
+        self.assertEqual(env, result)
+
+    def test_remove_value(self):
+        env = {
+            'USER': 'john',
+            'PATH': '/tmp/_MEIkhfrhw:/home/bar/:/usr/local'
+        }
+        result = sandbox_run_jvm.remove_path_from_env(env, 'PATH', '/tmp/_MEIkhfrhw')
+        expected_result = {
+            'USER': 'john',
+            'PATH': '/home/bar/:/usr/local'
+        }
+        self.assertEqual(expected_result, result)
+
+        env = {
+            'USER': 'john',
+            'PATH': '/home/bar/:/tmp/_MEIkhfrhw:/usr/local'
+        }
+        result = sandbox_run_jvm.remove_path_from_env(env, 'PATH', '/tmp/_MEIkhfrhw')
+        expected_result = {
+            'USER': 'john',
+            'PATH': '/home/bar/:/usr/local'
+        }
+        self.assertEqual(expected_result, result)
+
+        env = {
+            'USER': 'john',
+            'PATH': '/home/bar/:/usr/local:/tmp/_MEIkhfrhw'
+        }
+        result = sandbox_run_jvm.remove_path_from_env(env, 'PATH', '/tmp/_MEIkhfrhw')
+        expected_result = {
+            'USER': 'john',
+            'PATH': '/home/bar/:/usr/local'
+        }
+        self.assertEqual(expected_result, result)
+
+    def test_delete_key(self):
+        env = {
+            'USER': 'john',
+            'PATH': '/tmp/_MEIkhfrhw'
+        }
+        result = sandbox_run_jvm.remove_path_from_env(env, 'PATH', '/tmp/_MEIkhfrhw')
+        expected_result = {
+            'USER': 'john',
+        }
+        self.assertEqual(expected_result, result)
+
+        env = {
+            'PATH': '/tmp/_MEIkhfrhw'
+        }
+        result = sandbox_run_jvm.remove_path_from_env(env, 'PATH', '/tmp/_MEIkhfrhw')
+        expected_result = {}
+        self.assertEqual(expected_result, result)
