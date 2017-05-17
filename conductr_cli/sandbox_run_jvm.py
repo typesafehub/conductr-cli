@@ -1,4 +1,5 @@
-from conductr_cli import conduct_main, host, license_validation, sandbox_stop, sandbox_common, sandbox_version
+from conductr_cli import conduct_main, host, license_validation, pyinstaller_info, sandbox_stop, sandbox_common, \
+    sandbox_version
 from conductr_cli.constants import DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, DEFAULT_API_VERSION, \
     DEFAULT_LICENSE_FILE, DEFAULT_SERVICE_LOCATOR_PORT, FEATURE_PROVIDE_PROXYING, DEFAULT_SANDBOX_IMAGE_DIR
 from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError, InstanceCountError, \
@@ -698,8 +699,13 @@ def artefact_os_name():
 def merge_with_os_envs(*args):
     envs_to_override = [v for list in args for v in list]
 
+    result = os.environ.copy()
+    pyinstaller_base_path = pyinstaller_info.sys_meipass()
+    if pyinstaller_base_path:
+        result = remove_path_from_env(result, 'PATH', pyinstaller_base_path)
+        result = remove_path_from_env(result, 'LD_LIBRARY_PATH', pyinstaller_base_path)
+
     if envs_to_override:
-        result = os.environ.copy()
         for env in envs_to_override:
             if '=' in env:
                 env_split = env.split('=', 1)
@@ -707,6 +713,18 @@ def merge_with_os_envs(*args):
                 value = env_split[-1]
                 result.update({key: value})
 
-        return result
-    else:
-        return None
+    return result
+
+
+def remove_path_from_env(env, key, path_to_remove):
+    result = env.copy()
+
+    if key in env:
+        paths = env[key].split(':')
+        paths_cleaned = [path for path in paths if path != path_to_remove]
+        if len(paths_cleaned) > 0:
+            result.update({key: ':'.join(paths_cleaned)})
+        else:
+            del result[key]
+
+    return result
