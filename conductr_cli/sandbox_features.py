@@ -570,18 +570,28 @@ def collect_features(feature_args, no_default_features, image_version, offline_m
         feature = feature_lookup[feature_name](args, image_version, offline_mode)
         features.append(feature)
 
+    # Calculate default and mandatory features. Mandatory features are always enabled whereas default features
+    # are enabled unless a `--no-default-features` argument is provided.
+
+    # Note that OCI-in-Docker is a default feature on linux (thus can be disabled) whereas it is mandatory on macOS
+
     def add_default_features(features):
         names = [feature.name for feature in features]
-
-        def add_proxying(features):
-            if ProxyingFeature.name not in names:
-                features.insert(0, feature_lookup[ProxyingFeature.name]([], image_version, offline_mode))
 
         def add_logging_lite(features):
             if LoggingFeature.name not in names:
                 features.insert(0, feature_lookup[LiteLoggingFeature.name]([], image_version, offline_mode))
 
+        def add_oci_in_docker(features):
+            if OciInDockerFeature.name not in names and host.is_linux():
+                features.insert(0, feature_lookup[OciInDockerFeature.name]([], image_version, offline_mode))
+
+        def add_proxying(features):
+            if ProxyingFeature.name not in names:
+                features.insert(0, feature_lookup[ProxyingFeature.name]([], image_version, offline_mode))
+
         add_logging_lite(features)
+        add_oci_in_docker(features)
         add_proxying(features)
 
     def add_mandatory_features(features):
