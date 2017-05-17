@@ -103,7 +103,8 @@ class TestBndlDocker(CliTestCase):
                     'Labels': {
                         'description': 'This is a test',
                         'language': 'English'
-                    }
+                    },
+                    'User': 'ubuntu'
                 }
             },
             sizes={'some digest': 1234},
@@ -123,6 +124,8 @@ class TestBndlDocker(CliTestCase):
                 'Cmd': ['/bin'],
                 'Env': ['TEST=123'],
                 'ExposedPorts': {'80/tcp': {}},
+                'Labels': {'description': 'This is a test', 'language': 'English'},
+                'User': 'ubuntu',
                 'WorkingDir': '/root',
                 'Volumes': '/data'
             },
@@ -137,8 +140,8 @@ class TestBndlDocker(CliTestCase):
                 'mediaType': 'application/vnd.oci.image.layer.v1.tar+gzip'
             }],
             'config': {
-                'digest': 'sha256:689390ae64447c18367e97bc8745c535c9978f4a57006d091be7e3baa081bd2c',
-                'size': 414,
+                'digest': 'sha256:631e3800c578121c40159ce14556debf46606582b4ee881f2cf6c5c5df43f3d0',
+                'size': 500,
                 'mediaType': 'application/vnd.oci.image.config.v1+json'
             },
             'schemaVersion': 2,
@@ -149,7 +152,7 @@ class TestBndlDocker(CliTestCase):
         })
 
         self.assertEqual(json.loads(data['refs'].decode('UTF-8')), {
-            'digest': 'sha256:416375dd788642653657622b831d2e1901677dbe6b8184aa036cd8c0f2cc3bb1',
+            'digest': 'sha256:591962aa664dc4696fa852de6ecb3eb5c65776d5d5a1ae7522f2ad53640f5abd',
             'mediaType': 'application/vnd.oci.image.manifest.v1+json',
             'size': 380
         })

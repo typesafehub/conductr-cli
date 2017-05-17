@@ -112,6 +112,10 @@ def docker_config_to_oci_image(manifest, config, sizes, layers_to_digests):
 
                 'WorkingDir': config['config']['WorkingDir'] if 'WorkingDir' in config['config'] and
                                                                 config['config']['WorkingDir'] else None,
+                'User': config['config']['User'] if 'User' in config['config'] and
+                                                    config['config']['User'] else None,
+                'Labels': config['config']['Labels'] if 'Labels' in config['config'] and
+                                                        config['config']['Labels'] else None
             }.items()
 
             if v is not None
