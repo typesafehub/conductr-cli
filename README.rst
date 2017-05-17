@@ -114,6 +114,8 @@ To start a ConductR sandbox cluster with 3 nodes and the `visualization` feature
 
 Pick up the latest ConductR version from https://www.lightbend.com/product/conductr/developer
 
+By default, the sandbox is started with a number of default features: proxying, oci-in-docker, and lite-logging. These features can be disabled by providing the `--no-default-features` flag. Note that due to virtualization requirements, OCI-in-Docker is mandatory on macOS and thus cannot be disabled.
+
 To stop this cluster run:
 
 .. code:: bash

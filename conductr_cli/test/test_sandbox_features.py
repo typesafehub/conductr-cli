@@ -34,36 +34,36 @@ class TestFeatures(TestCase):
         mock_system = MagicMock(return_value='Linux')
         with patch('platform.system', mock_system):
             # default features enabled works
-            self.assertEqual([ProxyingFeature, LiteLoggingFeature],
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LiteLoggingFeature],
                              [type(f) for f in collect_features([], False, LATEST_CONDUCTR_VERSION, False)])
 
             # default features disabled works
             self.assertEqual([],
                              [type(f) for f in collect_features([], True, LATEST_CONDUCTR_VERSION, False)])
 
-            self.assertEqual([ProxyingFeature, LiteLoggingFeature, VisualizationFeature],
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LiteLoggingFeature, VisualizationFeature],
                              [type(f) for f in collect_features([['visualization']], False, LATEST_CONDUCTR_VERSION, False)])
 
-            self.assertEqual([ProxyingFeature, LoggingFeature],
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature],
                              [type(f) for f in collect_features([['logging']], False, LATEST_CONDUCTR_VERSION, False)])
 
             self.assertEqual([LoggingFeature],
                              [type(f) for f in collect_features([['logging']], True, LATEST_CONDUCTR_VERSION, False)])
 
             # enable dependencies
-            self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature],
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature],
                              [type(f) for f in collect_features([['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
 
             # allow explicit listing of dependencies
-            self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature],
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature],
                              [type(f) for f in collect_features([['logging'], ['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
 
             # topological ordering for dependencies
-            self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature],
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature],
                              [type(f) for f in collect_features([['monitoring'], ['logging']], False, LATEST_CONDUCTR_VERSION, False)])
 
             # topological ordering and ignore duplicates
-            self.assertEqual([ProxyingFeature, LoggingFeature, MonitoringFeature, VisualizationFeature],
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature, VisualizationFeature],
                              [type(f) for f in collect_features([['monitoring'], ['visualization'], ['logging'], ['monitoring']],
                                                                 False, LATEST_CONDUCTR_VERSION, False)])
 
