@@ -8,10 +8,9 @@ import tempfile
 
 
 class TestBndl(CliTestCase):
-    parser = bndl_main.build_parser()
-
     def test_parser_with_min_params(self):
-        args = self.parser.parse_args(['--name', 'hello', '--image-tag', 'latest'])
+        parser = bndl_main.build_parser()
+        args = parser.parse_args(['--name', 'hello', '--image-tag', 'latest'])
 
         self.assertEqual(args.func.__name__, 'bndl')
         self.assertEqual(args.name, 'hello')
@@ -20,7 +19,8 @@ class TestBndl(CliTestCase):
         self.assertTrue(args.use_default_endpoints)
 
     def test_parser_with_all_params(self):
-        args = self.parser.parse_args([
+        parser = bndl_main.build_parser()
+        args = parser.parse_args([
             'oci-image-dir',
             '--name',
             'world',
@@ -106,13 +106,96 @@ class TestBndl(CliTestCase):
                 'bind-protocol': 'http',
                 'bind-port': 8080,
                 'service-name': 'web',
-                'acls': ['http:/subpath']
+                'acls': [
+                    {'match': None,
+                     'protocol': 'http',
+                     'raw_value': 'http:/subpath',
+                     'rewrite': None,
+                     'value': '/subpath'}
+                ]
             }
         ])
         self.assertEqual(args.envs, ['MESSAGE=hello world'])
 
+    def test_parser_acl_params(self):
+        parser = bndl_main.build_parser()
+        args = parser.parse_args([
+            '-o',
+            '/dev/null',
+            '--endpoint',
+            'web',
+            '--component',
+            'web-component',
+            '--bind-protocol',
+            'http',
+            '--bind-port',
+            '8080',
+            '--service-name',
+            'web',
+            '--acl',
+            'http:/subpath',
+            '--acl',
+            'tcp:[1234, 1235]',
+            '--acl',
+            'udp:[2234, 2235]',
+            '--acl',
+            'http:/subpath',
+            '--path-beg',
+            '--acl',
+            '/subpath',
+            '--path-regex',
+            '--acl',
+            '/subpath',
+            '--path',
+            '--rewrite',
+            '/'
+        ])
+
+        self.assertEqual(args.endpoint_dicts, [
+            {
+                'name': 'web',
+                'component': 'web-component',
+                'bind-protocol': 'http',
+                'bind-port': 8080,
+                'service-name': 'web',
+                'acls': [
+                    {'match': None,
+                     'protocol': 'http',
+                     'raw_value': 'http:/subpath',
+                     'rewrite': None,
+                     'value': '/subpath'},
+                    {'match': None,
+                     'protocol': 'tcp',
+                     'raw_value': 'tcp:[1234, 1235]',
+                     'rewrite': None,
+                     'value': '[1234, 1235]'},
+                    {'match': None,
+                     'protocol': 'udp',
+                     'raw_value': 'udp:[2234, 2235]',
+                     'rewrite': None,
+                     'value': '[2234, 2235]'},
+                    {'match': 'path-beg',
+                     'protocol': 'http',
+                     'raw_value': 'http:/subpath',
+                     'rewrite': None,
+                     'value': '/subpath'},
+                    {'match': 'path-regex',
+                     'protocol': 'http',
+                     'raw_value': '/subpath',
+                     'rewrite': None,
+                     'value': '/subpath'},
+                    {'match': 'path',
+                     'protocol': 'http',
+                     'raw_value': '/subpath',
+                     'rewrite': '/',
+                     'value': '/subpath'}
+                ]
+            }
+        ])
+
     def test_parser_no_args(self):
-        args = self.parser.parse_args([])
+        parser = bndl_main.build_parser()
+        args = parser.parse_args([])
 
         self.assertEqual(args.func.__name__, 'bndl')
         self.assertTrue(args.use_shazar)

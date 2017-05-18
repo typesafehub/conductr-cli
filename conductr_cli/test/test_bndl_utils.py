@@ -175,8 +175,8 @@ class TestBndlUtils(CliTestCase):
                     'component': 'test-bundle',
                     'service-name': 'web',
                     'acls': [
-                        'http:/',
-                        'http:/subpath'
+                        {'value': '/', 'rewrite': None, 'match': 'path', 'protocol': 'http'},
+                        {'value': '/subpath', 'rewrite': None, 'match': 'path', 'protocol': 'http'}
                     ]
                 }),
                 Endpoint({
@@ -189,8 +189,8 @@ class TestBndlUtils(CliTestCase):
                     'component': 'test-bundle',
                     'service-name': 'tcp',
                     'acls': [
-                        'tcp:[5000, 5001]',
-                        'tcp:[5002, 5003]'
+                        {'value': '[5000, 5001]', 'rewrite': None, 'match': None, 'protocol': 'tcp'},
+                        {'value': '[5002, 5003]', 'rewrite': None, 'match': None, 'protocol': 'tcp'}
                     ]
                 }),
                 Endpoint({
@@ -198,8 +198,8 @@ class TestBndlUtils(CliTestCase):
                     'component': 'test-bundle',
                     'service-name': 'udp',
                     'acls': [
-                        'udp:[6000, 6001]',
-                        'udp:[6002, 6003]'
+                        {'value': '[6000, 6001]', 'rewrite': None, 'match': None, 'protocol': 'udp'},
+                        {'value': '[6002, 6003]', 'rewrite': None, 'match': None, 'protocol': 'udp'}
                     ]
                 })
             ]
@@ -372,7 +372,7 @@ class TestBndlUtils(CliTestCase):
                     'name': 'web',
                     'service-name': 'web',
                     'acls': [
-                        'http:/'
+                        {'value': '/', 'rewrite': None, 'match': None, 'protocol': 'http'}
                     ]
                 })
             ]
@@ -438,8 +438,8 @@ class TestBndlUtils(CliTestCase):
                     'component': 'invalid-component',
                     'service-name': 'web',
                     'acls': [
-                        'http:/',
-                        'http:/subpath'
+                        {'value': '/', 'rewrite': None, 'match': None, 'protocol': 'http'},
+                        {'value': '/subpath', 'rewrite': None, 'match': None, 'protocol': 'http'}
                     ]
                 })
             ]
@@ -473,7 +473,7 @@ class TestBndlUtils(CliTestCase):
                     'name': 'web',
                     'service-name': 'web',
                     'acls': [
-                        'http:/'
+                        {'value': '/', 'rewrite': None, 'match': None, 'protocol': 'http'}
                     ]
                 })
             ]
