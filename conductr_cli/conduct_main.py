@@ -325,6 +325,13 @@ def build_parser(dcos_mode):
     add_default_arguments(stop_parser, dcos_mode)
     add_wait_timeout(stop_parser)
     add_no_wait(stop_parser)
+
+    # These are the arguments to display the bundle events and logs when error occurs during waiting for bundle scale.
+    # As such, the help text for these arguments are not displayed.
+    add_date_args(stop_parser, show_help=False)
+    add_lines_args(stop_parser, show_help=False)
+    add_follow_args(stop_parser, show_help=False)
+
     stop_parser.set_defaults(func=conduct_stop.stop)
 
     # Sub-parser for `unload` sub-command
