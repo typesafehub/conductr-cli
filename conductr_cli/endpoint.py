@@ -15,10 +15,9 @@ class Endpoint:
         grouped_acls = defaultdict(list)
         if 'acls' in endpoint_dict:
             for acl in endpoint_dict['acls']:
-                protocol_family, request_mapping = RequestAcl.split_acl_string(acl)
-                grouped_acls[protocol_family].append(request_mapping)
-            for protocol_family, request_mappings in grouped_acls.items():
-                self.acls.append(RequestAcl(protocol_family, request_mappings))
+                grouped_acls[ProtocolFamily[acl['protocol']]].append(acl)
+            for protocol_family, entries in grouped_acls.items():
+                self.acls.append(RequestAcl(protocol_family, entries))
 
         if 'bind-protocol' in endpoint_dict:
             self.bind_protocol = endpoint_dict['bind-protocol']
@@ -56,23 +55,18 @@ class Endpoint:
 
 
 class RequestAcl:
-    def __init__(self, protocol_family, request_mappings):
+    def __init__(self, protocol_family, entries):
         self.request_mappings = []
-        for mapping in request_mappings:
-            if mapping.startswith('[') and mapping.endswith(']'):
-                ports = json.loads(mapping)
+        for mapping in entries:
+            if mapping['value'].startswith('[') and mapping['value'].endswith(']'):
+                ports = json.loads(mapping['value'])
                 if protocol_family is ProtocolFamily.tcp:
                     self.request_mappings.append(TcpRequest(ports))
                 elif protocol_family is ProtocolFamily.udp:
                     self.request_mappings.append(UdpRequest(ports))
-            elif mapping.startswith('/'):
+            elif mapping['value'].startswith('/'):
                 if protocol_family is ProtocolFamily.http:
-                    self.request_mappings.append(HttpRequest(mapping))
-
-    @staticmethod
-    def split_acl_string(acl_string):
-        protocol_family_string, request_mapping = acl_string.split(':', 1)
-        return ProtocolFamily[protocol_family_string], request_mapping
+                    self.request_mappings.append(HttpRequest(mapping['match'], mapping['value'], mapping['rewrite']))
 
     def hocon(self):
         acl_tree = ConfigTree()
@@ -110,14 +104,15 @@ class UdpRequest:
 class HttpRequest:
     protocol_family = ProtocolFamily.http
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, match, value, rewrite):
+        self.match = match
+        self.value = value
+        self.rewrite = rewrite
         self.method = None
-        self.rewrite = None
 
     def hocon(self):
         request_tree = ConfigTree()
-        request_tree.put('path', self.path)
+        request_tree.put(self.match if self.match else 'path', self.value)
         if self.method:
             request_tree.put('method', self.method)
         if self.rewrite:

@@ -44,19 +44,53 @@ def run(argv=None):
 class EndpointAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_strings):
         log = logging.getLogger(__name__)
+
+        def require_endpoint():
+            if not namespace.endpoint_dicts:
+                log.error('bndl: argument {} must be specified after the argument --endpoint'.format(option_strings))
+                sys.exit(2)
+
+        def require_acl():
+            require_endpoint()
+            if 'acls' not in namespace.endpoint_dicts[-1] or not namespace.endpoint_dicts[-1]['acls']:
+                log.error('bndl: argument {} must be specified after the argument --acl'.format(option_strings))
+                sys.exit(2)
+
         if option_strings == '--endpoint':
             namespace.endpoint_dicts.append({'name': value})
-        elif not namespace.endpoint_dicts:
-            log.error('bndl: argument {} needs to be specified after the argument --endpoint'
-                      .format(option_strings))
-            sys.exit(2)
         elif option_strings == '--acl':
+            require_endpoint()
+
             last_endpoint = namespace.endpoint_dicts[-1]
-            if 'acls' in last_endpoint:
-                last_endpoint['acls'].append(value)
+
+            if 'acls' not in last_endpoint:
+                last_endpoint['acls'] = []
+
+            if ':' in value:
+                protocol, mapping = value.split(':', 1)
             else:
-                last_endpoint['acls'] = [value]
+                protocol = 'http'
+                mapping = value
+
+            last_endpoint['acls'].append({'raw_value': value,
+                                          'value': mapping,
+                                          'match': None,
+                                          'rewrite': None,
+                                          'protocol': protocol})
+        elif option_strings == '--path':
+            require_acl()
+            namespace.endpoint_dicts[-1]['acls'][-1]['match'] = 'path'
+        elif option_strings == '--path-regex':
+            require_acl()
+            namespace.endpoint_dicts[-1]['acls'][-1]['match'] = 'path-regex'
+        elif option_strings == '--path-beg':
+            require_acl()
+            namespace.endpoint_dicts[-1]['acls'][-1]['match'] = 'path-beg'
+        elif option_strings == '--rewrite':
+            require_acl()
+            namespace.endpoint_dicts[-1]['acls'][-1]['rewrite'] = value
         else:
+            require_endpoint()
             dict_key = option_strings[2:]
             namespace.endpoint_dicts[-1][dict_key] = value
 
@@ -73,7 +107,7 @@ def set_endpoints(args):
                           'when acls with different protocol families are specified\n'
                           'endpoint: {}\n'
                           'acls: {}'
-                          .format(endpoint_dict['name'], ', '.join(endpoint_dict['acls'])))
+                          .format(endpoint_dict['name'], ', '.join([e['raw_value'] for e in endpoint_dict['acls']])))
                 sys.exit(2)
             args.endpoints.append(endpoint)
 
@@ -121,6 +155,7 @@ def add_conf_arguments(parser):
                                metavar='SERVICE_NAME',
                                dest='endpoint_dicts',
                                action=EndpointAction)
+
     endpoint_args.add_argument('--acl',
                                help='Request ACL of an endpoint\n'
                                     'Used in conjunction with the --endpoint option\n'
@@ -128,14 +163,40 @@ def add_conf_arguments(parser):
                                metavar='ACL',
                                dest='endpoint_dicts',
                                action=EndpointAction)
-
-    endpoint_args.add_argument('--env',
-                               dest='envs',
-                               action='append',
-                               default=[],
-                               help='Additional environment variables for the bundle\'s runtime-config.sh\n'
-                                    'Defaults to [].',
-                               metavar='')
+    endpoint_args.add_argument('--path',
+                               help='If provided, a path must equal the provided string for the ACL to match\n'
+                                    'Used in conjunction with the --acl option',
+                               type=bool,
+                               metavar='',
+                               default=False,
+                               nargs=0,
+                               dest='endpoint_dicts',
+                               action=EndpointAction)
+    endpoint_args.add_argument('--path-beg',
+                               help='If provided, a path must begin with the provided string for the ACL to match\n'
+                                    'Used in conjunction with the --acl option',
+                               type=bool,
+                               metavar='',
+                               default=False,
+                               nargs=0,
+                               dest='endpoint_dicts',
+                               action=EndpointAction)
+    endpoint_args.add_argument('--path-regex',
+                               help='If provided, a path must match the provided '
+                                    'regular expression string for the ACL to match\n'
+                                    'Used in conjunction with the --acl option',
+                               type=bool,
+                               metavar='',
+                               default=False,
+                               nargs=0,
+                               dest='endpoint_dicts',
+                               action=EndpointAction)
+    endpoint_args.add_argument('--rewrite',
+                               help='If provided, specifies a rewrite value for the ACL\n'
+                                    'Used in conjunction with the --acl option',
+                               dest='endpoint_dicts',
+                               metavar='REWRITE',
+                               action=EndpointAction)
 
     check_args = parser.add_argument_group('check')
     check_args.add_argument('--check',
@@ -186,6 +247,14 @@ def add_conf_arguments(parser):
                         help='Sets the "diskSpace" bundle.conf value',
                         dest='disk_space',
                         type=int)
+
+    parser.add_argument('--env',
+                        dest='envs',
+                        action='append',
+                        default=[],
+                        help='Additional environment variables for the bundle\'s runtime-config.sh\n'
+                             'Defaults to [].',
+                        metavar='')
 
     parser.add_argument('--memory',
                         nargs='?',
