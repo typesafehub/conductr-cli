@@ -381,26 +381,41 @@ def build_parser(dcos_mode):
                                           help='Replaces a running bundle with a deployed version',
                                           formatter_class=argparse.RawTextHelpFormatter)
     deploy_parser.add_argument('bundle',
-                               help='The ID of the bundle')
+                               nargs=None if sys.stdin.isatty() else '?',
+                               default=None if sys.stdin.isatty() else '-',
+                               help='The path to the bundle. Specify "-" to skip when providing stdin')
+    deploy_parser.add_argument('configuration',
+                               nargs='?',
+                               default=None,
+                               help='The optional configuration for the bundle')
     deploy_parser.add_argument('-y',
                                action='store_true',
                                default=False,
                                dest='auto_deploy',
                                help='If supplied, deployment will proceed without prompt')
-    deploy_parser.add_argument('-t', '--tag',
+    deploy_parser.add_argument('--target-tag',
                                action='append',
                                default=[],
-                               dest='tags',
+                               dest='target_tags',
                                help='If supplied, deployment will be performed on the bundles with matching tag.\n'
                                     'If multiple tags are supplied, deployment will be performed for each supplied tag.')
+    deploy_parser.add_argument('--webhook',
+                               default=None,
+                               dest='webhook',
+                               help='If supplied, the command will simulate the provided webhook.\n'
+                                    'Currently supports `bintray`.')
     add_dcos_mode_args(deploy_parser, dcos_mode)
     add_api_version(deploy_parser)
     add_local_connection_flag(deploy_parser)
     add_cli_settings_dir(deploy_parser)
     add_custom_settings_file(deploy_parser)
     add_custom_plugins_dir(deploy_parser)
+    add_offline_mode(deploy_parser)
+    add_bundle_resolve_cache_dir(deploy_parser)
+    add_configuration_resolve_cache_dir(deploy_parser)
     add_wait_timeout(deploy_parser, wait_timeout=conduct_deploy.DEFAULT_WAIT_TIMEOUT)
     add_no_wait(deploy_parser)
+    bndl_main.add_conf_arguments(deploy_parser)
     add_long_ids(deploy_parser)
     deploy_parser.set_defaults(func=conduct_deploy.deploy)
 

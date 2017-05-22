@@ -1,4 +1,5 @@
-from conductr_cli import bundle_utils, conduct_request, conduct_url, sse_client
+from conductr_cli import conduct_request, conduct_url, sse_client
+from conductr_cli.bundle_deploy import display_bundle_id
 from conductr_cli.exceptions import ContinuousDeliveryError, WaitTimeoutError
 from datetime import datetime
 
@@ -18,12 +19,9 @@ def get_deployment_events(deployment_id, args):
         return deployment_state
 
 
-def wait_for_deployment_complete(deployment_id, resolved_version, args):
+def wait_for_deployment_complete(deployment_id, args):
     log = logging.getLogger(__name__)
     start_time = datetime.now()
-
-    def display_bundle_id(bundle_id):
-        return bundle_id if args.long_ids else bundle_utils.short_id(bundle_id)
 
     def is_completed_with_success(deployment_events):
         for event in deployment_events:
@@ -48,7 +46,7 @@ def wait_for_deployment_complete(deployment_id, resolved_version, args):
             return 'Downloading bundle'
 
         elif event_type == 'configDownload':
-            compatible_bundle_id = display_bundle_id(deployment_event['compatibleBundleId'])
+            compatible_bundle_id = display_bundle_id(args, deployment_event['compatibleBundleId'])
             return 'Downloading config from bundle {}'.format(compatible_bundle_id)
 
         elif event_type == 'load':
@@ -77,12 +75,6 @@ def wait_for_deployment_complete(deployment_id, resolved_version, args):
         latest_event = sorted(deployment_events, key=get_event_sequence)[-1]
         return display_deployment_event(latest_event)
 
-    package_name = resolved_version['package_name']
-    tag = resolved_version['tag']
-    bundle_id = display_bundle_id(resolved_version['digest'])
-    bundle_shorthand = '{}:{}-{}'.format(package_name, tag, bundle_id)
-
-    log.info('Deploying {}'.format(bundle_shorthand))
     log.info('Deployment id: {}'.format(deployment_id))
 
     deployment_events = get_deployment_events(deployment_id, args)
@@ -91,8 +83,8 @@ def wait_for_deployment_complete(deployment_id, resolved_version, args):
         log.info(log_message(deployment_events))
         return
     elif deployment_events and is_completed_with_failure(deployment_events):
-        raise ContinuousDeliveryError('Unable to deploy {} - {}'.format(bundle_shorthand,
-                                                                        log_message(deployment_events)))
+        error_message = log_message(deployment_events)
+        raise ContinuousDeliveryError(error_message)
     else:
         sse_heartbeat_count_after_event = 0
 
@@ -123,8 +115,7 @@ def wait_for_deployment_complete(deployment_id, resolved_version, args):
 
                 elif is_completed_with_failure(deployment_events):
                     log.progress('\n', flush=False, line_end='')
-                    error_message = 'Unable to deploy {} - {}'.format(bundle_shorthand,
-                                                                      log_message(deployment_events))
+                    error_message = log_message(deployment_events)
                     raise ContinuousDeliveryError(error_message)
                 else:
                     if deployment_events != last_events:
