@@ -380,6 +380,12 @@ def build_parser(dcos_mode):
                                default=False,
                                dest='auto_deploy',
                                help='If supplied, deployment will proceed without prompt')
+    deploy_parser.add_argument('-t', '--tag',
+                               action='append',
+                               default=[],
+                               dest='tags',
+                               help='If supplied, deployment will be performed on the bundles with matching tag.\n'
+                                    'If multiple tags are supplied, deployment will be performed for each supplied tag.')
     add_dcos_mode_args(deploy_parser, dcos_mode)
     add_api_version(deploy_parser)
     add_local_connection_flag(deploy_parser)

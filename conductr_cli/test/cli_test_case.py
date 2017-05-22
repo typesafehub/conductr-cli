@@ -18,7 +18,7 @@ class CliTestCase(TestCase):
                                |"""))
 
     @staticmethod
-    def respond_with(status_code=200, text=''):
+    def respond_with(status_code=200, text='', content_type=None):
         reasons = {
             200: 'OK',
             401: 'Unauthorized',
@@ -28,10 +28,18 @@ class CliTestCase(TestCase):
             503: 'Service unavailable'
         }
 
-        response_mock = MagicMock(
-            status_code=status_code,
-            text=text,
-            reason=reasons[status_code])
+        args = {
+            'status_code': status_code,
+            'text': text,
+            'reason': reasons[status_code]
+        }
+        if content_type:
+            args.update({
+                'headers': {
+                    'Content-Type': content_type
+                }
+            })
+        response_mock = MagicMock(**args)
 
         if status_code == 200:
             response_mock.raise_for_status.return_value = None
