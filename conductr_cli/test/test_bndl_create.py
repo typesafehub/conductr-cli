@@ -340,7 +340,17 @@ class TestBndlCreate(CliTestCase):
 
     def test_bundle_conf(self):
         with tempfile.NamedTemporaryFile() as file_in, tempfile.NamedTemporaryFile() as file_out:
-            file_in.write(b'name = "testing"\ndescription = "my test description"\nroles = ["web", "web2"]')
+            file_in.write(b'name = "testing"\n'
+                          b'description = "my test description"\n'
+                          b'roles = ["web", "web2"]\n'
+                          b'components {'
+                          b'  "test1" {'
+                          b'    start-command = []'
+                          b'  }'
+                          b'  "test2": {'
+                          b'    start-command = []'
+                          b'  }'
+                          b'}')
             file_in.flush()
 
             args = create_attributes_object({
@@ -350,7 +360,17 @@ class TestBndlCreate(CliTestCase):
                 'output': file_out.name,
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'roles': ['test']
+                'roles': ['test'],
+                'start_commands': [
+                    create_attributes_object({
+                        'start_command': '["abc", "test"]',
+                        'component': 'test2'
+                    }),
+                    create_attributes_object({
+                        'start_command': '["xyz", "test"]',
+                        'component': 'test1'
+                    })
+                ]
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -368,7 +388,21 @@ class TestBndlCreate(CliTestCase):
                                |description = "my test description"
                                |roles = [
                                |  "test"
-                               |]''')
+                               |]
+                               |components {
+                               |  test1 {
+                               |    start-command = [
+                               |      "xyz"
+                               |      "test"
+                               |    ]
+                               |  }
+                               |  test2 {
+                               |    start-command = [
+                               |      "abc"
+                               |      "test"
+                               |    ]
+                               |  }
+                               |}''')
                     )
 
     def test_bundle_arg_no_name(self):
