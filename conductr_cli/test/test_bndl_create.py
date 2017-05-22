@@ -623,3 +623,52 @@ class TestBndlCreate(CliTestCase):
                     self.assertTrue(saw_config)
         finally:
             shutil.rmtree(temp_dir)
+
+    def test_oci_env(self):
+        stdout_mock = MagicMock()
+        tmpdir = tempfile.mkdtemp()
+        tmpfile = os.path.join(tmpdir, 'output')
+
+        try:
+            attributes = create_attributes_object({
+                'name': 'test',
+                'source': tmpdir,
+                'format': 'oci-image',
+                'image_tag': 'latest',
+                'output': tmpfile,
+                'component_description': '',
+                'use_shazar': True,
+                'use_default_endpoints': True,
+                'annotations': [],
+                'envs': [
+                    'ENV1=123',
+                    'ENV2=456'
+                ]
+            })
+
+            os.mkdir(os.path.join(tmpdir, 'refs'))
+            open(os.path.join(tmpdir, 'oci-layout'), 'w').close()
+            refs = open(os.path.join(tmpdir, 'refs/latest'), 'w')
+            refs.write('{}')
+            refs.close()
+
+            with \
+                    patch('sys.stdin', MagicMock(**{'buffer': BytesIO(b'')})), \
+                    patch('sys.stdout.buffer.write', stdout_mock):
+                self.assertEqual(bndl_create.bndl_create(attributes), 0)
+
+            self.assertTrue(zipfile.is_zipfile(tmpfile))
+
+            files = {}
+
+            with zipfile.ZipFile(tmpfile) as zip:
+                infos = zip.infolist()
+                for info in infos:
+                    files[info.filename] = zip.read(info.filename)
+
+            self.assertEqual(
+                files['test/runtime-config.sh'],
+                b'export \'ENV1=123\'\nexport \'ENV2=456\''
+            )
+        finally:
+            shutil.rmtree(tmpdir)

@@ -55,6 +55,7 @@ def bndl_create(args):
     mtime = None
     bundle_conf_data = b''
     runtime_conf_data = b''
+    runtime_conf_str = ''
 
     try:
         process_oci = False
@@ -156,19 +157,17 @@ def bndl_create(args):
 
             runtime_conf_path = os.path.join(input_dir, 'runtime-config.sh')
 
-            runtime_conf_str = ''
-
             if os.path.exists(runtime_conf_path):
                 with open(runtime_conf_path, 'r') as runtime_conf_fileobj:
                     runtime_conf_str = runtime_conf_fileobj.read()
 
-            for env in args.envs if hasattr(args, 'envs') else []:
-                if runtime_conf_str:
-                    runtime_conf_str += '\n'
-                runtime_conf_str += 'export \'{}\''.format(env.replace('\'', ''))
-
+        for env in args.envs if hasattr(args, 'envs') else []:
             if runtime_conf_str:
-                runtime_conf_data = runtime_conf_str.encode('UTF-8')
+                runtime_conf_str += '\n'
+            runtime_conf_str += 'export \'{}\''.format(env.replace('\'', ''))
+
+        if runtime_conf_str:
+            runtime_conf_data = runtime_conf_str.encode('UTF-8')
 
         if not args.name:
                 try:
