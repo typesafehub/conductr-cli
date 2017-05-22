@@ -8,6 +8,7 @@ from conductr_cli.bndl_utils import \
     detect_format_dir, \
     detect_format_stream, \
     find_bundle_conf_dir, \
+    file_write_bytes, \
     first_mtime, \
     load_bundle_args_into_conf, \
     zip_extract_with_dates
@@ -202,7 +203,48 @@ def bndl_create(args):
 
                 return 2
 
-            oci_manifest, oci_config = bndl_oci.oci_image_extract_manifest_config(component_dir, args.image_tag)
+            current_oci_manifest, current_oci_config = \
+                bndl_oci.oci_image_extract_manifest_config(component_dir, args.image_tag)
+
+            if not args.use_default_volumes or args.volumes:
+                current_oci_config['config']['Volumes'] = {}
+
+                for v in args.volumes:
+                    current_oci_config['config']['Volumes'][v] = {}
+
+            if not args.use_default_ports or args.ports:
+                current_oci_config['config']['ExposedPorts'] = {}
+
+                for p in args.ports:
+                    current_oci_config['config']['ExposedPorts'][p] = {}
+
+            oci_spec = bndl_oci.oci_config_to_image(current_oci_config,
+                                                    current_oci_manifest['layers']
+                                                    if 'layers' in current_oci_manifest else {},
+                                                    current_oci_manifest['annotations']
+                                                    if 'annotations' in current_oci_manifest else {})
+
+            oci_manifest = oci_spec['manifest_obj']
+            oci_config = oci_spec['config_obj']
+
+            os.makedirs(os.path.join(component_dir, 'blobs', 'sha256'), exist_ok=True)
+            os.makedirs(os.path.join(component_dir, 'refs'), exist_ok=True)
+
+            file_write_bytes(
+                os.path.join(component_dir, 'blobs', 'sha256', oci_spec['config_digest']),
+                oci_spec['config']
+            )
+
+            file_write_bytes(
+                os.path.join(component_dir, 'blobs', 'sha256', oci_spec['manifest_digest']),
+                oci_spec['manifest']
+            )
+
+            file_write_bytes(
+                os.path.join(component_dir, 'refs', args.image_tag),
+                oci_spec['refs']
+            )
+
             bundle_conf = oci_image_bundle_conf(args, component_name, oci_manifest, oci_config)
             bundle_conf_data = bundle_conf.encode('UTF-8')
 

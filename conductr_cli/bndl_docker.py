@@ -1,6 +1,6 @@
+from conductr_cli.bndl_oci import oci_config_to_image
 from conductr_cli.bndl_utils import DigestReaderWriter, file_write_bytes
 import gzip
-import hashlib
 import json
 import os
 import shutil
@@ -124,59 +124,17 @@ def docker_config_to_oci_image(manifest, config, sizes, layers_to_digests):
         'history': config['history']
     }
 
-    oci_config_data = json.dumps(oci_config, sort_keys=True).encode('UTF-8')
+    layers = [
+        {
+            'mediaType': 'application/vnd.oci.image.layer.v1.tar+gzip',
+            'size': sizes[layers_to_digests[layer]],
+            'digest': 'sha256:{}'.format(layers_to_digests[layer])
+        } for layer in manifest['Layers']
+    ]
 
-    digest = hashlib.sha256()
-    digest.update(oci_config_data)
+    annotations = config['config']['Labels'] if 'Labels' in config['config'] and config['config']['Labels'] else None
 
-    oci_config_digest = digest.hexdigest()
-
-    oci_manifest = {
-        'schemaVersion': 2,
-        'config': {
-            'mediaType': 'application/vnd.oci.image.config.v1+json',
-            'size': len(oci_config_data),
-            'digest': 'sha256:{}'.format(oci_config_digest)
-        },
-        'layers': [
-            {
-                'mediaType': 'application/vnd.oci.image.layer.v1.tar+gzip',
-                'size': sizes[layers_to_digests[layer]],
-                'digest': 'sha256:{}'.format(layers_to_digests[layer])
-            } for layer in manifest['Layers']
-        ],
-        'annotations': config['config']['Labels'] if 'Labels' in config['config'] and
-                                                     config['config']['Labels'] else None
-    }
-
-    oci_manifest_data = json.dumps(oci_manifest, sort_keys=True).encode('UTF-8')
-
-    digest = hashlib.sha256()
-    digest.update(oci_manifest_data)
-
-    oci_manifest_digest = digest.hexdigest()
-
-    refs = {
-        'mediaType': 'application/vnd.oci.image.manifest.v1+json',
-        'digest': 'sha256:{}'.format(oci_manifest_digest),
-        'size': len(oci_manifest_data)
-    }
-
-    refs_data = json.dumps(refs, sort_keys=True).encode('UTF-8')
-
-    digest = hashlib.sha256()
-    digest.update(refs_data)
-
-    refs_digest = digest.hexdigest()
-
-    return {
-        'config': oci_config_data,
-        'config_digest': oci_config_digest,
-        'manifest': oci_manifest_data,
-        'manifest_digest': oci_manifest_digest,
-        'refs': refs_data,
-        'refs_digest': refs_digest
-    }
+    return oci_config_to_image(oci_config, layers, annotations)
 
 
 def docker_unpack(destination, data, is_dir, maybe_name, maybe_tag):

@@ -1,10 +1,69 @@
 from pyhocon import HOCONConverter, ConfigFactory, ConfigTree
 from conductr_cli.bndl_utils import load_bundle_args_into_conf, create_check_hocon
+import hashlib
 import json
 import os
 import re
 import shutil
 import tempfile
+
+
+def oci_config_to_image(oci_config, layers, annotations):
+    oci_config_text = json.dumps(oci_config, sort_keys=True)
+    oci_config_data = oci_config_text.encode('UTF-8')
+
+    digest = hashlib.sha256()
+    digest.update(oci_config_data)
+
+    oci_config_digest = digest.hexdigest()
+
+    oci_manifest = {
+        'schemaVersion': 2,
+        'config': {
+            'mediaType': 'application/vnd.oci.image.config.v1+json',
+            'size': len(oci_config_data),
+            'digest': 'sha256:{}'.format(oci_config_digest)
+        },
+        'layers': layers,
+        'annotations': annotations
+    }
+
+    oci_manifest_text = json.dumps(oci_manifest, sort_keys=True)
+    oci_manifest_data = oci_manifest_text.encode('UTF-8')
+
+    digest = hashlib.sha256()
+    digest.update(oci_manifest_data)
+
+    oci_manifest_digest = digest.hexdigest()
+
+    refs = {
+        'mediaType': 'application/vnd.oci.image.manifest.v1+json',
+        'digest': 'sha256:{}'.format(oci_manifest_digest),
+        'size': len(oci_manifest_data)
+    }
+
+    refs_text = json.dumps(refs, sort_keys=True)
+    refs_data = refs_text.encode('UTF-8')
+
+    digest = hashlib.sha256()
+    digest.update(refs_data)
+
+    refs_digest = digest.hexdigest()
+
+    return {
+        'config_obj': oci_config,
+        'config_text': oci_config_text,
+        'config': oci_config_data,
+        'config_digest': oci_config_digest,
+        'manifest_obj': oci_manifest,
+        'manifest_text': oci_manifest_text,
+        'manifest': oci_manifest_data,
+        'manifest_digest': oci_manifest_digest,
+        'refs_obj': refs,
+        'refs_text': refs_text,
+        'refs': refs_data,
+        'refs_digest': refs_digest
+    }
 
 
 def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):

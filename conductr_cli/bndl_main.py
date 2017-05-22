@@ -367,6 +367,38 @@ def build_parser():
                         dest='use_default_check',
                         action='store_false')
 
+    parser.add_argument('--no-default-ports',
+                        help='If provided, a bundle will not contain any exposed port declarations\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_ports',
+                        action='store_false')
+
+    parser.add_argument('--no-default-volumes',
+                        help='If provided, a bundle will not contain any volume declarations\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_volumes',
+                        action='store_false')
+
+    parser.add_argument('--volume',
+                        dest='volumes',
+                        action='append',
+                        default=[],
+                        help='Declare a volume path. If provided, default volumes are removed\n'
+                             'For use with docker and oci-image formats'
+                             'Defaults to [].',
+                        metavar='')
+
+    parser.add_argument('--port',
+                        dest='ports',
+                        action='append',
+                        default=[],
+                        help='Declare a port to expose. If provided, default ports are removed\n'
+                             'For use with docker and oci-image formats'
+                             'Defaults to [].',
+                        metavar='')
+
     add_conf_arguments(parser)
 
     parser.set_defaults(func=bndl)

@@ -107,7 +107,11 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'use_default_ports': True,
+                'use_default_volumes': True,
+                'annotations': [],
+                'ports': [],
+                'volumes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -147,7 +151,11 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'annotations': []
+                'use_default_ports': True,
+                'use_default_volumes': True,
+                'annotations': [],
+                'ports': [],
+                'volumes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -190,7 +198,11 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'use_default_ports': True,
+                'use_default_volumes': True,
+                'annotations': [],
+                'ports': [],
+                'volumes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -210,7 +222,11 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'use_default_ports': True,
+                'use_default_volumes': True,
+                'annotations': [],
+                'ports': [],
+                'volumes': []
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -252,7 +268,11 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'use_default_ports': True,
+                'use_default_volumes': True,
+                'annotations': [],
+                'ports': [],
+                'volumes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -294,7 +314,11 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'annotations': []
+                'use_default_ports': True,
+                'use_default_volumes': True,
+                'annotations': [],
+                'ports': [],
+                'volumes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -314,7 +338,11 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'annotations': []
+                'use_default_ports': True,
+                'use_default_volumes': True,
+                'annotations': [],
+                'ports': [],
+                'volumes': []
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -350,6 +378,8 @@ class TestBndlCreate(CliTestCase):
                 'output': file_out.name,
                 'use_shazar': False,
                 'use_default_endpoints': True,
+                'use_default_ports': True,
+                'use_default_volumes': True,
                 'roles': ['test']
             })
 
@@ -382,7 +412,9 @@ class TestBndlCreate(CliTestCase):
                 'source': file_in.name,
                 'output': file_out.name,
                 'use_shazar': False,
-                'use_default_endpoints': True
+                'use_default_endpoints': True,
+                'use_default_ports': True,
+                'use_default_volumes': True,
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -413,7 +445,9 @@ class TestBndlCreate(CliTestCase):
                 'source': file_in.name,
                 'output': file_out.name,
                 'use_shazar': False,
-                'use_default_endpoints': True
+                'use_default_endpoints': True,
+                'use_default_ports': True,
+                'use_default_volumes': True,
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -449,6 +483,8 @@ class TestBndlCreate(CliTestCase):
                     'output': file_out.name,
                     'use_shazar': False,
                     'use_default_endpoints': True,
+                    'use_default_ports': True,
+                    'use_default_volumes': True,
                     'roles': ['test'],
                     'annotations': [
                         'my.test=testing'
@@ -495,6 +531,8 @@ class TestBndlCreate(CliTestCase):
                     'output': file_out.name,
                     'use_shazar': False,
                     'use_default_endpoints': True,
+                    'use_default_ports': True,
+                    'use_default_volumes': True,
                     'annotations': [
                         'my.test=testing'
                     ]
