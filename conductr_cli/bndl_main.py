@@ -13,7 +13,7 @@ def invoke(argv=None, args=None):
     if args is not None:
         for arg_name in args:
             setattr(parsed_args, arg_name, args[arg_name])
-    set_endpoints(parsed_args)
+    process_args(parsed_args)
     return parsed_args.func(parsed_args)
 
 
@@ -22,7 +22,7 @@ def run(argv=None):
     parser = build_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args(argv)
-    set_endpoints(args)
+    process_args(args)
 
     if args.source == '-':
         args.source = None
@@ -41,6 +41,19 @@ def run(argv=None):
         sys.exit(args.func(args))
 
 
+class ComponentAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_strings):
+        log = logging.getLogger(__name__)
+
+        if not hasattr(namespace, 'component_action'):
+            log.error('bndl: argument {} must be specified after an option that requires it'.format(option_strings))
+            sys.exit(2)
+        elif namespace.component_action == 'endpoint':
+            namespace.endpoint_dicts[-1]['component'] = value
+        elif namespace.component_action == 'start_command':
+            namespace.start_command_dicts[-1]['component'] = value
+
+
 class EndpointAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_strings):
         log = logging.getLogger(__name__)
@@ -57,6 +70,7 @@ class EndpointAction(argparse.Action):
                 sys.exit(2)
 
         if option_strings == '--endpoint':
+            namespace.component_action = 'endpoint'
             namespace.endpoint_dicts.append({'name': value})
         elif option_strings == '--acl':
             require_endpoint()
@@ -95,8 +109,27 @@ class EndpointAction(argparse.Action):
             namespace.endpoint_dicts[-1][dict_key] = value
 
 
-def set_endpoints(args):
+class StartCommandAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_strings):
+        log = logging.getLogger(__name__)
+
+        def require_start_command():
+            if not namespace.endpoint_dicts:
+                log.error('bndl: argument {} must be specified after the argument --start-command'.format(option_strings))
+                sys.exit(2)
+
+        if option_strings == '--start-command':
+            namespace.component_action = 'start_command'
+            namespace.start_command_dicts.append({'start_command': value})
+        else:
+            require_start_command()
+            dict_key = option_strings[2:]
+            namespace.start_command_dicts[-1][dict_key] = value
+
+
+def process_args(args):
     log = logging.getLogger(__name__)
+
     if args.endpoint_dicts:
         args.endpoints = []
         for endpoint_dict in args.endpoint_dicts:
@@ -111,9 +144,31 @@ def set_endpoints(args):
                 sys.exit(2)
             args.endpoints.append(endpoint)
 
+    if args.start_command_dicts:
+        args.start_commands = []
+
+        start_command = type('', (), {})()
+        start_command.start_command = args.start_command_dicts[-1]['start_command']
+
+        if 'component' in args.start_command_dicts[-1]:
+            start_command.component = args.start_command_dicts[-1]['component']
+
+        args.start_commands.append(start_command)
+
 
 def add_conf_arguments(parser):
-    endpoint_args = parser.add_argument_group('endpoints')
+    parser._handle_conflict_component = lambda: ()
+
+    parser.add_argument('--component',
+                        help='Specify the component that should be modified\n'
+                             'Required when the bundle has more than one component\n'
+                             'Used in conjunction with the following: --endpoint, --start-command',
+                        metavar='COMPONENT',
+                        action=ComponentAction)
+
+    endpoint_args = parser.add_argument_group('endpoints',
+                                              description='Add endpoints to the bundle. If the bundle has more than '
+                                                          'one component, you must specify --component.\n')
     endpoint_args.add_argument('--endpoint',
                                help='Endpoints that are added to the bundle\n'
                                     'If specified, existing endpoints are removed\n'
@@ -122,15 +177,6 @@ def add_conf_arguments(parser):
                                metavar='ENDPOINT',
                                dest='endpoint_dicts',
                                default=[],
-                               action=EndpointAction)
-    endpoint_args.add_argument('--component',
-                               help='Component to which an endpoint should be added\n'
-                                    'Used in conjunction with the --endpoint option\n'
-                                    'When absent, the endpoints of the first component are replaced\n'
-                                    'Required when a bundle has more than one component\n'
-                                    'The component bundle-status is not counted',
-                               metavar='COMPONENT',
-                               dest='endpoint_dicts',
                                action=EndpointAction)
     endpoint_args.add_argument('--bind-protocol',
                                help='Bind protocol of an endpoint\n'
@@ -197,6 +243,19 @@ def add_conf_arguments(parser):
                                dest='endpoint_dicts',
                                metavar='REWRITE',
                                action=EndpointAction)
+
+    start_command_args = parser.add_argument_group('start_command',
+                                                   description='Modify the start-command of a component. If the bundle '
+                                                               'has more than one component, you must specify '
+                                                               '--component.\n')
+    start_command_args.add_argument('--start-command',
+                                    help='Sets "start-command" for a component\n'
+                                         'Must be specified in HOCON format\n'
+                                         'Example: bndl --start-command \'["/my/app", "my arg"]\' --component service',
+                                    metavar='START_COMMAND',
+                                    dest='start_command_dicts',
+                                    default=[],
+                                    action=StartCommandAction)
 
     check_args = parser.add_argument_group('check')
     check_args.add_argument('--check',

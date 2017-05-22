@@ -132,6 +132,7 @@ def load_bundle_args_into_conf(config, args, with_defaults, validate_components)
     args_name = getattr(args, 'name', None)
     args_nr_of_cpus = getattr(args, 'nr_of_cpus', None)
     args_roles = getattr(args, 'roles', None)
+    args_start_commands = getattr(args, 'start_commands', None)
     args_system = getattr(args, 'system', None)
     args_system_version = getattr(args, 'system_version', None)
     args_version = getattr(args, 'version', None)
@@ -188,17 +189,26 @@ def load_bundle_args_into_conf(config, args, with_defaults, validate_components)
         if 'components' in config:
             # Delete existing endpoints if exist in configuration
             for endpoint in args_endpoints:
-                component_name = detect_endpoint_component(config, endpoint)
+                component_name = detect_component(config, endpoint)
                 endpoint_key = 'components.{}.endpoints'.format(component_name)
                 if endpoint_key in config:
                     config.put(endpoint_key, None)
             # Add endpoints to bundle components based on the --endpoint argument
             for endpoint in args_endpoints:
-                component_name = detect_endpoint_component(config, endpoint)
+                component_name = detect_component(config, endpoint)
                 endpoint_key = 'components.{}.endpoints'.format(component_name)
                 config.put(endpoint_key, endpoint.hocon())
         elif validate_components:
             raise SyntaxError('Unable to add endpoints. bundle.conf does not contain any components')
+
+    if args_start_commands:
+        if 'components' in config:
+            for start_command in args_start_commands:
+                component_name = detect_component(config, start_command)
+                start_command_key = 'components.{}.start-command'.format(component_name)
+                config.put(start_command_key, ConfigFactory.parse_string(start_command.start_command))
+        elif validate_components:
+            raise SyntaxError('Unable to specify start-command. bundle.conf does not contain any components')
 
     if args_memory is not None:
         config.put('memory', args_memory)
@@ -262,21 +272,21 @@ def create_check_hocon(check_args):
     return check_tree
 
 
-def detect_endpoint_component(config, endpoint):
-    if hasattr(endpoint, 'component'):
-        if endpoint.component in config.get('components'):
-            return endpoint.component
+def detect_component(config, args):
+    if hasattr(args, 'component'):
+        if args.component in config.get('components'):
+            return args.component
         else:
             component_names = [component for component in config.get('components')]
             raise ValueError('Component {} does not exist in the bundle.conf. Available components: {}'
-                             .format(endpoint.component, component_names))
+                             .format(args.component, component_names))
     else:
         non_status_component_names = [component for component in config.get('components')
                                       if component != 'bundle-status']
         if len(non_status_component_names) == 1:
             return non_status_component_names[0]
         else:
-            raise SyntaxError('Unable to auto-detect the endpoint component. '
+            raise SyntaxError('Unable to auto-detect the component. '
                               'Component not specified and bundle.conf contains multiple components: {}'
                               .format(non_status_component_names))
 
