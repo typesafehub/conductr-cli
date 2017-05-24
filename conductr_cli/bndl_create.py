@@ -2,6 +2,7 @@ from conductr_cli import bndl_oci, validation
 from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_unpack
 from conductr_cli.bndl_docker import docker_unpack
 from conductr_cli.bndl_utils import \
+    BndlFormat, \
     data_is_bundle_conf, \
     data_is_tar, \
     data_is_zip, \
@@ -11,6 +12,7 @@ from conductr_cli.bndl_utils import \
     first_mtime, \
     load_bundle_args_into_conf, \
     zip_extract_with_dates
+from conductr_cli.bundle_validation import validate_bundle_conf
 from conductr_cli.constants import BNDL_PEEK_SIZE, IO_CHUNK_SIZE, SHAZAR_TIMESTAMP_MIN
 from conductr_cli.shazar_main import dir_to_zip, write_with_digest
 from io import BufferedReader, BytesIO
@@ -35,14 +37,18 @@ def bndl_create(args):
 
         return 2
 
-    buff_in = BufferedReader(sys.stdin.buffer, IO_CHUNK_SIZE) if args.source is None else None
+    has_stdin = not os.isatty(sys.stdin.fileno())
+    if args.source is None and has_stdin:
+        buff_in = BufferedReader(sys.stdin.buffer, IO_CHUNK_SIZE)
+    else:
+        buff_in = None
 
     if not args.format:
-        if not args.source:
+        if buff_in:
             args.format = detect_format_stream(buff_in.peek(BNDL_PEEK_SIZE))
-        elif os.path.isdir(args.source):
+        elif args.source and os.path.isdir(args.source):
             args.format = detect_format_dir(args.source)
-        elif os.path.isfile(args.source):
+        elif args.source and os.path.isfile(args.source):
             with open(args.source, 'rb') as source_in:
                 args.format = detect_format_stream(source_in.read(BNDL_PEEK_SIZE))
 
@@ -64,7 +70,7 @@ def bndl_create(args):
             log.error('bndl: Unable to detect format. Provide a -f or --format argument')
 
             return 2
-        elif args.format == 'docker':
+        elif args.format == BndlFormat.DOCKER:
             os.mkdir(component_dir)
 
             if not args.source:
@@ -83,7 +89,7 @@ def bndl_create(args):
                 args.name = name
 
             process_oci = True
-        elif args.format == 'oci-image':
+        elif args.format == BndlFormat.OCI_IMAGE:
             os.mkdir(component_dir)
 
             if not args.source:
@@ -100,15 +106,20 @@ def bndl_create(args):
                 return 2
 
             process_oci = True
-        elif args.format == 'bundle':
-            peek = buff_in.peek(BNDL_PEEK_SIZE) if args.source is None else None
+        elif args.format == BndlFormat.BUNDLE or args.format == BndlFormat.CONFIGURATION:
+            peek = buff_in.peek(BNDL_PEEK_SIZE) if buff_in is not None else None
             peek_file = None
 
             if args.source and os.path.isfile(args.source):
                 with open(args.source, 'rb') as file:
                     peek_file = file.read(BNDL_PEEK_SIZE)
 
-            if not args.source and data_is_zip(peek):
+            if not args.source and not peek:
+                open(os.path.join(temp_dir, 'bundle.conf'), 'wb').close()
+            elif not args.source and data_is_bundle_conf(peek):
+                with open(os.path.join(temp_dir, 'bundle.conf'), 'wb') as bundle_conf_fileobj:
+                    shutil.copyfileobj(buff_in, bundle_conf_fileobj)
+            elif not args.source and data_is_zip(peek):
                 with tempfile.NamedTemporaryFile() as temp:
                     shutil.copyfileobj(buff_in, temp)
                     temp.seek(0)
@@ -116,9 +127,6 @@ def bndl_create(args):
             elif not args.source and data_is_tar(peek):
                 with tarfile.open(fileobj=buff_in, mode='r|') as tar:
                     tar.extractall(temp_dir)
-            elif not args.source and data_is_bundle_conf(peek):
-                with open(os.path.join(temp_dir, 'bundle.conf'), 'wb') as bundle_conf_fileobj:
-                    shutil.copyfileobj(buff_in, bundle_conf_fileobj)
             elif os.path.isdir(args.source):
                 os.rmdir(temp_dir)
                 shutil.copytree(args.source, temp_dir)
@@ -135,21 +143,13 @@ def bndl_create(args):
                 return 2
 
             input_dir = find_bundle_conf_dir(temp_dir)
-            bundle_conf_path = '' if not input_dir else os.path.join(input_dir, 'bundle.conf')
 
-            if not input_dir or not os.path.exists(bundle_conf_path):
-                log.error(
-                    'bndl: Missing bundle.conf (for source {})'.format(
-                        'stdin' if args.source is None else args.source
-                    )
-                )
-
-                return 2
-
-            with open(bundle_conf_path, 'rb') as bundle_conf_fileobj:
-                bundle_conf_data = bundle_conf_fileobj.read()
-
-            os.unlink(bundle_conf_path)
+            bundle_conf_path = os.path.join(input_dir, 'bundle.conf')
+            bundle_conf_data = None
+            if os.path.exists(bundle_conf_path):
+                with open(bundle_conf_path, 'rb') as bundle_conf_fileobj:
+                    bundle_conf_data = bundle_conf_fileobj.read()
+                os.unlink(bundle_conf_path)
 
             runtime_conf_path = os.path.join(input_dir, 'runtime-config.sh')
 
@@ -214,13 +214,22 @@ def bndl_create(args):
             if oci_config and 'created' in oci_config:
                 mtime = arrow.get(oci_config['created']).timestamp
 
-        try:
-            bundle_conf = ConfigFactory.parse_string(bundle_conf_data.decode('UTF-8'))
-        except ConfigException:
-            log.error('bndl: Unable to parse bundle.conf')
-            return 1
+        if bundle_conf_data:
+            try:
+                bundle_conf = ConfigFactory.parse_string(bundle_conf_data.decode('UTF-8'))
+            except ConfigException:
+                log.error('bndl: Unable to parse bundle.conf')
+                return 1
+        else:
+            bundle_conf = ConfigFactory.parse_string('')
 
         load_bundle_args_into_conf(bundle_conf, args, with_defaults=False, validate_components=True)
+
+        if bundle_conf:
+            validation_excludes = set(args.validation_excludes)
+            if args.format == BndlFormat.CONFIGURATION:
+                validation_excludes.add('required')
+            validate_bundle_conf(bundle_conf, validation_excludes)
 
         bundle_conf_data = HOCONConverter.to_hocon(bundle_conf).encode('UTF-8')
         archive_name = bundle_conf['name'] if 'name' in bundle_conf else 'bundle'

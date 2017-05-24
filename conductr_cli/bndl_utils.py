@@ -12,6 +12,7 @@ from conductr_cli.constants import \
     MAGIC_NUMBER_TAR, \
     MAGIC_NUMBER_TAR_OFFSET, \
     MAGIC_NUMBERS_ZIP
+from enum import Enum
 from pyhocon import ConfigFactory, ConfigTree
 import hashlib
 import os
@@ -20,29 +21,30 @@ import time
 import zipfile
 
 
+class BndlFormat(Enum):
+    BUNDLE = 'bundle'
+    CONFIGURATION = 'configuration'
+    DOCKER = 'docker'
+    OCI_IMAGE = 'oci-image'
+
+
 def detect_format_dir(dir):
     """
     Detects the format of a directory on disk.
     :param dir:
-    :return: one of 'docker', 'oci-image', 'bundle', or None
+    :return: one of 'BndlFormat.DOCKER', 'BndlFormat.OCI_IMAGE', 'BndlFormat.BUNDLE'
     """
     if \
             os.path.isfile(os.path.join(dir, 'oci-layout')) and \
             os.path.isdir(os.path.join(dir, 'refs')) and \
             os.path.isdir(os.path.join(dir, 'blobs')):
-        return 'oci-image'
+        return BndlFormat.OCI_IMAGE
     elif \
             os.path.isfile(os.path.join(dir, 'repositories')) and \
             os.path.isfile(os.path.join(dir, 'manifest.json')):
-        return 'docker'
-    elif \
-            os.path.isfile(os.path.join(dir, 'runtime-config.sh')):
-        return 'bundle'
-    elif \
-            os.path.isfile(os.path.join(dir, 'bundle.conf')):
-        return 'bundle'
+        return BndlFormat.DOCKER
     else:
-        return None
+        return BndlFormat.BUNDLE
 
 
 def detect_format_stream(initial_chunk):
@@ -52,7 +54,7 @@ def detect_format_stream(initial_chunk):
     to be expanded as the tooling matures.
 
     :param initial_chunk:
-    :return: one of 'docker', 'oci-image', or None
+    :return: one of 'BndlFormat.DOCKER', 'BndlFormat.OCI_IMAGE', 'BndlFormat.BUNDLE' or None
     """
 
     def try_match(pattern, slice):
@@ -67,23 +69,23 @@ def detect_format_stream(initial_chunk):
 
     if try_match('^[0-9a-f]{64}[/]', initial_chunk[0:65]):
         # docker save <image>
-        return 'docker'
+        return BndlFormat.DOCKER
     elif try_match('^[0-9a-f]{64}[.]json$', initial_chunk[0:69]):
         # docker save <image>:<tag>
-        return 'docker'
+        return BndlFormat.DOCKER
     elif b'/oci-layout\x00\x00\x00' in initial_chunk and b'/refs/\x00\x00\x00' in initial_chunk:
         # tar c on an oci folder (somewhat unreliable)
-        return 'oci-image'
+        return BndlFormat.OCI_IMAGE
     elif b'/manifest.json\x00\x00\x00' in initial_chunk and b'/layer.tar\x00\x00\x00' in initial_chunk:
         # tar c on a docker folder (somewhat unreliable)
-        return 'docker'
+        return BndlFormat.DOCKER
     elif b'\x00' not in initial_chunk and initial_chunk != b'' and data_is_bundle_conf(initial_chunk):
-        return 'bundle'
+        return BndlFormat.BUNDLE
     elif data_is_zip(initial_chunk):
-        return 'bundle'
+        return BndlFormat.BUNDLE
     elif data_is_tar(initial_chunk):
         # TAR marker
-        return 'bundle'
+        return BndlFormat.BUNDLE
     else:
         return None
 
@@ -301,7 +303,7 @@ def find_bundle_conf_dir(dir):
         for file_name in file_names:
             if file_name == 'bundle.conf' or file_name == 'runtime-config.sh':
                 return dir_path
-    return None
+    return dir
 
 
 def first_mtime(path, default=0):

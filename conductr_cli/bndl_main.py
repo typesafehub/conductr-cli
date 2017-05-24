@@ -1,6 +1,7 @@
 from conductr_cli import logging_setup
 from conductr_cli.endpoint import Endpoint, AmbigousBindProtocolError
 from conductr_cli.bndl_create import bndl_create
+from conductr_cli.bndl_utils import BndlFormat
 import argcomplete
 import argparse
 import logging
@@ -30,9 +31,7 @@ def run(argv=None):
     if args.output == '-':
         args.output = None
 
-    if sys.stdout.isatty() and sys.stdin.isatty() and args.source is None:
-        parser.print_help()
-    elif sys.stdout.isatty() and args.output is None:
+    if sys.stdout.isatty() and args.output is None:
         log.error('bndl: Refusing to write to terminal. Provide -o or redirect elsewhere')
         sys.exit(2)
     else:
@@ -129,6 +128,9 @@ class StartCommandAction(argparse.Action):
 
 def process_args(args):
     log = logging.getLogger(__name__)
+
+    if args.format:
+        args.format = BndlFormat(args.format)
 
     if args.endpoint_dicts:
         args.endpoints = []
@@ -374,10 +376,11 @@ def build_parser():
                                      description='Create or modify a bundle')
 
     parser.add_argument('-f', '--format',
-                        choices=['docker', 'oci-image', 'bundle'],
+                        choices=[e.value for e in BndlFormat],
                         required=False,
                         help='The input format\n'
-                             'When absent, auto-detection is attempted')
+                             'When absent, auto-detection is attempted\n'
+                             'The format configuration needs to be specified because it cannot be auto-detected.')
 
     parser.add_argument('--image-tag',
                         required=False,
@@ -425,6 +428,18 @@ def build_parser():
                         default=True,
                         dest='use_default_check',
                         action='store_false')
+
+    parser.add_argument('--validation-exclude',
+                        help='If provided, skips a given validation rule\n'
+                             'The following validation rules can be skipped: \n'
+                             '  property-names: Checks that the bundle.conf only contains property names '
+                             'that are known by ConductR\n'
+                             '  required: Checks that the bundle.conf contains all required properties\n'
+                             'By default, no validation rule is excluded',
+                        default=[],
+                        choices=['property-names', 'required'],
+                        dest='validation_excludes',
+                        action='append')
 
     add_conf_arguments(parser)
 

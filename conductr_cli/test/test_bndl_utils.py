@@ -1,4 +1,5 @@
 from conductr_cli import bndl_utils
+from conductr_cli.bndl_utils import BndlFormat
 from conductr_cli.endpoint import Endpoint
 from conductr_cli.constants import \
     BNDL_DEFAULT_ANNOTATIONS, \
@@ -27,7 +28,7 @@ class TestBndlUtils(CliTestCase):
         )
 
         # parsable as hocon is bundle
-        self.assertEqual(bndl_utils.detect_format_stream(b'name = "test"'), 'bundle')
+        self.assertEqual(bndl_utils.detect_format_stream(b'name = "test"'), BndlFormat.BUNDLE)
 
         # unrelated stream is none
         self.assertEqual(
@@ -39,30 +40,30 @@ class TestBndlUtils(CliTestCase):
         self.assertEqual(
             bndl_utils.detect_format_stream(b'194853445611786369d26c17093e481cdc14c838375091037f780fe22aa760e7/'
                                             b'\x00\x00\x00'),
-            'docker'
+            BndlFormat.DOCKER
         )
 
         # docker save with a tag starts with a json tar file entry
         self.assertEqual(
             bndl_utils.detect_format_stream(b'4a415e3663882fbc554ee830889c68a33b3585503892cc718a4698e91ef2a526.json'
                                             b'\x00\x00\x00'),
-            'docker'
+            BndlFormat.DOCKER
         )
 
         # docker from a tar stream of a dir on disk, we just hope the order works out
         self.assertEqual(
             bndl_utils.detect_format_stream(b'\x00/manifest.json\x00\x00\x00/layer.tar\x00\x00\x00'),
-            'docker'
+            BndlFormat.DOCKER
         )
 
         # oci image from a tar stream of a dir on disk, we just hope the order works out
         self.assertEqual(
             bndl_utils.detect_format_stream(b'\x00/oci-layout\x00\x00\x00/refs/\x00\x00\x00'),
-            'oci-image'
+            BndlFormat.OCI_IMAGE
         )
 
         # zips are bundles
-        self.assertEqual(bndl_utils.detect_format_stream(b'PK\x03\x04'), 'bundle')
+        self.assertEqual(bndl_utils.detect_format_stream(b'PK\x03\x04'), BndlFormat.BUNDLE)
 
     def test_detect_format_dir(self):
         docker_dir = tempfile.mkdtemp()
@@ -82,11 +83,11 @@ class TestBndlUtils(CliTestCase):
             open(os.path.join(bundle_dir, 'bundle.conf'), 'a').close()
             open(os.path.join(bundle_conf_dir, 'runtime-config.sh'), 'a').close()
 
-            self.assertEqual(bndl_utils.detect_format_dir(oci_image_dir), 'oci-image')
-            self.assertEqual(bndl_utils.detect_format_dir(docker_dir), 'docker')
-            self.assertEqual(bndl_utils.detect_format_dir(nothing_dir), None)
-            self.assertEqual(bndl_utils.detect_format_dir(bundle_dir), 'bundle')
-            self.assertEqual(bndl_utils.detect_format_dir(bundle_conf_dir), 'bundle')
+            self.assertEqual(bndl_utils.detect_format_dir(oci_image_dir), BndlFormat.OCI_IMAGE)
+            self.assertEqual(bndl_utils.detect_format_dir(docker_dir), BndlFormat.DOCKER)
+            self.assertEqual(bndl_utils.detect_format_dir(nothing_dir), BndlFormat.BUNDLE)
+            self.assertEqual(bndl_utils.detect_format_dir(bundle_dir), BndlFormat.BUNDLE)
+            self.assertEqual(bndl_utils.detect_format_dir(bundle_conf_dir), BndlFormat.BUNDLE)
         finally:
             shutil.rmtree(docker_dir)
             shutil.rmtree(oci_image_dir)
