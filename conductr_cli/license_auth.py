@@ -7,8 +7,8 @@ except ImportError:
     import pyreadline as readline
 
 
-AUTH_TOKEN_PROMPT = '\nAn access token is required. Please visit https://www.lightbend.com/account/access-token to \n' \
-                    'obtain one for free and commercial licenses.\n' \
+AUTH_TOKEN_PROMPT = '\nAn access token is required. Please visit https://www.lightbend.com/platform/enterprise-suite/access-token to \n' \
+                    'obtain one for free or for your commercial licenses.\n' \
                     '\n' \
                     'Please enter your access token: '
 
