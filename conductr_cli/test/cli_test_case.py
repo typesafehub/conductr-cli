@@ -98,7 +98,7 @@ def create_temp_bundle_with_contents(contents):
     os.makedirs(basedir)
 
     for name, content in contents.items():
-        with open(os.path.join(basedir, name), 'w') as file:
+        with open(os.path.join(basedir, name), 'w', encoding="utf-8") as file:
             file.write(content)
 
     return tmpdir, shutil.make_archive(os.path.join(tmpdir, 'bundle'), 'zip', unpacked, 'bundle-1.0.0')

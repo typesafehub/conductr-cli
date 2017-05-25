@@ -64,7 +64,7 @@ def save_license_data(license_data, save_to):
     :param save_to: the file where the license will be saved to
     """
     os.makedirs(os.path.dirname(save_to), exist_ok=True)
-    with open(save_to, 'w') as f:
+    with open(save_to, 'w', encoding="utf-8") as f:
         f.write(license_data)
 
 

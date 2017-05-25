@@ -19,7 +19,7 @@ def get_cached_auth_token():
     :return: cached token
     """
     if os.path.exists(DEFAULT_AUTH_TOKEN_FILE):
-        with open(DEFAULT_AUTH_TOKEN_FILE, 'r') as f:
+        with open(DEFAULT_AUTH_TOKEN_FILE, 'r', encoding="utf-8") as f:
             auth_token = f.readline()
     else:
         auth_token = None
@@ -58,5 +58,5 @@ def save_auth_token(auth_token):
     """
     os.makedirs(os.path.dirname(DEFAULT_AUTH_TOKEN_FILE), exist_ok=True)
 
-    with open(DEFAULT_AUTH_TOKEN_FILE, 'w') as f:
+    with open(DEFAULT_AUTH_TOKEN_FILE, 'w', encoding="utf-8") as f:
         f.write(auth_token)
