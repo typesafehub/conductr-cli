@@ -65,8 +65,6 @@ def bndl_create(args):
 
             return 2
         elif args.format == 'docker':
-            component_name = 'oci-image'
-            component_dir = os.path.join(temp_dir, component_name)
             os.mkdir(component_dir)
 
             if not args.source:
@@ -86,8 +84,6 @@ def bndl_create(args):
 
             process_oci = True
         elif args.format == 'oci-image':
-            component_name = 'oci-image'
-            component_dir = os.path.join(temp_dir, component_name)
             os.mkdir(component_dir)
 
             if not args.source:
@@ -181,6 +177,12 @@ def bndl_create(args):
         mtime = first_mtime(input_dir, SHAZAR_TIMESTAMP_MIN) if mtime is None else mtime
 
         if process_oci:
+            if args.name:
+                old_component_dir = component_dir
+                component_name = args.name
+                component_dir = os.path.join(temp_dir, component_name)
+                os.rename(old_component_dir, component_dir)
+
             has_oci_layout = os.path.isfile(os.path.join(component_dir, 'oci-layout'))
 
             refs_dir = os.path.join(component_dir, 'refs')
