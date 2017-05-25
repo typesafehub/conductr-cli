@@ -131,7 +131,7 @@ def fetch_manifest(cache_dir, url, ns, image, manifest, offline_mode):
                                   headers={'Accept': 'application/vnd.docker.distribution.manifest.v2+json'})
         response.raise_for_status()
 
-        with open(cache_file, 'w') as cache_fileobj:
+        with open(cache_file, 'w', encoding="utf-8") as cache_fileobj:
             cache_fileobj.write(response.text)
 
         return json.loads(response.text)
@@ -243,10 +243,10 @@ def do_resolve_bundle(cache_dir, uri, auth, offline_mode):
             ('Layers', layers)
         ])]
 
-        with open(os.path.join(temp_dir, 'manifest.json'), 'w') as manifest_fileobj:
+        with open(os.path.join(temp_dir, 'manifest.json'), 'w', encoding="utf-8") as manifest_fileobj:
             manifest_fileobj.write(json.dumps(manifests))
 
-        with open(os.path.join(temp_dir, 'repositories'), 'w') as repositories_fileobj:
+        with open(os.path.join(temp_dir, 'repositories'), 'w', encoding="utf-8") as repositories_fileobj:
             repositories_fileobj.write(json.dumps(repositories))
 
         return True, None, temp_dir

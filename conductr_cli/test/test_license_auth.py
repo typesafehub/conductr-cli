@@ -17,7 +17,7 @@ class TestGetCachedAuthToken(TestCase):
             license_auth.get_cached_auth_token()
 
         mock_exists.assert_called_once_with(DEFAULT_AUTH_TOKEN_FILE)
-        mock_open.assert_called_once_with(DEFAULT_AUTH_TOKEN_FILE, 'r')
+        mock_open.assert_called_once_with(DEFAULT_AUTH_TOKEN_FILE, 'r', encoding="utf-8")
 
     def test_cached_token_missing(self):
         mock_exists = MagicMock(return_value=False)
@@ -94,7 +94,7 @@ class TestSaveAuthToken(TestCase):
             with patch('builtins.open', mock_open):
                 license_auth.save_auth_token(auth_token)
 
-            mock_open.assert_called_once_with(DEFAULT_AUTH_TOKEN_FILE, 'w')
+            mock_open.assert_called_once_with(DEFAULT_AUTH_TOKEN_FILE, 'w', encoding="utf-8")
 
             with open(f.name, 'r') as d:
                 self.assertEqual([auth_token], d.readlines())
