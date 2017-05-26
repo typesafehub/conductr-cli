@@ -12,7 +12,7 @@ from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
 from conductr_cli.exceptions import BindAddressNotFound, BundleScaleError, ConductrStartupError, \
-    InstanceCountError, MalformedBundleError, \
+    InstanceCountError, MalformedBundleError, BundleConfValidationError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayResolutionError, \
     BintrayUnreachableError, BundleResolutionError, WaitTimeoutError, InsecureFilePermissions, \
     SandboxImageFetchError, SandboxImageNotFoundError, JavaCallError, HostnameLookupError, JavaUnsupportedVendorError, \
@@ -566,6 +566,10 @@ def handle_bndl_create_error(func):
             log = get_logger_for_func(func)
             log.error('bndl: {}'.format(e))
             return 2
+        except BundleConfValidationError as e:
+            log = get_logger_for_func(func)
+            log.error('bndl: bundle.conf validation errors: \n  {}'.format('\n  '.join(e.messages)))
+            return 1
 
     # Do not change the wrapped function name,
     # so argparse configuration can be tested.

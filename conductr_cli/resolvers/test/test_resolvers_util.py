@@ -16,7 +16,7 @@ class TestResolveBundle(TestCase):
 
         try:
             self.assertFalse(resolvers_util.is_local_file(temp, require_bundle_conf=True))
-            self.assertFalse(resolvers_util.is_local_file(temp, require_bundle_conf=False))
+            self.assertTrue(resolvers_util.is_local_file(temp, require_bundle_conf=False))
         finally:
             shutil.rmtree(temp)
 

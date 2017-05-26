@@ -13,6 +13,14 @@ class ConductrStartupError(Exception):
         return repr('{} {}'.format(self.wait_timeout, self.error_log_file))
 
 
+class BundleConfValidationError(Exception):
+    def __init__(self, messages):
+        self.messages = messages
+
+    def __str__(self):
+        repr(os.linesep.join(self.messages))
+
+
 class MalformedBundleError(Exception):
     def __init__(self, value):
         self.value = value

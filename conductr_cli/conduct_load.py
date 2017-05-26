@@ -5,6 +5,7 @@ from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermission
 from conductr_cli import resolver, bundle_installation
 from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
     DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR
+from conductr_cli.bndl_utils import BndlFormat
 from conductr_cli.conduct_url import conductr_host
 from functools import partial
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
@@ -248,14 +249,14 @@ def load_v2(args):
             resolver.resolve_bundle_configuration(custom_settings, configuration_cache_dir,
                                                   args.configuration, args.offline_mode)
         if not is_bundle(configuration_file) or bndl_arguments_present(args):
-            configuration_fileobj = invoke_bndl(configuration_file, 'bundle', args)
+            configuration_fileobj = invoke_bndl(configuration_file, BndlFormat.CONFIGURATION, args)
             configuration_file = configuration_fileobj.name
             configuration_file_name = os.path.basename(configuration_file)
         bundle_conf_overlay = bundle_utils.conf(configuration_file)
     elif bndl_arguments_present(args):
         with tempfile.NamedTemporaryFile() as empty_file:
             os.utime(empty_file.name, (constants.SHAZAR_TIMESTAMP_MIN, constants.SHAZAR_TIMESTAMP_MIN))
-            configuration_fileobj = invoke_bndl(empty_file.name, 'bundle', args)
+            configuration_fileobj = invoke_bndl(empty_file.name, BndlFormat.BUNDLE, args)
             configuration_file = configuration_fileobj.name
             configuration_file_name = os.path.basename(configuration_file)
             bundle_conf_overlay = bundle_utils.conf(configuration_file)

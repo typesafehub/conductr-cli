@@ -1,5 +1,6 @@
 from conductr_cli import bndl_create, logging_setup
 from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object, as_error, strip_margin
+from conductr_cli.bndl_utils import BndlFormat
 from io import BytesIO
 from unittest.mock import patch, MagicMock
 import os
@@ -41,7 +42,7 @@ class TestBndlCreate(CliTestCase):
             attributes = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': output.name
             })
@@ -68,7 +69,7 @@ class TestBndlCreate(CliTestCase):
                 attributes = create_attributes_object({
                     'name': 'test',
                     'source': tmpdir,
-                    'format': 'oci-image',
+                    'format': BndlFormat.OCI_IMAGE,
                     'image_tag': 'latest',
                     'output': output.name
                 })
@@ -101,13 +102,14 @@ class TestBndlCreate(CliTestCase):
             attributes = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'annotations': [],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -141,13 +143,14 @@ class TestBndlCreate(CliTestCase):
             attributes = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'annotations': []
+                'annotations': [],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -184,13 +187,14 @@ class TestBndlCreate(CliTestCase):
             attributes = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'annotations': [],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -204,13 +208,14 @@ class TestBndlCreate(CliTestCase):
             attributes2 = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir2,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile2,
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'annotations': [],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -246,13 +251,14 @@ class TestBndlCreate(CliTestCase):
             attributes = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
-                'annotations': []
+                'annotations': [],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -288,13 +294,14 @@ class TestBndlCreate(CliTestCase):
             attributes = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'annotations': []
+                'annotations': [],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -308,13 +315,14 @@ class TestBndlCreate(CliTestCase):
             attributes2 = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir2,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile2,
                 'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'annotations': []
+                'annotations': [],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -338,10 +346,74 @@ class TestBndlCreate(CliTestCase):
             shutil.rmtree(tmpdir)
             shutil.rmtree(tmpdir2)
 
+    def test_validation_excludes(self):
+        temp_dir = tempfile.mkdtemp()
+        bundle_conf = 'invalid-name = "1"'
+
+        try:
+            with \
+                    open(os.path.join(temp_dir, 'bundle.conf'), 'wb') as bundle_conf_file, \
+                    tempfile.NamedTemporaryFile() as file_out:
+
+                bundle_conf_file.write(bundle_conf.encode('UTF-8'))
+                bundle_conf_file.flush()
+
+                args = create_attributes_object({
+                    'name': 'test',
+                    'format': BndlFormat.BUNDLE,
+                    'source': temp_dir,
+                    'output': file_out.name,
+                    'use_shazar': False,
+                    'use_default_endpoints': False,
+                    'validation_excludes': ['required', 'property-names']
+                })
+
+                self.assertEqual(bndl_create.bndl_create(args), 0)
+                self.assertTrue(tarfile.is_tarfile(file_out.name))
+
+                with tarfile.open(file_out.name, 'r') as tar:
+                    for entry in tar:
+                        self.assertEqual('test/bundle.conf', entry.name)
+                        self.assertEqual(
+                            tar.extractfile(entry).read().decode('UTF-8'),
+                            'invalid-name = "1"\nname = "test"'
+                        )
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_no_input(self):
+        with tempfile.NamedTemporaryFile() as file_out:
+            args = create_attributes_object({
+                'name': 'test',
+                'format': BndlFormat.CONFIGURATION,
+                'source': None,
+                'output': file_out.name,
+                'use_shazar': False,
+                'use_default_endpoints': True,
+                'roles': ['test'],
+                'validation_excludes': []
+            })
+
+            self.assertEqual(bndl_create.bndl_create(args), 0)
+            self.assertTrue(tarfile.is_tarfile(file_out.name))
+
+            # check that config bundle is named properly and contains arguments
+
+            with tarfile.open(file_out.name, 'r') as tar:
+                for entry in tar:
+                    self.assertEqual('test/bundle.conf', entry.name)
+                    self.assertEqual(
+                        tar.extractfile(entry).read().decode('UTF-8'),
+                        strip_margin(
+                            '''|name = "test"
+                               |roles = [
+                               |  "test"
+                               |]''')
+                    )
+
     def test_bundle_conf(self):
         with tempfile.NamedTemporaryFile() as file_in, tempfile.NamedTemporaryFile() as file_out:
             file_in.write(b'name = "testing"\n'
-                          b'description = "my test description"\n'
                           b'roles = ["web", "web2"]\n'
                           b'components {'
                           b'  "test1" {'
@@ -355,7 +427,7 @@ class TestBndlCreate(CliTestCase):
 
             args = create_attributes_object({
                 'name': 'test',
-                'format': None,
+                'format': BndlFormat.CONFIGURATION,
                 'source': file_in.name,
                 'output': file_out.name,
                 'use_shazar': False,
@@ -370,7 +442,8 @@ class TestBndlCreate(CliTestCase):
                         'start_command': '["xyz", "test"]',
                         'component': 'test1'
                     })
-                ]
+                ],
+                'validation_excludes': []
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -382,10 +455,9 @@ class TestBndlCreate(CliTestCase):
                 for entry in tar:
                     self.assertEqual('test/bundle.conf', entry.name)
                     self.assertEqual(
-                        tar.extractfile(entry).read().decode("UTF-8"),
+                        tar.extractfile(entry).read().decode('UTF-8'),
                         strip_margin(
                             '''|name = "test"
-                               |description = "my test description"
                                |roles = [
                                |  "test"
                                |]
@@ -405,18 +477,19 @@ class TestBndlCreate(CliTestCase):
                                |}''')
                     )
 
-    def test_bundle_arg_no_name(self):
+    def test_bundle_configuration_arg_no_name(self):
         with tempfile.NamedTemporaryFile() as file_in, tempfile.NamedTemporaryFile() as file_out:
-            file_in.write(b'name = "test"\ndescription = "my test description"\nroles = ["web", "web2"]')
+            file_in.write(b'name = "test"\nroles = ["web", "web2"]')
             file_in.flush()
 
             args = create_attributes_object({
                 'name': None,
-                'format': None,
+                'format': BndlFormat.CONFIGURATION,
                 'source': file_in.name,
                 'output': file_out.name,
                 'use_shazar': False,
-                'use_default_endpoints': True
+                'use_default_endpoints': True,
+                'validation_excludes': []
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -426,10 +499,9 @@ class TestBndlCreate(CliTestCase):
                 for entry in tar:
                     self.assertEqual('test/bundle.conf', entry.name)
                     self.assertEqual(
-                        tar.extractfile(entry).read().decode("UTF-8"),
+                        tar.extractfile(entry).read().decode('UTF-8'),
                         strip_margin(
                             '''|name = "test"
-                               |description = "my test description"
                                |roles = [
                                |  "web"
                                |  "web2"
@@ -438,16 +510,17 @@ class TestBndlCreate(CliTestCase):
 
     def test_bundle_conf_no_name(self):
         with tempfile.NamedTemporaryFile() as file_in, tempfile.NamedTemporaryFile() as file_out:
-            file_in.write(b'description = "my test description"\nroles = ["web", "web2"]')
+            file_in.write(b'version = "1"\nroles = ["web", "web2"]')
             file_in.flush()
 
             args = create_attributes_object({
                 'name': None,
-                'format': None,
+                'format': BndlFormat.CONFIGURATION,
                 'source': file_in.name,
                 'output': file_out.name,
                 'use_shazar': False,
-                'use_default_endpoints': True
+                'use_default_endpoints': True,
+                'validation_excludes': []
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -457,9 +530,9 @@ class TestBndlCreate(CliTestCase):
                 for entry in tar:
                     self.assertEqual('bundle/bundle.conf', entry.name)
                     self.assertEqual(
-                        tar.extractfile(entry).read().decode("UTF-8"),
+                        tar.extractfile(entry).read().decode('UTF-8'),
                         strip_margin(
-                            '''|description = "my test description"
+                            '''|version = "1"
                                |roles = [
                                |  "web"
                                |  "web2"
@@ -468,17 +541,46 @@ class TestBndlCreate(CliTestCase):
 
     def test_bundle(self):
         temp_dir = tempfile.mkdtemp()
+        bundle_conf = strip_margin(
+            """|version = "1"
+               |name = "testing"
+               |compatibilityVersion = "1"
+               |system = "my-system"
+               |systemVersion = "1"
+               |nrOfCpus = 1.0
+               |memory = 402653184
+               |diskSpace = 200000000
+               |roles = ["web", "web2"]
+               |annotations = {},
+               |tags = ["1.0.0"]
+               |components {
+               |  test-bundle {
+               |    description = "test-bundle"
+               |    file-system-type = "universal"
+               |    start-command = [
+               |      "test-bundle/bin/test-bundle"
+               |    ]
+               |    endpoints {
+               |      test {
+               |        bind-protocol = "tcp"
+               |        bind-port = 0
+               |        acls = "some-acl"
+               |      }
+               |    }
+               |  }
+               |}""")
 
         try:
             with \
                     open(os.path.join(temp_dir, 'bundle.conf'), 'wb') as bundle_conf_file, \
                     tempfile.NamedTemporaryFile() as file_out:
-                bundle_conf_file.write(b'name = "testing"\ndescription = "my test description"\nroles = ["web", "web2"]')
+
+                bundle_conf_file.write(bundle_conf.encode('UTF-8'))
                 bundle_conf_file.flush()
 
                 args = create_attributes_object({
                     'name': 'test',
-                    'format': 'bundle',
+                    'format': BndlFormat.BUNDLE,
                     'source': temp_dir,
                     'output': file_out.name,
                     'use_shazar': False,
@@ -486,7 +588,8 @@ class TestBndlCreate(CliTestCase):
                     'roles': ['test'],
                     'annotations': [
                         'my.test=testing'
-                    ]
+                    ],
+                    'validation_excludes': []
                 })
 
                 self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -496,10 +599,16 @@ class TestBndlCreate(CliTestCase):
                     for entry in tar:
                         self.assertEqual('test/bundle.conf', entry.name)
                         self.assertEqual(
-                            tar.extractfile(entry).read().decode("UTF-8"),
+                            tar.extractfile(entry).read().decode('UTF-8'),
                             strip_margin(
-                                '''|name = "test"
-                                   |description = "my test description"
+                                """|version = "1"
+                                   |name = "test"
+                                   |compatibilityVersion = "1"
+                                   |system = "my-system"
+                                   |systemVersion = "1"
+                                   |nrOfCpus = 1.0
+                                   |memory = 402653184
+                                   |diskSpace = 200000000
                                    |roles = [
                                    |  "test"
                                    |]
@@ -507,7 +616,26 @@ class TestBndlCreate(CliTestCase):
                                    |  my {
                                    |    test = "testing"
                                    |  }
-                                   |}''')
+                                   |}
+                                   |tags = [
+                                   |  "1.0.0"
+                                   |]
+                                   |components {
+                                   |  test-bundle {
+                                   |    description = "test-bundle"
+                                   |    file-system-type = "universal"
+                                   |    start-command = [
+                                   |      "test-bundle/bin/test-bundle"
+                                   |    ]
+                                   |    endpoints {
+                                   |      test {
+                                   |        bind-protocol = "tcp"
+                                   |        bind-port = 0
+                                   |        acls = "some-acl"
+                                   |      }
+                                   |    }
+                                   |  }
+                                   |}""")
                         )
         finally:
             shutil.rmtree(temp_dir)
@@ -519,19 +647,20 @@ class TestBndlCreate(CliTestCase):
             with \
                     open(os.path.join(temp_dir, 'bundle.conf'), 'wb') as bundle_conf_file, \
                     tempfile.NamedTemporaryFile() as file_out:
-                bundle_conf_file.write(b'name = "testing"\ndescription = "my test description"\nroles = ["web", "web2"]')
+                bundle_conf_file.write(b'name = "testing"\nroles = ["web", "web2"]')
                 bundle_conf_file.flush()
 
                 args = create_attributes_object({
                     'name': 'test',
-                    'format': 'bundle',
+                    'format': BndlFormat.CONFIGURATION,
                     'source': temp_dir,
                     'output': file_out.name,
                     'use_shazar': False,
                     'use_default_endpoints': True,
                     'annotations': [
                         'my.test=testing'
-                    ]
+                    ],
+                    'validation_excludes': []
                 })
 
                 self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -543,10 +672,9 @@ class TestBndlCreate(CliTestCase):
                     for entry in tar:
                         self.assertEqual('test/bundle.conf', entry.name)
                         self.assertEqual(
-                            tar.extractfile(entry).read().decode("UTF-8"),
+                            tar.extractfile(entry).read().decode('UTF-8'),
                             strip_margin(
                                 '''|name = "test"
-                                   |description = "my test description"
                                    |roles = [
                                    |  "web"
                                    |  "web2"
@@ -567,7 +695,7 @@ class TestBndlCreate(CliTestCase):
             with tempfile.NamedTemporaryFile() as file_out:
                 args = create_attributes_object({
                     'name': None,
-                    'format': 'bundle',
+                    'format': BndlFormat.BUNDLE,
                     'source': temp_dir,
                     'output': file_out.name,
                     'use_shazar': False,
@@ -576,8 +704,6 @@ class TestBndlCreate(CliTestCase):
                         'ENV2=456'
                     ]
                 })
-
-                open(os.path.join(temp_dir, 'bundle.conf'), 'wb').close()
 
                 self.assertEqual(bndl_create.bndl_create(args), 0)
                 self.assertTrue(tarfile.is_tarfile(file_out.name))
@@ -589,12 +715,12 @@ class TestBndlCreate(CliTestCase):
                     for entry in tar:
                         if entry.name == 'bundle/bundle.conf':
                             saw_bundle = True
-                            self.assertEqual(tar.extractfile(entry).read().decode("UTF-8"), '{}')
+                            self.assertEqual(tar.extractfile(entry).read().decode('UTF-8'), '{}')
 
                         elif entry.name == 'bundle/runtime-config.sh':
                             saw_config = True
                             self.assertEqual(
-                                tar.extractfile(entry).read().decode("UTF-8"),
+                                tar.extractfile(entry).read().decode('UTF-8'),
                                 strip_margin(
                                     '''|export 'ENV1=123'
                                        |export 'ENV2=456\'''')
@@ -612,7 +738,7 @@ class TestBndlCreate(CliTestCase):
             with tempfile.NamedTemporaryFile() as file_out:
                 args = create_attributes_object({
                     'name': None,
-                    'format': 'bundle',
+                    'format': BndlFormat.BUNDLE,
                     'source': temp_dir,
                     'output': file_out.name,
                     'use_shazar': False,
@@ -621,8 +747,6 @@ class TestBndlCreate(CliTestCase):
                         'ENV2=456'
                     ]
                 })
-
-                open(os.path.join(temp_dir, 'bundle.conf'), 'wb').close()
 
                 with open(os.path.join(temp_dir, 'runtime-config.sh'), 'w') as config:
                     config.write(
@@ -641,12 +765,12 @@ class TestBndlCreate(CliTestCase):
                     for entry in tar:
                         if entry.name == 'bundle/bundle.conf':
                             saw_bundle = True
-                            self.assertEqual(tar.extractfile(entry).read().decode("UTF-8"), '{}')
+                            self.assertEqual(tar.extractfile(entry).read().decode('UTF-8'), '{}')
 
                         elif entry.name == 'bundle/runtime-config.sh':
                             saw_config = True
                             self.assertEqual(
-                                tar.extractfile(entry).read().decode("UTF-8"),
+                                tar.extractfile(entry).read().decode('UTF-8'),
                                 strip_margin(
                                     '''|export MY_ENV=hello
                                        |export 'ENV1=123'
@@ -667,7 +791,7 @@ class TestBndlCreate(CliTestCase):
             attributes = create_attributes_object({
                 'name': 'test',
                 'source': tmpdir,
-                'format': 'oci-image',
+                'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
                 'component_description': '',
@@ -677,7 +801,8 @@ class TestBndlCreate(CliTestCase):
                 'envs': [
                     'ENV1=123',
                     'ENV2=456'
-                ]
+                ],
+                'validation_excludes': []
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
