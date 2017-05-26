@@ -109,6 +109,7 @@ class TestBndlOci(CliTestCase):
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
+            'use_default_volumes': True,
             'annotations': []
         })
 
@@ -127,6 +128,7 @@ class TestBndlOci(CliTestCase):
             'roles': ['web', 'backend'],
             'image_tag': 'latest',
             'use_default_endpoints': True,
+            'use_default_volumes': True
         })
 
         self.assertEqual(
@@ -211,6 +213,7 @@ class TestBndlOci(CliTestCase):
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
+            'use_default_volumes': True,
             'annotations': []
         })
 
@@ -279,6 +282,7 @@ class TestBndlOci(CliTestCase):
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': False,
+            'use_default_volumes': True,
             'annotations': []
         })
 
@@ -332,6 +336,7 @@ class TestBndlOci(CliTestCase):
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
+            'use_default_volumes': True,
             'annotations': {}
         })
 
@@ -407,6 +412,7 @@ class TestBndlOci(CliTestCase):
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': False,
+            'use_default_volumes': True,
             'annotations': {}
         })
 
@@ -464,7 +470,7 @@ class TestBndlOci(CliTestCase):
                             |}''')
         )
 
-    def test_oci_image_annotations(self):
+    def test_oci_params(self):
         self.maxDiff = None
 
         base_args = create_attributes_object({
@@ -473,12 +479,14 @@ class TestBndlOci(CliTestCase):
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
+            'use_default_volumes': True,
             'annotations': []
         })
 
         config = {
             'config': {
-                'ExposedPorts': {'80/tcp': {}, '8080/udp': {}}
+                'ExposedPorts': {'80/tcp': {}, '8080/udp': {}},
+                'Volumes': {'/data': {}, '/var/lib/cassandra': {}}
             }
         }
 
@@ -534,6 +542,10 @@ class TestBndlOci(CliTestCase):
                             |        bind-port = 8080
                             |        service-name = "my-component-udp-8080"
                             |      }
+                            |    }
+                            |    volumes {
+                            |      volume-data = "/data"
+                            |      volume-var-lib-cassandra = "/var/lib/cassandra"
                             |    }
                             |  }
                             |  bundle-status {

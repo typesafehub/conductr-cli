@@ -9,7 +9,7 @@ import tempfile
 
 def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     conf = ConfigFactory.parse_string('')
-    load_bundle_args_into_conf(conf, args, with_defaults=True, validate_components=False)
+    load_bundle_args_into_conf(conf, args, with_defaults=True)
 
     annotations_tree = conf.get('annotations')
 
@@ -54,6 +54,13 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
             components_tree = ConfigTree()
             components_tree.put(component_name, oci_tree)
             components_tree.put('bundle-status', oci_check_tree)
+
+    if args.use_default_volumes and 'config' in oci_config and 'Volumes' in oci_config['config']:
+        volumes = ConfigTree()
+        for vol_path in sorted(oci_config['config']['Volumes'].keys()):
+            key = 'volume{}'.format(re.sub(r'\W+', '-', vol_path))
+            volumes.put(key, vol_path)
+        oci_tree.put('volumes', volumes)
 
     conf.put('components', components_tree)
 

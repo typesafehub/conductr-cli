@@ -109,7 +109,8 @@ class TestBndlCreate(CliTestCase):
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'use_default_volumes': True
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -150,7 +151,8 @@ class TestBndlCreate(CliTestCase):
                 'use_shazar': False,
                 'use_default_endpoints': True,
                 'annotations': [],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'use_default_volumes': True
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -194,7 +196,8 @@ class TestBndlCreate(CliTestCase):
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'use_default_volumes': True
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -215,7 +218,8 @@ class TestBndlCreate(CliTestCase):
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'use_default_volumes': True
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -258,7 +262,8 @@ class TestBndlCreate(CliTestCase):
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'use_default_volumes': True
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -301,7 +306,8 @@ class TestBndlCreate(CliTestCase):
                 'use_shazar': False,
                 'use_default_endpoints': True,
                 'annotations': [],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'use_default_volumes': True
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -322,7 +328,8 @@ class TestBndlCreate(CliTestCase):
                 'use_shazar': False,
                 'use_default_endpoints': True,
                 'annotations': [],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'use_default_volumes': True
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -432,6 +439,7 @@ class TestBndlCreate(CliTestCase):
                 'output': file_out.name,
                 'use_shazar': False,
                 'use_default_endpoints': True,
+                'use_default_volumes': True,
                 'roles': ['test'],
                 'start_commands': [
                     create_attributes_object({
@@ -443,7 +451,19 @@ class TestBndlCreate(CliTestCase):
                         'component': 'test1'
                     })
                 ],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'volumes': [
+                    create_attributes_object({
+                        'name': 'my-vol',
+                        'mount_point': '/data',
+                        'component': 'test2'
+                    }),
+                    create_attributes_object({
+                        'name': 'my-vol',
+                        'mount_point': '/other-data',
+                        'component': 'test1'
+                    })
+                ]
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -467,12 +487,18 @@ class TestBndlCreate(CliTestCase):
                                |      "xyz"
                                |      "test"
                                |    ]
+                               |    volumes {
+                               |      my-vol = "/other-data"
+                               |    }
                                |  }
                                |  test2 {
                                |    start-command = [
                                |      "abc"
                                |      "test"
                                |    ]
+                               |    volumes {
+                               |      my-vol = "/data"
+                               |    }
                                |  }
                                |}''')
                     )
@@ -797,6 +823,7 @@ class TestBndlCreate(CliTestCase):
                 'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
+                'use_default_volumes': True,
                 'annotations': [],
                 'envs': [
                     'ENV1=123',

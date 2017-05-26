@@ -122,7 +122,7 @@ def data_is_zip(data):
     return any(data.startswith(number) for number in MAGIC_NUMBERS_ZIP)
 
 
-def load_bundle_args_into_conf(config, args, with_defaults, validate_components):
+def load_bundle_args_into_conf(config, args, with_defaults):
     # this is unrolled because it's actually pretty complicated to get the order
     # correct given that some attributes need special handling and defaults
 
@@ -138,6 +138,7 @@ def load_bundle_args_into_conf(config, args, with_defaults, validate_components)
     args_system = getattr(args, 'system', None)
     args_system_version = getattr(args, 'system_version', None)
     args_version = getattr(args, 'version', None)
+    args_volumes = getattr(args, 'volumes', None)
 
     if hasattr(args, 'annotations') and len(args.annotations) > 0:
         annotations_tree = ConfigTree()
@@ -168,14 +169,14 @@ def load_bundle_args_into_conf(config, args, with_defaults, validate_components)
             check_args += ['--connection-timeout', str(args.check_connection_timeout)]
         check_args += args_check_addresses
 
-        if 'components' in config:
-            if 'bundle-status' in config.get('components'):
-                config.put('components.bundle-status.start-command', ['check'] + check_args)
-            else:
-                check_tree = create_check_hocon(check_args)
-                config.put('components.bundle-status', check_tree)
-        elif validate_components:
-            raise SyntaxError('Unable to add check command. bundle.conf does not contain any components')
+        if 'components' not in config:
+            config.put('components', ConfigTree())
+
+        if 'bundle-status' in config.get('components'):
+            config.put('components.bundle-status.start-command', ['check'] + check_args)
+        else:
+            check_tree = create_check_hocon(check_args)
+            config.put('components.bundle-status', check_tree)
 
     if args_compatibility_version is not None:
         config.put('compatibilityVersion', args_compatibility_version)
@@ -188,29 +189,38 @@ def load_bundle_args_into_conf(config, args, with_defaults, validate_components)
         config.put('diskSpace', BNDL_DEFAULT_DISK_SPACE)
 
     if args_endpoints is not None:
-        if 'components' in config:
-            # Delete existing endpoints if exist in configuration
-            for endpoint in args_endpoints:
-                component_name = detect_component(config, endpoint)
-                endpoint_key = 'components.{}.endpoints'.format(component_name)
-                if endpoint_key in config:
-                    config.put(endpoint_key, None)
-            # Add endpoints to bundle components based on the --endpoint argument
-            for endpoint in args_endpoints:
-                component_name = detect_component(config, endpoint)
-                endpoint_key = 'components.{}.endpoints'.format(component_name)
-                config.put(endpoint_key, endpoint.hocon())
-        elif validate_components:
-            raise SyntaxError('Unable to add endpoints. bundle.conf does not contain any components')
+        if 'components' not in config:
+            config.put('components', ConfigTree())
+
+        # Delete existing endpoints if exist in configuration
+        for endpoint in args_endpoints:
+            component_name = detect_component(config, endpoint)
+            endpoint_key = 'components.{}.endpoints'.format(component_name)
+            if endpoint_key in config:
+                config.put(endpoint_key, None)
+        # Add endpoints to bundle components based on the --endpoint argument
+        for endpoint in args_endpoints:
+            component_name = detect_component(config, endpoint)
+            endpoint_key = 'components.{}.endpoints'.format(component_name)
+            config.put(endpoint_key, endpoint.hocon())
 
     if args_start_commands:
-        if 'components' in config:
-            for start_command in args_start_commands:
-                component_name = detect_component(config, start_command)
-                start_command_key = 'components.{}.start-command'.format(component_name)
-                config.put(start_command_key, ConfigFactory.parse_string(start_command.start_command))
-        elif validate_components:
-            raise SyntaxError('Unable to specify start-command. bundle.conf does not contain any components')
+        if 'components' not in config:
+            config.put('components', ConfigTree())
+
+        for start_command in args_start_commands:
+            component_name = detect_component(config, start_command)
+            start_command_key = 'components.{}.start-command'.format(component_name)
+            config.put(start_command_key, ConfigFactory.parse_string(start_command.start_command))
+
+    if args_volumes:
+        if 'components' not in config:
+            config.put('components', ConfigTree())
+
+        for volume in args_volumes:
+            component_name = detect_component(config, volume)
+            volume_key = 'components.{}.volumes.{}'.format(component_name, volume.name)
+            config.put(volume_key, volume.mount_point)
 
     if args_memory is not None:
         config.put('memory', args_memory)
@@ -276,12 +286,7 @@ def create_check_hocon(check_args):
 
 def detect_component(config, args):
     if hasattr(args, 'component'):
-        if args.component in config.get('components'):
-            return args.component
-        else:
-            component_names = [component for component in config.get('components')]
-            raise ValueError('Component {} does not exist in the bundle.conf. Available components: {}'
-                             .format(args.component, component_names))
+        return args.component
     else:
         non_status_component_names = [component for component in config.get('components')
                                       if component != 'bundle-status']

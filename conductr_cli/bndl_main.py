@@ -51,6 +51,8 @@ class ComponentAction(argparse.Action):
             namespace.endpoint_dicts[-1]['component'] = value
         elif namespace.component_action == 'start_command':
             namespace.start_command_dicts[-1]['component'] = value
+        elif namespace.component_action == 'volume':
+            namespace.volume_dicts[-1]['component'] = value
 
 
 class EndpointAction(argparse.Action):
@@ -126,6 +128,24 @@ class StartCommandAction(argparse.Action):
             namespace.start_command_dicts[-1][dict_key] = value
 
 
+class VolumeAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_strings):
+        log = logging.getLogger(__name__)
+
+        def require_volume():
+            if not namespace.volume_dicts:
+                log.error('bndl: argument {} must be specified after the argument --volume'.format(option_strings))
+                sys.exit(2)
+
+        if option_strings == '--volume':
+            namespace.component_action = 'volume'
+            namespace.volume_dicts.append({'volume': value})
+        else:
+            require_volume()
+            dict_key = option_strings[2:]
+            namespace.volume_dicts[-1][dict_key] = value
+
+
 def process_args(args):
     log = logging.getLogger(__name__)
 
@@ -157,6 +177,25 @@ def process_args(args):
 
         args.start_commands.append(start_command)
 
+    if args.volume_dicts:
+        args.volumes = []
+
+        volume = type('', (), {})()
+        parts = args.volume_dicts[-1]['volume'].split('=', 1)
+
+        if len(parts) != 2:
+            log.error('bndl: volumes must be specified in the format NAME=MOUNT_POINT. '
+                      'Example: bndl --volume myvol=/data')
+            sys.exit(2)
+
+        volume.name = parts[0]
+        volume.mount_point = parts[1]
+
+        if 'component' in args.volume_dicts[-1]:
+            volume.component = args.volume_dicts[-1]['component']
+
+        args.volumes.append(volume)
+
 
 def add_conf_arguments(parser):
     parser._handle_conflict_component = lambda: ()
@@ -170,7 +209,7 @@ def add_conf_arguments(parser):
 
     endpoint_args = parser.add_argument_group('endpoints',
                                               description='Add endpoints to the bundle. If the bundle has more than '
-                                                          'one component, you must specify --component.\n')
+                                                          'one component, you must specify --component\n')
     endpoint_args.add_argument('--endpoint',
                                help='Endpoints that are added to the bundle\n'
                                     'If specified, existing endpoints are removed\n'
@@ -247,9 +286,9 @@ def add_conf_arguments(parser):
                                action=EndpointAction)
 
     start_command_args = parser.add_argument_group('start_command',
-                                                   description='Modify the start-command of a component. If the bundle '
-                                                               'has more than one component, you must specify '
-                                                               '--component.\n')
+                                                   description='Modify the start-command of a component\n'
+                                                               'If the bundle has more than one component, '
+                                                               'you must specify --component')
     start_command_args.add_argument('--start-command',
                                     help='Sets "start-command" for a component\n'
                                          'Must be specified in HOCON format\n'
@@ -258,6 +297,22 @@ def add_conf_arguments(parser):
                                     dest='start_command_dicts',
                                     default=[],
                                     action=StartCommandAction)
+
+    volume_args = parser.add_argument_group('volumes',
+                                            description='Declare volumes for a component that will be mounted into '
+                                                        'the container\n'
+                                                        'For use with oci-image, oci-bundle and docker components\n'
+                                                        'If the bundle has more than one component, you must specify'
+                                                        '--component')
+
+    volume_args.add_argument('--volume',
+                             dest='volume_dicts',
+                             action=VolumeAction,
+                             default=[],
+                             help='Declare a volume path given its name and mount point separated by an equals sign\n'
+                                  'If provided, existing volumes are removed\n'
+                                  'Example: bndl --volume my-vol=/data --component web',
+                             metavar='NAME=MOUNT-POINT')
 
     check_args = parser.add_argument_group('check')
     check_args.add_argument('--check',
@@ -314,7 +369,7 @@ def add_conf_arguments(parser):
                         action='append',
                         default=[],
                         help='Additional environment variables for the bundle\'s runtime-config.sh\n'
-                             'Defaults to [].',
+                             'Defaults to []',
                         metavar='')
 
     parser.add_argument('--memory',
@@ -440,6 +495,13 @@ def build_parser():
                         choices=['property-names', 'required'],
                         dest='validation_excludes',
                         action='append')
+
+    parser.add_argument('--no-default-volumes',
+                        help='If provided, a bundle will not contain any volume declarations\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_volumes',
+                        action='store_false')
 
     add_conf_arguments(parser)
 

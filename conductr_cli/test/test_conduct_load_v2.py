@@ -479,7 +479,7 @@ class TestConductLoadCommand(ConductLoadTestBase):
             bndl_mock.call_args_list,
             [
                 call(self.bundle_file),
-                call(config_file, BndlFormat.CONFIGURATION, input_args)
+                call(config_file, BndlFormat.CONFIGURATION.value, input_args, 'mock bundle.conf')
             ]
         )
 
