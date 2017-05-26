@@ -223,7 +223,7 @@ def bndl_create(args):
         else:
             bundle_conf = ConfigFactory.parse_string('')
 
-        load_bundle_args_into_conf(bundle_conf, args, with_defaults=False, validate_components=True)
+        load_bundle_args_into_conf(bundle_conf, args, with_defaults=False)
 
         if bundle_conf:
             validation_excludes = set(args.validation_excludes)

@@ -130,7 +130,7 @@ class TestBndlUtils(CliTestCase):
 
     def test_load_bundle_args_into_conf_with_defaults(self):
         simple_config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(simple_config, {}, with_defaults=True, validate_components=False)
+        bndl_utils.load_bundle_args_into_conf(simple_config, {}, with_defaults=True)
         self.assertEqual(simple_config.get('name'), BNDL_DEFAULT_NAME)
         self.assertEqual(simple_config.get('compatibilityVersion'), BNDL_DEFAULT_COMPATIBILITY_VERSION)
         self.assertEqual(simple_config.get('diskSpace'), BNDL_DEFAULT_DISK_SPACE)
@@ -215,13 +215,13 @@ class TestBndlUtils(CliTestCase):
         # empty
         no_defaults = ConfigFactory.parse_string('')
         bndl_utils.load_bundle_args_into_conf(no_defaults, create_attributes_object({}),
-                                              with_defaults=False, validate_components=False)
+                                              with_defaults=False)
 
         self.assertEqual(no_defaults, ConfigFactory.parse_string(''))
 
         # test that config value is specified, with defaults etc
         simple_config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(simple_config, base_args, with_defaults=True, validate_components=False)
+        bndl_utils.load_bundle_args_into_conf(simple_config, base_args, with_defaults=True)
         self.assertEqual(simple_config.get('name'), 'world')
         self.assertEqual(simple_config.get('compatibilityVersion'), BNDL_DEFAULT_COMPATIBILITY_VERSION)
         self.assertEqual(simple_config.get('diskSpace'), BNDL_DEFAULT_DISK_SPACE)
@@ -234,16 +234,16 @@ class TestBndlUtils(CliTestCase):
 
         # test that config value is overwritten
         name_config = ConfigFactory.parse_string('name = "hello"')
-        bndl_utils.load_bundle_args_into_conf(name_config, base_args, with_defaults=True, validate_components=False)
+        bndl_utils.load_bundle_args_into_conf(name_config, base_args, with_defaults=True)
         self.assertEqual(name_config.get('name'), 'world')
 
         # test that config value is retained
         cpu_config = ConfigFactory.parse_string('nrOfCpus = 0.1')
-        bndl_utils.load_bundle_args_into_conf(cpu_config, base_args, with_defaults=True, validate_components=False)
+        bndl_utils.load_bundle_args_into_conf(cpu_config, base_args, with_defaults=True)
         self.assertEqual(cpu_config.get('nrOfCpus'), 0.1)
 
         config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(config, extended_args, with_defaults=True, validate_components=False)
+        bndl_utils.load_bundle_args_into_conf(config, extended_args, with_defaults=True)
 
         # test that various args are set correctly
         self.assertEqual(config.get('name'), 'world')
@@ -261,19 +261,19 @@ class TestBndlUtils(CliTestCase):
 
         # test that we add replace tags that exist
         tag_config = ConfigFactory.parse_string('{ tags = ["hello"] }')
-        bndl_utils.load_bundle_args_into_conf(tag_config, base_args, with_defaults=True, validate_components=False)
+        bndl_utils.load_bundle_args_into_conf(tag_config, base_args, with_defaults=True)
         self.assertEqual(tag_config.get('tags'), ['testing'])
 
         # test that we only retain unique tags
         tag_config = ConfigFactory.parse_string('{}')
         bndl_utils.load_bundle_args_into_conf(tag_config, base_args_dup_tags,
-                                              with_defaults=True, validate_components=False)
+                                              with_defaults=True)
         self.assertEqual(tag_config.get('tags'), ['testing'])
 
         # test that annotations are added
         annotations_config = ConfigFactory.parse_string('{ annotations = { name = "my-name" } }')
         bndl_utils.load_bundle_args_into_conf(annotations_config, extended_args,
-                                              with_defaults=True, validate_components=False)
+                                              with_defaults=True)
         self.assertEqual(annotations_config.get('annotations'), {
             'name': 'my-name',
             'com': {
@@ -303,8 +303,7 @@ class TestBndlUtils(CliTestCase):
                |    }
                |  }
                |}"""))
-        bndl_utils.load_bundle_args_into_conf(existing_endpoints_config, extended_args,
-                                              with_defaults=True, validate_components=True)
+        bndl_utils.load_bundle_args_into_conf(existing_endpoints_config, extended_args, with_defaults=True)
         expected_replaced_endpoints_config = ConfigFactory.parse_string(strip_margin(
             """|web {
                |  bind-protocol = "http"
@@ -404,8 +403,9 @@ class TestBndlUtils(CliTestCase):
                |    }
                |  }
                |}"""))
-        bndl_utils.load_bundle_args_into_conf(auto_detect_endpoints_config, auto_detect_endpoint_args,
-                                              with_defaults=True, validate_components=True)
+        bndl_utils.load_bundle_args_into_conf(auto_detect_endpoints_config,
+                                              auto_detect_endpoint_args,
+                                              with_defaults=True)
         expected_replaced_endpoints_config = ConfigFactory.parse_string(strip_margin(
             """|web {
                |  bind-protocol = "http"
@@ -426,17 +426,17 @@ class TestBndlUtils(CliTestCase):
         self.assertEqual(auto_detect_endpoints_config.get('components.test-bundle.endpoints'),
                          expected_replaced_endpoints_config)
 
-        # test that endpoints cannot be added when no component exist
+        # test that endpoints can be added when no component exist
         no_components_config = ConfigFactory.parse_string(strip_margin("""|{}"""))
-        self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, no_components_config, extended_args,
-                          False, True)
 
-        # test that endpoints cannot be added when the specified component does not exist
-        invalid_endpoint_component_args = create_attributes_object({
+        bndl_utils.load_bundle_args_into_conf(no_components_config, extended_args, False)
+
+        # test that endpoints can be added when the specified component does not exist
+        missing_endpoint_component_args = create_attributes_object({
             'endpoints': [
                 Endpoint({
                     'name': 'web',
-                    'component': 'invalid-component',
+                    'component': 'a-component',
                     'service-name': 'web',
                     'acls': [
                         {'value': '/', 'rewrite': None, 'match': None, 'protocol': 'http'},
@@ -445,7 +445,7 @@ class TestBndlUtils(CliTestCase):
                 })
             ]
         })
-        invalid_component_endpoints_config = ConfigFactory.parse_string(strip_margin(
+        missing_component_endpoints_config = ConfigFactory.parse_string(strip_margin(
             """|{
                |  components {
                |    test-bundle {
@@ -463,8 +463,10 @@ class TestBndlUtils(CliTestCase):
                |    }
                |  }
                |}"""))
-        self.assertRaises(ValueError, bndl_utils.load_bundle_args_into_conf, invalid_component_endpoints_config,
-                          invalid_endpoint_component_args, False, True)
+
+        bndl_utils.load_bundle_args_into_conf(missing_component_endpoints_config,
+                                              missing_endpoint_component_args,
+                                              False)
 
         # test that endpoints cannot be added when auto detection of component failed due to multiple components
         # in the config
@@ -511,7 +513,7 @@ class TestBndlUtils(CliTestCase):
                |  }
                |}"""))
         self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, multiple_endpoint_components_config,
-                          multiple_endpoint_components_args, False, True)
+                          multiple_endpoint_components_args, False)
 
         # test that check command is replaced in existing component
         existing_check_config = ConfigFactory.parse_string(strip_margin(
@@ -527,8 +529,9 @@ class TestBndlUtils(CliTestCase):
                |    }
                |  }
                |}"""))
-        bndl_utils.load_bundle_args_into_conf(existing_check_config, check_args,
-                                              with_defaults=False, validate_components=True)
+        bndl_utils.load_bundle_args_into_conf(existing_check_config,
+                                              check_args,
+                                              with_defaults=False)
         expected_replaced_check_config = ConfigFactory.parse_string(strip_margin(
             """|description = "bundle-status"
                |file-system-type = "universal"
@@ -569,11 +572,11 @@ class TestBndlUtils(CliTestCase):
                |  "http://192.168.10.1:9999"
                |],
                |endpoints = {}"""))
-        bndl_utils.load_bundle_args_into_conf(without_check_config, check_args,
-                                              with_defaults=False, validate_components=True)
+        bndl_utils.load_bundle_args_into_conf(without_check_config,
+                                              check_args,
+                                              with_defaults=False)
         self.assertEqual(without_check_config.get('components.bundle-status'), expected_new_check_config)
 
-        # test that check component cannot be added because bundle.conf does not contain any components
+        # test that check component can be added when bundle.conf does not contain any components -- e.g. configurations
         no_components_config = ConfigFactory.parse_string(strip_margin("""|{}"""))
-        self.assertRaises(SyntaxError, bndl_utils.load_bundle_args_into_conf, no_components_config, check_args,
-                          False, True)
+        bndl_utils.load_bundle_args_into_conf(no_components_config, check_args, False)

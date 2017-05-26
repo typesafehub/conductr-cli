@@ -75,7 +75,13 @@ class TestBndl(CliTestCase):
             '--annotation',
             'description=this is a test',
             '--env',
-            'MESSAGE=hello world'
+            'MESSAGE=hello world',
+            '--volume',
+            'test:/data',
+            '--component',
+            'web-component',
+            '--volume',
+            'test2:/data2'
         ])
 
         self.assertEqual(args.source, 'oci-image-dir')
@@ -116,6 +122,10 @@ class TestBndl(CliTestCase):
             }
         ])
         self.assertEqual(args.envs, ['MESSAGE=hello world'])
+        self.assertEqual(args.volume_dicts, [
+            {'component': 'web-component', 'volume': 'test:/data'},
+            {'volume': 'test2:/data2'}
+        ])
 
     def test_parser_acl_params(self):
         parser = bndl_main.build_parser()

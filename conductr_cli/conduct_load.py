@@ -34,12 +34,18 @@ BNDL_ARGS = {
     'memory': None,
     'name': None,
     'nr_of_cpus': None,
+    'start_command_dicts': [],
     'roles': None,
     'system': None,
     'system_version': None,
     'tags': [],
-    'version': None
+    'version': None,
+    'volume_dicts': []
 }
+
+# A list of arguments that will need `component` added because
+# it cannot be detected from the configuration
+BNDL_ARGS_WITH_COMPONENT = ['endpoint_dicts', 'start_command_dicts', 'volume_dicts']
 
 # The number of old bundle versions to keep when performing housekeeping, apart from the recently loaded bundle.
 KEEP_BUNDLE_VERSIONS = 1
@@ -196,7 +202,7 @@ def bndl_arguments_present(args):
     return False
 
 
-def invoke_bndl(input, format=None, additional_args=None):
+def invoke_bndl(input, format=None, additional_args=None, bundle_conf=None):
     temp_file = tempfile.NamedTemporaryFile()
     args = [input, '-o', temp_file.name]
     arg_keys = {}
@@ -206,9 +212,19 @@ def invoke_bndl(input, format=None, additional_args=None):
         args.append(format)
 
     if additional_args is not None:
+        parsed_bundle_conf = ConfigFactory.parse_string(bundle_conf)
         for arg in BNDL_ARGS:
             if hasattr(additional_args, arg):
                 arg_keys[arg] = getattr(additional_args, arg)
+                if arg in BNDL_ARGS_WITH_COMPONENT:
+                    for entry in arg_keys[arg]:
+                        if 'component' not in entry and 'components' in parsed_bundle_conf:
+                            components = parsed_bundle_conf.get_config('components').as_plain_ordered_dict().keys()
+
+                            first_component = next(iter(components), None)
+
+                            if first_component:
+                                entry['component'] = first_component
 
     return_code = bndl_main.invoke(args, arg_keys)
 
@@ -249,14 +265,14 @@ def load_v2(args):
             resolver.resolve_bundle_configuration(custom_settings, configuration_cache_dir,
                                                   args.configuration, args.offline_mode)
         if not is_bundle(configuration_file) or bndl_arguments_present(args):
-            configuration_fileobj = invoke_bndl(configuration_file, BndlFormat.CONFIGURATION, args)
+            configuration_fileobj = invoke_bndl(configuration_file, BndlFormat.CONFIGURATION.value, args, bundle_conf)
             configuration_file = configuration_fileobj.name
             configuration_file_name = os.path.basename(configuration_file)
         bundle_conf_overlay = bundle_utils.conf(configuration_file)
     elif bndl_arguments_present(args):
         with tempfile.NamedTemporaryFile() as empty_file:
             os.utime(empty_file.name, (constants.SHAZAR_TIMESTAMP_MIN, constants.SHAZAR_TIMESTAMP_MIN))
-            configuration_fileobj = invoke_bndl(empty_file.name, BndlFormat.BUNDLE, args)
+            configuration_fileobj = invoke_bndl(empty_file.name, BndlFormat.CONFIGURATION.value, args, bundle_conf)
             configuration_file = configuration_fileobj.name
             configuration_file_name = os.path.basename(configuration_file)
             bundle_conf_overlay = bundle_utils.conf(configuration_file)
