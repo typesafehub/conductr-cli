@@ -116,7 +116,8 @@ class StartCommandAction(argparse.Action):
 
         def require_start_command():
             if not namespace.endpoint_dicts:
-                log.error('bndl: argument {} must be specified after the argument --start-command'.format(option_strings))
+                log.error(
+                    'bndl: argument {} must be specified after the argument --start-command'.format(option_strings))
                 sys.exit(2)
 
         if option_strings == '--start-command':
@@ -200,6 +201,15 @@ def process_args(args):
 def add_conf_arguments(parser):
     parser._handle_conflict_component = lambda: ()
 
+    # Root arguments
+    parser.add_argument('--annotation',
+                        action='append',
+                        default=[],
+                        dest='annotations',
+                        help='Annotations to add to bundle.conf\n'
+                             'Example: bndl --annotation my.first=value1 --annotation my.second=value2\n'
+                             'Defaults to []')
+
     parser.add_argument('--component',
                         help='Specify the component that should be modified\n'
                              'Required when the bundle has more than one component\n'
@@ -207,6 +217,184 @@ def add_conf_arguments(parser):
                         metavar='COMPONENT',
                         action=ComponentAction)
 
+    parser.add_argument('--component-description',
+                        help='Description to use for the generated ConductR component\n'
+                             'For use with docker and oci-image formats',
+                        default='')
+
+    parser.add_argument('--compatibility-version',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "compatibilityVersion" bundle.conf value',
+                        dest='compatibility_version')
+
+    parser.add_argument('--disk-space',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "diskSpace" bundle.conf value',
+                        dest='disk_space',
+                        type=int)
+
+    parser.add_argument('--env',
+                        dest='envs',
+                        action='append',
+                        default=[],
+                        help='Additional environment variables for the bundle\'s runtime-config.sh\n'
+                             'Defaults to []',
+                        metavar='')
+
+    parser.add_argument('--image-tag',
+                        required=False,
+                        help='The name of the tag to create a ConductR bundle from\n'
+                             'For use with docker and oci-image formats\n'
+                             'When absent, the first tag present is used')
+
+    parser.add_argument('--image-name',
+                        required=False,
+                        help='The name of the image to create a ConductR bundle from\n'
+                             'For use with docker and oci-image formats\n'
+                             'When absent, the first image present is used')
+
+    parser.add_argument('--memory',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "memory" bundle.conf value',
+                        dest='memory',
+                        type=int)
+
+    parser.add_argument('--name',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "name" bundle.conf value',
+                        dest='name')
+
+    parser.add_argument('--no-default-check',
+                        help='If provided, a bundle will not contain a default check command\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_check',
+                        action='store_false')
+
+    parser.add_argument('--no-default-endpoints',
+                        help='If provided, a bundle will not contain endpoints for ExposedPorts\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_endpoints',
+                        action='store_false')
+
+    parser.add_argument('--no-default-volumes',
+                        help='If provided, a bundle will not contain any volume declarations\n'
+                             'For use with docker and oci-image formats',
+                        default=True,
+                        dest='use_default_volumes',
+                        action='store_false')
+
+    parser.add_argument('--nr-of-cpus',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "nrOfCpus" bundle.conf value',
+                        dest='nr_of_cpus',
+                        type=float)
+
+    parser.add_argument('--roles',
+                        nargs='*',
+                        required=False,
+                        help='Sets the "roles" bundle.conf value',
+                        dest='roles')
+
+    parser.add_argument('--start-command',
+                        help='Sets "start-command" for a component\n'
+                             'Must be specified in HOCON format\n'
+                             'If the bundle has more than one component, '
+                             'you must specify --component\n'
+                             'Example: bndl --start-command \'["/my/app", "my arg"]\' --component service',
+                        metavar='START_COMMAND',
+                        dest='start_command_dicts',
+                        default=[],
+                        action=StartCommandAction)
+
+    parser.add_argument('--system',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "system" bundle.conf value',
+                        dest='system')
+
+    parser.add_argument('--system-version',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "systemVersion" bundle.conf value',
+                        dest='system_version')
+
+    parser.add_argument('--tag',
+                        action='append',
+                        default=[],
+                        dest='tags',
+                        help='Tags to add to bundle.conf\n'
+                             'Example: bndl --tag 16.04 --tag xenial\n'
+                             'Defaults to []')
+
+    parser.add_argument('--validation-exclude',
+                        help='If provided, skips a given validation rule\n'
+                             'The following validation rules can be skipped: \n'
+                             '  property-names: Checks that the bundle.conf only contains property names '
+                             'that are known by ConductR\n'
+                             '  required: Checks that the bundle.conf contains all required properties\n'
+                             'By default, no validation rule is excluded',
+                        default=[],
+                        choices=['property-names', 'required'],
+                        dest='validation_excludes',
+                        action='append')
+
+    parser.add_argument('--version',
+                        nargs='?',
+                        required=False,
+                        help='Sets the "version" bundle.conf value',
+                        dest='version')
+
+    parser.add_argument('--volume',
+                        dest='volume_dicts',
+                        action=VolumeAction,
+                        default=[],
+                        help='Declare a volume path for a component '
+                             'given its name and mount point separated by an equals sign\n'
+                             'For use with oci-image, oci-bundle and docker components\n'
+                             'If the bundle has more than one component, you must specify'
+                             '--component\n'
+                             'If provided, existing volumes are removed\n'
+                             'Example: bndl --volume my-vol=/data --component web',
+                        metavar='NAME=MOUNT-POINT')
+
+    # Check arguments
+    check_args = parser.add_argument_group('check')
+    check_args.add_argument('--check',
+                            help='Check command that is added to the bundle\n'
+                                 'Specify one or multiple addresses that are used to check for bundle connectivity\n'
+                                 'As an address, environment variables can be specified that are available '
+                                 'during Bundle startup, e.g. $MY_BUNDLE_HOST\n'
+                                 'If specified, the existing check command is removed\n'
+                                 'Example: bndl --check \$WEB_BUNDLE_HOST \$BACKEND_BUNDLE_HOST\n'
+                                 'Accepted address formats:\n'
+                                 '  \$ENV/<path>?<params>\n'
+                                 '  [docker+]http://<address>:<port>/<path>?<params>\n'
+                                 '  [docker+]tcp://<address>:<port>?<params>\n'
+                                 'Accepted params:\n'
+                                 '  retry-count=<int> - Number of retries\n'
+                                 '  retry-delay=<int> - Delay in seconds between retries\n'
+                                 '  docker-timeout=<int> - Timeout in seconds for docker container start',
+                            nargs='+',
+                            dest='check_addresses')
+    check_args.add_argument('--connection-timeout',
+                            help='Connection timeout in seconds\n'
+                                 'Used in conjunction with the --check option',
+                            type=int,
+                            dest='check_connection_timeout')
+    check_args.add_argument('--initial-delay',
+                            help='Initial delay in seconds\n'
+                                 'Used in conjunction with the --check option',
+                            type=int,
+                            dest='check_initial_delay')
+
+    # Endpoint arguments
     endpoint_args = parser.add_argument_group('endpoints',
                                               description='Add endpoints to the bundle. If the bundle has more than '
                                                           'one component, you must specify --component\n')
@@ -242,7 +430,6 @@ def add_conf_arguments(parser):
                                metavar='SERVICE_NAME',
                                dest='endpoint_dicts',
                                action=EndpointAction)
-
     endpoint_args.add_argument('--acl',
                                help='Request ACL of an endpoint\n'
                                     'Used in conjunction with the --endpoint option\n'
@@ -285,145 +472,6 @@ def add_conf_arguments(parser):
                                metavar='REWRITE',
                                action=EndpointAction)
 
-    start_command_args = parser.add_argument_group('start_command',
-                                                   description='Modify the start-command of a component\n'
-                                                               'If the bundle has more than one component, '
-                                                               'you must specify --component')
-    start_command_args.add_argument('--start-command',
-                                    help='Sets "start-command" for a component\n'
-                                         'Must be specified in HOCON format\n'
-                                         'Example: bndl --start-command \'["/my/app", "my arg"]\' --component service',
-                                    metavar='START_COMMAND',
-                                    dest='start_command_dicts',
-                                    default=[],
-                                    action=StartCommandAction)
-
-    volume_args = parser.add_argument_group('volumes',
-                                            description='Declare volumes for a component that will be mounted into '
-                                                        'the container\n'
-                                                        'For use with oci-image, oci-bundle and docker components\n'
-                                                        'If the bundle has more than one component, you must specify'
-                                                        '--component')
-
-    volume_args.add_argument('--volume',
-                             dest='volume_dicts',
-                             action=VolumeAction,
-                             default=[],
-                             help='Declare a volume path given its name and mount point separated by an equals sign\n'
-                                  'If provided, existing volumes are removed\n'
-                                  'Example: bndl --volume my-vol=/data --component web',
-                             metavar='NAME=MOUNT-POINT')
-
-    check_args = parser.add_argument_group('check')
-    check_args.add_argument('--check',
-                            help='Check command that is added to the bundle\n'
-                                 'Specify one or multiple addresses that are used to check for bundle connectivity\n'
-                                 'As an address, environment variables can be specified that are available '
-                                 'during Bundle startup, e.g. $MY_BUNDLE_HOST\n'
-                                 'If specified, the existing check command is removed\n'
-                                 'Example: bndl --check \$WEB_BUNDLE_HOST \$BACKEND_BUNDLE_HOST\n'
-                                 'Accepted address formats:\n'
-                                 '  \$ENV/<path>?<params>\n'
-                                 '  [docker+]http://<address>:<port>/<path>?<params>\n'
-                                 '  [docker+]tcp://<address>:<port>?<params>\n'
-                                 'Accepted params:\n'
-                                 '  retry-count=<int> - Number of retries\n'
-                                 '  retry-delay=<int> - Delay in seconds between retries\n'
-                                 '  docker-timeout=<int> - Timeout in seconds for docker container start',
-                            nargs='+',
-                            dest='check_addresses')
-    check_args.add_argument('--connection-timeout',
-                            help='Connection timeout in seconds\n'
-                                 'Used in conjunction with the --check option',
-                            type=int,
-                            dest='check_connection_timeout')
-    check_args.add_argument('--initial-delay',
-                            help='Initial delay in seconds\n'
-                                 'Used in conjunction with the --check option',
-                            type=int,
-                            dest='check_initial_delay')
-
-    parser.add_argument('--annotation',
-                        action='append',
-                        default=[],
-                        dest='annotations',
-                        help='Annotations to add to bundle.conf\n'
-                             'Example: bndl --annotation my.first=value1 --annotation my.second=value2\n'
-                             'Defaults to []')
-
-    parser.add_argument('--compatibility-version',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "compatibilityVersion" bundle.conf value',
-                        dest='compatibility_version')
-
-    parser.add_argument('--disk-space',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "diskSpace" bundle.conf value',
-                        dest='disk_space',
-                        type=int)
-
-    parser.add_argument('--env',
-                        dest='envs',
-                        action='append',
-                        default=[],
-                        help='Additional environment variables for the bundle\'s runtime-config.sh\n'
-                             'Defaults to []',
-                        metavar='')
-
-    parser.add_argument('--memory',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "memory" bundle.conf value',
-                        dest='memory',
-                        type=int)
-
-    parser.add_argument('--name',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "name" bundle.conf value',
-                        dest='name')
-
-    parser.add_argument('--nr-of-cpus',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "nrOfCpus" bundle.conf value',
-                        dest='nr_of_cpus',
-                        type=float)
-
-    parser.add_argument('--roles',
-                        nargs='*',
-                        required=False,
-                        help='Sets the "roles" bundle.conf value',
-                        dest='roles')
-
-    parser.add_argument('--system',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "system" bundle.conf value',
-                        dest='system')
-
-    parser.add_argument('--system-version',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "systemVersion" bundle.conf value',
-                        dest='system_version')
-
-    parser.add_argument('--tag',
-                        action='append',
-                        default=[],
-                        dest='tags',
-                        help='Tags to add to bundle.conf\n'
-                             'Example: bndl --tag 16.04 --tag xenial\n'
-                             'Defaults to []')
-
-    parser.add_argument('--version',
-                        nargs='?',
-                        required=False,
-                        help='Sets the "version" bundle.conf value',
-                        dest='version')
-
 
 def build_parser():
     parser = argparse.ArgumentParser(prog='bndl',
@@ -437,17 +485,11 @@ def build_parser():
                              'When absent, auto-detection is attempted\n'
                              'The format configuration needs to be specified because it cannot be auto-detected.')
 
-    parser.add_argument('--image-tag',
-                        required=False,
-                        help='The name of the tag to create a ConductR bundle from\n'
-                             'For use with docker and oci-image formats\n'
-                             'When absent, the first tag present is used')
-
-    parser.add_argument('--image-name',
-                        required=False,
-                        help='The name of the image to create a ConductR bundle from\n'
-                             'For use with docker and oci-image formats\n'
-                             'When absent, the first image present is used')
+    parser.add_argument('--no-shazar',
+                        help='If enabled, a bundle will not be run through shazar',
+                        default=True,
+                        dest='use_shazar',
+                        action='store_false')
 
     parser.add_argument('-o', '--output',
                         nargs='?',
@@ -458,51 +500,6 @@ def build_parser():
                         help='Optional path to a directory or tar file\n'
                              'When absent, stdin is used',
                         nargs='?')
-
-    parser.add_argument('--no-shazar',
-                        help='If enabled, a bundle will not be run through shazar',
-                        default=True,
-                        dest='use_shazar',
-                        action='store_false')
-
-    parser.add_argument('--component-description',
-                        help='Description to use for the generated ConductR component\n'
-                             'For use with docker and oci-image formats',
-                        default='')
-
-    parser.add_argument('--no-default-endpoints',
-                        help='If provided, a bundle will not contain endpoints for ExposedPorts\n'
-                             'For use with docker and oci-image formats',
-                        default=True,
-                        dest='use_default_endpoints',
-                        action='store_false')
-
-    parser.add_argument('--no-default-check',
-                        help='If provided, a bundle will not contain a default check command\n'
-                             'For use with docker and oci-image formats',
-                        default=True,
-                        dest='use_default_check',
-                        action='store_false')
-
-    parser.add_argument('--validation-exclude',
-                        help='If provided, skips a given validation rule\n'
-                             'The following validation rules can be skipped: \n'
-                             '  property-names: Checks that the bundle.conf only contains property names '
-                             'that are known by ConductR\n'
-                             '  required: Checks that the bundle.conf contains all required properties\n'
-                             'By default, no validation rule is excluded',
-                        default=[],
-                        choices=['property-names', 'required'],
-                        dest='validation_excludes',
-                        action='append')
-
-    parser.add_argument('--no-default-volumes',
-                        help='If provided, a bundle will not contain any volume declarations\n'
-                             'For use with docker and oci-image formats',
-                        default=True,
-                        dest='use_default_volumes',
-                        action='store_false')
-
     add_conf_arguments(parser)
 
     parser.set_defaults(func=bndl)
