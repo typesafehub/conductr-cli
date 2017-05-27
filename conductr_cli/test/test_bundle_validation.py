@@ -9,64 +9,112 @@ from unittest.mock import patch, MagicMock
 class TestValidateBundleConf(TestCase):
     @staticmethod
     def test_success_with_all_checks():
-        mock_assert_non_empty = MagicMock(return_value=None)
+        mock_assert_bundle_conf_non_empty = MagicMock(return_value=None)
+        mock_assert_properties_non_empty = MagicMock(return_value=None)
         mock_assert_property_names = MagicMock(return_value=None)
         mock_assert_required_properties = MagicMock(return_value=None)
 
-        with patch('conductr_cli.bundle_validation.assert_non_empty', mock_assert_non_empty), \
+        with patch('conductr_cli.bundle_validation.assert_bundle_conf_non_empty', mock_assert_bundle_conf_non_empty), \
+                patch('conductr_cli.bundle_validation.assert_properties_non_empty', mock_assert_properties_non_empty), \
                 patch('conductr_cli.bundle_validation.assert_property_names', mock_assert_property_names), \
                 patch('conductr_cli.bundle_validation.assert_required_properties', mock_assert_required_properties):
             bundle_conf = ConfigFactory.parse_string('nrOfCpus = 1.0')
 
             bundle_validation.validate_bundle_conf(bundle_conf, excludes=[])
 
-        mock_assert_non_empty.assert_called_once_with(bundle_conf)
+        mock_assert_bundle_conf_non_empty.assert_called_once_with(bundle_conf)
+        mock_assert_properties_non_empty.assert_called_once_with(bundle_conf)
         mock_assert_property_names.assert_called_once_with(bundle_conf)
         mock_assert_required_properties.assert_called_once_with(bundle_conf)
 
     @staticmethod
     def test_success_with_excludes():
-        mock_assert_non_empty = MagicMock(return_value=None)
+        mock_assert_bundle_conf_non_empty = MagicMock(return_value=None)
+        mock_assert_properties_non_empty = MagicMock(return_value=None)
         mock_assert_property_names = MagicMock(return_value=None)
         mock_assert_required_properties = MagicMock()
 
-        with patch('conductr_cli.bundle_validation.assert_non_empty', mock_assert_non_empty), \
+        with patch('conductr_cli.bundle_validation.assert_bundle_conf_non_empty', mock_assert_bundle_conf_non_empty), \
+                patch('conductr_cli.bundle_validation.assert_properties_non_empty', mock_assert_properties_non_empty), \
                 patch('conductr_cli.bundle_validation.assert_property_names', mock_assert_property_names), \
                 patch('conductr_cli.bundle_validation.assert_required_properties', mock_assert_required_properties):
             bundle_conf = ConfigFactory.parse_string('nrOfCpus = 1.0')
 
-            bundle_validation.validate_bundle_conf(bundle_conf, excludes=['required', 'property-names'])
+            bundle_validation.validate_bundle_conf(bundle_conf,
+                                                   excludes=['required', 'property-name', 'empty-property'])
 
-        mock_assert_non_empty.assert_called_once_with(bundle_conf)
+        mock_assert_bundle_conf_non_empty.assert_called_once_with(bundle_conf)
+        mock_assert_properties_non_empty.assert_not_called()
         mock_assert_property_names.assert_not_called()
         mock_assert_required_properties.assert_not_called()
 
     def test_raise_bundle_conf_validation_error(self):
-        mock_assert_non_empty = MagicMock(return_value='Non empty error')
+        mock_assert_bundle_conf_non_empty = MagicMock(return_value='bundle.conf non empty error')
+        mock_assert_properties_non_empty = MagicMock(return_value='Property non empty error')
         mock_assert_property_names = MagicMock(return_value='Property name error')
         mock_assert_required_properties = MagicMock(return_value='Required properties error')
 
-        with patch('conductr_cli.bundle_validation.assert_non_empty', mock_assert_non_empty), \
+        with patch('conductr_cli.bundle_validation.assert_bundle_conf_non_empty', mock_assert_bundle_conf_non_empty), \
+                patch('conductr_cli.bundle_validation.assert_properties_non_empty', mock_assert_properties_non_empty), \
                 patch('conductr_cli.bundle_validation.assert_property_names', mock_assert_property_names), \
                 patch('conductr_cli.bundle_validation.assert_required_properties', mock_assert_required_properties):
             bundle_conf = ConfigFactory.parse_string('nrOfCpus = 1.0')
 
             self.assertRaises(BundleConfValidationError, bundle_validation.validate_bundle_conf, bundle_conf, [])
 
-        mock_assert_non_empty.assert_called_once_with(bundle_conf)
+        mock_assert_bundle_conf_non_empty.assert_called_once_with(bundle_conf)
+        mock_assert_properties_non_empty.assert_called_once_with(bundle_conf)
         mock_assert_property_names.assert_called_once_with(bundle_conf)
         mock_assert_required_properties.assert_called_once_with(bundle_conf)
 
 
-class TestAssertNonEmpty(TestCase):
-    def test_non_empty(self):
+class TestAssertBundleConfNonEmpty(TestCase):
+    def test_valid(self):
         bundle_conf = ConfigFactory.parse_string('nrOfCpus = 1.0')
-        self.assertEqual(bundle_validation.assert_non_empty(bundle_conf), None)
+        self.assertEqual(bundle_validation.assert_bundle_conf_non_empty(bundle_conf), None)
 
-    def test_empty(self):
+    def test_invalid(self):
         bundle_conf = ConfigFactory.parse_string('')
-        self.assertEqual(bundle_validation.assert_non_empty(bundle_conf),
+        self.assertEqual(bundle_validation.assert_bundle_conf_non_empty(bundle_conf),
                          'The bundle.conf is empty')
+
+
+class TestAssertPropertiesNonEmpty(TestCase):
+    def test_valid(self):
+        bundle_conf = ConfigFactory.parse_string(strip_margin(
+            """|version = "1"
+               |name = "my-bundle"
+               |compatibilityVersion = "1"
+               |system = "my-system"
+               |systemVersion = "1"
+               |nrOfCpus = 1.0
+               |memory = 402653184
+               |diskSpace = 200000000
+               |roles = ["web"]
+               |components {
+               |test-bundle {
+               |    description = ""
+               |    file-system-type = "universal"
+               |    start-command = []
+               |    endpoints {}
+               |  }
+               |}"""))
+        self.assertEqual(bundle_validation.assert_properties_non_empty(bundle_conf), None)
+
+    def test_invalid(self):
+        bundle_conf = ConfigFactory.parse_string(strip_margin(
+            """|version = "1"
+               |name = "my-bundle"
+               |compatibilityVersion = "1"
+               |system = ""
+               |systemVersion = "1"
+               |nrOfCpus = 1.0
+               |memory = 402653184
+               |diskSpace = 200000000
+               |roles = ["web"]
+               |components {}"""))
+        expected_error_message = 'The following properties are not allowed to be empty: system, components'
+        self.assertEqual(bundle_validation.assert_properties_non_empty(bundle_conf), expected_error_message)
 
 
 class TestAssertPropertyNames(TestCase):
@@ -148,7 +196,7 @@ class TestAssertPropertyNames(TestCase):
                |}"""))
         self.assertEqual(bundle_validation.assert_property_names(bundle_conf), None)
 
-    def test_invalid_property_names(self):
+    def test_invalid(self):
         bundle_conf = ConfigFactory.parse_string(strip_margin(
             """|version = "1"
                |nome = "my-bundle"
@@ -196,7 +244,7 @@ class TestAssertPropertyNames(TestCase):
 
 
 class TestAssertRequiredProperties(TestCase):
-    def test_no_missing_properties(self):
+    def test_valid(self):
         bundle_conf = ConfigFactory.parse_string(strip_margin(
             """|version = "1"
                |name = "my-bundle"
@@ -227,12 +275,13 @@ class TestAssertRequiredProperties(TestCase):
                |    start-command = [
                |      "check",
                |      "$SOME_BUNDLE_HOST"
-               |    ]
+               |    ],
+               |    endpoints {}
                |  }
                |}"""))
         self.assertEqual(bundle_validation.assert_required_properties(bundle_conf), None)
 
-    def test_missing_properties(self):
+    def test_invalid(self):
         bundle_conf = ConfigFactory.parse_string(strip_margin(
             """|version = "1"
                |compatibilityVersion = "1"

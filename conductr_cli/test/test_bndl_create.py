@@ -1,6 +1,6 @@
 from conductr_cli import bndl_create, logging_setup
 from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object, as_error, strip_margin
-from conductr_cli.bndl_utils import BndlFormat
+from conductr_cli.bndl_utils import ApplicationType, BndlFormat
 from io import BytesIO
 from unittest.mock import patch, MagicMock
 import os
@@ -71,7 +71,8 @@ class TestBndlCreate(CliTestCase):
                     'source': tmpdir,
                     'format': BndlFormat.OCI_IMAGE,
                     'image_tag': 'latest',
-                    'output': output.name
+                    'output': output.name,
+                    'with_defaults': None
                 })
 
             stdout_mock = MagicMock()
@@ -110,7 +111,8 @@ class TestBndlCreate(CliTestCase):
                 'use_default_endpoints': True,
                 'annotations': [],
                 'validation_excludes': [],
-                'use_default_volumes': True
+                'use_default_volumes': True,
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -152,7 +154,8 @@ class TestBndlCreate(CliTestCase):
                 'use_default_endpoints': True,
                 'annotations': [],
                 'validation_excludes': [],
-                'use_default_volumes': True
+                'use_default_volumes': True,
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -197,7 +200,8 @@ class TestBndlCreate(CliTestCase):
                 'use_default_endpoints': True,
                 'annotations': [],
                 'validation_excludes': [],
-                'use_default_volumes': True
+                'use_default_volumes': True,
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -219,7 +223,8 @@ class TestBndlCreate(CliTestCase):
                 'use_default_endpoints': True,
                 'annotations': [],
                 'validation_excludes': [],
-                'use_default_volumes': True
+                'use_default_volumes': True,
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -263,7 +268,8 @@ class TestBndlCreate(CliTestCase):
                 'use_default_endpoints': True,
                 'annotations': [],
                 'validation_excludes': [],
-                'use_default_volumes': True
+                'use_default_volumes': True,
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -307,7 +313,8 @@ class TestBndlCreate(CliTestCase):
                 'use_default_endpoints': True,
                 'annotations': [],
                 'validation_excludes': [],
-                'use_default_volumes': True
+                'use_default_volumes': True,
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))
@@ -329,7 +336,8 @@ class TestBndlCreate(CliTestCase):
                 'use_default_endpoints': True,
                 'annotations': [],
                 'validation_excludes': [],
-                'use_default_volumes': True
+                'use_default_volumes': True,
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir2, 'refs'))
@@ -355,7 +363,7 @@ class TestBndlCreate(CliTestCase):
 
     def test_validation_excludes(self):
         temp_dir = tempfile.mkdtemp()
-        bundle_conf = 'invalid-name = "1"'
+        bundle_conf = 'invalid-name = "1"\nversion=""'
 
         try:
             with \
@@ -372,7 +380,8 @@ class TestBndlCreate(CliTestCase):
                     'output': file_out.name,
                     'use_shazar': False,
                     'use_default_endpoints': False,
-                    'validation_excludes': ['required', 'property-names']
+                    'validation_excludes': ['empty-property', 'required', 'property-name'],
+                    'with_defaults': None
                 })
 
                 self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -383,12 +392,12 @@ class TestBndlCreate(CliTestCase):
                         self.assertEqual('test/bundle.conf', entry.name)
                         self.assertEqual(
                             tar.extractfile(entry).read().decode('UTF-8'),
-                            'invalid-name = "1"\nname = "test"'
+                            'invalid-name = "1"\nversion = ""\nname = "test"'
                         )
         finally:
             shutil.rmtree(temp_dir)
 
-    def test_no_input(self):
+    def test_no_input_configuration(self):
         with tempfile.NamedTemporaryFile() as file_out:
             args = create_attributes_object({
                 'name': 'test',
@@ -396,9 +405,10 @@ class TestBndlCreate(CliTestCase):
                 'source': None,
                 'output': file_out.name,
                 'use_shazar': False,
-                'use_default_endpoints': True,
+                'use_default_endpoints': False,
                 'roles': ['test'],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'with_defaults': None
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -416,6 +426,64 @@ class TestBndlCreate(CliTestCase):
                                |roles = [
                                |  "test"
                                |]''')
+                    )
+
+    def test_no_input_bundle(self):
+        with tempfile.NamedTemporaryFile() as file_out:
+            args = create_attributes_object({
+                'endpoints': [],
+                'name': 'test',
+                'format': BndlFormat.BUNDLE,
+                'source': None,
+                'start_commands': [
+                    create_attributes_object({
+                        'start_command': '["bin/start"]'
+                    })
+                ],
+                'output': file_out.name,
+                'use_shazar': False,
+                'use_default_endpoints': False,
+                'roles': ['test'],
+                'validation_excludes': [],
+                'with_defaults': ApplicationType.GENERIC
+            })
+
+            self.assertEqual(bndl_create.bndl_create(args), 0)
+            self.assertTrue(tarfile.is_tarfile(file_out.name))
+
+            # check that config bundle is named properly and contains arguments
+
+            with tarfile.open(file_out.name, 'r') as tar:
+                for entry in tar:
+                    self.assertEqual('test/bundle.conf', entry.name)
+                    self.assertEqual(
+                        tar.extractfile(entry).read().decode('UTF-8'),
+                        strip_margin(
+                            '''|annotations {}
+                               |compatibilityVersion = "0"
+                               |components {
+                               |  test {
+                               |    endpoints {}
+                               |    start-command = [
+                               |      "bin/start"
+                               |    ]
+                               |    description = ""
+                               |    file-system-type = "universal"
+                               |  }
+                               |}
+                               |diskSpace = 1073741824
+                               |memory = 402653184
+                               |name = "test"
+                               |nrOfCpus = 0.1
+                               |roles = [
+                               |  "test"
+                               |]
+                               |system = "test"
+                               |systemVersion = "0"
+                               |tags = [
+                               |  "0.0.1"
+                               |]
+                               |version = "1"''')
                     )
 
     def test_bundle_conf(self):
@@ -463,7 +531,8 @@ class TestBndlCreate(CliTestCase):
                         'mount_point': '/other-data',
                         'component': 'test1'
                     })
-                ]
+                ],
+                'with_defaults': None
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -515,7 +584,8 @@ class TestBndlCreate(CliTestCase):
                 'output': file_out.name,
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'validation_excludes': []
+                'validation_excludes': [],
+                'with_defaults': None
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -546,7 +616,8 @@ class TestBndlCreate(CliTestCase):
                 'output': file_out.name,
                 'use_shazar': False,
                 'use_default_endpoints': True,
-                'validation_excludes': []
+                'validation_excludes': [],
+                'with_defaults': None
             })
 
             self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -615,7 +686,8 @@ class TestBndlCreate(CliTestCase):
                     'annotations': [
                         'my.test=testing'
                     ],
-                    'validation_excludes': []
+                    'validation_excludes': [],
+                    'with_defaults': None
                 })
 
                 self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -686,7 +758,8 @@ class TestBndlCreate(CliTestCase):
                     'annotations': [
                         'my.test=testing'
                     ],
-                    'validation_excludes': []
+                    'validation_excludes': [],
+                    'with_defaults': None
                 })
 
                 self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -728,7 +801,8 @@ class TestBndlCreate(CliTestCase):
                     'envs': [
                         'ENV1=123',
                         'ENV2=456'
-                    ]
+                    ],
+                    'with_defaults': None
                 })
 
                 self.assertEqual(bndl_create.bndl_create(args), 0)
@@ -771,7 +845,8 @@ class TestBndlCreate(CliTestCase):
                     'envs': [
                         'ENV1=123',
                         'ENV2=456'
-                    ]
+                    ],
+                    'with_defaults': None
                 })
 
                 with open(os.path.join(temp_dir, 'runtime-config.sh'), 'w') as config:
@@ -829,7 +904,8 @@ class TestBndlCreate(CliTestCase):
                     'ENV1=123',
                     'ENV2=456'
                 ],
-                'validation_excludes': []
+                'validation_excludes': [],
+                'with_defaults': None
             })
 
             os.mkdir(os.path.join(tmpdir, 'refs'))

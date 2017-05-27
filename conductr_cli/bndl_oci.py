@@ -9,7 +9,7 @@ import tempfile
 
 def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     conf = ConfigFactory.parse_string('')
-    load_bundle_args_into_conf(conf, args, with_defaults=True)
+    load_bundle_args_into_conf(conf, args, args.with_defaults)
 
     annotations_tree = conf.get('annotations')
 

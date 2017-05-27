@@ -1,17 +1,4 @@
-from conductr_cli.constants import \
-    BNDL_DEFAULT_ANNOTATIONS, \
-    BNDL_DEFAULT_COMPATIBILITY_VERSION, \
-    BNDL_DEFAULT_DISK_SPACE, \
-    BNDL_IGNORE_TAGS, \
-    BNDL_DEFAULT_MEMORY, \
-    BNDL_DEFAULT_NAME, \
-    BNDL_DEFAULT_NR_OF_CPUS, \
-    BNDL_DEFAULT_ROLES, \
-    BNDL_DEFAULT_TAGS, \
-    BNDL_DEFAULT_VERSION, \
-    MAGIC_NUMBER_TAR, \
-    MAGIC_NUMBER_TAR_OFFSET, \
-    MAGIC_NUMBERS_ZIP
+from conductr_cli.constants import BNDL_IGNORE_TAGS, MAGIC_NUMBER_TAR, MAGIC_NUMBER_TAR_OFFSET, MAGIC_NUMBERS_ZIP
 from enum import Enum
 from pyhocon import ConfigFactory, ConfigTree
 import hashlib
@@ -27,6 +14,59 @@ class BndlFormat(Enum):
     DOCKER = 'docker'
     OCI_IMAGE = 'oci-image'
 
+    def to_file_system_type(self):
+        if self == BndlFormat.BUNDLE or self == BndlFormat.CONFIGURATION:
+            return 'universal'
+        elif self == BndlFormat.DOCKER:
+            return 'docker'
+        elif self == BndlFormat.OCI_IMAGE:
+            return 'oci-image'
+
+
+class ApplicationType(Enum):
+    AKKA = 'akka'
+    GENERIC = 'generic'
+    LAGOM = 'lagom'
+    PLAY = 'play'
+
+    def config_defaults(self, file_system_type):
+        if self == ApplicationType.PLAY or self == ApplicationType.LAGOM:
+            return {
+                'annotations': {},
+                'compatibilityVersion': '0',
+                'components': {
+                    'description': '',
+                    'file-system-type': file_system_type
+                },
+                'diskSpace': 1677721600,
+                'memory': 402653184,
+                'name': 'bundle',
+                'nrOfCpus': 0.1,
+                'roles': ['web'],
+                'system': 'bundle',
+                'systemVersion': '0',
+                'tags': [],
+                'version': '1'
+            }
+        else:
+            return {
+                'annotations': {},
+                'compatibilityVersion': '0',
+                'components': {
+                    'description': '',
+                    'file-system-type': file_system_type
+                },
+                'diskSpace': 1073741824,
+                'memory': 402653184,
+                'name': 'bundle',
+                'nrOfCpus': 0.1,
+                'roles': ['web'],
+                'system': 'bundle',
+                'systemVersion': '0',
+                'tags': ['0.0.1'],
+                'version': '1'
+            }
+
 
 def detect_format_dir(dir):
     """
@@ -34,13 +74,11 @@ def detect_format_dir(dir):
     :param dir:
     :return: one of 'BndlFormat.DOCKER', 'BndlFormat.OCI_IMAGE', 'BndlFormat.BUNDLE'
     """
-    if \
-            os.path.isfile(os.path.join(dir, 'oci-layout')) and \
+    if os.path.isfile(os.path.join(dir, 'oci-layout')) and \
             os.path.isdir(os.path.join(dir, 'refs')) and \
             os.path.isdir(os.path.join(dir, 'blobs')):
         return BndlFormat.OCI_IMAGE
-    elif \
-            os.path.isfile(os.path.join(dir, 'repositories')) and \
+    elif os.path.isfile(os.path.join(dir, 'repositories')) and \
             os.path.isfile(os.path.join(dir, 'manifest.json')):
         return BndlFormat.DOCKER
     else:
@@ -122,9 +160,11 @@ def data_is_zip(data):
     return any(data.startswith(number) for number in MAGIC_NUMBERS_ZIP)
 
 
-def load_bundle_args_into_conf(config, args, with_defaults):
+def load_bundle_args_into_conf(config, args, application_type):
     # this is unrolled because it's actually pretty complicated to get the order
     # correct given that some attributes need special handling and defaults
+
+    config_defaults = application_type.config_defaults(args.format.to_file_system_type()) if application_type else None
 
     args_check_addresses = getattr(args, 'check_addresses', None)
     args_compatibility_version = getattr(args, 'compatibility_version', None)
@@ -139,6 +179,16 @@ def load_bundle_args_into_conf(config, args, with_defaults):
     args_system_version = getattr(args, 'system_version', None)
     args_version = getattr(args, 'version', None)
     args_volumes = getattr(args, 'volumes', None)
+
+    # config name need to set first because it is used for other config properties
+    if args_name is not None:
+        config_name = args_name
+    elif 'name' in config:
+        config_name = config['name']
+    elif config_defaults:
+        config_name = config_defaults['name']
+    else:
+        config_name = None
 
     if hasattr(args, 'annotations') and len(args.annotations) > 0:
         annotations_tree = ConfigTree()
@@ -158,8 +208,8 @@ def load_bundle_args_into_conf(config, args, with_defaults):
             )
 
         config.put('annotations', annotations_tree)
-    if with_defaults and 'annotations' not in config:
-        config.put('annotations', ConfigTree(BNDL_DEFAULT_ANNOTATIONS.copy()))
+    if config_defaults and 'annotations' not in config:
+        config.put('annotations', ConfigTree(config_defaults['annotations']))
 
     if args_check_addresses is not None:
         check_args = []
@@ -180,36 +230,38 @@ def load_bundle_args_into_conf(config, args, with_defaults):
 
     if args_compatibility_version is not None:
         config.put('compatibilityVersion', args_compatibility_version)
-    if with_defaults and 'compatibilityVersion' not in config:
-        config.put('compatibilityVersion', BNDL_DEFAULT_COMPATIBILITY_VERSION)
+    if config_defaults and 'compatibilityVersion' not in config:
+        config.put('compatibilityVersion', config_defaults['compatibilityVersion'])
 
-    if args_disk_space is not None:
-        config.put('diskSpace', args_disk_space)
-    if with_defaults and 'diskSpace' not in config:
-        config.put('diskSpace', BNDL_DEFAULT_DISK_SPACE)
-
+    # Component properties
     if args_endpoints is not None:
         if 'components' not in config:
             config.put('components', ConfigTree())
 
         # Delete existing endpoints if exist in configuration
         for endpoint in args_endpoints:
-            component_name = detect_component(config, endpoint)
+            component_name = detect_component(config, endpoint, config_name)
             endpoint_key = 'components.{}.endpoints'.format(component_name)
             if endpoint_key in config:
                 config.put(endpoint_key, None)
         # Add endpoints to bundle components based on the --endpoint argument
         for endpoint in args_endpoints:
-            component_name = detect_component(config, endpoint)
+            component_name = detect_component(config, endpoint, config_name)
             endpoint_key = 'components.{}.endpoints'.format(component_name)
             config.put(endpoint_key, endpoint.hocon())
+        # Add empty endpoints property if args_endpoints is empty. This is required to be backwards compatible with
+        # ConductR 2.0 and below
+        if not args_endpoints:
+            component_name = detect_component(config, None, config_name)
+            endpoint_key = 'components.{}.endpoints'.format(component_name)
+            config.put(endpoint_key, ConfigTree())
 
     if args_start_commands:
         if 'components' not in config:
             config.put('components', ConfigTree())
 
         for start_command in args_start_commands:
-            component_name = detect_component(config, start_command)
+            component_name = detect_component(config, start_command, config_name)
             start_command_key = 'components.{}.start-command'.format(component_name)
             config.put(start_command_key, ConfigFactory.parse_string(start_command.start_command))
 
@@ -218,39 +270,51 @@ def load_bundle_args_into_conf(config, args, with_defaults):
             config.put('components', ConfigTree())
 
         for volume in args_volumes:
-            component_name = detect_component(config, volume)
+            component_name = detect_component(config, volume, config_name)
             volume_key = 'components.{}.volumes.{}'.format(component_name, volume.name)
             config.put(volume_key, volume.mount_point)
 
+    if config_defaults and 'components' in config:
+        for component_name in config['components']:
+            if 'description' not in config['components'][component_name]:
+                description_key = 'components.{}.description'.format(component_name)
+                config.put(description_key, config_defaults['components']['description'])
+            if 'file-system-type' not in config['components'][component_name]:
+                file_system_type_key = 'components.{}.file-system-type'.format(component_name)
+                config.put(file_system_type_key, config_defaults['components']['file-system-type'])
+
+    if args_disk_space is not None:
+        config.put('diskSpace', args_disk_space)
+    if config_defaults and 'diskSpace' not in config:
+        config.put('diskSpace', config_defaults['diskSpace'])
+
     if args_memory is not None:
         config.put('memory', args_memory)
-    if with_defaults and 'memory' not in config:
-        config.put('memory', BNDL_DEFAULT_MEMORY)
+    if config_defaults and 'memory' not in config:
+        config.put('memory', config_defaults['memory'])
 
-    if args_name is not None:
-        config.put('name', args_name)
-    if with_defaults and 'name' not in config:
-        config.put('name', BNDL_DEFAULT_NAME)
+    if config_name:
+        config.put('name', config_name)
 
     if args_nr_of_cpus is not None:
         config.put('nrOfCpus', args_nr_of_cpus)
-    if with_defaults and 'nrOfCpus' not in config:
-        config.put('nrOfCpus', BNDL_DEFAULT_NR_OF_CPUS)
+    if config_defaults and 'nrOfCpus' not in config:
+        config.put('nrOfCpus', config_defaults['nrOfCpus'])
 
     if args_roles is not None:
         config.put('roles', args_roles)
-    if with_defaults and 'roles' not in config:
-        config.put('roles', BNDL_DEFAULT_ROLES.copy())
+    if config_defaults and 'roles' not in config:
+        config.put('roles', config_defaults['roles'])
 
     if args_system is not None:
         config.put('system', args_system)
-    if with_defaults and 'system' not in config:
-        config.put('system', config.get('name') if 'name' in config else BNDL_DEFAULT_NAME)
+    if config_defaults and 'system' not in config:
+        config.put('system', config.get('name') if 'name' in config else config_defaults['system'])
 
     if args_system_version is not None:
         config.put('systemVersion', args_system_version)
-    if with_defaults and 'systemVersion' not in config:
-        config.put('systemVersion', config.get('version') if 'version' in config else BNDL_DEFAULT_VERSION)
+    if config_defaults and 'systemVersion' not in config:
+        config.put('systemVersion', config.get('version') if 'version' in config else config_defaults['systemVersion'])
 
     if hasattr(args, 'image_tag'):
         tags = config.get('tags') if 'tags' in config else []
@@ -266,13 +330,13 @@ def load_bundle_args_into_conf(config, args, with_defaults):
                 tags.append(tag)
 
         config.put('tags', tags)
-    if with_defaults and 'tags' not in config:
-        config.put('tags', BNDL_DEFAULT_TAGS.copy())
+    if config_defaults and 'tags' not in config:
+        config.put('tags', config_defaults['tags'])
 
     if args_version is not None:
         config.put('version', args_version)
-    if with_defaults and 'version' not in config:
-        config.put('version', BNDL_DEFAULT_VERSION)
+    if config_defaults and 'version' not in config:
+        config.put('version', config_defaults['version'])
 
 
 def create_check_hocon(check_args):
@@ -284,13 +348,23 @@ def create_check_hocon(check_args):
     return check_tree
 
 
-def detect_component(config, args):
+def detect_component(config, args, default_component_name):
     if hasattr(args, 'component'):
         return args.component
     else:
         non_status_component_names = [component for component in config.get('components')
                                       if component != 'bundle-status']
-        if len(non_status_component_names) == 1:
+        non_status_component_len = len(non_status_component_names)
+        if non_status_component_len == 0:
+            if default_component_name:
+                return default_component_name
+            else:
+                raise SyntaxError('Unable to auto-detect the component. '
+                                  'Component not specified, bundle.conf does not contain a component and component '
+                                  'cannot be derived from the bundle.conf name because name is not declared\n'
+                                  'Set a component name by either specifying the --component argument or by '
+                                  'specifying the --with-defaults <application_type> argument')
+        elif non_status_component_len == 1:
             return non_status_component_names[0]
         else:
             raise SyntaxError('Unable to auto-detect the component. '
