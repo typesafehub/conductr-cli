@@ -17,6 +17,7 @@ install_requires = [
     'colorama>=0.3.7',
     'pyreadline>=2.1',
     'www-authenticate==0.9.2',
+    'certifi>=2017.4.17',
 
     # FIXME: Remove the following dependencies when dcos can be depended on
     'jsonschema>=2.5, <3.0',
