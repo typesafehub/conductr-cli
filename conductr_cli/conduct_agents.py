@@ -1,5 +1,6 @@
 from conductr_cli import validation, conduct_request, conduct_url, screen_utils
 from conductr_cli.conduct_url import conductr_host
+from conductr_cli.bytes_util import natural_size
 import json
 import logging
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
@@ -22,6 +23,7 @@ def agents(args):
         log.verbose(validation.pretty_json(response.text))
 
     raw_data = json.loads(response.text)
+    with_resources = True if raw_data and 'resourceAvailable' in raw_data[0] else False
 
     data = [
         {
@@ -30,6 +32,10 @@ def agents(args):
             'observed': 'OBSERVED BY'
         }
     ]
+    if with_resources:
+        data[0]['disk-space'] = 'DISK'
+        data[0]['memory'] = 'MEM'
+        data[0]['nr-of-cpus'] = 'CPUS'
 
     for entry in raw_data:
         if args.role is None or args.role in entry['roles']:
@@ -38,14 +44,27 @@ def agents(args):
                 'roles': ','.join(entry['roles']),
                 'observed': ','.join(map(lambda e: e['node']['address'], entry['observedBy']))
             })
+            if with_resources:
+                data[-1]['disk-space'] = natural_size(entry['resourceAvailable']['diskSpace'])
+                data[-1]['memory'] = natural_size(entry['resourceAvailable']['memory'], binary=True)
+                data[-1]['nr-of-cpus'] = entry['resourceAvailable']['nrOfCpus']
 
     padding = 2
     column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
 
     for row in data:
-        log.screen('''\
+        if with_resources:
+            log.screen('''\
+{address: <{address_width}}{padding}\
+{disk-space: >{disk-space_width}}{padding}\
+{memory: >{memory_width}}{padding}\
+{nr-of-cpus: >{nr-of-cpus_width}}{padding}\
+{roles: <{roles_width}}{padding}\
+{observed: <{observed_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
+        else:
+            log.screen('''\
 {address: <{address_width}}{padding}\
 {roles: <{roles_width}}{padding}\
-{observed: >{observed_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
+{observed: <{observed_width}}{padding}'''.format(**dict(row, **column_widths)).rstrip())
 
     return True
