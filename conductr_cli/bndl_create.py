@@ -2,6 +2,7 @@ from conductr_cli import bndl_oci, validation
 from conductr_cli.bndl_oci import oci_image_bundle_conf, oci_image_unpack
 from conductr_cli.bndl_docker import docker_unpack
 from conductr_cli.bndl_utils import \
+    ApplicationType, \
     BndlFormat, \
     data_is_bundle_conf, \
     data_is_tar, \
@@ -75,18 +76,24 @@ def bndl_create(args):
 
             if not args.source:
                 with tarfile.open(fileobj=buff_in, mode='r|') as tar_in:
-                    name = docker_unpack(component_dir, tar_in, is_dir=False, maybe_name=args.image_name, maybe_tag=args.image_tag)
+                    name = docker_unpack(component_dir, tar_in, is_dir=False, maybe_name=args.image_name,
+                                         maybe_tag=args.image_tag)
             elif os.path.isfile(args.source):
                 with tarfile.open(args.source, mode='r') as tar_in:
-                    name = docker_unpack(component_dir, tar_in, is_dir=False, maybe_name=args.image_name, maybe_tag=args.image_tag)
+                    name = docker_unpack(component_dir, tar_in, is_dir=False, maybe_name=args.image_name,
+                                         maybe_tag=args.image_tag)
             else:
-                name = docker_unpack(component_dir, args.source, is_dir=True, maybe_name=args.image_name, maybe_tag=args.image_tag)
+                name = docker_unpack(component_dir, args.source, is_dir=True, maybe_name=args.image_name,
+                                     maybe_tag=args.image_tag)
 
             if not name:
                 log.error('bndl: Not a Docker image')
                 return 3
             elif not args.name:
                 args.name = name
+
+            if not args.with_defaults:
+                args.with_defaults = ApplicationType.GENERIC
 
             process_oci = True
         elif args.format == BndlFormat.OCI_IMAGE:
@@ -104,6 +111,9 @@ def bndl_create(args):
             if not valid_image:
                 log.error('bndl: Not an OCI Image')
                 return 2
+
+            if not args.with_defaults:
+                args.with_defaults = ApplicationType.GENERIC
 
             process_oci = True
         elif args.format == BndlFormat.BUNDLE or args.format == BndlFormat.CONFIGURATION:
@@ -223,7 +233,7 @@ def bndl_create(args):
         else:
             bundle_conf = ConfigFactory.parse_string('')
 
-        load_bundle_args_into_conf(bundle_conf, args, with_defaults=False)
+        load_bundle_args_into_conf(bundle_conf, args, args.with_defaults)
 
         if bundle_conf:
             validation_excludes = set(args.validation_excludes)

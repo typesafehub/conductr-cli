@@ -1,16 +1,6 @@
 from conductr_cli import bndl_utils
-from conductr_cli.bndl_utils import BndlFormat
+from conductr_cli.bndl_utils import ApplicationType, BndlFormat
 from conductr_cli.endpoint import Endpoint
-from conductr_cli.constants import \
-    BNDL_DEFAULT_ANNOTATIONS, \
-    BNDL_DEFAULT_NAME, \
-    BNDL_DEFAULT_COMPATIBILITY_VERSION, \
-    BNDL_DEFAULT_DISK_SPACE, \
-    BNDL_DEFAULT_MEMORY, \
-    BNDL_DEFAULT_NR_OF_CPUS, \
-    BNDL_DEFAULT_ROLES, \
-    BNDL_DEFAULT_TAGS, \
-    BNDL_DEFAULT_VERSION
 from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object, strip_margin
 from io import BytesIO
 from pyhocon import ConfigFactory
@@ -128,23 +118,50 @@ class TestBndlUtils(CliTestCase):
         finally:
             shutil.rmtree(tmpdir)
 
-    def test_load_bundle_args_into_conf_with_defaults(self):
+    def test_load_bundle_args_into_conf_with_generic_defaults(self):
         simple_config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(simple_config, {}, with_defaults=True)
-        self.assertEqual(simple_config.get('name'), BNDL_DEFAULT_NAME)
-        self.assertEqual(simple_config.get('compatibilityVersion'), BNDL_DEFAULT_COMPATIBILITY_VERSION)
-        self.assertEqual(simple_config.get('diskSpace'), BNDL_DEFAULT_DISK_SPACE)
-        self.assertEqual(simple_config.get('memory'), BNDL_DEFAULT_MEMORY)
-        self.assertEqual(simple_config.get('nrOfCpus'), BNDL_DEFAULT_NR_OF_CPUS)
-        self.assertEqual(simple_config.get('roles'), BNDL_DEFAULT_ROLES)
-        self.assertEqual(simple_config.get('system'), BNDL_DEFAULT_NAME)
-        self.assertEqual(simple_config.get('version'), BNDL_DEFAULT_VERSION)
-        self.assertEqual(simple_config.get('tags'), BNDL_DEFAULT_TAGS)
-        self.assertEqual(simple_config.get('annotations'), BNDL_DEFAULT_ANNOTATIONS)
+        args = create_attributes_object({
+            'format': BndlFormat.BUNDLE
+        })
+        application_type = ApplicationType.GENERIC
+        defaults = application_type.config_defaults('universal')
+        bndl_utils.load_bundle_args_into_conf(simple_config, args, application_type)
+        self.assertEqual(simple_config.get('annotations'), defaults['annotations'])
+        self.assertEqual(simple_config.get('compatibilityVersion'), defaults['compatibilityVersion'])
+        self.assertEqual(simple_config.get('diskSpace'), defaults['diskSpace'])
+        self.assertEqual(simple_config.get('memory'), defaults['memory'])
+        self.assertEqual(simple_config.get('name'), defaults['name'])
+        self.assertEqual(simple_config.get('nrOfCpus'), defaults['nrOfCpus'])
+        self.assertEqual(simple_config.get('roles'), defaults['roles'])
+        self.assertEqual(simple_config.get('system'), defaults['system'])
+        self.assertEqual(simple_config.get('systemVersion'), defaults['systemVersion'])
+        self.assertEqual(simple_config.get('tags'), defaults['tags'])
+        self.assertEqual(simple_config.get('version'), defaults['version'])
+
+    def test_load_bundle_args_into_conf_with_play_defaults(self):
+        simple_config = ConfigFactory.parse_string('')
+        args = create_attributes_object({
+            'format': BndlFormat.BUNDLE
+        })
+        application_type = ApplicationType.PLAY
+        defaults = application_type.config_defaults('universal')
+        bndl_utils.load_bundle_args_into_conf(simple_config, args, application_type)
+        self.assertEqual(simple_config.get('annotations'), defaults['annotations'])
+        self.assertEqual(simple_config.get('compatibilityVersion'), defaults['compatibilityVersion'])
+        self.assertEqual(simple_config.get('diskSpace'), defaults['diskSpace'])
+        self.assertEqual(simple_config.get('memory'), defaults['memory'])
+        self.assertEqual(simple_config.get('name'), defaults['name'])
+        self.assertEqual(simple_config.get('nrOfCpus'), defaults['nrOfCpus'])
+        self.assertEqual(simple_config.get('roles'), defaults['roles'])
+        self.assertEqual(simple_config.get('system'), defaults['system'])
+        self.assertEqual(simple_config.get('systemVersion'), defaults['systemVersion'])
+        self.assertEqual(simple_config.get('tags'), defaults['tags'])
+        self.assertEqual(simple_config.get('version'), defaults['version'])
 
     def test_load_bundle_args_into_conf(self):
         base_args = create_attributes_object({
             'name': 'world',
+            'format': BndlFormat.BUNDLE,
             'component_description': 'testing desc 1',
             'tags': ['testing'],
             'annotations': {}
@@ -152,6 +169,7 @@ class TestBndlUtils(CliTestCase):
 
         base_args_dup_tags = create_attributes_object({
             'name': 'world',
+            'format': BndlFormat.BUNDLE,
             'component_description': 'testing desc 1',
             'tags': ['testing', 'testing', 'testing'],
             'annotations': {}
@@ -159,6 +177,7 @@ class TestBndlUtils(CliTestCase):
 
         extended_args = create_attributes_object({
             'name': 'world',
+            'format': BndlFormat.BUNDLE,
             'component_description': 'testing desc 2',
             'version': '4',
             'compatibility_version': '5',
@@ -214,36 +233,36 @@ class TestBndlUtils(CliTestCase):
 
         # empty
         no_defaults = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(no_defaults, create_attributes_object({}),
-                                              with_defaults=False)
+        bndl_utils.load_bundle_args_into_conf(no_defaults, create_attributes_object({}), application_type=None)
 
         self.assertEqual(no_defaults, ConfigFactory.parse_string(''))
 
         # test that config value is specified, with defaults etc
         simple_config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(simple_config, base_args, with_defaults=True)
+        defaults = ApplicationType.GENERIC.config_defaults('universal')
+        bndl_utils.load_bundle_args_into_conf(simple_config, base_args, ApplicationType.GENERIC)
         self.assertEqual(simple_config.get('name'), 'world')
-        self.assertEqual(simple_config.get('compatibilityVersion'), BNDL_DEFAULT_COMPATIBILITY_VERSION)
-        self.assertEqual(simple_config.get('diskSpace'), BNDL_DEFAULT_DISK_SPACE)
-        self.assertEqual(simple_config.get('memory'), BNDL_DEFAULT_MEMORY)
-        self.assertEqual(simple_config.get('nrOfCpus'), BNDL_DEFAULT_NR_OF_CPUS)
-        self.assertEqual(simple_config.get('roles'), BNDL_DEFAULT_ROLES)
+        self.assertEqual(simple_config.get('compatibilityVersion'), defaults['compatibilityVersion'])
+        self.assertEqual(simple_config.get('diskSpace'), defaults['diskSpace'])
+        self.assertEqual(simple_config.get('memory'), defaults['memory'])
+        self.assertEqual(simple_config.get('nrOfCpus'), defaults['nrOfCpus'])
+        self.assertEqual(simple_config.get('roles'), defaults['roles'])
         self.assertEqual(simple_config.get('system'), 'world')
-        self.assertEqual(simple_config.get('version'), BNDL_DEFAULT_VERSION)
+        self.assertEqual(simple_config.get('version'), defaults['version'])
         self.assertEqual(simple_config.get('tags'), ['testing'])
 
         # test that config value is overwritten
         name_config = ConfigFactory.parse_string('name = "hello"')
-        bndl_utils.load_bundle_args_into_conf(name_config, base_args, with_defaults=True)
+        bndl_utils.load_bundle_args_into_conf(name_config, base_args, ApplicationType.GENERIC)
         self.assertEqual(name_config.get('name'), 'world')
 
         # test that config value is retained
         cpu_config = ConfigFactory.parse_string('nrOfCpus = 0.1')
-        bndl_utils.load_bundle_args_into_conf(cpu_config, base_args, with_defaults=True)
+        bndl_utils.load_bundle_args_into_conf(cpu_config, base_args, ApplicationType.GENERIC)
         self.assertEqual(cpu_config.get('nrOfCpus'), 0.1)
 
         config = ConfigFactory.parse_string('')
-        bndl_utils.load_bundle_args_into_conf(config, extended_args, with_defaults=True)
+        bndl_utils.load_bundle_args_into_conf(config, extended_args, ApplicationType.GENERIC)
 
         # test that various args are set correctly
         self.assertEqual(config.get('name'), 'world')
@@ -257,23 +276,21 @@ class TestBndlUtils(CliTestCase):
         self.assertEqual(config.get('roles'), ['web', 'backend'])
 
         # test that the "latest" tag is ignored
-        self.assertEqual(config.get('tags'), [])
+        self.assertEqual(config.get('tags'), ['0.0.1'])
 
         # test that we add replace tags that exist
         tag_config = ConfigFactory.parse_string('{ tags = ["hello"] }')
-        bndl_utils.load_bundle_args_into_conf(tag_config, base_args, with_defaults=True)
+        bndl_utils.load_bundle_args_into_conf(tag_config, base_args, ApplicationType.GENERIC)
         self.assertEqual(tag_config.get('tags'), ['testing'])
 
         # test that we only retain unique tags
         tag_config = ConfigFactory.parse_string('{}')
-        bndl_utils.load_bundle_args_into_conf(tag_config, base_args_dup_tags,
-                                              with_defaults=True)
+        bndl_utils.load_bundle_args_into_conf(tag_config, base_args_dup_tags, ApplicationType.GENERIC)
         self.assertEqual(tag_config.get('tags'), ['testing'])
 
         # test that annotations are added
         annotations_config = ConfigFactory.parse_string('{ annotations = { name = "my-name" } }')
-        bndl_utils.load_bundle_args_into_conf(annotations_config, extended_args,
-                                              with_defaults=True)
+        bndl_utils.load_bundle_args_into_conf(annotations_config, extended_args, ApplicationType.GENERIC)
         self.assertEqual(annotations_config.get('annotations'), {
             'name': 'my-name',
             'com': {
@@ -303,7 +320,7 @@ class TestBndlUtils(CliTestCase):
                |    }
                |  }
                |}"""))
-        bndl_utils.load_bundle_args_into_conf(existing_endpoints_config, extended_args, with_defaults=True)
+        bndl_utils.load_bundle_args_into_conf(existing_endpoints_config, extended_args, ApplicationType.GENERIC)
         expected_replaced_endpoints_config = ConfigFactory.parse_string(strip_margin(
             """|web {
                |  bind-protocol = "http"
@@ -367,6 +384,7 @@ class TestBndlUtils(CliTestCase):
 
         # test that endpoints are added when component is auto-detected
         auto_detect_endpoint_args = create_attributes_object({
+            'format': BndlFormat.BUNDLE,
             'endpoints': [
                 Endpoint({
                     'name': 'web',
@@ -405,7 +423,7 @@ class TestBndlUtils(CliTestCase):
                |}"""))
         bndl_utils.load_bundle_args_into_conf(auto_detect_endpoints_config,
                                               auto_detect_endpoint_args,
-                                              with_defaults=True)
+                                              ApplicationType.GENERIC)
         expected_replaced_endpoints_config = ConfigFactory.parse_string(strip_margin(
             """|web {
                |  bind-protocol = "http"
@@ -531,7 +549,7 @@ class TestBndlUtils(CliTestCase):
                |}"""))
         bndl_utils.load_bundle_args_into_conf(existing_check_config,
                                               check_args,
-                                              with_defaults=False)
+                                              application_type=None)
         expected_replaced_check_config = ConfigFactory.parse_string(strip_margin(
             """|description = "bundle-status"
                |file-system-type = "universal"
@@ -574,7 +592,7 @@ class TestBndlUtils(CliTestCase):
                |endpoints = {}"""))
         bndl_utils.load_bundle_args_into_conf(without_check_config,
                                               check_args,
-                                              with_defaults=False)
+                                              application_type=None)
         self.assertEqual(without_check_config.get('components.bundle-status'), expected_new_check_config)
 
         # test that check component can be added when bundle.conf does not contain any components -- e.g. configurations

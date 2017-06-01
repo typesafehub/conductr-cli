@@ -1,4 +1,5 @@
 from conductr_cli import bndl_oci
+from conductr_cli.bndl_utils import ApplicationType, BndlFormat
 from conductr_cli.test.cli_test_case import CliTestCase, create_attributes_object, strip_margin
 from io import BytesIO
 import os
@@ -104,16 +105,19 @@ class TestBndlOci(CliTestCase):
 
     def test_oci_image_bundle_conf(self):
         base_args = create_attributes_object({
+            'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'tags': [],
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_volumes': True,
-            'annotations': []
+            'annotations': [],
+            'with_defaults': ApplicationType.GENERIC
         })
 
         extended_args = create_attributes_object({
+            'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'tags': [],
             'annotations': [],
@@ -128,7 +132,8 @@ class TestBndlOci(CliTestCase):
             'roles': ['web', 'backend'],
             'image_tag': 'latest',
             'use_default_endpoints': True,
-            'use_default_volumes': True
+            'use_default_volumes': True,
+            'with_defaults': ApplicationType.GENERIC
         })
 
         self.assertEqual(
@@ -153,7 +158,7 @@ class TestBndlOci(CliTestCase):
                             |  "web"
                             |]
                             |system = "world"
-                            |systemVersion = "1"
+                            |systemVersion = "0"
                             |tags = [
                             |  "testing"
                             |]
@@ -194,7 +199,9 @@ class TestBndlOci(CliTestCase):
                             |]
                             |system = "myapp"
                             |systemVersion = "3"
-                            |tags = []
+                            |tags = [
+                            |  "0.0.1"
+                            |]
                             |version = "4"
                             |components {
                             |  my-other-component {
@@ -208,13 +215,15 @@ class TestBndlOci(CliTestCase):
 
     def test_oci_image_bundle_conf_endpoints(self):
         base_args = create_attributes_object({
+            'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
             'use_default_volumes': True,
-            'annotations': []
+            'annotations': [],
+            'with_defaults': ApplicationType.GENERIC
         })
 
         config = {
@@ -245,7 +254,7 @@ class TestBndlOci(CliTestCase):
                             |  "web"
                             |]
                             |system = "world"
-                            |systemVersion = "1"
+                            |systemVersion = "0"
                             |tags = [
                             |  "testing"
                             |]
@@ -278,12 +287,14 @@ class TestBndlOci(CliTestCase):
 
     def test_oci_image_bundle_conf_no_endpoints(self):
         base_args = create_attributes_object({
+            'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': False,
             'use_default_volumes': True,
-            'annotations': []
+            'annotations': [],
+            'with_defaults': ApplicationType.GENERIC
         })
 
         config = {
@@ -314,7 +325,7 @@ class TestBndlOci(CliTestCase):
                             |  "web"
                             |]
                             |system = "world"
-                            |systemVersion = "1"
+                            |systemVersion = "0"
                             |tags = [
                             |  "testing"
                             |]
@@ -331,13 +342,15 @@ class TestBndlOci(CliTestCase):
 
     def test_oci_image_with_check(self):
         base_args = create_attributes_object({
+            'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
             'use_default_volumes': True,
-            'annotations': {}
+            'annotations': {},
+            'with_defaults': ApplicationType.GENERIC
         })
 
         config = {
@@ -368,7 +381,7 @@ class TestBndlOci(CliTestCase):
                             |  "web"
                             |]
                             |system = "world"
-                            |systemVersion = "1"
+                            |systemVersion = "0"
                             |tags = [
                             |  "testing"
                             |]
@@ -407,13 +420,15 @@ class TestBndlOci(CliTestCase):
 
     def test_oci_image_with_default_endpoints_no_check(self):
         base_args = create_attributes_object({
+            'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': False,
             'use_default_volumes': True,
-            'annotations': {}
+            'annotations': {},
+            'with_defaults': ApplicationType.GENERIC
         })
 
         config = {
@@ -444,7 +459,7 @@ class TestBndlOci(CliTestCase):
                             |  "web"
                             |]
                             |system = "world"
-                            |systemVersion = "1"
+                            |systemVersion = "0"
                             |tags = [
                             |  "testing"
                             |]
@@ -474,13 +489,15 @@ class TestBndlOci(CliTestCase):
         self.maxDiff = None
 
         base_args = create_attributes_object({
+            'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
             'use_default_volumes': True,
-            'annotations': []
+            'annotations': [],
+            'with_defaults': ApplicationType.GENERIC
         })
 
         config = {
@@ -521,7 +538,7 @@ class TestBndlOci(CliTestCase):
                             |  "web"
                             |]
                             |system = "world"
-                            |systemVersion = "1"
+                            |systemVersion = "0"
                             |tags = [
                             |  "testing"
                             |]

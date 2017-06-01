@@ -1,7 +1,7 @@
 from conductr_cli import logging_setup
 from conductr_cli.endpoint import Endpoint, AmbigousBindProtocolError
 from conductr_cli.bndl_create import bndl_create
-from conductr_cli.bndl_utils import BndlFormat
+from conductr_cli.bndl_utils import ApplicationType, BndlFormat
 import argcomplete
 import argparse
 import logging
@@ -153,6 +153,9 @@ def process_args(args):
     if args.format:
         args.format = BndlFormat(args.format)
 
+    if args.with_defaults:
+        args.with_defaults = ApplicationType(args.with_defaults)
+
     if args.endpoint_dicts:
         args.endpoints = []
         for endpoint_dict in args.endpoint_dicts:
@@ -218,9 +221,10 @@ def add_conf_arguments(parser):
                         action=ComponentAction)
 
     parser.add_argument('--component-description',
+                        required=False,
                         help='Description to use for the generated ConductR component\n'
                              'For use with docker and oci-image formats',
-                        default='')
+                        dest='component_description')
 
     parser.add_argument('--compatibility-version',
                         nargs='?',
@@ -336,7 +340,8 @@ def add_conf_arguments(parser):
     parser.add_argument('--validation-exclude',
                         help='If provided, skips a given validation rule\n'
                              'The following validation rules can be skipped: \n'
-                             '  property-names: Checks that the bundle.conf only contains property names '
+                             '  empty-property: Checks that the bundle.conf properties are not empty\n'
+                             '  property-name: Checks that the bundle.conf only contains property names '
                              'that are known by ConductR\n'
                              '  required: Checks that the bundle.conf contains all required properties\n'
                              'By default, no validation rule is excluded',
@@ -363,6 +368,19 @@ def add_conf_arguments(parser):
                              'If provided, existing volumes are removed\n'
                              'Example: bndl --volume my-vol=/data --component web',
                         metavar='NAME=MOUNT-POINT')
+
+    parser.add_argument('--with-defaults',
+                        default=None,
+                        choices=[e.value for e in ApplicationType],
+                        help='Sets default properties in the bundle.conf for a given application type.\n'
+                             'Example: bndl --with-defaults lagom\n'
+                             'Declaring a bndl argument, that specifies a bundle.conf property such as --memory, is '
+                             'overriding the default property\n'
+                             'If absent, and the bndl format is "docker" or "oci-image", '
+                             '--with-defaults is set to "generic"'
+                             'If absent, and the bndl format is something different, --with-defaults is None'
+                             'If set to None, no default properties are added',
+                        dest='with_defaults')
 
     # Check arguments
     check_args = parser.add_argument_group('check')
