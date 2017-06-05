@@ -112,7 +112,7 @@ class HttpRequest:
 
     def hocon(self):
         request_tree = ConfigTree()
-        request_tree.put(self.match if self.match else 'path', self.value)
+        request_tree.put(self.match if self.match else 'path-beg', self.value)
         if self.method:
             request_tree.put('method', self.method)
         if self.rewrite:
