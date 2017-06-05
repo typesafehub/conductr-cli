@@ -434,7 +434,7 @@ class TestBndlUtils(CliTestCase):
                |      http {
                |        requests = [
                |          {
-               |            path = "/"
+               |            path-beg = "/"
                |          }
                |        ]
                |      }
