@@ -908,6 +908,6 @@ class TestIsConsolidatedLoggingEnabled(CliTestCase):
         with patch('conductr_cli.conduct_events.get_bundle_events', mock_get_bundle_events), \
                 self.assertRaises(HTTPError) as e:
             self.assertFalse(bundle_scale.is_consolidated_logging_enabled(self.args))
-            self.assertEqual(e.cause, http_error)
 
+        self.assertEqual(e.exception, http_error)
         mock_get_bundle_events.assert_called_once_with(self.args, count=1)

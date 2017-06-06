@@ -11,6 +11,7 @@ from requests import status_codes
 from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
 from urllib.error import URLError
 from zipfile import BadZipFile
+from conductr_cli import screen_utils
 from conductr_cli.exceptions import BindAddressNotFound, BundleScaleError, ConductrStartupError, \
     InstanceCountError, MalformedBundleError, BundleConfValidationError, \
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError, BintrayResolutionError, \
@@ -18,6 +19,8 @@ from conductr_cli.exceptions import BindAddressNotFound, BundleScaleError, Condu
     SandboxImageFetchError, SandboxImageNotFoundError, JavaCallError, HostnameLookupError, JavaUnsupportedVendorError, \
     JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, SandboxImageNotAvailableOfflineError, \
     SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, LicenseLoadError, LicenseDownloadError, NOT_FOUND_ERROR
+from conductr_cli.resolvers import bintray_resolver, docker_offline_resolver, docker_resolver, offline_resolver, \
+    stdin_resolver, uri_resolver
 
 
 def connection_error(log, err, args):
@@ -160,12 +163,50 @@ def handle_malformed_bundle(func):
 
 
 def handle_bundle_resolution_error(func):
+    display_padding = 2
+
+    resolver_display_name = {
+        bintray_resolver: 'Bintray',
+        docker_offline_resolver: 'Docker (Offline)',
+        docker_resolver: 'Docker',
+        offline_resolver: 'Offline',
+        stdin_resolver: 'Stdin',
+        uri_resolver: 'URI',
+    }
+
+    def get_resolver_display_name(resolver):
+        return resolver_display_name[resolver] if resolver in resolver_display_name else resolver.__name__
+
+    def display_errors(log, resolver_errors):
+        if resolver_errors:
+            data = [{'resolver_name': 'RESOLVER', 'error': 'ERROR'}]
+            for entry in resolver_errors:
+                (resolver, error) = entry
+                data.append({
+                    'resolver_name': get_resolver_display_name(resolver),
+                    'error': '{}'.format(error)
+                })
+            column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * display_padding})
+
+            for row in data:
+                log.error('''\
+{resolver_name: <{resolver_name_width}}{padding}\
+{error: <{error_width}}'''.format(**dict(row, **column_widths)).rstrip())
+
     def handler(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except BundleResolutionError as err:
             log = get_logger_for_func(func)
-            log.error('Bundle not found: {}'.format(err.args[0]))
+
+            log.error(err.value)
+
+            if err.bundle_resolution_errors:
+                display_errors(log, err.bundle_resolution_errors)
+
+            elif err.cache_resolution_errors:
+                display_errors(log, err.cache_resolution_errors)
+
             return False
 
     # Do not change the wrapped function name,

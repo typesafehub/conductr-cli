@@ -563,7 +563,9 @@ class ConductLoadTestBase(CliTestCase):
             self.output(stderr))
 
     def base_test_failure_no_bundle(self):
-        resolve_bundle_mock = MagicMock(side_effect=BundleResolutionError('some message'))
+        resolve_bundle_mock = MagicMock(side_effect=BundleResolutionError('some message',
+                                                                          cache_resolution_errors=[],
+                                                                          bundle_resolution_errors=[]))
         stdout = MagicMock()
         stderr = MagicMock()
 
@@ -578,13 +580,15 @@ class ConductLoadTestBase(CliTestCase):
                                                'no_such.bundle', self.offline_mode)
 
         self.assertEqual(
-            as_error(strip_margin("""|Error: Bundle not found: some message
+            as_error(strip_margin("""|Error: some message
                                      |""")),
             self.output(stderr))
 
     def base_test_failure_no_configuration(self):
         resolve_bundle_mock = MagicMock(return_value=(self.bundle_file_name, self.bundle_file))
-        resolve_bundle_configuration_mock = MagicMock(side_effect=BundleResolutionError('some message'))
+        resolve_bundle_configuration_mock = MagicMock(side_effect=BundleResolutionError('some message',
+                                                                                        cache_resolution_errors=[],
+                                                                                        bundle_resolution_errors=[]))
         stdout = MagicMock()
         stderr = MagicMock()
 
@@ -602,7 +606,7 @@ class ConductLoadTestBase(CliTestCase):
                                                              'no_such.conf', self.offline_mode)
 
         self.assertEqual(
-            as_error(strip_margin("""|Error: Bundle not found: some message
+            as_error(strip_margin("""|Error: some message
                                      |""")),
             self.output(stderr))
 

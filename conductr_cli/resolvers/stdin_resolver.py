@@ -7,7 +7,7 @@ ALLOCATED_FILES = []
 
 def resolve_bundle(cache_dir, uri, auth=None):
     if sys.stdin.isatty() or uri != '-':
-        return False, None, None
+        return False, None, None, None
     else:
         temp = tempfile.NamedTemporaryFile(delete=False)
 
@@ -28,23 +28,23 @@ def resolve_bundle(cache_dir, uri, auth=None):
 
         ALLOCATED_FILES.append(temp)
 
-        return True, None, temp.name
+        return True, None, temp.name, None
 
 
 def load_bundle_from_cache(cache_dir, uri):
-    return False, None, None
+    return False, None, None, None
 
 
 def resolve_bundle_configuration(cache_dir, uri, auth=None):
-    return False, None, None
+    return False, None, None, None
 
 
 def load_bundle_configuration_from_cache(cache_dir, uri):
-    return False, None, None
+    return False, None, None, None
 
 
 def resolve_bundle_version(uri):
-    return None
+    return None, None
 
 
 def continuous_delivery_uri(resolved_version):

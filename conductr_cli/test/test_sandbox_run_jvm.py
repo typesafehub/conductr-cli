@@ -1803,7 +1803,8 @@ class TestDownloadSandboxImage(CliTestCase):
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
                                                                  'conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
+                                                                 '~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 None))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -1839,7 +1840,8 @@ class TestDownloadSandboxImage(CliTestCase):
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
                                                                  'conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
+                                                                 '~/.conductr/images/conductr-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 None))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -1888,7 +1890,8 @@ class TestDownloadSandboxImage(CliTestCase):
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
                                                                  'conductr-2.0.5-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-2.0.5-Mac_OS_X-x86_64.tgz'))
+                                                                 '~/.conductr/images/conductr-2.0.5-Mac_OS_X-x86_64.tgz',
+                                                                 None))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -1923,7 +1926,8 @@ class TestDownloadSandboxImage(CliTestCase):
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
                                                                  'conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
+                                                                 '~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 None))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -1959,7 +1963,8 @@ class TestDownloadSandboxImage(CliTestCase):
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
                                                                  'conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz'))
+                                                                 '~/.conductr/images/conductr-agent-2.1.0-alpha.1-Mac_OS_X-x86_64.tgz',
+                                                                 None))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -2009,7 +2014,8 @@ class TestDownloadSandboxImage(CliTestCase):
 
         mock_bintray_download_artefact = MagicMock(return_value=(True,
                                                                  'conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz',
-                                                                 '~/.conductr/images/conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz'))
+                                                                 '~/.conductr/images/conductr-agent-2.0.5-Mac_OS_X-x86_64.tgz',
+                                                                 None))
 
         with patch('conductr_cli.sandbox_run_jvm.artefact_os_name', mock_artefact_os_name), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials',
@@ -2067,10 +2073,9 @@ class TestDownloadSandboxImage(CliTestCase):
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', mock_load_bintray_credentials), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_artefacts_by_version',
                       mock_bintray_artefacts_by_version), \
-                self.assertRaises(SandboxImageNotFoundError) as err:
+                self.assertRaises(SandboxImageNotFoundError):
                     sandbox_run_jvm.download_sandbox_image(self.image_dir, self.core_package_name,
                                                            self.core_artefact_type, self.image_version)
-                    self.assertEqual(err.cause, error)
 
         mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
@@ -2092,8 +2097,8 @@ class TestDownloadSandboxImage(CliTestCase):
                 self.assertRaises(SandboxImageFetchError) as err:
                     sandbox_run_jvm.download_sandbox_image(self.image_dir, self.core_package_name,
                                                            self.core_artefact_type, self.image_version)
-                    self.assertEqual(err.cause, error)
 
+        self.assertEqual(err.exception.cause, error)
         mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',
@@ -2113,8 +2118,8 @@ class TestDownloadSandboxImage(CliTestCase):
                 self.assertRaises(SandboxImageFetchError) as err:
                     sandbox_run_jvm.download_sandbox_image(self.image_dir, self.core_package_name,
                                                            self.core_artefact_type, self.image_version)
-                    self.assertEqual(err.cause, error)
 
+        self.assertEqual(err.exception.cause, error)
         mock_load_bintray_credentials.assert_called_once_with(raise_error=False)
         mock_bintray_artefacts_by_version.assert_called_once_with(self.bintray_auth,
                                                                   'lightbend',

@@ -30,8 +30,10 @@ class MalformedBundleError(Exception):
 
 
 class BundleResolutionError(Exception):
-    def __init__(self, value):
+    def __init__(self, value, cache_resolution_errors, bundle_resolution_errors):
         self.value = value
+        self.cache_resolution_errors = cache_resolution_errors
+        self.bundle_resolution_errors = bundle_resolution_errors
 
     def __str__(self):
         return repr(self.value)
