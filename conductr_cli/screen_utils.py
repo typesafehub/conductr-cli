@@ -19,9 +19,9 @@ def calc_column_widths(data):
     return column_widths
 
 
-def progress_bar(current_size, total_size, bar_length=50):
+def progress_bar(current_size, total_size, bar_length=DEFAULT_BAR_LENGTH):
     if current_size <= total_size:
-        percent = int(current_size * 100 / total_size)
+        percent = round(current_size * 100.0 / total_size)
     else:
         percent = 100
 
