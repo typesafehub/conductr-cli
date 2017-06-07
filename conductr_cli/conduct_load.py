@@ -366,15 +366,19 @@ def conduct_load_progress_monitor(log):
     # Without this flag, the scrollbar will progress until 100% as expected, and when it hits 100% the same scrollbar
     # will be printed twice.
     upload_completed = False
+    progress = 0
 
     def continue_logging(monitor):
-        nonlocal upload_completed
+        nonlocal upload_completed, progress
         if not upload_completed:
             uploaded_progress = monitor.bytes_read
             total_size = monitor.len
             upload_completed = monitor.encoder.finished
-            progress_bar_text = screen_utils.progress_bar(uploaded_progress, total_size)
-            log.progress(progress_bar_text, flush=upload_completed)
+            now_progress = round(uploaded_progress * 1.0 / total_size, 2)
+            if now_progress != progress:
+                progress = now_progress
+                progress_bar_text = screen_utils.progress_bar(uploaded_progress, total_size)
+                log.progress(progress_bar_text, flush=upload_completed)
 
     return continue_logging
 
