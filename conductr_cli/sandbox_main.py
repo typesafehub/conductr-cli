@@ -122,7 +122,7 @@ def build_parser():
                             metavar='')
     run_parser.add_argument('-n', '--nr-of-containers', '--nr-of-instances',
                             type=nr_of_instances,
-                            default='1',
+                            default='3',
                             dest='nr_of_instances',
                             help='Number of ConductR core and agent instances\n'
                                  'Defaults to 1\n'
