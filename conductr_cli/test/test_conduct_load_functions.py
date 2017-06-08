@@ -36,8 +36,8 @@ class TestCommonFunctions(TestCase):
         self.assertEqual(
             progress_bar.call_args_list,
             [
-                call(1, 100),
-                call(100, 100)
+                call(0.01),
+                call(1.0)
             ]
         )
 

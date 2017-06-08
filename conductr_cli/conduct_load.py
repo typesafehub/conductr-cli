@@ -15,6 +15,7 @@ import io
 import os
 import stat
 import sys
+import time
 import json
 import logging
 import tempfile
@@ -365,20 +366,19 @@ def conduct_load_progress_monitor(log):
     # been uploaded.
     # Without this flag, the scrollbar will progress until 100% as expected, and when it hits 100% the same scrollbar
     # will be printed twice.
-    upload_completed = False
-    progress = 0
+    prev_time = 0.0
+    upload_complete = False
 
     def continue_logging(monitor):
-        nonlocal upload_completed, progress
-        if not upload_completed:
-            uploaded_progress = monitor.bytes_read
-            total_size = monitor.len
-            upload_completed = monitor.encoder.finished
-            now_progress = round(uploaded_progress * 1.0 / total_size, 2)
-            if now_progress != progress:
-                progress = now_progress
-                progress_bar_text = screen_utils.progress_bar(uploaded_progress, total_size)
-                log.progress(progress_bar_text, flush=upload_completed)
+        nonlocal prev_time, upload_complete
+        if not upload_complete:
+            upload_complete = monitor.encoder.finished
+            now_time = time.time()
+            if upload_complete or now_time - prev_time >= 0.1:
+                percent = 1.0 if upload_complete else monitor.bytes_read * 1.0 / monitor.len
+                progress_bar_text = screen_utils.progress_bar(percent)
+                log.progress(progress_bar_text, flush=upload_complete)
+                prev_time = now_time
 
     return continue_logging
 
