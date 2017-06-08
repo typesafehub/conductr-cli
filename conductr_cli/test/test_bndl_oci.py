@@ -278,7 +278,7 @@ class TestBndlOci(CliTestCase):
                             |    start-command = [
                             |      "check"
                             |      "--any-address"
-                            |      "$MY_COMPONENT_UDP_80_HOST"
+                            |      "$MY_COMPONENT_UDP_80_HOST?retry-delay=10&retry-count=6"
                             |    ]
                             |    endpoints {}
                             |  }
@@ -410,8 +410,8 @@ class TestBndlOci(CliTestCase):
                             |    start-command = [
                             |      "check"
                             |      "--any-address"
-                            |      "$MY_COMPONENT_TCP_80_HOST"
-                            |      "$MY_COMPONENT_UDP_8080_HOST"
+                            |      "$MY_COMPONENT_TCP_80_HOST?retry-delay=10&retry-count=6"
+                            |      "$MY_COMPONENT_UDP_8080_HOST?retry-delay=10&retry-count=6"
                             |    ]
                             |    endpoints {}
                             |  }
@@ -571,8 +571,8 @@ class TestBndlOci(CliTestCase):
                             |    start-command = [
                             |      "check"
                             |      "--any-address"
-                            |      "$MY_COMPONENT_TCP_80_HOST"
-                            |      "$MY_COMPONENT_UDP_8080_HOST"
+                            |      "$MY_COMPONENT_TCP_80_HOST?retry-delay=10&retry-count=6"
+                            |      "$MY_COMPONENT_UDP_8080_HOST?retry-delay=10&retry-count=6"
                             |    ]
                             |    endpoints {}
                             |  }
