@@ -1,5 +1,9 @@
 import os
 
+BNDL_DEFAULT_CHECK_RETRY_DELAY = 10
+
+BNDL_DEFAULT_CHECK_RETRY_COUNT = 6
+
 # Preload this much data in the bndl tool to determine input type of a stream. Since we use this to determine
 # if a stream is a plain bundle conf, this should be set to hold the maximum size of a reasonable bundle.conf
 # or else auto-detection will fail.

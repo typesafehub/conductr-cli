@@ -1,5 +1,6 @@
 from pyhocon import HOCONConverter, ConfigFactory, ConfigTree
 from conductr_cli.bndl_utils import load_bundle_args_into_conf, create_check_hocon
+from conductr_cli.constants import BNDL_DEFAULT_CHECK_RETRY_COUNT, BNDL_DEFAULT_CHECK_RETRY_DELAY
 import json
 import os
 import re
@@ -39,7 +40,13 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
             port = int(type_parts[0])
             protocol = type_parts[1] if len(type_parts) > 1 else 'tcp'
             name = '{}-{}-{}'.format(component_name, protocol, port)
-            check_arguments.append('${}_HOST'.format(re.sub('\\W', '_', name.upper())))
+            check_arguments.append(
+                '${}_HOST?retry-delay={}&retry-count={}'.format(
+                    re.sub('\\W', '_', name.upper()),
+                    BNDL_DEFAULT_CHECK_RETRY_DELAY,
+                    BNDL_DEFAULT_CHECK_RETRY_COUNT
+                )
+            )
 
             entry_tree = ConfigTree()
             entry_tree.put('bind-protocol', protocol)
