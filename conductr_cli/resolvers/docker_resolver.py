@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 from conductr_cli import screen_utils
 from conductr_cli.constants import IO_CHUNK_SIZE
@@ -97,16 +98,24 @@ def fetch_blobs(cache_dir, url, ns, image, blobs, offline_mode):
             if offline_mode:
                 return None
 
+            prev_time = 0.0
+
             full_url = 'https://{}/v2/{}/{}/blobs/{}'.format(url, ns, image, blob['digest'])
             response = get_with_token(url, full_url, raw=True)
             with open(cache_file_temp, 'wb') as cache_fileobj:
                 for chunk in iter(partial(response.raw.read, IO_CHUNK_SIZE), b''):
                     cache_fileobj.write(chunk)
-                    downloaded_size += len(chunk)
 
                     if log.is_progress_enabled():
-                        progress_bar_text = screen_utils.progress_bar(downloaded_size, total_size)
-                        log.progress(progress_bar_text, flush=downloaded_size >= total_size)
+                        downloaded_size += len(chunk)
+                        percent = (downloaded_size * 1.0) / total_size
+                        download_complete = percent >= 1.0
+                        now_time = time.time()
+                        if download_complete or now_time - prev_time >= 0.1:
+                            progress_bar_text = screen_utils.progress_bar(percent)
+                            log.progress(progress_bar_text, flush=download_complete)
+                            prev_time = now_time
+
             os.rename(cache_file_temp, cache_file)
 
         files[blob['digest']] = cache_file

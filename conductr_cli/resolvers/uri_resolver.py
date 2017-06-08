@@ -2,6 +2,9 @@ from urllib.request import urlretrieve
 from urllib.parse import ParseResult, urlparse, urlunparse
 from urllib.error import URLError
 from pathlib import Path
+
+import time
+
 from conductr_cli import screen_utils
 from conductr_cli.resolvers.resolvers_util import is_local_file
 import os
@@ -122,10 +125,17 @@ def download_bundle(log, bundle_url, tmp_download_path, auth):
 
 
 def show_progress(log):
+    prev_time = 0.0
+
     def continue_logging(count, block_size, total_size):
+        nonlocal prev_time
         downloaded_size = count * block_size
-        is_download_complete = downloaded_size >= total_size
-        progress_bar_text = screen_utils.progress_bar(downloaded_size, total_size)
-        log.progress(progress_bar_text, flush=is_download_complete)
+        percent = (downloaded_size * 1.0) / total_size
+        download_complete = percent >= 1.0
+        now_time = time.time()
+        if download_complete or now_time - prev_time >= 0.1:
+            progress_bar_text = screen_utils.progress_bar(percent)
+            log.progress(progress_bar_text, flush=download_complete)
+            prev_time = now_time
 
     return continue_logging

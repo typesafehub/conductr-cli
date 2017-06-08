@@ -529,13 +529,9 @@ class TestShowProgress(TestCase):
             progress_tracker = uri_resolver.show_progress(log_mock)
 
             progress_tracker(0, 10, 200)
-            progress_bar_mock.assert_called_with(0, 200)
-            log_progress_mock.assert_called_with('mock progress bar', flush=False)
-
-            progress_tracker(5, 10, 200)
-            progress_bar_mock.assert_called_with(50, 200)
+            progress_bar_mock.assert_called_with(0.0)
             log_progress_mock.assert_called_with('mock progress bar', flush=False)
 
             progress_tracker(20, 10, 200)
-            progress_bar_mock.assert_called_with(200, 200)
+            progress_bar_mock.assert_called_with(1.0)
             log_progress_mock.assert_called_with('mock progress bar', flush=True)

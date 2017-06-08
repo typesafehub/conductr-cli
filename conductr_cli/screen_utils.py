@@ -4,7 +4,7 @@ BORDER_CHAR = '|'
 H1_CHAR = '-'
 H2_CHAR = '- '
 SEPARATION_CHAR = ' '
-LOADING_CHAR = '#'
+LOADING_CHARS = '##################################################'
 DEFAULT_BAR_LENGTH = 50
 
 
@@ -19,20 +19,10 @@ def calc_column_widths(data):
     return column_widths
 
 
-def progress_bar(current_size, total_size, bar_length=DEFAULT_BAR_LENGTH):
-    if current_size <= total_size:
-        percent = round(current_size * 100.0 / total_size)
-    else:
-        percent = 100
-
-    def progress_character(number):
-        if number * (100 / bar_length) <= percent:
-            return LOADING_CHAR
-        else:
-            return SEPARATION_CHAR
-
-    progress = ''.join([progress_character(i) for i in range(1, bar_length)])
-    return '[{}] {}'.format(progress, '%3d%%' % percent)
+def progress_bar(percent):
+    percent = min(percent, 1.0)
+    progress = str.ljust(LOADING_CHARS[:int(percent * DEFAULT_BAR_LENGTH)], DEFAULT_BAR_LENGTH)
+    return '[{}] {}'.format(progress, '%3d%%' % (percent * 100.0))
 
 
 def h1(text, bar_length=DEFAULT_BAR_LENGTH):
