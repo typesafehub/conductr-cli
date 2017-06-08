@@ -13,46 +13,77 @@ OFFLINE_RESOLVERS = [stdin_resolver, offline_resolver, docker_offline_resolver]
 def resolve_bundle(custom_settings, cache_dir, uri, offline_mode=False):
     all_resolvers = resolver_chain(custom_settings, offline_mode)
 
+    cache_resolution_errors = []
     for resolver in all_resolvers:
-        is_cached, bundle_file_name, cached_bundle = resolver.load_bundle_from_cache(cache_dir, uri)
+        is_cached, bundle_file_name, cached_bundle, error = resolver.load_bundle_from_cache(cache_dir, uri)
+
+        if error:
+            cache_resolution_errors.append((resolver, error))
+
         if is_cached:
             return bundle_file_name, cached_bundle
 
+    bundle_resolution_errors = []
     for resolver in all_resolvers:
-        is_resolved, bundle_file_name, bundle_file = resolver.resolve_bundle(cache_dir, uri)
+        is_resolved, bundle_file_name, bundle_file, error = resolver.resolve_bundle(cache_dir, uri)
+
+        if error:
+            bundle_resolution_errors.append((resolver, error))
+
         if is_resolved:
             return bundle_file_name, bundle_file
 
-    raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
+    raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri),
+                                cache_resolution_errors,
+                                bundle_resolution_errors)
 
 
 def resolve_bundle_configuration(custom_settings, cache_dir, uri, offline_mode=False):
     all_resolvers = resolver_chain(custom_settings, offline_mode)
 
+    cache_resolution_errors = []
     for resolver in all_resolvers:
-        is_cached, bundle_configuration_file_name, cached_bundle = \
+        is_cached, bundle_configuration_file_name, cached_bundle, error = \
             resolver.load_bundle_configuration_from_cache(cache_dir, uri)
+
+        if error:
+            cache_resolution_errors.append((resolver, error))
+
         if is_cached:
             return bundle_configuration_file_name, cached_bundle
 
+    bundle_resolution_errors = []
     for resolver in all_resolvers:
-        is_resolved, bundle_configuration_file_name, bundle_configuration_file = \
+        is_resolved, bundle_configuration_file_name, bundle_configuration_file, error = \
             resolver.resolve_bundle_configuration(cache_dir, uri)
+
+        if error:
+            bundle_resolution_errors.append((resolver, error))
+
         if is_resolved:
             return bundle_configuration_file_name, bundle_configuration_file
 
-    raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
+    raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri),
+                                cache_resolution_errors,
+                                bundle_resolution_errors)
 
 
 def resolve_bundle_version(custom_settings, uri, offline_mode=False):
     all_resolvers = resolver_chain(custom_settings, offline_mode)
 
+    bundle_resolution_errors = []
     for resolver in all_resolvers:
-        resolved_version = resolver.resolve_bundle_version(uri)
+        resolved_version, error = resolver.resolve_bundle_version(uri)
+
+        if error:
+            bundle_resolution_errors.append((resolver, error))
+
         if resolved_version:
             return resolved_version
 
-    raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri))
+    raise BundleResolutionError('Unable to resolve bundle using {}'.format(uri),
+                                cache_resolution_errors=[],
+                                bundle_resolution_errors=bundle_resolution_errors)
 
 
 def continuous_delivery_uri(custom_settings, resolved_version, offline_mode=False):

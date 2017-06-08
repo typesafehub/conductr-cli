@@ -13,9 +13,9 @@ def resolve_file(cache_dir, uri, auth=None):
     if os.path.exists(uri):
         abs_path = os.path.abspath(uri)
         log.info('Retrieving {}'.format(abs_path))
-        return True, os.path.basename(abs_path), abs_path
+        return True, os.path.basename(abs_path), abs_path, None
     else:
-        return False, None, None
+        return False, None, None, None
 
 
 def load_bundle_from_cache(cache_dir, uri):
@@ -37,9 +37,9 @@ def load_bundle_from_cache(cache_dir, uri):
             latest_bundle_file = max(cached_bundles, key=os.path.getctime)
             bundle_name = os.path.basename(latest_bundle_file)
             log.info('Retrieving from cache {}'.format(latest_bundle_file))
-            return True, bundle_name, latest_bundle_file
+            return True, bundle_name, latest_bundle_file, None
 
-    return False, None, None
+    return False, None, None, None
 
 
 def resolve_bundle_configuration(cache_dir, uri, auth=None):
@@ -51,7 +51,7 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
 
 
 def resolve_bundle_version(uri):
-    return None
+    return None, None
 
 
 def continuous_delivery_uri(resolved_version):

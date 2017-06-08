@@ -20,7 +20,7 @@ class TestResolveBundle(CliTestCase):
         with patch('os.path.exists', mock_exists), \
                 patch('os.path.abspath', mock_abspath):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((True, 'bundle.zip', self.abspath),
+            self.assertEqual((True, 'bundle.zip', self.abspath, None),
                              offline_resolver.resolve_bundle(self.cache_dir, self.abspath))
 
         mock_exists.assert_called_once_with(self.abspath)
@@ -39,7 +39,7 @@ class TestResolveBundle(CliTestCase):
 
         with patch('os.path.exists', mock_exists):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((False, None, None),
+            self.assertEqual((False, None, None, None),
                              offline_resolver.resolve_bundle(self.cache_dir, self.abspath))
 
         mock_exists.assert_called_once_with(self.abspath)
@@ -63,7 +63,7 @@ class TestResolveBundleConfiguration(CliTestCase):
         with patch('os.path.exists', mock_exists), \
                 patch('os.path.abspath', mock_abspath):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((True, 'bundle-configuration.zip', self.abspath),
+            self.assertEqual((True, 'bundle-configuration.zip', self.abspath, None),
                              offline_resolver.resolve_bundle_configuration(self.cache_dir, self.abspath))
 
         mock_exists.assert_called_once_with(self.abspath)
@@ -82,7 +82,7 @@ class TestResolveBundleConfiguration(CliTestCase):
 
         with patch('os.path.exists', mock_exists):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((False, None, None),
+            self.assertEqual((False, None, None, None),
                              offline_resolver.resolve_bundle_configuration(self.cache_dir, self.abspath))
 
         mock_exists.assert_called_once_with(self.abspath)
@@ -110,7 +110,7 @@ class TestLoadBundleFromCache(CliTestCase):
         with patch('glob.glob', mock_glob), \
                 patch('os.path.getctime', mock_getctime):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((True, 'path-2.zip', '~/.conductr/cache/path-2.zip'),
+            self.assertEqual((True, 'path-2.zip', '~/.conductr/cache/path-2.zip', None),
                              offline_resolver.load_bundle_from_cache(self.cache_dir, 'visualizer'))
 
         mock_glob.assert_called_once_with('~/.conductr/cache/visualizer*')
@@ -133,7 +133,7 @@ class TestLoadBundleFromCache(CliTestCase):
 
         with patch('glob.glob', mock_glob):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((False, None, None),
+            self.assertEqual((False, None, None, None),
                              offline_resolver.load_bundle_from_cache(self.cache_dir, 'visualizer'))
 
         mock_glob.assert_called_once_with('~/.conductr/cache/visualizer*')
@@ -141,9 +141,9 @@ class TestLoadBundleFromCache(CliTestCase):
         self.assertEqual('', self.output(stdout))
 
     def test_not_bundle_name(self):
-        self.assertEqual((False, None, None),
+        self.assertEqual((False, None, None, None),
                          offline_resolver.load_bundle_from_cache(self.cache_dir, '/tmp/visualizer.zip'))
-        self.assertEqual((False, None, None),
+        self.assertEqual((False, None, None, None),
                          offline_resolver.load_bundle_from_cache(self.cache_dir, 'visualizer.zip'))
 
 
@@ -167,7 +167,7 @@ class TestLoadBundleConfigurationFromCache(CliTestCase):
         with patch('glob.glob', mock_glob), \
                 patch('os.path.getctime', mock_getctime):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((True, 'path-2.zip', '~/.conductr/cache/path-2.zip'),
+            self.assertEqual((True, 'path-2.zip', '~/.conductr/cache/path-2.zip', None),
                              offline_resolver.load_bundle_configuration_from_cache(self.cache_dir,
                                                                                    'conductr-haproxy-dev-mode'))
 
@@ -191,7 +191,7 @@ class TestLoadBundleConfigurationFromCache(CliTestCase):
 
         with patch('glob.glob', mock_glob):
             logging_setup.configure_logging(args, stdout)
-            self.assertEqual((False, None, None),
+            self.assertEqual((False, None, None, None),
                              offline_resolver.load_bundle_configuration_from_cache(self.cache_dir,
                                                                                    'conductr-haproxy-dev-mode'))
 
@@ -200,17 +200,17 @@ class TestLoadBundleConfigurationFromCache(CliTestCase):
         self.assertEqual('', self.output(stdout))
 
     def test_not_bundle_name(self):
-        self.assertEqual((False, None, None),
+        self.assertEqual((False, None, None, None),
                          offline_resolver.load_bundle_configuration_from_cache(self.cache_dir,
                                                                                '/tmp/conductr-haproxy-dev-mode.zip'))
-        self.assertEqual((False, None, None),
+        self.assertEqual((False, None, None, None),
                          offline_resolver.load_bundle_configuration_from_cache(self.cache_dir,
                                                                                'conductr-haproxy-dev-mode.zip'))
 
 
 class TestResolveBundleVersion(CliTestCase):
     def test_return_none(self):
-        self.assertIsNone(offline_resolver.resolve_bundle_version('visualizer'))
+        self.assertEqual((None, None), offline_resolver.resolve_bundle_version('visualizer'))
 
 
 class TestContinuousDeliveryUri(CliTestCase):

@@ -28,7 +28,7 @@ def resolve_file(cache_dir, uri, auth=None, require_bundle_conf=True, raise_erro
             file_path = file_url[len(file_protocol):]
 
             if is_local_file(file_path, require_bundle_conf=require_bundle_conf):
-                return True, file_name, file_path
+                return True, file_name, file_path, None
 
         cached_file = cache_path(cache_dir, uri)
         tmp_download_path = '{}.tmp'.format(cached_file)
@@ -40,19 +40,19 @@ def resolve_file(cache_dir, uri, auth=None, require_bundle_conf=True, raise_erro
 
         os.chmod(tmp_download_path, 0o600)
         shutil.move(tmp_download_path, cached_file)
-        return True, file_name, cached_file
+        return True, file_name, cached_file, None
     except URLError as e:
         if raise_error:
             raise e
         else:
-            return False, None, None
+            return False, None, None, e
 
 
 def load_bundle_from_cache(cache_dir, uri):
     # When the supplied uri is a local filesystem, don't load from cache so file can be used as is
     parsed = urlparse(uri, scheme='file')
     if parsed.scheme == 'file':
-        return False, None, None
+        return False, None, None, None
     else:
         log = logging.getLogger(__name__)
 
@@ -60,9 +60,9 @@ def load_bundle_from_cache(cache_dir, uri):
         if os.path.exists(cached_file):
             bundle_name = os.path.basename(cached_file)
             log.info('Retrieving from cache {}'.format(cached_file))
-            return True, bundle_name, cached_file
+            return True, bundle_name, cached_file, None
         else:
-            return False, None, None
+            return False, None, None, None
 
 
 def resolve_bundle_configuration(cache_dir, uri, auth=None):

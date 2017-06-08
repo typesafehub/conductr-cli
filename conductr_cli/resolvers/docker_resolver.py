@@ -168,10 +168,8 @@ def resolve_bundle(cache_dir, uri, auth=None):
 
 
 def do_resolve_bundle(cache_dir, uri, auth, offline_mode):
-    log = logging.getLogger(__name__)
-
     if is_local_file(uri, require_bundle_conf=True):
-        return False, None, None
+        return False, None, None, None
 
     (provided_url, url), (provided_ns, ns), (provided_image, image), (provided_tag, tag) = parse_uri(uri)
 
@@ -181,12 +179,12 @@ def do_resolve_bundle(cache_dir, uri, auth, offline_mode):
         manifest = fetch_manifest(cache_dir, url, ns, image, tag, offline_mode)
 
         if manifest is None:
-            return False, None, None
+            return False, None, None, None
 
         files = fetch_blobs(cache_dir, url, ns, image, [manifest['config']] + manifest['layers'], offline_mode)
 
         if files is None:
-            return False, None, None
+            return False, None, None, None
 
         shutil.copyfile(
             files[manifest['config']['digest']],
@@ -249,26 +247,25 @@ def do_resolve_bundle(cache_dir, uri, auth, offline_mode):
         with open(os.path.join(temp_dir, 'repositories'), 'w', encoding="utf-8") as repositories_fileobj:
             repositories_fileobj.write(json.dumps(repositories))
 
-        return True, None, temp_dir
+        return True, None, temp_dir, None
     except Exception as e:
-        log.debug(e, exc_info=1)
-        return False, None, None
+        return False, None, None, e
 
 
 def load_bundle_from_cache(cache_dir, uri):
-    return False, None, None
+    return False, None, None, None
 
 
 def resolve_bundle_configuration(cache_dir, uri, auth=None):
-    return False, None, None
+    return False, None, None, None
 
 
 def load_bundle_configuration_from_cache(cache_dir, uri):
-    return False, None, None
+    return False, None, None, None
 
 
 def resolve_bundle_version(uri):
-    return None
+    return None, None
 
 
 def continuous_delivery_uri(resolved_version):

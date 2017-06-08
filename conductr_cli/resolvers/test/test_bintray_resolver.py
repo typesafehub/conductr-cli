@@ -26,16 +26,14 @@ class TestResolveBundle(TestCase):
             'path': 'download.zip',
             'download_url': 'https://dl.bintray.com/typesafe/bundle/download.zip'
         })
-        resolve_bundle_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
+        resolve_bundle_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file', None))
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.uri_resolver.resolve_file', resolve_bundle_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
-            self.assertTrue(is_resolved)
-            self.assertEqual('bundle-name', bundle_name)
-            self.assertEqual('mock bundle file', bundle_file)
+            result = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((True, 'bundle-name', 'mock bundle file', None), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -52,10 +50,8 @@ class TestResolveBundle(TestCase):
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, None), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -63,13 +59,12 @@ class TestResolveBundle(TestCase):
                                                         'v1', 'digest')
 
     def test_failure_malformed_bundle_uri(self):
-        parse_bundle_mock = MagicMock(side_effect=MalformedBundleUriError('test only'))
+        error = MalformedBundleUriError('test only')
+        parse_bundle_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         parse_bundle_mock.assert_called_with('bundle-name:v1')
 
@@ -77,13 +72,14 @@ class TestResolveBundle(TestCase):
         exists_mock = MagicMock(return_value=False)
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_no_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(
-            side_effect=HTTPError(response=MagicMock(text='Repo bundle was not found', status_code=404)))
+        error = HTTPError(response=MagicMock(text='Repo bundle was not found', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            self.assertEqual(bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1'), (False, None, None))
+            self.assertEqual(bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1'),
+                             (False, None, None, error))
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -93,15 +89,14 @@ class TestResolveBundle(TestCase):
     def test_failure_http_error(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=HTTPError(response=MagicMock(text='', status_code=404)))
+        error = HTTPError(response=MagicMock(text='', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -111,15 +106,14 @@ class TestResolveBundle(TestCase):
     def test_connection_error(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
+        error = ConnectionError('test only')
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -144,17 +138,14 @@ class TestResolveBundleConfiguration(TestCase):
             'path': 'download.zip',
             'download_url': 'https://dl.bintray.com/typesafe/bundle-configuration/download.zip'
         })
-        resolve_bundle_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
+        resolve_bundle_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file', None))
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.uri_resolver.resolve_file', resolve_bundle_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle_configuration(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertTrue(is_resolved)
-            self.assertEqual('bundle-name', bundle_name)
-            self.assertEqual('mock bundle file', bundle_file)
+            result = bintray_resolver.resolve_bundle_configuration('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((True, 'bundle-name', 'mock bundle file', None), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
@@ -174,11 +165,8 @@ class TestResolveBundleConfiguration(TestCase):
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle_configuration(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle_configuration('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, None), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
@@ -186,14 +174,12 @@ class TestResolveBundleConfiguration(TestCase):
                                                         'bundle-name', 'v1', 'digest')
 
     def test_failure_malformed_bundle_uri(self):
-        parse_bundle_configuration_mock = MagicMock(side_effect=MalformedBundleUriError('test only'))
+        error = MalformedBundleUriError('test only')
+        parse_bundle_configuration_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle_configuration(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle_configuration('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
 
@@ -201,14 +187,14 @@ class TestResolveBundleConfiguration(TestCase):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_no_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(
-            side_effect=HTTPError(response=MagicMock(text='Repo bundle-configuration was not found', status_code=404)))
+        error = HTTPError(response=MagicMock(text='Repo bundle-configuration was not found', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
             self.assertEqual(bintray_resolver.resolve_bundle_configuration('/cache-dir', 'bundle-name:v1'),
-                             (False, None, None))
+                             (False, None, None, error))
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
@@ -219,16 +205,14 @@ class TestResolveBundleConfiguration(TestCase):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=HTTPError(response=MagicMock(text='', status_code=404)))
+        error = HTTPError(response=MagicMock(text='', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle_configuration(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle_configuration('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
@@ -239,16 +223,14 @@ class TestResolveBundleConfiguration(TestCase):
         load_bintray_credentials_mock = MagicMock(return_value=(self.bintray_auth))
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
+        error = ConnectionError('test only')
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle_configuration(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle_configuration('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_configuration_mock.assert_called_with('bundle-name:v1')
@@ -268,11 +250,8 @@ class TestLoadBundleFromCache(TestCase):
         with patch('os.path.exists', exists_mock), \
                 patch('os.path.isfile', isfile_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                            '/tmp/bundle.zip')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_from_cache('/cache-dir', '/tmp/bundle.zip')
+            self.assertEqual((False, None, None, None), result)
 
         exists_mock.assert_called_with('/tmp/bundle.zip')
         parse_bundle_mock.assert_not_called()
@@ -289,11 +268,9 @@ class TestLoadBundleFromCache(TestCase):
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', credentials_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.resolve_bundle(
-                '/cache-dir', 'bundle')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.resolve_bundle('/cache-dir', 'bundle')
+            self.assertEqual((False, None, None, None), result)
+
         credentials_mock.assert_called_with(raise_error=False)
 
     def test_bundle(self):
@@ -322,7 +299,7 @@ class TestLoadBundleFromCache(TestCase):
             'path': 'download.zip',
             'download_url': 'https://dl.bintray.com/typesafe/bundle/download.zip'
         })
-        load_bundle_from_cache_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
+        load_bundle_from_cache_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file', None))
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
@@ -330,11 +307,8 @@ class TestLoadBundleFromCache(TestCase):
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.uri_resolver.load_bundle_from_cache',
                       load_bundle_from_cache_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                            'bundle-name:v1')
-            self.assertTrue(is_resolved)
-            self.assertEqual('bundle-name', bundle_name)
-            self.assertEqual('mock bundle file', bundle_file)
+            result = bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((True, 'bundle-name', 'mock bundle file', None), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -354,11 +328,8 @@ class TestLoadBundleFromCache(TestCase):
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                            'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, None), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -368,15 +339,13 @@ class TestLoadBundleFromCache(TestCase):
 
     def test_failure_malformed_bundle_uri(self):
         exists_mock = MagicMock(return_value=False)
-        parse_bundle_mock = MagicMock(side_effect=MalformedBundleUriError('test only'))
+        error = MalformedBundleUriError('test only')
+        parse_bundle_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                            'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         exists_mock.assert_not_called()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -385,15 +354,15 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock = MagicMock(return_value=False)
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_no_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(
-            side_effect=HTTPError(response=MagicMock(text='Repo bundle was not found', status_code=404)))
+        error = HTTPError(response=MagicMock(text='Repo bundle was not found', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
             self.assertEqual(bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1'),
-                             (False, None, None))
+                             (False, None, None, error))
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -405,17 +374,15 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock = MagicMock(return_value=False)
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=HTTPError(response=MagicMock(text='', status_code=404)))
+        error = HTTPError(response=MagicMock(text='', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                            'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -427,17 +394,15 @@ class TestLoadBundleFromCache(TestCase):
         exists_mock = MagicMock(return_value=False)
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
+        error = ConnectionError('test only')
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                            'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -458,11 +423,8 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         with patch('os.path.exists', exists_mock), \
                 patch('os.path.isfile', isfile_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_configuration_from_cache(
-                '/cache-dir', '/tmp/bundle.zip')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_configuration_from_cache('/cache-dir', '/tmp/bundle.zip')
+            self.assertEqual((False, None, None, None), result)
 
         exists_mock.assert_called_with('/tmp/bundle.zip')
         parse_bundle_configuration_mock.assert_not_called()
@@ -481,7 +443,7 @@ class TestLoadBundleConfigurationFromCache(TestCase):
             'path': 'download.zip',
             'download_url': 'https://dl.bintray.com/typesafe/bundle-configuration/download.zip'
         })
-        load_bundle_from_cache_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file'))
+        load_bundle_from_cache_mock = MagicMock(return_value=(True, 'bundle-name', 'mock bundle file', None))
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
@@ -489,11 +451,8 @@ class TestLoadBundleConfigurationFromCache(TestCase):
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.uri_resolver.load_bundle_from_cache',
                       load_bundle_from_cache_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_configuration_from_cache(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertTrue(is_resolved)
-            self.assertEqual('bundle-name', bundle_name)
-            self.assertEqual('mock bundle file', bundle_file)
+            result = bintray_resolver.load_bundle_configuration_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((True, 'bundle-name', 'mock bundle file', None), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -514,11 +473,8 @@ class TestLoadBundleConfigurationFromCache(TestCase):
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_configuration_from_cache(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_configuration_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, None), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -528,15 +484,13 @@ class TestLoadBundleConfigurationFromCache(TestCase):
 
     def test_failure_malformed_bundle_uri(self):
         exists_mock = MagicMock(return_value=False)
-        parse_bundle_mock = MagicMock(side_effect=MalformedBundleUriError('test only'))
+        error = MalformedBundleUriError('test only')
+        parse_bundle_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_from_cache('/cache-dir',
-                                                                                            'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         exists_mock.assert_not_called()
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -546,16 +500,16 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_no_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(
-            side_effect=HTTPError(response=MagicMock(text='Repo bundle-configuration was not found', status_code=404)))
+        error = HTTPError(response=MagicMock(text='Repo bundle-configuration was not found', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            self.assertEquals(
+            self.assertEqual(
                 bintray_resolver.load_bundle_configuration_from_cache('/cache-dir', 'bundle-name:v1'),
-                (False, None, None)
+                (False, None, None, error)
             )
 
         exists_mock.assert_not_called()
@@ -569,17 +523,15 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                     'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=HTTPError(response=MagicMock(text='', status_code=404)))
+        error = HTTPError(response=MagicMock(text='', status_code=404))
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_configuration_from_cache(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_configuration_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -592,17 +544,15 @@ class TestLoadBundleConfigurationFromCache(TestCase):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=ConnectionError('test only'))
+        error = ConnectionError('test only')
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('os.path.exists', exists_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle_configuration', parse_bundle_configuration_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
-            is_resolved, bundle_name, bundle_file = bintray_resolver.load_bundle_configuration_from_cache(
-                '/cache-dir', 'bundle-name:v1')
-            self.assertFalse(is_resolved)
-            self.assertIsNone(bundle_name)
-            self.assertIsNone(bundle_file)
+            result = bintray_resolver.load_bundle_configuration_from_cache('/cache-dir', 'bundle-name:v1')
+            self.assertEqual((False, None, None, error), result)
 
         exists_mock.assert_not_called()
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
@@ -910,7 +860,7 @@ class TestResolveBundleVersion(TestCase):
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
             result = bintray_resolver.resolve_bundle_version('bundle-name:v1')
-            self.assertEqual(resolved_version, result)
+            self.assertEqual((resolved_version, None), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -926,7 +876,7 @@ class TestResolveBundleVersion(TestCase):
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
             result = bintray_resolver.resolve_bundle_version('bundle-name:v1')
-            self.assertIsNone(result)
+            self.assertEqual((None, None), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -936,13 +886,14 @@ class TestResolveBundleVersion(TestCase):
     def test_malformed_bundle_uri_error(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=MalformedBundleUriError('test'))
+        error = MalformedBundleUriError('test')
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
             result = bintray_resolver.resolve_bundle_version('bundle-name:v1')
-            self.assertIsNone(result)
+            self.assertEqual((None, error), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')
@@ -952,13 +903,31 @@ class TestResolveBundleVersion(TestCase):
     def test_http_error(self):
         load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
-        bintray_resolve_version_mock = MagicMock(side_effect=HTTPError('test'))
+        error = HTTPError('test')
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
 
         with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
                 patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
                 patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
             result = bintray_resolver.resolve_bundle_version('bundle-name:v1')
-            self.assertIsNone(result)
+            self.assertEqual((None, error), result)
+
+        load_bintray_credentials_mock.assert_called_with(raise_error=False)
+        parse_bundle_mock.assert_called_with('bundle-name:v1')
+        bintray_resolve_version_mock.assert_called_with(self.bintray_auth, 'typesafe', 'bundle', 'bundle-name',
+                                                        tag='v1', digest='digest')
+
+    def test_connection_error(self):
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
+        parse_bundle_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle', 'bundle-name', 'v1', 'digest'))
+        error = ConnectionError('test')
+        bintray_resolve_version_mock = MagicMock(side_effect=error)
+
+        with patch('conductr_cli.resolvers.bintray_resolver.load_bintray_credentials', load_bintray_credentials_mock), \
+                patch('conductr_cli.bundle_shorthand.parse_bundle', parse_bundle_mock), \
+                patch('conductr_cli.resolvers.bintray_resolver.bintray_resolve_version', bintray_resolve_version_mock):
+            result = bintray_resolver.resolve_bundle_version('bundle-name:v1')
+            self.assertEqual((None, error), result)
 
         load_bintray_credentials_mock.assert_called_with(raise_error=False)
         parse_bundle_mock.assert_called_with('bundle-name:v1')

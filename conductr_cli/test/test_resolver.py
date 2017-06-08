@@ -1,12 +1,11 @@
 from unittest import TestCase
-from unittest.mock import call, patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 from conductr_cli.test.cli_test_case import strip_margin, create_mock_logger
 from conductr_cli.exceptions import BundleResolutionError, ContinuousDeliveryError
 from conductr_cli import resolver
 from conductr_cli.resolvers import \
     bintray_resolver, docker_resolver, docker_offline_resolver, uri_resolver, offline_resolver, stdin_resolver
 from pyhocon import ConfigFactory
-import tempfile
 
 
 class TestResolver(TestCase):
@@ -15,12 +14,12 @@ class TestResolver(TestCase):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(False, None, None))
-        first_resolver_mock.resolve_bundle = MagicMock(return_value=(False, None, None))
+        first_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(False, None, None, None))
+        first_resolver_mock.resolve_bundle = MagicMock(return_value=(False, None, None, None))
 
         second_resolver_mock = Mock()
-        second_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(False, None, None))
-        second_resolver_mock.resolve_bundle = MagicMock(return_value=(True, 'bundle_name', 'mock bundle_file'))
+        second_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(False, None, None, None))
+        second_resolver_mock.resolve_bundle = MagicMock(return_value=(True, 'bundle_name', 'mock bundle_file', None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
 
@@ -37,17 +36,87 @@ class TestResolver(TestCase):
         second_resolver_mock.load_from_cache('/some-cache-dir', '/some-bundle-path')
         second_resolver_mock.resolve_bundle.assert_called_with('/some-cache-dir', '/some-bundle-path')
 
-    def test_resolve_bundle_failure(self):
+    def test_resolve_bundle_success_with_some_resolver_returning_errors(self):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(False, None, None))
-        first_resolver_mock.resolve_bundle = MagicMock(return_value=(False, None, None))
+        first_resolver_load_bundle_from_cache_error = MagicMock(name='first_resolver_load_bundle_from_cache_error')
+        first_resolver_mock.load_bundle_from_cache = MagicMock(
+            return_value=(False, None, None, first_resolver_load_bundle_from_cache_error))
+        first_resolver_mock.resolve_bundle = MagicMock(return_value=(False, None, None, None))
+
+        second_resolver_mock = Mock()
+        second_resolver_load_bundle_from_cache_error = MagicMock(name='second_resolver_load_bundle_from_cache_error')
+        second_resolver_mock.load_bundle_from_cache = MagicMock(
+            return_value=(False, None, None, second_resolver_load_bundle_from_cache_error))
+        second_resolver_mock.resolve_bundle = MagicMock(return_value=(True, 'bundle_name', 'mock bundle_file', None))
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
+
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
+            bundle_name, bundle_file = resolver.resolve_bundle(custom_settings, '/some-cache-dir', '/some-bundle-path')
+            self.assertEqual('bundle_name', bundle_name)
+            self.assertEqual('mock bundle_file', bundle_file)
+
+        resolver_chain_mock.assert_called_with(custom_settings, False)
+
+        first_resolver_mock.load_from_cache('/some-cache-dir', '/some-bundle-path')
+        first_resolver_mock.resolve_bundle.assert_called_with('/some-cache-dir', '/some-bundle-path')
+
+        second_resolver_mock.load_from_cache('/some-cache-dir', '/some-bundle-path')
+        second_resolver_mock.resolve_bundle.assert_called_with('/some-cache-dir', '/some-bundle-path')
+
+    def test_resolve_bundle_not_found(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+
+        first_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(False, None, None, None))
+        first_resolver_mock.resolve_bundle = MagicMock(return_value=(False, None, None, None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock])
-        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
-            self.assertRaises(BundleResolutionError, resolver.resolve_bundle, custom_settings, '/some-cache-dir',
-                              '/some-bundle-path')
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock), \
+                self.assertRaises(BundleResolutionError) as e:
+            resolver.resolve_bundle(custom_settings, '/some-cache-dir', '/some-bundle-path')
+
+        self.assertEqual([], e.exception.cache_resolution_errors)
+        self.assertEqual([], e.exception.bundle_resolution_errors)
+
+        resolver_chain_mock.assert_called_with(custom_settings, False)
+
+        first_resolver_mock.load_from_cache('/some-cache-dir', '/some-bundle-path')
+        first_resolver_mock.resolve_bundle.assert_called_with('/some-cache-dir', '/some-bundle-path')
+
+    def test_resolve_bundle_error(self):
+        custom_settings = Mock()
+
+        first_resolver_mock = Mock()
+        first_resolver_load_bundle_from_cache_error = MagicMock(name='first_resolver_load_bundle_from_cache_error')
+        first_resolver_mock.load_bundle_from_cache = MagicMock(
+            return_value=(False, None, None, first_resolver_load_bundle_from_cache_error))
+        first_resolver_mock.resolve_bundle = MagicMock(return_value=(False, None, None, None))
+
+        second_resolver_mock = Mock()
+        second_resolver_load_bundle_from_cache_error = MagicMock(name='second_resolver_load_bundle_from_cache_error')
+        second_resolver_mock.load_bundle_from_cache = MagicMock(
+            return_value=(False, None, None, second_resolver_load_bundle_from_cache_error))
+        second_resolver_resolve_bundle_error = MagicMock(name='second_resolver_resolve_bundle_error')
+        second_resolver_mock.resolve_bundle = MagicMock(
+            return_value=(False, None, None, second_resolver_resolve_bundle_error))
+
+        resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock), \
+                self.assertRaises(BundleResolutionError) as e:
+            resolver.resolve_bundle(custom_settings, '/some-cache-dir', '/some-bundle-path')
+
+        self.assertEqual([
+            (first_resolver_mock, first_resolver_load_bundle_from_cache_error),
+            (second_resolver_mock, second_resolver_load_bundle_from_cache_error),
+        ], e.exception.cache_resolution_errors)
+
+        self.assertEqual([
+            (second_resolver_mock, second_resolver_resolve_bundle_error),
+        ], e.exception.bundle_resolution_errors)
 
         resolver_chain_mock.assert_called_with(custom_settings, False)
 
@@ -58,7 +127,7 @@ class TestResolver(TestCase):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(True, 'bundle_name', 'mock bundle_file'))
+        first_resolver_mock.load_bundle_from_cache = MagicMock(return_value=(True, 'bundle_name', 'mock bundle_file', None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock])
         with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
@@ -75,13 +144,13 @@ class TestResolver(TestCase):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.load_bundle_configuration_from_cache = MagicMock(return_value=(False, None, None))
-        first_resolver_mock.resolve_bundle_configuration = MagicMock(return_value=(False, None, None))
+        first_resolver_mock.load_bundle_configuration_from_cache = MagicMock(return_value=(False, None, None, None))
+        first_resolver_mock.resolve_bundle_configuration = MagicMock(return_value=(False, None, None, None))
 
         second_resolver_mock = Mock()
-        second_resolver_mock.load_bundle_configuration_from_cache = MagicMock(return_value=(False, None, None))
+        second_resolver_mock.load_bundle_configuration_from_cache = MagicMock(return_value=(False, None, None, None))
         second_resolver_mock.resolve_bundle_configuration = MagicMock(return_value=(True, 'bundle_name',
-                                                                                    'mock bundle_file'))
+                                                                                    'mock bundle_file', None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
 
@@ -103,13 +172,16 @@ class TestResolver(TestCase):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.load_bundle_configuration_from_cache = MagicMock(return_value=(False, None, None))
-        first_resolver_mock.resolve_bundle_configuration = MagicMock(return_value=(False, None, None))
+        first_resolver_mock.load_bundle_configuration_from_cache = MagicMock(return_value=(False, None, None, None))
+        first_resolver_mock.resolve_bundle_configuration = MagicMock(return_value=(False, None, None, None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock])
-        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
-            self.assertRaises(BundleResolutionError, resolver.resolve_bundle_configuration, custom_settings,
-                              '/some-cache-dir', '/some-bundle-path')
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock), \
+                self.assertRaises(BundleResolutionError) as e:
+            resolver.resolve_bundle_configuration(custom_settings, '/some-cache-dir', '/some-bundle-path')
+
+        self.assertEqual([], e.exception.cache_resolution_errors)
+        self.assertEqual([], e.exception.bundle_resolution_errors)
 
         resolver_chain_mock.assert_called_with(custom_settings, False)
 
@@ -121,7 +193,7 @@ class TestResolver(TestCase):
 
         first_resolver_mock = Mock()
         first_resolver_mock.load_bundle_configuration_from_cache = MagicMock(return_value=(True, 'bundle_name',
-                                                                                           'mock bundle_file'))
+                                                                                           'mock bundle_file', None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock])
         with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
@@ -140,11 +212,11 @@ class TestResolverResolveBundleVersion(TestCase):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=None)
+        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=(None, None))
 
         second_resolver_mock = Mock()
         resolved_version = {'test': 'only'}
-        second_resolver_mock.resolve_bundle_version = MagicMock(return_value=resolved_version)
+        second_resolver_mock.resolve_bundle_version = MagicMock(return_value=(resolved_version, None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
 
@@ -160,11 +232,11 @@ class TestResolverResolveBundleVersion(TestCase):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=None)
+        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=(None, None))
 
         second_resolver_mock = Mock()
         resolved_version = {'test': 'only'}
-        second_resolver_mock.resolve_bundle_version = MagicMock(return_value=resolved_version)
+        second_resolver_mock.resolve_bundle_version = MagicMock(return_value=(resolved_version, None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock, second_resolver_mock])
 
@@ -180,12 +252,15 @@ class TestResolverResolveBundleVersion(TestCase):
         custom_settings = Mock()
 
         first_resolver_mock = Mock()
-        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=None)
+        first_resolver_mock.resolve_bundle_version = MagicMock(return_value=(None, None))
 
         resolver_chain_mock = MagicMock(return_value=[first_resolver_mock])
-        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock):
-            self.assertRaises(BundleResolutionError, resolver.resolve_bundle_version, custom_settings, 'bundle')
+        with patch('conductr_cli.resolver.resolver_chain', resolver_chain_mock),\
+                self.assertRaises(BundleResolutionError) as e:
+            resolver.resolve_bundle_version(custom_settings, 'bundle')
 
+        self.assertEqual([], e.exception.cache_resolution_errors)
+        self.assertEqual([], e.exception.bundle_resolution_errors)
         resolver_chain_mock.assert_called_with(custom_settings, False)
         first_resolver_mock.resolve_bundle_version.assert_called_with('bundle')
 
@@ -294,137 +369,3 @@ class TestResolverChain(TestCase):
         result = resolver.resolver_chain(None, True)
         expected_result = [stdin_resolver, offline_resolver, docker_offline_resolver]
         self.assertEqual(expected_result, result)
-
-
-class TestResolverStdIn(TestCase):
-    def test_tty_in(self):
-        with patch('sys.stdin.isatty', lambda: True):
-            self.assertEqual(
-                resolver.stdin_resolver.resolve_bundle('/some/cache/dir', None, None),
-                (False, None, None)
-            )
-
-    def test_not_used_for_given_file(self):
-        with patch('sys.stdin.isatty', lambda: False):
-            self.assertEqual(
-                resolver.stdin_resolver.resolve_bundle('/some/cache/dir', 'somefile.zip', None),
-                (False, None, None)
-            )
-
-    def test_file_in(self):
-        read_mock = MagicMock(side_effect=[b'hello', b''])
-
-        file = tempfile.NamedTemporaryFile()
-
-        with patch('sys.stdin.isatty', lambda: False), \
-                patch('sys.stdin.buffer.read', read_mock),\
-                patch('tempfile.NamedTemporaryFile', MagicMock(return_value=file)):
-            self.assertEqual(
-                resolver.stdin_resolver.resolve_bundle('/some/cache/dir', '-', None),
-                (True, None, file.name)
-            )
-
-            file.seek(0)
-
-            self.assertEqual(file.read(), b'hello')
-
-
-class TestResolverDocker(TestCase):
-    def test_parse_uri(self):
-        self.assertEqual(docker_resolver.parse_uri('alpine'), (
-            (None, 'registry.hub.docker.com'),
-            (None, 'library'),
-            ('alpine', 'alpine'),
-            (None, 'latest')
-        ))
-
-        self.assertEqual(docker_resolver.parse_uri('alpine:3.5'), (
-            (None, 'registry.hub.docker.com'),
-            (None, 'library'),
-            ('alpine', 'alpine'),
-            ('3.5', '3.5')
-        ))
-
-        self.assertEqual(docker_resolver.parse_uri('lightbend-docker.registry.bintray.io/conductr/oci-in-docker'), (
-            ('lightbend-docker.registry.bintray.io', 'lightbend-docker.registry.bintray.io'),
-            ('conductr', 'conductr'),
-            ('oci-in-docker', 'oci-in-docker'),
-            (None, 'latest')
-        ))
-
-        self.assertEqual(docker_resolver.parse_uri('lightbend-docker.registry.bintray.io/conductr/oci-in-docker:0.1'), (
-            ('lightbend-docker.registry.bintray.io', 'lightbend-docker.registry.bintray.io'),
-            ('conductr', 'conductr'),
-            ('oci-in-docker', 'oci-in-docker'),
-            ('0.1', '0.1')
-        ))
-
-    def test_offline_mode(self):
-        mock_is_file = MagicMock(return_value=True)
-        mock_json_load = MagicMock(return_value='1234')
-        mock_open = MagicMock(return_value=MagicMock())
-
-        with \
-                patch('os.path.isfile', mock_is_file), \
-                patch('json.load', mock_json_load), \
-                patch('builtins.open', mock_open):
-            self.assertEqual(
-                docker_resolver.fetch_manifest('/tmp', 'registry.hub.docker.com', 'library', 'alpine', '3.5', True),
-                '1234'
-            )
-
-        mock_is_file.assert_called_once_with('/tmp/docker-manifest-624ab327c0f6bb1039ca62'
-                                             '9a2c1ec806514b9194c30491c02e9800254c73d998')
-
-    def test_load_docker_credentials(self):
-        with \
-                tempfile.NamedTemporaryFile('w') as one, \
-                tempfile.NamedTemporaryFile('w') as two, \
-                tempfile.NamedTemporaryFile('w') as three:
-            one.write('user=one\npassword=one-password')
-            one.flush()
-            two.write('username=two\npassword=two-password')
-            two.flush()
-            three.write('hello')
-            three.flush()
-
-            with \
-                    open(one.name, 'r') as one_in, \
-                    patch('os.path.exists', MagicMock(return_value=True)), \
-                    patch('builtins.open', MagicMock(return_value=one_in)):
-                self.assertEqual(
-                    resolver.docker_resolver.load_docker_credentials('test'),
-                    ('one', 'one-password')
-                )
-
-            with \
-                    open(two.name, 'r') as two_in, \
-                    patch('os.path.exists', MagicMock(return_value=True)), \
-                    patch('builtins.open', MagicMock(return_value=two_in)):
-                self.assertEqual(
-                    resolver.docker_resolver.load_docker_credentials('test'),
-                    ('two', 'two-password')
-                )
-
-            with \
-                    open(three.name, 'r') as three_in, \
-                    patch('os.path.exists', MagicMock(return_value=True)), \
-                    patch('builtins.open', MagicMock(return_value=three_in)):
-                self.assertEqual(
-                    resolver.docker_resolver.load_docker_credentials('test'),
-                    None
-                )
-
-            path_exists_mock = MagicMock(side_effect=[False, True])
-
-            with \
-                    open(one.name, 'r') as one_in, \
-                    patch('os.path.exists', path_exists_mock), \
-                    MagicMock(return_value=one_in) as open_mock, \
-                    patch('builtins.open', open_mock):
-                resolver.docker_resolver.load_docker_credentials('test')
-
-                path_exists_mock.assert_has_calls([
-                    call('{}-{}'.format(docker_resolver.DOCKER_CREDENTIAL_FILE_PATH, 'test')),
-                    call(docker_resolver.DOCKER_CREDENTIAL_FILE_PATH)
-                ])

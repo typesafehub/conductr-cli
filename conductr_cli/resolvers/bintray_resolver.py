@@ -31,18 +31,18 @@ def resolve_bundle(cache_dir, uri):
         bintray_auth = load_bintray_credentials(raise_error=False)
         resolved_version = bintray_resolve_version(bintray_auth, org, repo, package_name, tag, digest)
         return bintray_download_artefact(cache_dir, resolved_version, bintray_auth)
-    except MalformedBundleUriError:
-        return False, None, None
-    except HTTPError as http_error:
-        return handle_http_error(http_error, org, repo)
-    except ConnectionError:
-        return False, None, None
+    except MalformedBundleUriError as e:
+        return False, None, None, e
+    except HTTPError as e:
+        return False, None, None, e
+    except ConnectionError as e:
+        return False, None, None, e
 
 
 def load_bundle_from_cache(cache_dir, uri):
     # When the supplied uri points to a local file, don't load from cache so file can be used as is.
     if is_local_file(uri, require_bundle_conf=True):
-        return False, None, None
+        return False, None, None, None
     else:
         log = logging.getLogger(__name__)
         try:
@@ -53,13 +53,13 @@ def load_bundle_from_cache(cache_dir, uri):
             if resolved_version:
                 return uri_resolver.load_bundle_from_cache(cache_dir, resolved_version['download_url'])
             else:
-                return False, None, None
-        except MalformedBundleUriError:
-            return False, None, None
-        except HTTPError as http_error:
-            return handle_http_error(http_error, org, repo)
-        except ConnectionError:
-            return False, None, None
+                return False, None, None, None
+        except MalformedBundleUriError as e:
+            return False, None, None, e
+        except HTTPError as e:
+            return False, None, None, e
+        except ConnectionError as e:
+            return False, None, None, e
 
 
 def resolve_bundle_configuration(cache_dir, uri):
@@ -70,18 +70,18 @@ def resolve_bundle_configuration(cache_dir, uri):
         bintray_auth = load_bintray_credentials(raise_error=False)
         resolved_version = bintray_resolve_version(bintray_auth, org, repo, package_name, tag, digest)
         return bintray_download_artefact(cache_dir, resolved_version, bintray_auth)
-    except MalformedBundleUriError:
-        return False, None, None
-    except HTTPError as http_error:
-        return handle_http_error(http_error, org, repo)
-    except ConnectionError:
-        return False, None, None
+    except MalformedBundleUriError as e:
+        return False, None, None, e
+    except HTTPError as e:
+        return False, None, None, e
+    except ConnectionError as e:
+        return False, None, None, e
 
 
 def load_bundle_configuration_from_cache(cache_dir, uri):
     # When the supplied uri points to a local file, don't load from cache so file can be used as is.
     if is_local_file(uri, require_bundle_conf=False):
-        return False, None, None
+        return False, None, None, None
     else:
         log = logging.getLogger(__name__)
         try:
@@ -94,13 +94,13 @@ def load_bundle_configuration_from_cache(cache_dir, uri):
             if resolved_version:
                 return uri_resolver.load_bundle_from_cache(cache_dir, resolved_version['download_url'])
             else:
-                return False, None, None
-        except MalformedBundleUriError:
-            return False, None, None
-        except HTTPError as http_error:
-            return handle_http_error(http_error, org, repo)
-        except ConnectionError:
-            return False, None, None
+                return False, None, None, None
+        except MalformedBundleUriError as e:
+            return False, None, None, e
+        except HTTPError as e:
+            return False, None, None, e
+        except ConnectionError as e:
+            return False, None, None, e
 
 
 def handle_http_error(http_error, org, repo):
@@ -123,13 +123,13 @@ def resolve_bundle_version(uri):
         urn, org, repo, package_name, tag, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Resolving bundle version', org, repo, package_name, tag, digest))
         resolved_version = bintray_resolve_version(bintray_auth, org, repo, package_name, tag=tag, digest=digest)
-        return resolved_version if resolved_version else None
-    except MalformedBundleUriError:
-        return None
-    except HTTPError:
-        return None
-    except ConnectionError:
-        return None
+        return (resolved_version, None) if resolved_version else (None, None)
+    except MalformedBundleUriError as e:
+        return None, e
+    except HTTPError as e:
+        return None, e
+    except ConnectionError as e:
+        return None, e
 
 
 def continuous_delivery_uri(resolved_version):
@@ -147,7 +147,7 @@ def bintray_download_artefact(cache_dir, artefact, auth, raise_error=False):
     if artefact:
         return uri_resolver.resolve_file(cache_dir, artefact['download_url'], auth, raise_error)
     else:
-        return False, None, None
+        return False, None, None, None
 
 
 def load_bintray_credentials(raise_error=True, disable_instructions=False):

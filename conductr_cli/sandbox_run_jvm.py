@@ -500,10 +500,10 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
             if is_matching_artefact(artefact['download_url'])
         ]
         if len(artefacts) == 1:
-            is_success, _, download_path = bintray_resolver.bintray_download_artefact(image_dir,
-                                                                                      artefacts[0],
-                                                                                      bintray_auth,
-                                                                                      raise_error=True)
+            is_success, _, download_path, _ = bintray_resolver.bintray_download_artefact(image_dir,
+                                                                                         artefacts[0],
+                                                                                         bintray_auth,
+                                                                                         raise_error=True)
 
             if is_success:
                 return download_path
