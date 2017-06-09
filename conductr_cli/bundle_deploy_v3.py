@@ -1,4 +1,5 @@
-from conductr_cli import bundle_utils, conduct_url, conduct_request, sse_client
+from conductr_cli import conduct_url, conduct_request, sse_client
+from conductr_cli.bundle_deploy import display_bundle_id
 from conductr_cli.exceptions import ContinuousDeliveryError, WaitTimeoutError
 from datetime import datetime
 import json
@@ -29,7 +30,7 @@ def get_deployment_events(deployment_batch_id, args):
         return deployment_events
 
 
-def wait_for_deployment_complete(deployment_batch_id, resolved_version, args):
+def wait_for_deployment_complete(deployment_batch_id, args):
     log = logging.getLogger(__name__)
     start_time = datetime.now()
 
@@ -47,13 +48,19 @@ def wait_for_deployment_complete(deployment_batch_id, resolved_version, args):
         latest_event = sorted(batch_events, key=get_batch_event_sequence)[-1]
         return display_batch_event(latest_event)
 
-    def get_scheduled_deployments(batch_events):
+    def get_scheduled_lock_step_deployments(batch_events):
         if batch_events:
             return [
                 scheduled_deployment
-                for event in batch_events if event['eventType'] == 'scheduleDeployments'
+                for event in batch_events if event['eventType'] == 'scheduleLockStepDeployments'
                 for scheduled_deployment in event['scheduledDeployments']
             ]
+        else:
+            return None
+
+    def get_scheduled_simple_deployment(batch_events):
+        if batch_events:
+            return [event for event in batch_events if event['eventType'] == 'scheduleSimpleDeployment']
         else:
             return None
 
@@ -103,18 +110,12 @@ def wait_for_deployment_complete(deployment_batch_id, resolved_version, args):
         all_completed, all_successful = is_completed(deployment_events)
         return not all_successful
 
-    package_name = resolved_version['package_name']
-    tag = resolved_version['tag']
-    bundle_id = display_bundle_id(args, resolved_version['digest'])
-    bundle_shorthand = '{}:{}-{}'.format(package_name, tag, bundle_id)
-
-    log.info('Deploying {}'.format(bundle_shorthand))
     log.info('Deployment batch id: {}'.format(deployment_batch_id))
 
     batch_events = get_batch_events(deployment_batch_id, args)
     if batch_events and is_batch_completed_with_failure(batch_events):
-        raise ContinuousDeliveryError('Unable to deploy {} - {}'.format(bundle_shorthand,
-                                                                        log_message_batch(batch_events)))
+        error_message = log_message_batch(batch_events)
+        raise ContinuousDeliveryError(error_message)
     else:
         latest_state = None
         scheduled_deployments = []
@@ -138,28 +139,39 @@ def wait_for_deployment_complete(deployment_batch_id, resolved_version, args):
 
                 if not scheduled_deployments:
                     batch_events = get_batch_events(deployment_batch_id, args)
-                    scheduled_deployments = get_scheduled_deployments(batch_events)
+                    scheduled_lock_step_deployments = get_scheduled_lock_step_deployments(batch_events)
+                    scheduled_simple_deployment = get_scheduled_simple_deployment(batch_events)
 
-                    if scheduled_deployments:
+                    if scheduled_lock_step_deployments:
                         # Increase the wait timeout to match the number of deployments
-                        wait_timeout = args.wait_timeout * len(scheduled_deployments)
+                        wait_timeout = args.wait_timeout * len(scheduled_lock_step_deployments)
 
                         # Display the targeted bundles
                         log.progress('Targeting the following bundles',
                                      flush=True,
                                      next_line=(latest_state is not None))
-                        for scheduled_deployment in scheduled_deployments:
-                            target_bundle_id = display_bundle_id(args, scheduled_deployment['targetBundleId'])
+                        for scheduled_lock_step_deployment in scheduled_lock_step_deployments:
+                            target_bundle_id = display_bundle_id(args, scheduled_lock_step_deployment['targetBundleId'])
                             log.progress('  {}'.format(target_bundle_id), flush=True)
+
+                        scheduled_deployments = scheduled_lock_step_deployments
 
                         # Reset the latest state for tracking deployment events
                         latest_state = None
 
+                    elif scheduled_simple_deployment:
+                        log.progress('Deployment scheduled',
+                                     flush=True,
+                                     next_line=(latest_state is not None))
+
+                        scheduled_deployments = scheduled_simple_deployment
+
+                        # Reset the latest state for tracking deployment events
+                        latest_state = None
                     elif batch_events and is_batch_completed_with_failure(batch_events):
                         log.progress('\n', flush=False, line_end='')
-                        error = 'Unable to deploy {} - {}'.format(bundle_shorthand,
-                                                                  log_message_batch(batch_events))
-                        raise ContinuousDeliveryError(error)
+                        error_message = log_message_batch(batch_events)
+                        raise ContinuousDeliveryError(error_message)
                     elif batch_events != latest_state:
                         log.progress(log_message_batch(batch_events),
                                      flush=False,
@@ -187,10 +199,9 @@ def wait_for_deployment_complete(deployment_batch_id, resolved_version, args):
                             deployment_events_to_display = find_deployment_events_to_display(deployment_events_current,
                                                                                              deployment_events_previous)
                             log.progress('\n', flush=False, line_end='')
-                            error = 'Unable to deploy {} - {}'.format(bundle_shorthand,
-                                                                      log_message_deployment(args,
-                                                                                             deployment_events_to_display))
-                            raise ContinuousDeliveryError(error)
+
+                            error_message = log_message_deployment(args, deployment_events_to_display)
+                            raise ContinuousDeliveryError(error_message)
 
                         elif deployments != latest_state:
                             deployment_events_current = find_latest_deployment_events(deployments)
@@ -217,7 +228,7 @@ def display_batch_event(batch_event):
         return 'Downloading bundle'
     elif event_type == 'resolveCompatibleBundle':
         return 'Resolving compatible bundle'
-    elif event_type == 'scheduleDeployments':
+    elif event_type == 'scheduleLockStepDeployments':
         return 'Scheduling deployments'
     elif event_type == 'deploymentFailure':
         return 'Failure: {}'.format(batch_event['failure'])
@@ -227,8 +238,13 @@ def display_batch_event(batch_event):
 
 def display_deploy_event(args, deploy_event):
     event_type = deploy_event['eventType']
-    target_bundle_id = deploy_event['deploymentTarget']['bundleId']
-    prefix = "[{}] ".format(display_bundle_id(args, target_bundle_id))
+
+    if 'deploymentTarget' in deploy_event:
+        target_bundle_id = deploy_event['deploymentTarget']['bundleId']
+        prefix = '[{}] '.format(display_bundle_id(args, target_bundle_id))
+    else:
+        prefix = ''
+
     if event_type == 'deploymentScheduled':
         return '{}Deployment scheduled'.format(prefix)
 
@@ -242,13 +258,16 @@ def display_deploy_event(args, deploy_event):
         message = 'Loading bundle with config' if 'configFileName' in deploy_event else 'Loading bundle'
         return '{}{}'.format(prefix, message)
 
-    elif event_type == 'deploy':
+    elif event_type == 'deployLockStep':
         bundle_old = deploy_event['bundleOld']
         bundle_new = deploy_event['bundleNew']
         deploy_progress = '{}Deploying - {} old instance vs {} new instance'.format(prefix,
                                                                                     bundle_old['scale'],
                                                                                     bundle_new['scale'])
         return deploy_progress
+
+    elif event_type == 'deploySimple':
+        return '{}Deploying new instance'.format(prefix)
 
     elif event_type == 'deploymentSuccess':
         return '{}Success'.format(prefix)
@@ -258,7 +277,3 @@ def display_deploy_event(args, deploy_event):
 
     else:
         return 'Deploy event {}'.format(deploy_event)
-
-
-def display_bundle_id(args, bundle_id):
-    return bundle_id if args.long_ids else bundle_utils.short_id(bundle_id)

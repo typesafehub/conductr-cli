@@ -1,390 +1,320 @@
-from conductr_cli.test.cli_test_case import CliTestCase
-from conductr_cli.test.conduct_deploy_test_base import ConductDeployTestBase
-from conductr_cli import conduct_deploy
+from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
+from conductr_cli import conduct_deploy, logging_setup
+from conductr_cli.exceptions import BintrayResolutionError, BintrayCredentialsNotFoundError, BundleResolutionError, \
+    InsecureFilePermissions, MalformedBundleError, MalformedBintrayCredentialsError, WaitTimeoutError
+from pyhocon.exceptions import ConfigException
+from requests.exceptions import ConnectionError, HTTPError, ReadTimeout
+from urllib.error import URLError
 from unittest.mock import patch, MagicMock
+from zipfile import BadZipFile
 import json
+import urllib
 
 
-class TestConductDeployWithCDv2(ConductDeployTestBase):
+class TestConductDeploy(CliTestCase):
+    deployment_batch_id = 'deployment-batch-id'
+    deployment_batch = {'value': deployment_batch_id}
+    deployment_batch_json = json.dumps(deployment_batch)
 
-    deployment_id = 'deployment_id'
-
-    def test_success(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': True,
-            'bundle': self.bundle_id,
-            'tags': [],
-            'custom_settings': self.custom_settings,
-            'no_wait': False
-        })
-
-        http_mock = self.respond_with(text=self.deployment_id)
-        wait_for_deployment_complete_mock = MagicMock()
-
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success(input_args, http_mock, wait_for_deployment_complete_mock)
-
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
-
-        wait_for_deployment_complete_mock.assert_called_with(self.deployment_id,
-                                                             self.resolved_version,
-                                                             input_args)
-
-    def test_success_no_wait(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': True,
-            'bundle': self.bundle_id,
-            'tags': [],
-            'custom_settings': self.custom_settings,
-            'no_wait': True
-        })
-
-        http_mock = self.respond_with(text=self.deployment_id)
-        wait_for_deployment_complete_mock = MagicMock()
-
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success_no_wait(input_args, http_mock, wait_for_deployment_complete_mock)
-
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
-        wait_for_deployment_complete_mock.assert_not_called()
-
-    def test_success_with_confirmation(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': False,
-            'bundle': self.bundle_id,
-            'tags': [],
-            'custom_settings': self.custom_settings,
-            'no_wait': False
-        })
-
-        http_mock = self.respond_with(text=self.deployment_id)
-        wait_for_deployment_complete_mock = MagicMock()
-
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success_with_confirmation(input_args, http_mock, wait_for_deployment_complete_mock)
-
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
-        wait_for_deployment_complete_mock.assert_called_with(self.deployment_id,
-                                                             self.resolved_version,
-                                                             input_args)
-
-    def test_success_with_tags(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': True,
-            'bundle': self.bundle_id,
-            'tags': ['1.0.1', 'white nectarine'],
-            'custom_settings': self.custom_settings,
-            'no_wait': False
-        })
-
-        http_mock = self.respond_with(text=self.deployment_id)
-        wait_for_deployment_complete_mock = MagicMock()
-
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success_with_tags(input_args, http_mock, wait_for_deployment_complete_mock)
-
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
-        wait_for_deployment_complete_mock.assert_called_with(self.deployment_id,
-                                                             self.resolved_version,
-                                                             input_args)
-
-    def test_declined(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_declined()
-        wait_for_deployment_complete_mock.assert_not_called()
-
-    def test_error_bintray_webhook_secret_not_defined(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_error_bintray_webhook_secret_not_defined()
-        wait_for_deployment_complete_mock.assert_not_called()
-
-    def test_error_resolved_version_not_found(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_error_resolved_version_not_found()
-        wait_for_deployment_complete_mock.assert_not_called()
-
-    def test_error_deploy_uri_not_found(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_error_deploy_uri_not_found()
-        wait_for_deployment_complete_mock.assert_not_called()
-
-    def test_http_post_error(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_http_post_error()
-        wait_for_deployment_complete_mock.assert_not_called()
-
-
-class TestConductDeployWithCDv3(ConductDeployTestBase):
-
-    deployment_batch_id = 'batchId'
-    deployment_batch = {
-        'value': deployment_batch_id
+    bundle = 'cassandra'
+    args = {
+        'webhook': None,
+        'bundle': bundle,
+        'no_wait': False
     }
 
-    def test_success(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': True,
-            'bundle': self.bundle_id,
-            'tags': [],
-            'custom_settings': self.custom_settings,
-            'no_wait': False
-        })
+    def test_success_deploy_bundle_v3(self):
+        bintray_deploy = MagicMock()
+        bundle_deploy = self.respond_with(200, self.deployment_batch_json, content_type='application/json')
 
-        http_mock = self.respond_with(text=json.dumps(self.deployment_batch), content_type='application/json')
-        wait_for_deployment_complete_mock = MagicMock()
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
 
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success(input_args, http_mock, wait_for_deployment_complete_mock)
+        input_args = MagicMock(**self.args)
 
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            self.assertTrue(conduct_deploy.deploy(input_args))
 
-        wait_for_deployment_complete_mock.assert_called_with(self.deployment_batch_id,
-                                                             self.resolved_version,
-                                                             input_args)
+        bintray_deploy.assert_not_called()
+        bundle_deploy.assert_called_once_with(input_args)
+        wait_for_deployment_complete_v3.assert_called_once_with(self.deployment_batch_id, input_args)
+        wait_for_deployment_complete_v2.assert_not_called()
 
     def test_success_no_wait(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': True,
-            'bundle': self.bundle_id,
-            'tags': [],
-            'custom_settings': self.custom_settings,
-            'no_wait': True
-        })
+        bintray_deploy = MagicMock()
+        bundle_deploy = self.respond_with(200, self.deployment_batch_json, content_type='application/json')
 
-        http_mock = self.respond_with(text=json.dumps(self.deployment_batch), content_type='application/json')
-        wait_for_deployment_complete_mock = MagicMock()
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
 
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success_no_wait(input_args, http_mock, wait_for_deployment_complete_mock)
+        args = self.args.copy()
+        args.update({'no_wait': True})
+        input_args = MagicMock(**args)
 
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
-        wait_for_deployment_complete_mock.assert_not_called()
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            self.assertTrue(conduct_deploy.deploy(input_args))
 
-    def test_success_with_confirmation(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': False,
-            'bundle': self.bundle_id,
-            'tags': [],
-            'custom_settings': self.custom_settings,
-            'no_wait': False
-        })
+        bintray_deploy.assert_not_called()
+        bundle_deploy.assert_called_once_with(input_args)
+        wait_for_deployment_complete_v3.assert_not_called()
+        wait_for_deployment_complete_v2.assert_not_called()
 
-        http_mock = self.respond_with(text=json.dumps(self.deployment_batch), content_type='application/json')
-        wait_for_deployment_complete_mock = MagicMock()
+    def test_success_deploy_webhook_v3(self):
+        bintray_deploy = self.respond_with(200, self.deployment_batch_json, content_type='application/json')
+        bundle_deploy = MagicMock()
 
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success_with_confirmation(input_args, http_mock, wait_for_deployment_complete_mock)
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
 
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
-        wait_for_deployment_complete_mock.assert_called_with(self.deployment_batch_id,
-                                                             self.resolved_version,
-                                                             input_args)
+        args = self.args.copy()
+        args.update({'webhook': 'bintray'})
+        input_args = MagicMock(**args)
 
-    def test_success_with_tags(self):
-        input_args = MagicMock(**{
-            'dcos_mode': False,
-            'host': self.host,
-            'conductr_auth': self.conductr_auth,
-            'server_verification_file': self.server_verification_file,
-            'auto_deploy': True,
-            'bundle': self.bundle_id,
-            'tags': ['1.0.1', 'white nectarine'],
-            'custom_settings': self.custom_settings,
-            'no_wait': False
-        })
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            self.assertTrue(conduct_deploy.deploy(input_args))
 
-        http_mock = self.respond_with(text=json.dumps(self.deployment_batch), content_type='application/json')
-        wait_for_deployment_complete_mock = MagicMock()
+        bintray_deploy.assert_called_once_with(input_args)
+        bundle_deploy.assert_not_called()
+        wait_for_deployment_complete_v3.assert_called_once_with(self.deployment_batch_id, input_args)
+        wait_for_deployment_complete_v2.assert_not_called()
 
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_success_with_tags(input_args, http_mock, wait_for_deployment_complete_mock)
+    def test_success_deploy_webhook_v2(self):
+        deployment_id = 'deployment-id'
 
-        http_mock.assert_called_with(False, self.host, self.url_mock,
-                                     json={
-                                         'package': 'cassandra',
-                                         'version': 'v1-abcabc'
-                                     },
-                                     headers={'X-Bintray-Hook-Hmac': self.hmac_mock},
-                                     auth=self.conductr_auth,
-                                     verify=self.server_verification_file)
-        wait_for_deployment_complete_mock.assert_called_with(self.deployment_batch_id,
-                                                             self.resolved_version,
-                                                             input_args)
+        bintray_deploy = self.respond_with(200, deployment_id, content_type='text/plain')
+        bundle_deploy = MagicMock()
 
-    def test_declined(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_declined()
-        wait_for_deployment_complete_mock.assert_not_called()
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
 
-    def test_error_bintray_webhook_secret_not_defined(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_error_bintray_webhook_secret_not_defined()
-        wait_for_deployment_complete_mock.assert_not_called()
+        args = self.args.copy()
+        args.update({'webhook': 'bintray'})
+        input_args = MagicMock(**args)
 
-    def test_error_resolved_version_not_found(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_error_resolved_version_not_found()
-        wait_for_deployment_complete_mock.assert_not_called()
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            self.assertTrue(conduct_deploy.deploy(input_args))
 
-    def test_error_deploy_uri_not_found(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_error_deploy_uri_not_found()
-        wait_for_deployment_complete_mock.assert_not_called()
+        bintray_deploy.assert_called_once_with(input_args)
+        bundle_deploy.assert_not_called()
+        wait_for_deployment_complete_v3.assert_not_called()
+        wait_for_deployment_complete_v2.assert_called_once_with(deployment_id, input_args)
 
-    def test_http_post_error(self):
-        wait_for_deployment_complete_mock = MagicMock()
-        with patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_mock):
-            self.base_test_http_post_error()
-        wait_for_deployment_complete_mock.assert_not_called()
+    def test_failure_deploy_bundle(self):
+        bintray_deploy = MagicMock()
+        bundle_deploy = MagicMock(return_value=False)
 
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
 
-class TestDeployConfirmation(CliTestCase):
+        input_args = MagicMock(**self.args)
 
-    resolved_version = {
-        'org': 'typesafe',
-        'repo': 'bundle',
-        'package_name': 'cassandra',
-        'tag': 'v1',
-        'digest': 'd073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de'
-    }
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            self.assertFalse(conduct_deploy.deploy(input_args))
 
-    def test_return_true_if_empty(self):
-        input_mock = MagicMock(return_value='')
-        input_args = MagicMock(**{
-            'long_ids': False
-        })
+        bintray_deploy.assert_not_called()
+        bundle_deploy.assert_called_once_with(input_args)
+        wait_for_deployment_complete_v3.assert_not_called()
+        wait_for_deployment_complete_v2.assert_not_called()
 
-        with patch('builtins.input', input_mock):
-            self.assertTrue(conduct_deploy.request_deploy_confirmation(self.resolved_version, input_args))
+    def test_failure_deploy_webhook(self):
+        bintray_deploy = MagicMock(return_value=False)
+        bundle_deploy = MagicMock()
 
-        input_mock.assert_called_with('Deploy cassandra:v1-d073991-a53237c? [Y/n]: ')
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
 
-    def test_return_true_if_empty_with_long_ids(self):
-        input_mock = MagicMock(return_value='')
-        input_args = MagicMock(**{
-            'long_ids': True
-        })
+        args = self.args.copy()
+        args.update({'webhook': 'bintray'})
+        input_args = MagicMock(**args)
 
-        with patch('builtins.input', input_mock):
-            self.assertTrue(conduct_deploy.request_deploy_confirmation(self.resolved_version, input_args))
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            self.assertFalse(conduct_deploy.deploy(input_args))
 
-        input_mock.assert_called_with('Deploy cassandra:v1-d073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de? [Y/n]: ')
+        bintray_deploy.assert_called_once_with(input_args)
+        bundle_deploy.assert_not_called()
+        wait_for_deployment_complete_v3.assert_not_called()
+        wait_for_deployment_complete_v2.assert_not_called()
 
-    def test_return_true_if_y(self):
-        input_mock = MagicMock(return_value='y')
-        input_args = MagicMock(**{
-            'long_ids': False
-        })
+    def test_error_wait_timeout(self):
+        bintray_deploy = MagicMock()
+        bundle_deploy = self.respond_with(200, self.deployment_batch_json, content_type='application/json')
 
-        with patch('builtins.input', input_mock):
-            self.assertTrue(conduct_deploy.request_deploy_confirmation(self.resolved_version, input_args))
+        wait_for_deployment_complete_v3 = MagicMock(side_effect=WaitTimeoutError('test only'))
+        wait_for_deployment_complete_v2 = MagicMock()
 
-        input_mock.assert_called_with('Deploy cassandra:v1-d073991-a53237c? [Y/n]: ')
+        input_args = MagicMock(**self.args)
 
-    def test_return_true_if_yes(self):
-        input_mock = MagicMock(return_value='yes')
-        input_args = MagicMock(**{
-            'long_ids': False
-        })
+        stdout = MagicMock()
+        stderr = MagicMock()
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            self.assertFalse(conduct_deploy.deploy(input_args))
 
-        with patch('builtins.input', input_mock):
-            self.assertTrue(conduct_deploy.request_deploy_confirmation(self.resolved_version, input_args))
+        bintray_deploy.assert_not_called()
+        bundle_deploy.assert_called_once_with(input_args)
+        wait_for_deployment_complete_v3.assert_called_once_with(self.deployment_batch_id, input_args)
+        wait_for_deployment_complete_v2.assert_not_called()
 
-        input_mock.assert_called_with('Deploy cassandra:v1-d073991-a53237c? [Y/n]: ')
+        self.assertEqual('', self.output(stdout))
+        self.assertEqual(as_error('Error: Timed out: test only\n'), self.output(stderr))
 
-    def test_return_false(self):
-        input_mock = MagicMock(return_value='anything else')
-        input_args = MagicMock(**{
-            'long_ids': False
-        })
+    def test_error_unsupported_webhook(self):
+        bintray_deploy = MagicMock()
+        bundle_deploy = MagicMock()
 
-        with patch('builtins.input', input_mock):
-            self.assertFalse(conduct_deploy.request_deploy_confirmation(self.resolved_version, input_args))
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
 
-        input_mock.assert_called_with('Deploy cassandra:v1-d073991-a53237c? [Y/n]: ')
+        args = self.args.copy()
+        args.update({'webhook': 'foo'})
+        input_args = MagicMock(**args)
+
+        stdout = MagicMock()
+        stderr = MagicMock()
+
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            self.assertFalse(conduct_deploy.deploy(input_args))
+
+        bintray_deploy.assert_not_called()
+        bundle_deploy.assert_not_called()
+        wait_for_deployment_complete_v3.assert_not_called()
+        wait_for_deployment_complete_v2.assert_not_called()
+
+        self.assertEqual('', self.output(stdout))
+
+        expected_error = as_error(strip_margin("""|Error: Unsupported webhook foo
+                                                  |"""))
+        self.assertEqual(expected_error, self.output(stderr))
+
+    def test_error_connection_error(self):
+        expected_error = as_error(strip_margin("""|Error: Unable to contact ConductR.
+                                                  |Error: Reason: test only
+                                                  |Error: Start the ConductR sandbox with: sandbox run IMAGE_VERSION
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(ConnectionError('test only'), expected_error)
+
+    def test_error_http_error(self):
+        expected_error = as_error(strip_margin("""|Error: 500 test only
+                                                  |Error: test http error
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(HTTPError(response=MagicMock(reason='test only',
+                                                                               text='test http error',
+                                                                               status_code=500)),
+                                                  expected_error)
+
+    def test_error_invalid_config(self):
+        expected_error = as_error(strip_margin("""|Error: Unable to parse bundle.conf.
+                                                  |Error: test only.
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(ConfigException('test only'), expected_error)
+
+    def test_error_no_file_url_error(self):
+        expected_error = as_error(strip_margin("""|Error: File not found: test only
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(URLError('test only'), expected_error)
+
+    def test_error_no_file_urllib_http_error(self):
+        mock_file = MagicMock()
+        expected_error = as_error(strip_margin("""|Error: Resource not found: url
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(urllib.error.HTTPError('url', 'code', 'msg', 'hdrs', mock_file),
+                                                  expected_error)
+
+    def test_error_bad_zip_file(self):
+        expected_error = as_error(strip_margin("""|Error: Problem with the bundle: test only
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(BadZipFile('test only'), expected_error)
+
+    def test_error_malformed_bundle(self):
+        expected_error = as_error(strip_margin("""|Error: Problem with the bundle: test only
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(MalformedBundleError('test only'), expected_error)
+
+    def test_error_bundle_resolution(self):
+        expected_error = as_error(strip_margin("""|Error: test only
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(BundleResolutionError('test only', [], []), expected_error)
+
+    def test_error_load_read_timeout(self):
+        expected_error = as_error(strip_margin(
+            """|Error: Timed out waiting for response from the server: test only
+               |Error: One possible issue may be that there are not enough resources or machines with the roles that your bundle requires
+               |"""))
+        self.conduct_deploy_bundle_error_scenario(ReadTimeout('test only'), expected_error)
+
+    def test_error_insecure_file_permissions(self):
+        expected_error = as_error(strip_margin("""|Error: File permissions are not secure: test only
+                                                  |Error: Please choose a file where only the owner has access, e.g. 700
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(InsecureFilePermissions('test only'), expected_error)
+
+    def test_error_bintray_resolutions(self):
+        expected_error = as_error(strip_margin("""|Error: test only
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(BintrayResolutionError('test only'), expected_error)
+
+    def test_error_bintray_credentials_not_found(self):
+        expected_error = as_error(strip_margin("""|Error: Nearly there! The ConductR artifacts are hosted on private Bintray repository.
+                                                  |Error: It is therefore necessary to create a Bintray credentials file at test only
+                                                  |Error: For more information how to setup the Lightbend Bintray credentials please follow:
+                                                  |Error:   http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(BintrayCredentialsNotFoundError('test only'), expected_error)
+
+    def test_error_bintray_credentials_malformed(self):
+        expected_error = as_error(strip_margin("""|Error: Malformed Bintray credentials in test only
+                                                  |Error: Please follow the instructions to setup the Lightbend Bintray credentials:
+                                                  |Error:   http://developers.lightbend.com/docs/reactive-platform/2.0/setup/setup-sbt.html
+                                                  |"""))
+        self.conduct_deploy_bundle_error_scenario(MalformedBintrayCredentialsError('test only'), expected_error)
+
+    def conduct_deploy_bundle_error_scenario(self, error_raised, expected_stderr):
+        bintray_deploy = MagicMock()
+        bundle_deploy = MagicMock(side_effect=error_raised)
+
+        wait_for_deployment_complete_v3 = MagicMock()
+        wait_for_deployment_complete_v2 = MagicMock()
+
+        input_args = MagicMock(**self.args)
+
+        stdout = MagicMock()
+        stderr = MagicMock()
+        with patch('conductr_cli.conduct_deploy_bintray.deploy', bintray_deploy), \
+                patch('conductr_cli.conduct_deploy_bundle.deploy', bundle_deploy), \
+                patch('conductr_cli.bundle_deploy_v3.wait_for_deployment_complete', wait_for_deployment_complete_v3), \
+                patch('conductr_cli.bundle_deploy_v2.wait_for_deployment_complete', wait_for_deployment_complete_v2):
+            logging_setup.configure_logging(input_args, stdout, stderr)
+            self.assertFalse(conduct_deploy.deploy(input_args))
+
+        bintray_deploy.assert_not_called()
+        bundle_deploy.assert_called_once_with(input_args)
+        wait_for_deployment_complete_v3.assert_not_called()
+        wait_for_deployment_complete_v2.assert_not_called()
+
+        self.assertEqual('', self.output(stdout))
+        self.assertEqual(expected_stderr, self.output(stderr))

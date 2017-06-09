@@ -244,10 +244,11 @@ class TestConduct(TestCase):
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.auto_deploy, True)
         self.assertEqual(args.tags, [])
+        self.assertEqual(args.webhook, None)
         self.assertEqual(args.bundle, 'cassandra')
 
     def test_parser_deploy_with_tags(self):
-        args = self.parser.parse_args('deploy cassandra -t 1.0.1 --tag 1.0.2'.split())
+        args = self.parser.parse_args('deploy cassandra --target-tag 1.0.1 --target-tag 1.0.2 --webhook bintray'.split())
 
         self.assertEqual(args.func.__name__, 'deploy')
         self.assertEqual(args.ip, None)
@@ -258,7 +259,8 @@ class TestConduct(TestCase):
         self.assertEqual(args.wait_timeout, 180)
         self.assertEqual(args.long_ids, False)
         self.assertEqual(args.auto_deploy, False)
-        self.assertEqual(args.tags, ['1.0.1', '1.0.2'])
+        self.assertEqual(args.target_tags, ['1.0.1', '1.0.2'])
+        self.assertEqual(args.webhook, 'bintray')
         self.assertEqual(args.bundle, 'cassandra')
 
     def test_parser_load_license(self):

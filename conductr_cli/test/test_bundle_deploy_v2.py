@@ -1,6 +1,5 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import bundle_deploy_v2, logging_setup
-from conductr_cli.resolvers import bintray_resolver
 from conductr_cli.exceptions import ContinuousDeliveryError, WaitTimeoutError
 from unittest.mock import call, patch, MagicMock
 import json
@@ -226,14 +225,6 @@ class TestWaitForDeployment(CliTestCase):
         is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'd073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -249,7 +240,7 @@ class TestWaitForDeployment(CliTestCase):
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
-            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
@@ -268,8 +259,7 @@ class TestWaitForDeployment(CliTestCase):
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/deployments/events', auth=self.conductr_auth,
                                            verify=self.server_verification_file)
 
-        expected_log_message = strip_margin("""|Deploying cassandra:v1-d073991-a53237c
-                                               |Deployment id: a101449418187d92c789d1adc240b6d6
+        expected_log_message = strip_margin("""|Deployment id: a101449418187d92c789d1adc240b6d6
                                                |Downloading bundle
                                                |Downloading config from bundle abf6045-a53237c
                                                |Loading bundle with config
@@ -379,14 +369,6 @@ class TestWaitForDeployment(CliTestCase):
         is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'd073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -402,7 +384,7 @@ class TestWaitForDeployment(CliTestCase):
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
-            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
@@ -421,8 +403,7 @@ class TestWaitForDeployment(CliTestCase):
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/deployments/events', auth=self.conductr_auth,
                                            verify=self.server_verification_file)
 
-        expected_log_message = strip_margin("""|Deploying cassandra:v1-d073991ab918ee22c7426af8a62a48c5-a53237c1f4a067e13ef00090627fb3de
-                                               |Deployment id: a101449418187d92c789d1adc240b6d6
+        expected_log_message = strip_margin("""|Deployment id: a101449418187d92c789d1adc240b6d6
                                                |Downloading bundle
                                                |Downloading config from bundle abf60451c6af18adcc851d67b369b7f5-a53237c1f4a067e13ef00090627fb3de
                                                |Loading bundle with config
@@ -446,14 +427,6 @@ class TestWaitForDeployment(CliTestCase):
         stdout = MagicMock()
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'abcdef',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -468,7 +441,7 @@ class TestWaitForDeployment(CliTestCase):
                 patch('conductr_cli.bundle_deploy_v2.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock):
             logging_setup.configure_logging(args, stdout)
-            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
@@ -480,8 +453,7 @@ class TestWaitForDeployment(CliTestCase):
 
         get_events_mock.assert_not_called()
 
-        expected_log_message = strip_margin("""|Deploying cassandra:v1-abcdef
-                                               |Deployment id: a101449418187d92c789d1adc240b6d6
+        expected_log_message = strip_margin("""|Deployment id: a101449418187d92c789d1adc240b6d6
                                                |Success
                                                |""")
         self.assertEqual(self.output(stdout), expected_log_message)
@@ -501,14 +473,6 @@ class TestWaitForDeployment(CliTestCase):
         stderr = MagicMock()
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'abcdef',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -521,10 +485,10 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy_v2.get_deployment_events', get_deployment_events_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                self.assertRaises(ContinuousDeliveryError):
             logging_setup.configure_logging(args, stdout, stderr)
-            self.assertRaises(ContinuousDeliveryError, bundle_deploy_v2.wait_for_deployment_complete, deployment_id,
-                              resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
@@ -536,8 +500,7 @@ class TestWaitForDeployment(CliTestCase):
 
         get_events_mock.assert_not_called()
 
-        expected_log_message = strip_margin("""|Deploying cassandra:v1-abcdef
-                                               |Deployment id: a101449418187d92c789d1adc240b6d6
+        expected_log_message = strip_margin("""|Deployment id: a101449418187d92c789d1adc240b6d6
                                                |""")
         self.assertEqual(self.output(stdout), expected_log_message)
 
@@ -642,14 +605,6 @@ class TestWaitForDeployment(CliTestCase):
         is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'abcdef',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -665,7 +620,7 @@ class TestWaitForDeployment(CliTestCase):
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('sys.stdout.isatty', is_tty_mock):
             logging_setup.configure_logging(args, stdout)
-            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
@@ -685,8 +640,7 @@ class TestWaitForDeployment(CliTestCase):
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/deployments/events', auth=self.conductr_auth,
                                            verify=self.server_verification_file)
 
-        expected_log_message = strip_margin("""|Deploying cassandra:v1-abcdef
-                                               |Deployment id: a101449418187d92c789d1adc240b6d6
+        expected_log_message = strip_margin("""|Deployment id: a101449418187d92c789d1adc240b6d6
                                                |Deployment started
                                                |Downloading bundle
                                                |Downloading config from bundle abf6045-a53237c
@@ -797,14 +751,6 @@ class TestWaitForDeployment(CliTestCase):
         is_tty_mock = MagicMock(return_value=True)
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'abcdef',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -818,10 +764,10 @@ class TestWaitForDeployment(CliTestCase):
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy_v2.get_deployment_events', get_deployment_events_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
-                patch('sys.stdout.isatty', is_tty_mock):
+                patch('sys.stdout.isatty', is_tty_mock), \
+                self.assertRaises(ContinuousDeliveryError):
             logging_setup.configure_logging(args, stdout)
-            self.assertRaises(ContinuousDeliveryError, bundle_deploy_v2.wait_for_deployment_complete, deployment_id,
-                              resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
@@ -840,8 +786,7 @@ class TestWaitForDeployment(CliTestCase):
         get_events_mock.assert_called_with(dcos_mode, conductr_host, '/deployments/events', auth=self.conductr_auth,
                                            verify=self.server_verification_file)
 
-        expected_log_message = strip_margin("""|Deploying cassandra:v1-abcdef
-                                               |Deployment id: a101449418187d92c789d1adc240b6d6
+        expected_log_message = strip_margin("""|Deployment id: a101449418187d92c789d1adc240b6d6
                                                |Downloading bundle
                                                |Downloading config from bundle abf6045-a53237c
                                                |Loading bundle with config
@@ -867,14 +812,6 @@ class TestWaitForDeployment(CliTestCase):
         stdout = MagicMock()
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'abcdef',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -887,10 +824,10 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy_v2.get_deployment_events', get_deployment_events_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                self.assertRaises(WaitTimeoutError):
             logging_setup.configure_logging(args, stdout)
-            self.assertRaises(WaitTimeoutError, bundle_deploy_v2.wait_for_deployment_complete,
-                              deployment_id, resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args),
@@ -994,14 +931,6 @@ class TestWaitForDeployment(CliTestCase):
         stdout = MagicMock()
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'abcdef',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -1015,10 +944,10 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy_v2.get_deployment_events', get_deployment_events_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                self.assertRaises(WaitTimeoutError):
             logging_setup.configure_logging(args, stdout)
-            self.assertRaises(WaitTimeoutError, bundle_deploy_v2.wait_for_deployment_complete, deployment_id,
-                              resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
@@ -1051,14 +980,6 @@ class TestWaitForDeployment(CliTestCase):
         stdout = MagicMock()
 
         deployment_id = 'a101449418187d92c789d1adc240b6d6'
-        resolved_version = {
-            'org': 'typesafe',
-            'repo': 'bundle',
-            'package_name': 'cassandra',
-            'tag': 'v1',
-            'digest': 'abcdef',
-            'resolver': bintray_resolver.__name__
-        }
         dcos_mode = False
         args = MagicMock(**{
             'dcos_mode': dcos_mode,
@@ -1072,10 +993,10 @@ class TestWaitForDeployment(CliTestCase):
         with patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.bundle_deploy_v2.get_deployment_events', get_deployment_events_mock), \
-                patch('conductr_cli.sse_client.get_events', get_events_mock):
+                patch('conductr_cli.sse_client.get_events', get_events_mock), \
+                self.assertRaises(WaitTimeoutError):
             logging_setup.configure_logging(args, stdout)
-            self.assertRaises(WaitTimeoutError, bundle_deploy_v2.wait_for_deployment_complete, deployment_id,
-                              resolved_version, args)
+            bundle_deploy_v2.wait_for_deployment_complete(deployment_id, args)
 
         self.assertEqual(get_deployment_events_mock.call_args_list, [
             call(deployment_id, args)
