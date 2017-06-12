@@ -9,6 +9,7 @@ from conductr_cli.bndl_utils import \
     data_is_zip, \
     detect_format_dir, \
     detect_format_stream, \
+    escape_bash_double_quotes, \
     find_bundle_conf_dir, \
     first_mtime, \
     load_bundle_args_into_conf, \
@@ -170,7 +171,7 @@ def bndl_create(args):
         for env in args.envs if hasattr(args, 'envs') else []:
             if runtime_conf_str:
                 runtime_conf_str += '\n'
-            runtime_conf_str += 'export \'{}\''.format(env.replace('\'', ''))
+            runtime_conf_str += 'export "{}"'.format(escape_bash_double_quotes(env))
 
         if runtime_conf_str:
             runtime_conf_data = runtime_conf_str.encode('UTF-8')

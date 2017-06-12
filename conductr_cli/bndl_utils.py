@@ -160,6 +160,19 @@ def data_is_zip(data):
     return any(data.startswith(number) for number in MAGIC_NUMBERS_ZIP)
 
 
+def escape_bash_double_quotes(input):
+    """
+    Given a string, escapes it according to bash rules while still allowing variable substitutions.
+    https://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html#Double-Quotes
+    :param input:
+    :return: escaped value (unquoted)
+    """
+    return input \
+        .replace('\\', '\\\\') \
+        .replace('`', '\\`') \
+        .replace('"', '\\"')
+
+
 def load_bundle_args_into_conf(config, args, application_type):
     # this is unrolled because it's actually pretty complicated to get the order
     # correct given that some attributes need special handling and defaults

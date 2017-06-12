@@ -800,7 +800,9 @@ class TestBndlCreate(CliTestCase):
                     'use_shazar': False,
                     'envs': [
                         'ENV1=123',
-                        'ENV2=456'
+                        'ENV2=456',
+                        'ENV3=$BUNDLE_HOST_IP',
+                        'ENV4=`escapes properly`'
                     ],
                     'with_defaults': None
                 })
@@ -822,8 +824,10 @@ class TestBndlCreate(CliTestCase):
                             self.assertEqual(
                                 tar.extractfile(entry).read().decode('UTF-8'),
                                 strip_margin(
-                                    '''|export 'ENV1=123'
-                                       |export 'ENV2=456\'''')
+                                    '''|export "ENV1=123"
+                                       |export "ENV2=456"
+                                       |export "ENV3=$BUNDLE_HOST_IP"
+                                       |export "ENV4=\\`escapes properly\\`"''')
                             )
 
                     self.assertTrue(saw_bundle)
@@ -874,8 +878,8 @@ class TestBndlCreate(CliTestCase):
                                 tar.extractfile(entry).read().decode('UTF-8'),
                                 strip_margin(
                                     '''|export MY_ENV=hello
-                                       |export 'ENV1=123'
-                                       |export 'ENV2=456\'''')
+                                       |export "ENV1=123"
+                                       |export "ENV2=456"''')
                             )
 
                     self.assertTrue(saw_bundle)
@@ -930,7 +934,7 @@ class TestBndlCreate(CliTestCase):
 
             self.assertEqual(
                 files['test/runtime-config.sh'],
-                b'export \'ENV1=123\'\nexport \'ENV2=456\''
+                b'export "ENV1=123"\nexport "ENV2=456"'
             )
         finally:
             shutil.rmtree(tmpdir)
