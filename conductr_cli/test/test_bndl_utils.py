@@ -10,6 +10,12 @@ import tempfile
 
 
 class TestBndlUtils(CliTestCase):
+    def test_escape_bash_double_quotes(self):
+        self.assertEqual(bndl_utils.escape_bash_double_quotes('hello'), 'hello')
+        self.assertEqual(bndl_utils.escape_bash_double_quotes('"hello"'), '\\"hello\\"')
+        self.assertEqual(bndl_utils.escape_bash_double_quotes('$hello'), '$hello')
+        self.assertEqual(bndl_utils.escape_bash_double_quotes('echo `whoami`'), 'echo \\`whoami\\`')
+
     def test_detect_format_stream(self):
         # empty stream is none
         self.assertEqual(
