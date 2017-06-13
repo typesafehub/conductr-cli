@@ -1,3 +1,4 @@
+from conductr_cli.resolvers.schemes import SCHEME_FILE, SCHEME_HTTP, SCHEME_HTTPS
 from urllib.request import urlretrieve
 from urllib.parse import ParseResult, urlparse, urlunparse
 from urllib.error import URLError
@@ -11,6 +12,10 @@ import os
 import logging
 import shutil
 import urllib
+
+
+def supported_schemes():
+    return [SCHEME_FILE, SCHEME_HTTP, SCHEME_HTTPS]
 
 
 def resolve_bundle(cache_dir, uri, auth=None):
@@ -102,8 +107,6 @@ def cache_path(cache_dir, uri):
 
 
 def download_bundle(log, bundle_url, tmp_download_path, auth):
-    log.info('Retrieving {}'.format(bundle_url))
-
     parsed = urlparse(bundle_url, scheme='file')
     is_http_download = parsed.scheme == 'http' or parsed.scheme == 'https'
 
@@ -118,17 +121,24 @@ def download_bundle(log, bundle_url, tmp_download_path, auth):
         urllib.request.install_opener(opener)
 
     if log.is_progress_enabled() and is_http_download:
-        urlretrieve(bundle_url, tmp_download_path, reporthook=show_progress(log))
+        urlretrieve(bundle_url, tmp_download_path, reporthook=show_progress(log, bundle_url))
     else:
+        log.info('Retrieving {}'.format(bundle_url))
         # File based download, no need to show progress bar
         urlretrieve(bundle_url, tmp_download_path)
 
 
-def show_progress(log):
+def show_progress(log, bundle_url):
     prev_time = 0.0
+    download_message_shown = False
 
     def continue_logging(count, block_size, total_size):
-        nonlocal prev_time
+        nonlocal prev_time, download_message_shown
+
+        if not download_message_shown:
+            log.info('Retrieving {}'.format(bundle_url))
+            download_message_shown = True
+
         downloaded_size = count * block_size
         percent = (downloaded_size * 1.0) / total_size
         download_complete = percent >= 1.0

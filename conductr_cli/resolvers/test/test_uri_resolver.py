@@ -1,6 +1,7 @@
 from unittest import TestCase
 from urllib.error import URLError
 from conductr_cli.resolvers import uri_resolver
+from conductr_cli.resolvers.schemes import SCHEME_FILE, SCHEME_HTTP, SCHEME_HTTPS
 from conductr_cli.test.cli_test_case import create_mock_logger
 import os
 
@@ -472,7 +473,7 @@ class TestProgressBar(TestCase):
         file_move_mock.assert_called_with('/bundle-cached-path.tmp', '/bundle-cached-path')
 
         get_logger_mock.assert_called_with('conductr_cli.resolvers.uri_resolver')
-        log_mock.info.assert_called_with('Retrieving http://site.com/bundle-url-resolved')
+        log_mock.info.assert_not_called()
 
     def test_no_progress_bar_given_quiet_mode(self):
         os_path_exists_mock = MagicMock(side_effect=[True, True])
@@ -518,7 +519,12 @@ class TestResolveBundleVersion(TestCase):
 
 class TestShowProgress(TestCase):
     def test_log_progress_until_completion(self):
+        bundle_url = 'http://url/bundle.zip'
+
         log_mock = MagicMock()
+
+        log_info_mock = MagicMock()
+        log_mock.info = log_info_mock
 
         log_progress_mock = MagicMock()
         log_mock.progress = log_progress_mock
@@ -526,7 +532,7 @@ class TestShowProgress(TestCase):
         progress_bar_mock = MagicMock(return_value='mock progress bar')
 
         with patch('conductr_cli.screen_utils.progress_bar', progress_bar_mock):
-            progress_tracker = uri_resolver.show_progress(log_mock)
+            progress_tracker = uri_resolver.show_progress(log_mock, bundle_url)
 
             progress_tracker(0, 10, 200)
             progress_bar_mock.assert_called_with(0.0)
@@ -535,3 +541,10 @@ class TestShowProgress(TestCase):
             progress_tracker(20, 10, 200)
             progress_bar_mock.assert_called_with(1.0)
             log_progress_mock.assert_called_with('mock progress bar', flush=True)
+
+            log_info_mock.assert_called_once_with('Retrieving http://url/bundle.zip')
+
+
+class TestSupportedSchemes(TestCase):
+    def test_supported_schemes(self):
+        self.assertEqual([SCHEME_FILE, SCHEME_HTTP, SCHEME_HTTPS], uri_resolver.supported_schemes())

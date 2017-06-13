@@ -1,6 +1,11 @@
+from conductr_cli.resolvers.schemes import SCHEME_BUNDLE, SCHEME_FILE
 import os
 import glob
 import logging
+
+
+def supported_schemes():
+    return [SCHEME_BUNDLE, SCHEME_FILE]
 
 
 def resolve_bundle(cache_dir, uri, auth=None):

@@ -1,6 +1,7 @@
 from unittest import TestCase
 from conductr_cli.test.cli_test_case import strip_margin
 from conductr_cli.resolvers import bintray_resolver
+from conductr_cli.resolvers.schemes import SCHEME_BUNDLE
 from conductr_cli.exceptions import MalformedBundleUriError, BintrayResolutionError, MalformedBintrayCredentialsError, \
     BintrayCredentialsNotFoundError
 from requests.exceptions import HTTPError, ConnectionError
@@ -220,7 +221,7 @@ class TestResolveBundleConfiguration(TestCase):
                                                         'bundle-name', 'v1', 'digest')
 
     def test_failure_connection_error(self):
-        load_bintray_credentials_mock = MagicMock(return_value=(self.bintray_auth))
+        load_bintray_credentials_mock = MagicMock(return_value=self.bintray_auth)
         parse_bundle_configuration_mock = MagicMock(return_value=('urn:x-bundle:', 'typesafe', 'bundle-configuration',
                                                                   'bundle-name', 'v1', 'digest'))
         error = ConnectionError('test only')
@@ -1080,3 +1081,8 @@ class TestGetJson(TestCase):
 
         requests_get_mock.assert_called_with('http://site.com')
         response_raise_for_status_mock.assert_called_with()
+
+
+class TestSupportedSchemes(TestCase):
+    def test_supported_schemes(self):
+        self.assertEqual([SCHEME_BUNDLE], bintray_resolver.supported_schemes())

@@ -1,6 +1,10 @@
 from conductr_cli.resolvers import docker_resolver
 
 
+def supported_schemes():
+    return docker_resolver.supported_schemes()
+
+
 def resolve_bundle(cache_dir, uri, auth=None):
     return docker_resolver.do_resolve_bundle(cache_dir, uri, auth, offline_mode=True)
 

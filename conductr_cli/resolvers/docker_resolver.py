@@ -2,7 +2,8 @@ import time
 from collections import OrderedDict
 from conductr_cli import screen_utils
 from conductr_cli.constants import IO_CHUNK_SIZE
-from conductr_cli.resolvers.resolvers_util import is_local_file
+from conductr_cli.exceptions import DockerImageMalformedError
+from conductr_cli.resolvers.schemes import SCHEME_BUNDLE
 from functools import partial
 from requests.auth import HTTPBasicAuth
 from urllib.parse import urlencode
@@ -20,6 +21,10 @@ import www_authenticate
 
 DOCKER_CREDENTIAL_FILE_PATH = '{}/.lightbend/docker.credentials'.format(os.path.expanduser('~'))
 DOCKER_PROPERTIES_RE = re.compile('^(\S+)\s*=\s*([\S]+)$')
+
+
+def supported_schemes():
+    return [SCHEME_BUNDLE]
 
 
 def get_with_token(ns, url, headers=None, raw=False, try_new_token=True):
@@ -66,7 +71,6 @@ def get_with_token(ns, url, headers=None, raw=False, try_new_token=True):
 
             return get_with_token(ns, url, headers, raw, try_new_token=False)
         else:
-
             raise error
 
 
@@ -177,9 +181,6 @@ def resolve_bundle(cache_dir, uri, auth=None):
 
 
 def do_resolve_bundle(cache_dir, uri, auth, offline_mode):
-    if is_local_file(uri, require_bundle_conf=True):
-        return False, None, None, None
-
     (provided_url, url), (provided_ns, ns), (provided_image, image), (provided_tag, tag) = parse_uri(uri)
 
     temp_dir = tempfile.mkdtemp()
@@ -188,7 +189,9 @@ def do_resolve_bundle(cache_dir, uri, auth, offline_mode):
         manifest = fetch_manifest(cache_dir, url, ns, image, tag, offline_mode)
 
         if manifest is None:
-            return False, None, None, None
+            return False, None, None, DockerImageMalformedError('{} - unable to find manifest'.format(uri))
+        elif 'config' not in manifest or 'layers' not in manifest:
+            return False, None, None, DockerImageMalformedError('{} - 1.0 manifests are not supported'.format(uri))
 
         files = fetch_blobs(cache_dir, url, ns, image, [manifest['config']] + manifest['layers'], offline_mode)
 

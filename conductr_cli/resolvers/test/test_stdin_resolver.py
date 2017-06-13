@@ -1,4 +1,5 @@
 from conductr_cli.resolver import stdin_resolver
+from conductr_cli.resolvers.schemes import SCHEME_STDIN
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 import tempfile
@@ -72,3 +73,8 @@ class TestResolverStdIn(TestCase):
     def test_is_bundle_name(self):
         self.assertTrue(stdin_resolver.is_bundle_name('visualizer'))
         self.assertFalse(stdin_resolver.is_bundle_name('/tmp/foo.zip'))
+
+
+class TestSupportedSchemes(TestCase):
+    def test_supported_schemes(self):
+        self.assertEqual([SCHEME_STDIN], stdin_resolver.supported_schemes())
