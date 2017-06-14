@@ -506,13 +506,79 @@ class MonitoringFeature:
         return True
 
 
+class ContinuousDeliveryFeature:
+    """ContinuousDelivery feature.
+
+    On start, the continuous-delivery bundle will be run. The version of the continuous-delivery
+    bundle can also be configured using feature arguments. For example:
+
+        `-f continuous-delivery`: default latest version of the Visualizer bundle
+        `-f continuous-delivery v2`: specify a tag
+    """
+
+    name = 'continuous-delivery'
+    ports = []
+    dependencies = []
+    provides = []
+
+    def __init__(self, version_args, image_version, offline_mode):
+        self.version_args = version_args
+        self.image_version = image_version
+        self.offline_mode = offline_mode
+
+    def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
+        pass
+
+    def conductr_core_envs(self):
+        return []
+
+    def conductr_pre_agent_start(self, envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs, conductr_roles):
+        pass
+
+    def conductr_agent_envs(self):
+        return []
+
+    def conductr_post_start(self, args, run_result):
+        pass
+
+    def conductr_feature_envs(self):
+        return []
+
+    @staticmethod
+    def conductr_args():
+        return []
+
+    @staticmethod
+    def conductr_roles():
+        return []
+
+    def start(self):
+        if is_conductr_supportive_of_features(self.image_version):
+            log = logging.getLogger(__name__)
+            log.info(h1('Starting continuous delivery feature'))
+            cd = select_bintray_uri('continuous-delivery', self.version_args)
+            log.info('Deploying bundle %s..' % cd['bundle'])
+            load_command = ['load', cd['bundle'], '--disable-instructions'] + parse_offline_mode_arg(self.offline_mode)
+            conductr_cli.conduct_main.run(load_command, configure_logging=False)
+            conductr_cli.conduct_main.run(['run', cd['name'], '--disable-instructions'],
+                                          configure_logging=False)
+            return FeatureStartResult(True, [])
+        else:
+            return FeatureStartResult(False, [])
+
+    @staticmethod
+    def stop():
+        return True
+
+
 feature_classes = [
     ProxyingFeature,
     VisualizationFeature,
     LoggingFeature,
     LiteLoggingFeature,
     MonitoringFeature,
-    OciInDockerFeature
+    OciInDockerFeature,
+    ContinuousDeliveryFeature
 ]
 
 feature_names = [feature.name for feature in feature_classes]
@@ -590,9 +656,14 @@ def collect_features(feature_args, no_default_features, image_version, offline_m
             if ProxyingFeature.name not in names:
                 features.insert(0, feature_lookup[ProxyingFeature.name]([], image_version, offline_mode))
 
+        def add_continuous_delivery(features):
+            if ContinuousDeliveryFeature.name not in names:
+                features.insert(0, feature_lookup[ContinuousDeliveryFeature.name]([], image_version, offline_mode))
+
         add_logging_lite(features)
         add_oci_in_docker(features)
         add_proxying(features)
+        add_continuous_delivery(features)
 
     def add_mandatory_features(features):
         names = [feature.name for feature in features]

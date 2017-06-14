@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import call, patch, MagicMock
 from conductr_cli import logging_setup
-from conductr_cli.sandbox_features import VisualizationFeature, LiteLoggingFeature, \
+from conductr_cli.sandbox_features import ContinuousDeliveryFeature, VisualizationFeature, LiteLoggingFeature, \
     OciInDockerFeature, LoggingFeature, MonitoringFeature, ProxyingFeature, \
     calculate_features, collect_features, feature_conflicts, select_bintray_uri
 from conductr_cli.docker import DockerVmType
@@ -34,38 +34,55 @@ class TestFeatures(TestCase):
         mock_system = MagicMock(return_value='Linux')
         with patch('platform.system', mock_system):
             # default features enabled works
-            self.assertEqual([ProxyingFeature, OciInDockerFeature, LiteLoggingFeature],
+            self.assertEqual([ContinuousDeliveryFeature, ProxyingFeature, OciInDockerFeature, LiteLoggingFeature],
                              [type(f) for f in collect_features([], False, LATEST_CONDUCTR_VERSION, False)])
 
             # default features disabled works
             self.assertEqual([],
                              [type(f) for f in collect_features([], True, LATEST_CONDUCTR_VERSION, False)])
 
-            self.assertEqual([ProxyingFeature, OciInDockerFeature, LiteLoggingFeature, VisualizationFeature],
-                             [type(f) for f in collect_features([['visualization']], False, LATEST_CONDUCTR_VERSION, False)])
+            self.assertEqual([ContinuousDeliveryFeature, ProxyingFeature, OciInDockerFeature, LiteLoggingFeature,
+                              VisualizationFeature],
+                             [type(f) for f in collect_features([['visualization']],
+                                                                False, LATEST_CONDUCTR_VERSION, False)])
 
-            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature],
-                             [type(f) for f in collect_features([['logging']], False, LATEST_CONDUCTR_VERSION, False)])
+            self.assertEqual([ContinuousDeliveryFeature, ProxyingFeature, OciInDockerFeature, LoggingFeature],
+                             [type(f) for f in collect_features([['logging']],
+                                                                False, LATEST_CONDUCTR_VERSION, False)])
 
             self.assertEqual([LoggingFeature],
-                             [type(f) for f in collect_features([['logging']], True, LATEST_CONDUCTR_VERSION, False)])
+                             [type(f) for f in collect_features([['logging']],
+                                                                True, LATEST_CONDUCTR_VERSION, False)])
+
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LiteLoggingFeature, ContinuousDeliveryFeature],
+                             [type(f) for f in collect_features([['continuous-delivery']],
+                                                                False, LATEST_CONDUCTR_VERSION, False)])
 
             # enable dependencies
-            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature],
-                             [type(f) for f in collect_features([['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
+            self.assertEqual([ContinuousDeliveryFeature, ProxyingFeature, OciInDockerFeature, LoggingFeature,
+                              MonitoringFeature],
+                             [type(f) for f in collect_features([['monitoring']],
+                                                                False, LATEST_CONDUCTR_VERSION, False)])
 
             # allow explicit listing of dependencies
-            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature],
-                             [type(f) for f in collect_features([['logging'], ['monitoring']], False, LATEST_CONDUCTR_VERSION, False)])
+            self.assertEqual([ContinuousDeliveryFeature, ProxyingFeature, OciInDockerFeature, LoggingFeature,
+                              MonitoringFeature],
+                             [type(f) for f in collect_features([['logging'], ['monitoring']],
+                                                                False, LATEST_CONDUCTR_VERSION, False)])
 
             # topological ordering for dependencies
-            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature],
-                             [type(f) for f in collect_features([['monitoring'], ['logging']], False, LATEST_CONDUCTR_VERSION, False)])
+            self.assertEqual([ContinuousDeliveryFeature, ProxyingFeature, OciInDockerFeature, LoggingFeature,
+                              MonitoringFeature],
+                             [type(f) for f in collect_features([['monitoring'], ['logging']],
+                                                                False, LATEST_CONDUCTR_VERSION, False)])
 
             # topological ordering and ignore duplicates
-            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature, VisualizationFeature],
-                             [type(f) for f in collect_features([['monitoring'], ['visualization'], ['logging'], ['monitoring']],
-                                                                False, LATEST_CONDUCTR_VERSION, False)])
+            self.assertEqual([ProxyingFeature, OciInDockerFeature, LoggingFeature, MonitoringFeature,
+                              VisualizationFeature, ContinuousDeliveryFeature],
+                             [type(f)
+                              for f in collect_features([['monitoring'], ['visualization'],
+                                                         ['logging'], ['monitoring'], ['continuous-delivery']],
+                                                        False, LATEST_CONDUCTR_VERSION, False)])
 
     def test_collect_features_oci_mandatory(self):
         with patch('platform.system', lambda: 'Darwin'):
@@ -448,3 +465,109 @@ class TestMonitoringFeature(TestCase):
             call(['load', 'cinnamon-grafana-docker', '--disable-instructions', '--offline'], configure_logging=False),
             call(['run', 'cinnamon-grafana-docker', '--disable-instructions', '--wait-timeout', '600'], configure_logging=False)
         ])
+
+
+class TestContinuousDeliveryFeature(TestCase):
+
+    version_args = []
+    offline_mode = False
+
+    def test_attributes(self):
+        self.assertEqual('continuous-delivery', ContinuousDeliveryFeature.name)
+        self.assertEqual([], ContinuousDeliveryFeature.ports)
+        self.assertEqual([], ContinuousDeliveryFeature.dependencies)
+        self.assertEqual([], ContinuousDeliveryFeature.provides)
+
+    def test_start_v1(self):
+        run_mock = MagicMock()
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            feature = ContinuousDeliveryFeature(self.version_args, '1.0.5', self.offline_mode)
+            result = feature.start()
+            self.assertFalse(result.started)
+            self.assertEqual([], result.bundle_results)
+
+        run_mock.assert_not_called()
+
+    def test_start_v2(self):
+        run_mock = MagicMock()
+        with patch('conductr_cli.conduct_main.run', run_mock):
+            feature = ContinuousDeliveryFeature(self.version_args, '2.0.5', self.offline_mode)
+            result = feature.start()
+            self.assertTrue(result.started)
+            self.assertEqual([], result.bundle_results)
+
+        self.assertEqual(run_mock.call_args_list, [
+            call(['load', 'continuous-delivery', '--disable-instructions'], configure_logging=False),
+            call(['run', 'continuous-delivery', '--disable-instructions'], configure_logging=False),
+        ])
+
+    def test_conductr_pre_core_start(self):
+        envs = MagicMock()
+        envs_core = MagicMock()
+        args = MagicMock()
+        args_core = MagicMock()
+        dir = MagicMock()
+        bind_addrs = MagicMock()
+        conductr_roles = MagicMock()
+
+        feature = ContinuousDeliveryFeature(self.version_args, '2.0.5', self.offline_mode)
+        feature.conductr_pre_core_start(envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles)
+
+        envs.assert_not_called()
+        envs_core.assert_not_called()
+        args.assert_not_called()
+        args_core.assert_not_called()
+        dir.assert_not_called()
+        bind_addrs.assert_not_called()
+        conductr_roles.assert_not_called()
+
+    def test_conductr_core_envs(self):
+        feature = ContinuousDeliveryFeature(self.version_args, '2.0.5', self.offline_mode)
+        self.assertEqual([], feature.conductr_core_envs())
+
+    def test_conductr_pre_agent_start(self):
+        envs = MagicMock()
+        envs_agent = MagicMock()
+        args = MagicMock()
+        args_agent = MagicMock()
+        dir = MagicMock()
+        bind_addrs = MagicMock()
+        core_addrs = MagicMock()
+        conductr_roles = MagicMock()
+
+        feature = ContinuousDeliveryFeature(self.version_args, '2.0.5', self.offline_mode)
+        feature.conductr_pre_agent_start(envs, envs_agent, args, args_agent, dir, bind_addrs, core_addrs,
+                                         conductr_roles)
+
+        envs.assert_not_called()
+        envs_agent.assert_not_called()
+        args.assert_not_called()
+        args_agent.assert_not_called()
+        dir.assert_not_called()
+        bind_addrs.assert_not_called()
+        core_addrs.assert_not_called()
+        conductr_roles.assert_not_called()
+
+    def test_conductr_agent_envs(self):
+        feature = ContinuousDeliveryFeature(self.version_args, '2.0.5', self.offline_mode)
+        self.assertEqual([], feature.conductr_agent_envs())
+
+    def test_conductr_post_start(self):
+        args = MagicMock()
+        run_result = MagicMock()
+
+        feature = ContinuousDeliveryFeature(self.version_args, '2.0.5', self.offline_mode)
+        feature.conductr_post_start(args, run_result)
+
+        args.assert_not_called()
+        run_result.assert_not_called()
+
+    def test_conductr_feature_envs(self):
+        feature = ContinuousDeliveryFeature(self.version_args, '2.0.5', self.offline_mode)
+        self.assertEqual([], feature.conductr_feature_envs())
+
+    def test_conductr_args(self):
+        self.assertEqual([], ContinuousDeliveryFeature.conductr_args())
+
+    def test_conductr_roles(self):
+        self.assertEqual([], ContinuousDeliveryFeature.conductr_roles())
