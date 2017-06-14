@@ -600,10 +600,14 @@ class TestWaitForScale(CliTestCase):
 
         display_bundle_scale_error_message_mock.assert_not_called()
 
-    def test_return_immediately_if_failed(self):
+    def test_ignore_initial_errors(self):
+        url_mock = MagicMock(return_value='/bundle-events/endpoint')
+
         conductr_host = '10.0.0.1'
         conductr_host_mock = MagicMock(return_value=conductr_host)
-        get_events_mock = MagicMock(return_value=[])
+        get_events_mock = MagicMock(return_value=[
+            self.create_test_event(None) for i in range(1, 10)
+        ])
         get_scale_mock = MagicMock(return_value=(0, True))
         display_bundle_scale_error_message_mock = MagicMock()
 
@@ -618,22 +622,22 @@ class TestWaitForScale(CliTestCase):
             'server_verification_file': self.server_verification_file
         })
         with patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
+                patch('conductr_cli.conduct_url.url', url_mock), \
                 patch('conductr_cli.conduct_url.conductr_host', conductr_host_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('conductr_cli.bundle_scale.display_bundle_scale_error_message',
                       display_bundle_scale_error_message_mock), \
+                patch('conductr_cli.bundle_scale.IGNORE_ERROR_FIRST_SECONDS', 0), \
                 self.assertRaises(BundleScaleError) as e:
             logging_setup.configure_logging(args, stdout)
             bundle_scale.wait_for_scale(bundle_id, 3, wait_for_is_active=True, args=args)
             self.assertEqual(e.cause.bundle_id, bundle_id)
 
-        self.assertEqual(get_scale_mock.call_args_list, [
-            call(bundle_id, True, args)
-        ])
-
-        conductr_host_mock.assert_not_called()
-
-        get_events_mock.assert_not_called()
+        get_scale_mock.assert_called_with(bundle_id, True, args)
+        conductr_host_mock.assert_called_with(args)
+        get_events_mock.assert_called_with(dcos_mode, conductr_host, '/bundle-events/endpoint',
+                                           auth=self.conductr_auth,
+                                           verify=self.server_verification_file)
 
         display_bundle_scale_error_message_mock.assert_called_with(bundle_id, args)
 
@@ -722,7 +726,8 @@ class TestWaitForScale(CliTestCase):
                 patch('conductr_cli.bundle_scale.get_scale', get_scale_mock), \
                 patch('conductr_cli.sse_client.get_events', get_events_mock), \
                 patch('conductr_cli.bundle_scale.display_bundle_scale_error_message',
-                      display_bundle_scale_error_message_mock),\
+                      display_bundle_scale_error_message_mock), \
+                patch('conductr_cli.bundle_scale.IGNORE_ERROR_FIRST_SECONDS', 0), \
                 self.assertRaises(BundleScaleError) as e:
             logging_setup.configure_logging(args, stdout)
             bundle_scale.wait_for_scale(bundle_id, 3, wait_for_is_active=True, args=args)
