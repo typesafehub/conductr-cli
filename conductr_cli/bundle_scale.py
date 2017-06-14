@@ -7,6 +7,9 @@ import json
 import logging
 
 
+IGNORE_ERROR_FIRST_SECONDS = 10  # The number of seconds where bundle error will be ignored
+
+
 def get_scale(bundle_id, wait_for_is_active, args):
     bundles_url = conduct_url.url('bundles', args)
     response = conduct_request.get(args.dcos_mode, conduct_url.conductr_host(args), bundles_url,
@@ -31,10 +34,8 @@ def wait_for_scale(bundle_id, expected_scale, wait_for_is_active, args):
     start_time = datetime.now()
 
     (bundle_scale, has_error) = get_scale(bundle_id, wait_for_is_active, args)
-    if has_error:
-        display_bundle_scale_error_message(bundle_id, args)
-        raise BundleScaleError(bundle_id)
-    elif bundle_scale == expected_scale:
+    # Ignore initial error to wait for the bundle to start and correct itself.
+    if bundle_scale == expected_scale:
         log.info('Bundle {} expected scale {} is met'.format(bundle_id, expected_scale))
         return
     else:
@@ -59,7 +60,12 @@ def wait_for_scale(bundle_id, expected_scale, wait_for_is_active, args):
                     sse_heartbeat_count_after_event = 0
 
                 (bundle_scale, has_error) = get_scale(bundle_id, wait_for_is_active, args)
-                if has_error:
+
+                # Ignore error as long as the time elapsed is below threshold specified by IGNORE_ERROR_FIRST_SECONDS.
+                # This is done to allow the CLI to wait for the bundle to start and correct its error.
+                ignore_error = elapsed <= IGNORE_ERROR_FIRST_SECONDS
+
+                if has_error and not ignore_error:
                     # Reprint previous message with flush to go to next line
                     if last_log_message:
                         log.progress(last_log_message, flush=True)
