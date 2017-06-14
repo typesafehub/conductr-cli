@@ -14,7 +14,7 @@ BINTRAY_API_BASE_URL = 'https://api.bintray.com'
 BINTRAY_DOWNLOAD_BASE_URL = 'https://dl.bintray.com'
 BINTRAY_DOWNLOAD_REALM = 'Bintray'
 BINTRAY_CREDENTIAL_FILE_PATH = '{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~'))
-BINTRAY_PROPERTIES_RE = re.compile('^(\S+)\s*=\s*([\S]+)$')
+BINTRAY_PROPERTIES_RE = re.compile('^\s*(\S+)\s*=\s*([\S]+)\s*$')
 BINTRAY_LIGHTBEND_ORG = 'lightbend'
 BINTRAY_CONDUCTR_COMMERCIAL_REPO = 'commercial-releases'
 BINTRAY_CONDUCTR_GENERIC_REPO = 'generic'
