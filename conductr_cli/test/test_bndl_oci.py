@@ -108,7 +108,6 @@ class TestBndlOci(CliTestCase):
             'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
             'tags': [],
-            'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_volumes': True,
@@ -121,7 +120,6 @@ class TestBndlOci(CliTestCase):
             'name': 'world',
             'tags': [],
             'annotations': [],
-            'component_description': 'testing desc 2',
             'version': '4',
             'compatibility_version': '5',
             'system': 'myapp',
@@ -149,23 +147,8 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |}
-                            |compatibilityVersion = "0"
-                            |diskSpace = 1073741824
-                            |memory = 402653184
-                            |name = "world"
-                            |nrOfCpus = 0.1
-                            |roles = [
-                            |  "web"
-                            |]
-                            |system = "world"
-                            |systemVersion = "0"
-                            |tags = [
-                            |  "testing"
-                            |]
-                            |version = "1"
                             |components {
                             |  my-component {
-                            |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
                             |    start-command = []
                             |    endpoints {}
@@ -188,24 +171,8 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |}
-                            |compatibilityVersion = "5"
-                            |diskSpace = "16384"
-                            |memory = "65536"
-                            |name = "world"
-                            |nrOfCpus = "8"
-                            |roles = [
-                            |  "web"
-                            |  "backend"
-                            |]
-                            |system = "myapp"
-                            |systemVersion = "3"
-                            |tags = [
-                            |  "0.0.1"
-                            |]
-                            |version = "4"
                             |components {
                             |  my-other-component {
-                            |    description = "testing desc 2"
                             |    file-system-type = "oci-image"
                             |    start-command = []
                             |    endpoints {}
@@ -217,7 +184,6 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
-            'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
@@ -245,23 +211,8 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |}
-                            |compatibilityVersion = "0"
-                            |diskSpace = 1073741824
-                            |memory = 402653184
-                            |name = "world"
-                            |nrOfCpus = 0.1
-                            |roles = [
-                            |  "web"
-                            |]
-                            |system = "world"
-                            |systemVersion = "0"
-                            |tags = [
-                            |  "testing"
-                            |]
-                            |version = "1"
                             |components {
                             |  my-component {
-                            |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
                             |    start-command = []
                             |    endpoints {
@@ -289,7 +240,6 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
-            'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': False,
             'use_default_volumes': True,
@@ -316,23 +266,8 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |}
-                            |compatibilityVersion = "0"
-                            |diskSpace = 1073741824
-                            |memory = 402653184
-                            |name = "world"
-                            |nrOfCpus = 0.1
-                            |roles = [
-                            |  "web"
-                            |]
-                            |system = "world"
-                            |systemVersion = "0"
-                            |tags = [
-                            |  "testing"
-                            |]
-                            |version = "1"
                             |components {
                             |  my-component {
-                            |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
                             |    start-command = []
                             |    endpoints {}
@@ -344,7 +279,6 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
-            'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
@@ -372,23 +306,8 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |}
-                            |compatibilityVersion = "0"
-                            |diskSpace = 1073741824
-                            |memory = 402653184
-                            |name = "world"
-                            |nrOfCpus = 0.1
-                            |roles = [
-                            |  "web"
-                            |]
-                            |system = "world"
-                            |systemVersion = "0"
-                            |tags = [
-                            |  "testing"
-                            |]
-                            |version = "1"
                             |components {
                             |  my-component {
-                            |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
                             |    start-command = []
                             |    endpoints {
@@ -419,10 +338,10 @@ class TestBndlOci(CliTestCase):
         )
 
     def test_oci_image_with_default_endpoints_no_check(self):
+        self.maxDiff = None
         base_args = create_attributes_object({
             'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
-            'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': False,
@@ -450,23 +369,8 @@ class TestBndlOci(CliTestCase):
                             |    }
                             |  }
                             |}
-                            |compatibilityVersion = "0"
-                            |diskSpace = 1073741824
-                            |memory = 402653184
-                            |name = "world"
-                            |nrOfCpus = 0.1
-                            |roles = [
-                            |  "web"
-                            |]
-                            |system = "world"
-                            |systemVersion = "0"
-                            |tags = [
-                            |  "testing"
-                            |]
-                            |version = "1"
                             |components {
                             |  my-component {
-                            |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
                             |    start-command = []
                             |    endpoints {
@@ -491,7 +395,6 @@ class TestBndlOci(CliTestCase):
         base_args = create_attributes_object({
             'format': BndlFormat.OCI_IMAGE,
             'name': 'world',
-            'component_description': 'testing desc 1',
             'image_tag': 'testing',
             'use_default_endpoints': True,
             'use_default_check': True,
@@ -529,23 +432,8 @@ class TestBndlOci(CliTestCase):
                             |  }
                             |  description = "hello world"
                             |}
-                            |compatibilityVersion = "0"
-                            |diskSpace = 1073741824
-                            |memory = 402653184
-                            |name = "world"
-                            |nrOfCpus = 0.1
-                            |roles = [
-                            |  "web"
-                            |]
-                            |system = "world"
-                            |systemVersion = "0"
-                            |tags = [
-                            |  "testing"
-                            |]
-                            |version = "1"
                             |components {
                             |  my-component {
-                            |    description = "testing desc 1"
                             |    file-system-type = "oci-image"
                             |    start-command = []
                             |    endpoints {

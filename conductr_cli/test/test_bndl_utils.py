@@ -168,7 +168,6 @@ class TestBndlUtils(CliTestCase):
         base_args = create_attributes_object({
             'name': 'world',
             'format': BndlFormat.BUNDLE,
-            'component_description': 'testing desc 1',
             'tags': ['testing'],
             'annotations': {}
         })
@@ -176,7 +175,6 @@ class TestBndlUtils(CliTestCase):
         base_args_dup_tags = create_attributes_object({
             'name': 'world',
             'format': BndlFormat.BUNDLE,
-            'component_description': 'testing desc 1',
             'tags': ['testing', 'testing', 'testing'],
             'annotations': {}
         })
@@ -184,7 +182,6 @@ class TestBndlUtils(CliTestCase):
         extended_args = create_attributes_object({
             'name': 'world',
             'format': BndlFormat.BUNDLE,
-            'component_description': 'testing desc 2',
             'version': '4',
             'compatibility_version': '5',
             'system': 'myapp',

@@ -174,13 +174,11 @@ def escape_bash_double_quotes(input):
 
 
 def load_bundle_args_into_conf(config, args, application_type):
-    # this is unrolled because it's actually pretty complicated to get the order
-    # correct given that some attributes need special handling and defaults
-
     config_defaults = application_type.config_defaults(args.format.to_file_system_type()) if application_type else None
 
     args_check_addresses = getattr(args, 'check_addresses', None)
     args_compatibility_version = getattr(args, 'compatibility_version', None)
+    args_descriptions = getattr(args, 'descriptions', None)
     args_disk_space = getattr(args, 'disk_space', None)
     args_endpoints = getattr(args, 'endpoints', None)
     args_memory = getattr(args, 'memory', None)
@@ -247,6 +245,15 @@ def load_bundle_args_into_conf(config, args, application_type):
         config.put('compatibilityVersion', config_defaults['compatibilityVersion'])
 
     # Component properties
+    if args_descriptions:
+        if 'components' not in config:
+            config.put('components', ConfigTree())
+
+        for description in args_descriptions:
+            component_name = detect_component(config, description, config_name)
+            description_key = 'components.{}.description'.format(component_name)
+            config.put(description_key, description.description)
+
     if args_endpoints is not None:
         if 'components' not in config:
             config.put('components', ConfigTree())
