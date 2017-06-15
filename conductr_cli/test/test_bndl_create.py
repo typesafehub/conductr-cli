@@ -106,7 +106,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
-                'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
@@ -149,7 +148,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
-                'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
                 'annotations': [],
@@ -195,7 +193,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
-                'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
@@ -218,7 +215,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile2,
-                'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
@@ -263,7 +259,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
-                'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'annotations': [],
@@ -308,7 +303,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
-                'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
                 'annotations': [],
@@ -331,7 +325,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile2,
-                'component_description': '',
                 'use_shazar': False,
                 'use_default_endpoints': True,
                 'annotations': [],
@@ -530,6 +523,17 @@ class TestBndlCreate(CliTestCase):
                         'name': 'my-vol',
                         'mount_point': '/other-data',
                         'component': 'test1'
+                    }),
+                    create_attributes_object({
+                        'name': 'my-vol2',
+                        'mount_point': '/data',
+                        'component': 'test1'
+                    })
+                ],
+                'descriptions': [
+                    create_attributes_object({
+                        'description': 'this is a test',
+                        'component': 'test2'
                     })
                 ],
                 'with_defaults': None
@@ -558,6 +562,7 @@ class TestBndlCreate(CliTestCase):
                                |    ]
                                |    volumes {
                                |      my-vol = "/other-data"
+                               |      my-vol2 = "/data"
                                |    }
                                |  }
                                |  test2 {
@@ -565,6 +570,7 @@ class TestBndlCreate(CliTestCase):
                                |      "abc"
                                |      "test"
                                |    ]
+                               |    description = "this is a test"
                                |    volumes {
                                |      my-vol = "/data"
                                |    }
@@ -899,7 +905,6 @@ class TestBndlCreate(CliTestCase):
                 'format': BndlFormat.OCI_IMAGE,
                 'image_tag': 'latest',
                 'output': tmpfile,
-                'component_description': '',
                 'use_shazar': True,
                 'use_default_endpoints': True,
                 'use_default_volumes': True,

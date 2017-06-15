@@ -31,8 +31,6 @@ class TestBndl(CliTestCase):
             '-o',
             '/dev/null',
             '--no-shazar',
-            '--component-description',
-            'some description',
             '--version',
             '4',
             '--compatibility-version',
@@ -81,7 +79,13 @@ class TestBndl(CliTestCase):
             '--component',
             'web-component',
             '--volume',
-            'test2:/data2'
+            'test2:/data2',
+            '--description',
+            'this is a test',
+            '--description',
+            'another test',
+            '--component',
+            'web-component'
         ])
 
         self.assertEqual(args.source, 'oci-image-dir')
@@ -91,7 +95,6 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.image_name, 'test')
         self.assertEqual(args.output, '/dev/null')
         self.assertFalse(args.use_shazar)
-        self.assertEqual(args.component_description, 'some description')
         self.assertEqual(args.version, '4')
         self.assertEqual(args.compatibility_version, '5')
         self.assertEqual(args.system, 'myapp')
@@ -125,6 +128,10 @@ class TestBndl(CliTestCase):
         self.assertEqual(args.volume_dicts, [
             {'component': 'web-component', 'volume': 'test:/data'},
             {'volume': 'test2:/data2'}
+        ])
+        self.assertEqual(args.description_dicts, [
+            {'description': 'this is a test'},
+            {'description': 'another test', 'component': 'web-component'}
         ])
 
     def test_parser_acl_params(self):

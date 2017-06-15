@@ -1,5 +1,5 @@
 from pyhocon import HOCONConverter, ConfigFactory, ConfigTree
-from conductr_cli.bndl_utils import load_bundle_args_into_conf, create_check_hocon
+from conductr_cli.bndl_utils import create_check_hocon
 from conductr_cli.constants import BNDL_DEFAULT_CHECK_RETRY_COUNT, BNDL_DEFAULT_CHECK_RETRY_DELAY
 import json
 import os
@@ -9,10 +9,7 @@ import tempfile
 
 
 def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
-    conf = ConfigFactory.parse_string('')
-    load_bundle_args_into_conf(conf, args, args.with_defaults)
-
-    annotations_tree = conf.get('annotations')
+    annotations_tree = ConfigTree()
 
     if 'annotations' in oci_manifest and oci_manifest['annotations'] is not None:
         for key in sorted(oci_manifest['annotations']):
@@ -23,7 +20,6 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
     endpoints_tree = ConfigTree()
 
     oci_tree = ConfigTree()
-    oci_tree.put('description', args.component_description)
     oci_tree.put('file-system-type', 'oci-image')
     oci_tree.put('start-command', [])
     oci_tree.put('endpoints', endpoints_tree)
@@ -69,6 +65,8 @@ def oci_image_bundle_conf(args, component_name, oci_manifest, oci_config):
             volumes.put(key, vol_path)
         oci_tree.put('volumes', volumes)
 
+    conf = ConfigFactory.parse_string('')
+    conf.put('annotations', annotations_tree)
     conf.put('components', components_tree)
 
     return HOCONConverter.to_hocon(conf)

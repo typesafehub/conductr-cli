@@ -53,6 +53,8 @@ class ComponentAction(argparse.Action):
             namespace.start_command_dicts[-1]['component'] = value
         elif namespace.component_action == 'volume':
             namespace.volume_dicts[-1]['component'] = value
+        elif namespace.component_action == 'description':
+            namespace.description_dicts[-1]['component'] = value
 
 
 class EndpointAction(argparse.Action):
@@ -147,6 +149,12 @@ class VolumeAction(argparse.Action):
             namespace.volume_dicts[-1][dict_key] = value
 
 
+class DescriptionAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_strings):
+        namespace.component_action = 'description'
+        namespace.description_dicts.append({'description': value})
+
+
 def process_args(args):
     log = logging.getLogger(__name__)
 
@@ -173,32 +181,44 @@ def process_args(args):
     if args.start_command_dicts:
         args.start_commands = []
 
-        start_command = type('', (), {})()
-        start_command.start_command = args.start_command_dicts[-1]['start_command']
+        for start_command_dict in args.start_command_dicts:
+            start_command = type('', (), {})()
+            start_command.start_command = start_command_dict['start_command']
 
-        if 'component' in args.start_command_dicts[-1]:
-            start_command.component = args.start_command_dicts[-1]['component']
+            if 'component' in start_command_dict:
+                start_command.component = start_command_dict['component']
 
-        args.start_commands.append(start_command)
+            args.start_commands.append(start_command)
 
     if args.volume_dicts:
         args.volumes = []
 
-        volume = type('', (), {})()
-        parts = args.volume_dicts[-1]['volume'].split('=', 1)
+        for volume_dict in args.volume_dicts:
+            volume = type('', (), {})()
+            parts = volume_dict['volume'].split('=', 1)
 
-        if len(parts) != 2:
-            log.error('bndl: volumes must be specified in the format NAME=MOUNT_POINT. '
-                      'Example: bndl --volume myvol=/data')
-            sys.exit(2)
+            if len(parts) != 2:
+                log.error('bndl: volumes must be specified in the format NAME=MOUNT_POINT. '
+                          'Example: bndl --volume myvol=/data')
+                sys.exit(2)
 
-        volume.name = parts[0]
-        volume.mount_point = parts[1]
+            volume.name = parts[0]
+            volume.mount_point = parts[1]
 
-        if 'component' in args.volume_dicts[-1]:
-            volume.component = args.volume_dicts[-1]['component']
+            if 'component' in volume_dict:
+                volume.component = volume_dict['component']
 
-        args.volumes.append(volume)
+            args.volumes.append(volume)
+
+    if args.description_dicts:
+        args.descriptions = []
+
+        for description_dict in args.description_dicts:
+            description = type('', (), {})()
+            description.description = description_dict['description']
+            if 'component' in description_dict:
+                description.component = description_dict['component']
+            args.descriptions.append(description)
 
 
 def add_conf_arguments(parser):
@@ -216,21 +236,26 @@ def add_conf_arguments(parser):
     parser.add_argument('--component',
                         help='Specify the component that should be modified\n'
                              'Required when the bundle has more than one component\n'
-                             'Used in conjunction with the following: --endpoint, --start-command',
+                             'Used in conjunction with the following: '
+                             '--description, --endpoint, --start-command, --volume',
                         metavar='COMPONENT',
                         action=ComponentAction)
-
-    parser.add_argument('--component-description',
-                        required=False,
-                        help='Description to use for the generated ConductR component\n'
-                             'For use with docker and oci-image formats',
-                        dest='component_description')
 
     parser.add_argument('--compatibility-version',
                         nargs='?',
                         required=False,
                         help='Sets the "compatibilityVersion" bundle.conf value',
                         dest='compatibility_version')
+
+    parser.add_argument('--description',
+                        required=False,
+                        help='Sets "description" for a component\n'
+                             'If the bundle has more than one component, you must specify --component\n'
+                             'Example: bndl --description "My service" --component service',
+                        metavar='DESCRIPTION',
+                        dest='description_dicts',
+                        default=[],
+                        action=DescriptionAction)
 
     parser.add_argument('--disk-space',
                         nargs='?',
