@@ -527,15 +527,17 @@ def handle_hostname_lookup_error(func):
             machine_hostname = socket.gethostname()
 
             log = get_logger_for_func(func)
-            log.error('Hostname lookup on your machine will take more than 5 seconds '
-                      'which will result in a ConductR startup failure')
-            log.error('This is known Java 8 issue on macOS: http://stackoverflow.com/questions/39636792/'
-                      'jvm-takes-a-long-time-to-resolve-ip-address-for-localhost')
-            log.error('To speed up the hostname lookup add your macOS hostname to /etc/hosts')
-            log.error('Resolves your hostname on the terminal with: hostname')
-            log.error('Sample /etc/hosts file:')
-            log.error('127.0.0.1   localhost {}'.format(machine_hostname))
-            log.error('::1         localhost {}'.format(machine_hostname))
+            log.error('\n\tUnfortunately, because of a known Java 8 issue on macOS,'
+                      '\n\thostname lookups on your machine will take more than 5 seconds.'
+                      '\n\n\tThis will prevent ConductR from starting.'
+                      '\n\n\tFortunately, there is an easy, quick fix. Just add \'{}\' to your /etc/hosts file. e.g.:'
+                      '\n\n\t\t127.0.0.1   localhost {}'
+                      '\n\t\t::1         localhost {}'
+                      '\n\n\tNote that you will need to use sudo to edit the /etc/hosts file.'
+                      '\n\tUse your favorite editor to do this e.g. \'sudo vi /etc/hosts\''
+                      '\n\n\tTo learn more about the Java 8 issue: http://stackoverflow.com/questions/39636792/'
+                      'jvm-takes-a-long-time-to-resolve-ip-address-for-localhost'
+                      '\n'.format(machine_hostname, machine_hostname, machine_hostname))
             return False
 
     # Do not change the wrapped function name,

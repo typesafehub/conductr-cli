@@ -56,13 +56,21 @@ class TestErrorHandler(CliTestCase):
 
         self.assertEqual(self.output(stdout), '')
 
-        expected_output = as_error(strip_margin("""|Error: Hostname lookup on your machine will take more than 5 seconds which will result in a ConductR startup failure
-                                                   |Error: This is known Java 8 issue on macOS: http://stackoverflow.com/questions/39636792/jvm-takes-a-long-time-to-resolve-ip-address-for-localhost
-                                                   |Error: To speed up the hostname lookup add your macOS hostname to /etc/hosts
-                                                   |Error: Resolves your hostname on the terminal with: hostname
-                                                   |Error: Sample /etc/hosts file:
-                                                   |Error: 127.0.0.1   localhost MagicBox
-                                                   |Error: ::1         localhost MagicBox
+        expected_output = as_error(strip_margin("""|Error: \n	Unfortunately, because of a known Java 8 issue on macOS,
+                                                   |	hostname lookups on your machine will take more than 5 seconds.
+                                                   |
+                                                   |	This will prevent ConductR from starting.
+                                                   |
+                                                   |	Fortunately, there is an easy, quick fix. Just add 'MagicBox' to your /etc/hosts file. e.g.:
+                                                   |
+                                                   |		127.0.0.1   localhost MagicBox
+                                                   |		::1         localhost MagicBox
+                                                   |
+                                                   |	Note that you will need to use sudo to edit the /etc/hosts file.
+                                                   |	Use your favorite editor to do this e.g. 'sudo vi /etc/hosts'
+                                                   |
+                                                   |	To learn more about the Java 8 issue: http://stackoverflow.com/questions/39636792/jvm-takes-a-long-time-to-resolve-ip-address-for-localhost
+                                                   |
                                                    |"""))
         self.assertEqual(self.output(stderr), expected_output)
 
