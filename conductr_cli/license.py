@@ -44,11 +44,8 @@ def download_license(args, save_to, use_cached_auth_token):
     if log.is_verbose_enabled():
         log.verbose(response.text)
 
-    if response.status_code == 401 or response.status_code == 303:
+    if response.status_code == 401 or response.status_code == 303 or response.status_code == 403:
         license_auth.remove_cached_auth_token()
-        raise LicenseDownloadError([response.text])
-
-    elif response.status_code == 403:
         raise LicenseDownloadError([response.text])
 
     validation.raise_for_status_inc_3xx(response)
