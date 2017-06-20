@@ -574,6 +574,7 @@ def handle_license_load_error(func):
             log = get_logger_for_func(func)
             log.error('Error loading license into ConductR')
             log.error(e.message)
+            log.error('Use `conduct load-license -f` to re-download your license.')
             return False
 
     # Do not change the wrapped function name,
@@ -592,6 +593,7 @@ def handle_license_download_error(func):
             log = get_logger_for_func(func)
             for message in e.messages:
                 log.error(message)
+            log.error('Use `conduct load-license -f` to re-download your license.')
             return False
 
     # Do not change the wrapped function name,
