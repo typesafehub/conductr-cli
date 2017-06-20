@@ -10,8 +10,8 @@ def short_id(bundle_id):
 
 def conf(bundle_path):
     bundle_zip = ZipFile(bundle_path)
-    bundle_configuration = [bundle_zip.read(name) for name in bundle_zip.namelist() if name.endswith('bundle.conf')]
-    return bundle_configuration[0].decode('utf-8') if len(bundle_configuration) == 1 else ''
+    bundle_configurations = [bundle_zip.read(name) for name in bundle_zip.namelist() if name.endswith('bundle.conf')]
+    return bundle_configurations[0].decode('utf-8') if len(bundle_configurations) > 0 else None
 
 
 def digest_extract_and_open(path):

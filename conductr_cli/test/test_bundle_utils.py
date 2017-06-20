@@ -1,6 +1,6 @@
 from unittest import TestCase
 from conductr_cli import bundle_utils, constants
-from conductr_cli.test.cli_test_case import create_temp_bundle
+from conductr_cli.test.cli_test_case import create_temp_bundle_with_contents
 import shutil
 import tempfile
 
@@ -18,7 +18,11 @@ class ShortId(TestCase):
 
 class Conf(TestCase):
     def setUp(self):  # noqa
-        self.tmpdir, self.bundle_path = create_temp_bundle('bundle conf contents')
+        self.tmpdir, self.bundle_path = create_temp_bundle_with_contents({
+            'bundle.conf': 'bundle conf contents',
+            'password.txt': 'monkey',
+            'dir/bundle.conf': 'another bundle conf contents'
+        })
 
     def test(self):
         conf_contents = bundle_utils.conf(self.bundle_path)
