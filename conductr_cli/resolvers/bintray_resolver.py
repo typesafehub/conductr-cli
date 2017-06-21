@@ -2,6 +2,7 @@ from conductr_cli.exceptions import MalformedBundleUriError, BintrayResolutionEr
     BintrayCredentialsNotFoundError, MalformedBintrayCredentialsError
 from conductr_cli.resolvers import uri_resolver
 from conductr_cli.resolvers.resolvers_util import is_local_file
+from conductr_cli.resolvers.schemes import SCHEME_BUNDLE
 from conductr_cli import bundle_shorthand
 from requests.exceptions import HTTPError, ConnectionError
 import json
@@ -22,8 +23,13 @@ BINTRAY_CONDUCTR_CORE_PACKAGE_NAME = 'ConductR-Universal'
 BINTRAY_CONDUCTR_AGENT_PACKAGE_NAME = 'ConductR-Agent-Universal'
 
 
+def supported_schemes():
+    return [SCHEME_BUNDLE]
+
+
 def resolve_bundle(cache_dir, uri):
     log = logging.getLogger(__name__)
+
     try:
         urn, org, repo, package_name, tag, digest = bundle_shorthand.parse_bundle(uri)
         log.info(log_message('Resolving bundle', org, repo, package_name, tag, digest))
@@ -64,6 +70,7 @@ def load_bundle_from_cache(cache_dir, uri):
 
 def resolve_bundle_configuration(cache_dir, uri):
     log = logging.getLogger(__name__)
+
     try:
         urn, org, repo, package_name, tag, digest = bundle_shorthand.parse_bundle_configuration(uri)
         log.info(log_message('Resolving bundle configuration', org, repo, package_name, tag, digest))

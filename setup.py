@@ -18,6 +18,7 @@ install_requires = [
     'pyreadline>=2.1',
     'www-authenticate==0.9.2',
     'certifi>=2017.4.17',
+    'boto3>=1.4.4',
 
     # FIXME: Remove the following dependencies when dcos can be depended on
     'jsonschema>=2.5, <3.0',

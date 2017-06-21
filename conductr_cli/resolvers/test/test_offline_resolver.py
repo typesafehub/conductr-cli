@@ -1,6 +1,7 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup
 from conductr_cli.resolvers import offline_resolver
+from conductr_cli.resolvers.schemes import SCHEME_BUNDLE, SCHEME_FILE
 from unittest.mock import call, patch, MagicMock
 
 
@@ -226,3 +227,8 @@ class TestIsBundleName(CliTestCase):
     def test_return_false(self):
         self.assertFalse(offline_resolver.is_bundle_name('/tmp/visualizer.zip'))
         self.assertFalse(offline_resolver.is_bundle_name('conductr-haproxy-dev-mode.zip'))
+
+
+class TestSupportedSchemes(CliTestCase):
+    def test_supported_schemes(self):
+        self.assertEqual([SCHEME_BUNDLE, SCHEME_FILE], offline_resolver.supported_schemes())

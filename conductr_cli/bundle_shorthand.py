@@ -1,9 +1,11 @@
 from conductr_cli.exceptions import MalformedBundleUriError
+from conductr_cli.resolvers.schemes import SCHEME_BUNDLE
 
 
 DEFAULT_ORG = 'typesafe'
 DEFAULT_REPO_BUNDLE = 'bundle'
 DEFAULT_REPO_BUNDLE_CONFIGURATION = 'bundle-configuration'
+URN_BUNDLE = '{}:'.format(SCHEME_BUNDLE)
 
 
 def parse_bundle(uri):
@@ -21,17 +23,27 @@ def parse_bundle_configuration(uri):
 
 
 def split_to_urn_and_rest(uri):
+    if len(uri.strip()) < 1:
+        raise MalformedBundleUriError('{} is not a valid bundle uri'.format(uri))
+
     if uri.startswith('urn:'):
-        if uri.startswith('urn:x-bundle:'):
-            return 'urn:x-bundle:', uri.replace('urn:x-bundle:', '')
+        if uri.startswith(URN_BUNDLE):
+            return URN_BUNDLE, uri.replace(URN_BUNDLE, '')
         else:
             raise MalformedBundleUriError('{} is not a valid bundle uri'.format(uri))
     else:
-        return 'urn:x-bundle:', uri
+        return URN_BUNDLE, uri
 
 
 def split_to_org_repo_package(uri, default_repo):
+    if len(uri.strip()) < 1:
+        raise MalformedBundleUriError('{} is not a valid bundle uri'.format(uri))
+
     parts = uri.split('/')
+    empty_parts = [part for part in parts if not part]
+    if len(empty_parts) > 0:
+        raise MalformedBundleUriError('{} is not a valid bundle uri'.format(uri))
+
     if len(parts) == 3:
         return parts
     elif len(parts) == 2:

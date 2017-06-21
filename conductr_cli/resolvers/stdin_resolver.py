@@ -1,8 +1,13 @@
 from conductr_cli.constants import IO_CHUNK_SIZE
+from conductr_cli.resolvers.schemes import SCHEME_STDIN
 import sys
 import tempfile
 
 ALLOCATED_FILES = []
+
+
+def supported_schemes():
+    return [SCHEME_STDIN]
 
 
 def resolve_bundle(cache_dir, uri, auth=None):

@@ -242,3 +242,27 @@ class LicenseDownloadError(Exception):
 
     def __str(self):
         return repr(os.linesep.join(self.messages))
+
+
+class S3InvalidArtefactError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return repr(self.message)
+
+
+class S3MalformedUrlError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return repr(self.message)
+
+
+class DockerImageMalformedError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return repr(self.message)

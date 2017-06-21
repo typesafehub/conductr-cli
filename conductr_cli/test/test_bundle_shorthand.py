@@ -74,6 +74,14 @@ class TestParseBundleWithMalformedExpression(TestCase):
         uri = 'http://some-url.com/dist/bundle/my-project-1.0.0-023f9da22.zip'
         self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle, uri)
 
+    def test_empty_parts_should_be_invalid(self):
+        uri = 'typesafe//conductr-haproxy-dev-mode:1.0.0-023f9da22'
+        self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle, uri)
+
+    def test_empty_string_should_be_invalid(self):
+        self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle, '')
+        self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle, ' ')
+
 
 class TestParseBundleConfiguration(TestCase):
     def test_full_address(self):
@@ -138,3 +146,11 @@ class TestParseBundleConfigurationWithMalformedExpression(TestCase):
     def test_http_url_should_be_invalid(self):
         uri = 'http://some-url.com/dist/bundle-configuration/my-project-1.0.0-023f9da22.zip'
         self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle_configuration, uri)
+
+    def test_empty_parts_should_be_invalid(self):
+        uri = 'typesafe//conductr-haproxy-dev-mode:1.0.0-023f9da22'
+        self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle_configuration, uri)
+
+    def test_empty_string_should_be_invalid(self):
+        self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle_configuration, '')
+        self.assertRaises(MalformedBundleUriError, bundle_shorthand.parse_bundle_configuration, '  ')
