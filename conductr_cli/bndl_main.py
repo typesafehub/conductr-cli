@@ -325,11 +325,13 @@ def add_conf_arguments(parser):
                         dest='nr_of_cpus',
                         type=float)
 
-    parser.add_argument('--roles',
-                        nargs='*',
-                        required=False,
-                        help='Sets the "roles" bundle.conf value',
-                        dest='roles')
+    parser.add_argument('--role',
+                        action='append',
+                        default=[],
+                        dest='roles',
+                        help='Roles to add to the bundle.conf'
+                             'Example: bndl --role backend --role web\n'
+                             'Defaults to []')
 
     parser.add_argument('--start-command',
                         help='Sets "start-command" for a component\n'
