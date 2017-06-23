@@ -184,7 +184,6 @@ def load_bundle_args_into_conf(config, args, application_type):
     args_memory = getattr(args, 'memory', None)
     args_name = getattr(args, 'name', None)
     args_nr_of_cpus = getattr(args, 'nr_of_cpus', None)
-    args_roles = getattr(args, 'roles', None)
     args_start_commands = getattr(args, 'start_commands', None)
     args_system = getattr(args, 'system', None)
     args_system_version = getattr(args, 'system_version', None)
@@ -321,8 +320,12 @@ def load_bundle_args_into_conf(config, args, application_type):
     if config_defaults and 'nrOfCpus' not in config:
         config.put('nrOfCpus', config_defaults['nrOfCpus'])
 
-    if args_roles is not None:
-        config.put('roles', args_roles)
+    if hasattr(args, 'roles') and len(args.roles) > 0:
+        roles = []
+        for role in args.roles:
+            if role not in roles:
+                roles.append(role)
+        config.put('roles', roles)
     if config_defaults and 'roles' not in config:
         config.put('roles', config_defaults['roles'])
 

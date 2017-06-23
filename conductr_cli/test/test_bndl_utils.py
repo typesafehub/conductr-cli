@@ -124,6 +124,29 @@ class TestBndlUtils(CliTestCase):
         finally:
             shutil.rmtree(tmpdir)
 
+    def test_load_bundle_args_into_conf_with_empty_lists(self):
+        simple_config = ConfigFactory.parse_string('')
+        args = create_attributes_object({
+            'annotations': [],
+            'format': BndlFormat.BUNDLE,
+            'roles': [],
+            'tags': []
+        })
+        application_type = ApplicationType.GENERIC
+        defaults = application_type.config_defaults('universal')
+        bndl_utils.load_bundle_args_into_conf(simple_config, args, application_type)
+        self.assertEqual(simple_config.get('annotations'), defaults['annotations'])
+        self.assertEqual(simple_config.get('compatibilityVersion'), defaults['compatibilityVersion'])
+        self.assertEqual(simple_config.get('diskSpace'), defaults['diskSpace'])
+        self.assertEqual(simple_config.get('memory'), defaults['memory'])
+        self.assertEqual(simple_config.get('name'), defaults['name'])
+        self.assertEqual(simple_config.get('nrOfCpus'), defaults['nrOfCpus'])
+        self.assertEqual(simple_config.get('roles'), defaults['roles'])
+        self.assertEqual(simple_config.get('system'), defaults['system'])
+        self.assertEqual(simple_config.get('systemVersion'), defaults['systemVersion'])
+        self.assertEqual(simple_config.get('tags'), defaults['tags'])
+        self.assertEqual(simple_config.get('version'), defaults['version'])
+
     def test_load_bundle_args_into_conf_with_generic_defaults(self):
         simple_config = ConfigFactory.parse_string('')
         args = create_attributes_object({
