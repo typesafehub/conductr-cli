@@ -23,7 +23,8 @@ def agents(args):
         log.verbose(validation.pretty_json(response.text))
 
     raw_data = json.loads(response.text)
-    with_resources = True if raw_data and 'resourceAvailable' in raw_data[0] else False
+
+    with_resources_columns = any('resourceAvailable' in entry for entry in raw_data)
 
     data = [
         {
@@ -32,7 +33,7 @@ def agents(args):
             'observed': 'OBSERVED BY'
         }
     ]
-    if with_resources:
+    if with_resources_columns:
         data[0]['disk-space'] = 'DISK'
         data[0]['memory'] = 'MEM'
         data[0]['nr-of-cpus'] = 'CPUS'
@@ -44,16 +45,21 @@ def agents(args):
                 'roles': ','.join(entry['roles']),
                 'observed': ','.join(map(lambda e: e['node']['address'], entry['observedBy']))
             })
-            if with_resources:
-                data[-1]['disk-space'] = natural_size(entry['resourceAvailable']['diskSpace'])
-                data[-1]['memory'] = natural_size(entry['resourceAvailable']['memory'], binary=True)
-                data[-1]['nr-of-cpus'] = entry['resourceAvailable']['nrOfCpus']
+            if with_resources_columns:
+                if 'resourceAvailable' in entry:
+                    data[-1]['disk-space'] = natural_size(entry['resourceAvailable']['diskSpace'])
+                    data[-1]['memory'] = natural_size(entry['resourceAvailable']['memory'], binary=True)
+                    data[-1]['nr-of-cpus'] = entry['resourceAvailable']['nrOfCpus']
+                else:
+                    data[-1]['disk-space'] = ''
+                    data[-1]['memory'] = ''
+                    data[-1]['nr-of-cpus'] = ''
 
     padding = 2
     column_widths = dict(screen_utils.calc_column_widths(data), **{'padding': ' ' * padding})
 
     for row in data:
-        if with_resources:
+        if with_resources_columns:
             log.screen('''\
 {address: <{address_width}}{padding}\
 {disk-space: >{disk-space_width}}{padding}\
