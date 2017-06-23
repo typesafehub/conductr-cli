@@ -89,6 +89,65 @@ class TestConductAgentsCommand(CliTestCase):
         ]
     """
 
+    fake_output_with_partial_resources = """
+        [
+          {
+            "address": "akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188",
+            "observedBy": [
+              {
+                "node": {
+                  "address": "akka.tcp://conductr@192.168.10.2:9004",
+                  "uid": "1129598726"
+                }
+              }
+            ],
+            "resourceAvailable": {
+              "diskSpace": 130841165824,
+              "memory": 5028888576,
+              "nrOfCpus": 4
+            },
+            "roles": [
+              "web",
+              "data"
+            ]
+          },
+          {
+            "address": "akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131",
+            "observedBy": [
+              {
+                "node": {
+                  "address": "akka.tcp://conductr@192.168.10.2:9004",
+                  "uid": "1129598726"
+                }
+              }
+            ],
+            "roles": [
+              "web"
+            ]
+          },
+          {
+            "address": "akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110",
+            "observedBy": [
+              {
+                "node": {
+                  "address": "akka.tcp://conductr@192.168.10.2:9004",
+                  "uid": "1129598726"
+                }
+              }
+            ],
+            "resourceAvailable": {
+              "diskSpace": 160841165824,
+              "memory": 4028888576,
+              "nrOfCpus": 2
+            },
+            "roles": [
+              "web",
+              "data"
+            ]
+          }
+        ]
+    """
+
     fake_output_without_resources = """
         [
           {
@@ -182,6 +241,30 @@ class TestConductAgentsCommand(CliTestCase):
             strip_margin("""|ADDRESS                                                                                DISK      MEM  CPUS  ROLES     OBSERVED BY
                             |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  130.8 GB  4.7 GiB     4  web,data  akka.tcp://conductr@192.168.10.2:9004
                             |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131   60.8 GB  2.8 GiB     8  web       akka.tcp://conductr@192.168.10.2:9004
+                            |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  160.8 GB  3.8 GiB     2  web,data  akka.tcp://conductr@192.168.10.2:9004
+                            |"""),
+            self.output(stdout))
+
+    def test_basic_usage_with_partial_resources(self):
+        self.maxDiff = None
+
+        http_method = self.respond_with(text=self.fake_output_with_partial_resources)
+
+        stdout = MagicMock()
+
+        input_args = MagicMock(**self.default_args)
+        with patch('requests.get', http_method):
+            logging_setup.configure_logging(input_args, stdout)
+            result = conduct_agents.agents(input_args)
+            self.assertTrue(result)
+
+        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
+                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+
+        self.assertEqual(
+            strip_margin("""|ADDRESS                                                                                DISK      MEM  CPUS  ROLES     OBSERVED BY
+                            |akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-596247188  130.8 GB  4.7 GiB     4  web,data  akka.tcp://conductr@192.168.10.2:9004
+                            |akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-775189131                           web       akka.tcp://conductr@192.168.10.2:9004
                             |akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#1858099110  160.8 GB  3.8 GiB     2  web,data  akka.tcp://conductr@192.168.10.2:9004
                             |"""),
             self.output(stdout))
