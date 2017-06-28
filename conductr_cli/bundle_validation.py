@@ -28,7 +28,7 @@ BUNDLE_CONF_PROPERTIES = sort_dict(
                     'child': {
                         'acls': {
                             'required': False,
-                            'emptiness_check': True
+                            'emptiness_check': False
                         },
                         'bind-port': {
                             'required': True,
@@ -44,7 +44,7 @@ BUNDLE_CONF_PROPERTIES = sort_dict(
                         },
                         'services': {
                             'required': False,
-                            'emptiness_check': True
+                            'emptiness_check': False
                         }
                     }
                 },

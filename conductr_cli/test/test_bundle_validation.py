@@ -80,7 +80,7 @@ class TestAssertBundleConfNonEmpty(TestCase):
 
 
 class TestAssertPropertiesNonEmpty(TestCase):
-    def test_valid(self):
+    def test_valid_empty_endpoint(self):
         bundle_conf = ConfigFactory.parse_string(strip_margin(
             """|version = "1"
                |name = "my-bundle"
@@ -97,6 +97,33 @@ class TestAssertPropertiesNonEmpty(TestCase):
                |    file-system-type = "universal"
                |    start-command = []
                |    endpoints {}
+               |  }
+               |}"""))
+        self.assertEqual(bundle_validation.assert_properties_non_empty(bundle_conf), None)
+
+    def test_valid_empty_services(self):
+        bundle_conf = ConfigFactory.parse_string(strip_margin(
+            """|version = "1"
+               |name = "my-bundle"
+               |compatibilityVersion = "1"
+               |system = "my-system"
+               |systemVersion = "1"
+               |nrOfCpus = 1.0
+               |memory = 402653184
+               |diskSpace = 200000000
+               |roles = ["web"]
+               |components {
+               |test-bundle {
+               |    description = ""
+               |    file-system-type = "universal"
+               |    start-command = []
+               |    endpoints {
+               |      "akka-remote" = {
+               |        bind-protocol = "tcp"
+               |        bind-port     = 0
+               |        services      = []
+               |      }
+               |    }
                |  }
                |}"""))
         self.assertEqual(bundle_validation.assert_properties_non_empty(bundle_conf), None)
