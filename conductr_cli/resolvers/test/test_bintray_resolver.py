@@ -1018,6 +1018,29 @@ class TestLoadBintrayCredentials(TestCase):
         exists_mock.assert_called_with('{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~')))
         open_mock.assert_called_with('{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~')), 'r')
 
+    def test_success_multiple_realms(self):
+        bintray_credential_file = (
+            'realm = Bintray\n'
+            'user = user1\n'
+            'password = sec=ret\n'
+            'realm = Bintray API Realm\n'
+            'user = user2\n'
+            'password = sec=ret2\n'
+        )
+
+        exists_mock = MagicMock(return_value=True)
+        open_mock = MagicMock(return_value=io.StringIO(bintray_credential_file))
+
+        with patch('os.path.exists', exists_mock), \
+                patch('builtins.open', open_mock):
+            realm, username, password = bintray_resolver.load_bintray_credentials()
+            self.assertEqual('Bintray', realm)
+            self.assertEqual('user1', username)
+            self.assertEqual('sec=ret', password)
+
+        exists_mock.assert_called_with('{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~')))
+        open_mock.assert_called_with('{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~')), 'r')
+
     def test_credential_file_not_having_username_password(self):
         bintray_credential_file = strip_margin(
             """|dummy = yes

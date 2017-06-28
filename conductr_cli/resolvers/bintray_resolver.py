@@ -15,7 +15,7 @@ BINTRAY_API_BASE_URL = 'https://api.bintray.com'
 BINTRAY_DOWNLOAD_BASE_URL = 'https://dl.bintray.com'
 BINTRAY_DOWNLOAD_REALM = 'Bintray'
 BINTRAY_CREDENTIAL_FILE_PATH = '{}/.lightbend/commercial.credentials'.format(os.path.expanduser('~'))
-BINTRAY_PROPERTIES_RE = re.compile('^\s*(\S+)\s*=\s*([\S]+)\s*$')
+BINTRAY_PROPERTIES_RE = re.compile('^\s*(\S+)\s*=\s*((\S|\S+\s+\S+)+)\s*$')
 BINTRAY_LIGHTBEND_ORG = 'lightbend'
 BINTRAY_CONDUCTR_COMMERCIAL_REPO = 'commercial-releases'
 BINTRAY_CONDUCTR_GENERIC_REPO = 'generic'
@@ -168,12 +168,16 @@ def load_bintray_credentials(raise_error=True, disable_instructions=False):
         with open(BINTRAY_CREDENTIAL_FILE_PATH, 'r') as cred_file:
             lines = [line.replace('\n', '') for line in cred_file.readlines()]
             data = dict()
+            realm = BINTRAY_DOWNLOAD_REALM
             for line in lines:
                 match = BINTRAY_PROPERTIES_RE.match(line)
                 if match is not None:
                     try:
                         key, value = match.group(1, 2)
-                        data[key] = value
+                        if key == 'realm':
+                            realm = value
+                        elif realm == BINTRAY_DOWNLOAD_REALM:
+                            data[key] = value
                     except IndexError:
                         pass
 
