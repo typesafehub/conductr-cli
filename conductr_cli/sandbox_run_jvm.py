@@ -7,8 +7,8 @@ from conductr_cli.exceptions import BindAddressNotFound, BintrayUnreachableError
     SandboxUnsupportedOsArchError, SandboxUnsupportedOsError, JavaCallError, JavaUnsupportedVendorError, \
     JavaUnsupportedVersionError, JavaVersionParseError, HostnameLookupError, LicenseValidationError
 from conductr_cli.resolvers import bintray_resolver
-from conductr_cli.resolvers.bintray_resolver import BINTRAY_LIGHTBEND_ORG, BINTRAY_CONDUCTR_COMMERCIAL_REPO, \
-    BINTRAY_CONDUCTR_GENERIC_REPO
+from conductr_cli.resolvers.bintray_resolver import BINTRAY_API_BASE_URL, BINTRAY_LIGHTBEND_ORG, \
+    BINTRAY_CONDUCTR_COMMERCIAL_REPO, BINTRAY_CONDUCTR_GENERIC_REPO, BINTRAY_CONDUCTR_CORE_PACKAGE_NAME
 from conductr_cli.sandbox_common import flatten
 from conductr_cli.sandbox_version import is_conductr_on_private_bintray
 from conductr_cli.screen_utils import h1, h2
@@ -17,9 +17,12 @@ from subprocess import CalledProcessError
 from urllib.error import URLError
 
 import glob
+import json
 import logging
-import re
 import os
+import re
+import requests
+import semver
 import shutil
 import subprocess
 
@@ -33,7 +36,10 @@ SUPPORTED_JVM_VERSION = (1, 8)  # Supports JVM version 1.8 and above.
 
 
 class SandboxRunResult:
-    def __init__(self, core_pids, core_addrs, agent_pids, agent_addrs, wait_for_conductr, license_validation_error):
+    def __init__(self,
+                 core_pids, core_addrs, agent_pids, agent_addrs,
+                 wait_for_conductr, license_validation_error,
+                 sandbox_upgrade_requirements):
         self.core_pids = core_pids
         self.core_addrs = core_addrs
         self.agent_pids = agent_pids
@@ -42,11 +48,22 @@ class SandboxRunResult:
         self.wait_for_conductr = wait_for_conductr
         self.conductr_log_file = '{}/core/logs/conductr.log'.format(DEFAULT_SANDBOX_IMAGE_DIR)
         self.license_validation_error = license_validation_error
+        self.sandbox_upgrade_requirements = sandbox_upgrade_requirements
 
     scheme = DEFAULT_SCHEME
     port = DEFAULT_PORT
     base_path = DEFAULT_BASE_PATH
     api_version = DEFAULT_API_VERSION
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__ if isinstance(other, self.__class__) else False
+
+
+class SandboxUpgradeRequirement:
+    def __init__(self, is_upgrade_required, current_version, latest_version):
+        self.is_upgrade_required = is_upgrade_required
+        self.current_version = current_version
+        self.latest_version = latest_version
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__ if isinstance(other, self.__class__) else False
@@ -91,8 +108,9 @@ def run(args, features):
 
     bind_addrs = find_bind_addrs(max(nr_of_core_instances, nr_of_agent_instances), args.addr_range)
 
-    core_extracted_dir, agent_extracted_dir = obtain_sandbox_image(args.image_dir, args.image_version,
-                                                                   args.offline_mode)
+    core_extracted_dir, agent_extracted_dir, sandbox_upgrade_requirements = obtain_sandbox_image(args.image_dir,
+                                                                                                 args.image_version,
+                                                                                                 args.offline_mode)
 
     core_addrs = bind_addrs[0:nr_of_core_instances]
     core_pids = start_core_instances(core_extracted_dir,
@@ -130,7 +148,9 @@ def run(args, features):
                                        features,
                                        args.log_level)
     return SandboxRunResult(core_pids, core_addrs, agent_pids, agent_addrs,
-                            wait_for_conductr=False, license_validation_error=license_validation_error)
+                            wait_for_conductr=False,
+                            license_validation_error=license_validation_error,
+                            sandbox_upgrade_requirements=sandbox_upgrade_requirements)
 
 
 def log_run_attempt(args, run_result, feature_results, feature_provided):
@@ -184,6 +204,21 @@ def log_run_attempt(args, run_result, feature_results, feature_provided):
     if run_result.license_validation_error:
         for message in run_result.license_validation_error.messages:
             log.warning(message)
+
+    elif run_result.sandbox_upgrade_requirements and run_result.sandbox_upgrade_requirements.is_upgrade_required:
+        def format_version(version_info):
+            return semver.format_version(version_info.major,
+                                         version_info.minor,
+                                         version_info.patch,
+                                         version_info.prerelease,
+                                         version_info.build)
+
+        upgrade_requirements = run_result.sandbox_upgrade_requirements
+        latest_version_str = format_version(upgrade_requirements.latest_version)
+        log.info('')
+        log.warning('A newer ConductR version is available. '
+                    'Please upgrade the sandbox to {} by running'.format(latest_version_str))
+        log.warning('  sandbox run {}'.format(latest_version_str))
 
 
 def instance_count(image_version, instance_expression):
@@ -378,6 +413,12 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
     Similarly, the agent binary will be expanded into the `${image_dir}/agent`. The directory `${image_dir}/agent` will
     be emptied before the binary is expanded.
 
+    Once this is done, upgrade requirement is then checked. Upgrade is deemed to be required if:
+    - There is newer image having same Semver major and minor version as the currently run image, and
+    - The newer image is not yet downloaded.
+
+    Upgrade requirement check will be disabled if the offline mode is enabled.
+
     :param image_dir: the directory where ConductR core and agent binaries will be cached, also the base directory
                       containing the expanded ConductR core and agent binaries.
     :param image_version: the version of the sandbox to be downloaded.
@@ -403,8 +444,12 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
 
         Once downloaded, the binaries are cached in `${image_dir}`.
 
-        :return: tuple of (core_path, agent_path)
+        Once image is resolved, upgrade requirement check will be performed unless sandbox offline mode is enabled.
+
+        :return: tuple of (core_path, agent_path, sandbox_upgrade_requirements)
         """
+        bintray_auth = bintray_resolver.load_bintray_credentials(raise_error=False)
+
         core_path = resolve_binary_from_cache(image_dir, 'conductr', image_version)
         agent_path = resolve_binary_from_cache(image_dir, 'conductr-agent', image_version)
 
@@ -413,31 +458,22 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
                 raise SandboxImageNotAvailableOfflineError(image_version)
             else:
                 if not core_path:
-                    core_path = download_sandbox_image(image_dir,
+                    core_path = download_sandbox_image(bintray_auth, image_dir,
                                                        package_name=core_info['bintray_package_name'],
                                                        artefact_type=core_info['type'],
                                                        image_version=image_version)
 
                 if not agent_path:
-                    agent_path = download_sandbox_image(image_dir,
+                    agent_path = download_sandbox_image(bintray_auth, image_dir,
                                                         package_name=agent_info['bintray_package_name'],
                                                         artefact_type=agent_info['type'],
                                                         image_version=image_version)
 
-        return core_path, agent_path
+        upgrade_requirements = None if offline_mode else check_upgrade_requirements(bintray_auth,
+                                                                                    image_dir,
+                                                                                    image_version)
 
-    def resolve_binary_from_cache(image_dir, file_prefix, image_version):
-        """
-        Checks for the presence of the ConductR binary in the cache directory.
-
-        :param image_dir: the directory where image will be stored.
-        :param file_prefix: either `conductr` or `conductr-agent`.
-        :param image_version: the version of the ConductR to be checked.
-        :return: If present, return the path to the binary file, else return None.
-        """
-
-        binaries = glob.glob('{}/{}-{}-{}-*64.tgz'.format(image_dir, file_prefix, image_version, artefact_os_name()))
-        return binaries[0] if binaries and len(binaries) > 0 else None
+        return core_path, agent_path, upgrade_requirements
 
     def extract_binary(path, conductr_info):
         """
@@ -464,18 +500,16 @@ def obtain_sandbox_image(image_dir, image_version, offline_mode):
 
     core_info, agent_info = sandbox_common.resolve_conductr_info(image_dir)
 
-    core_binary_path, agent_binary_path = resolve_binaries()
+    core_binary_path, agent_binary_path, sandbox_upgrade_requirements = resolve_binaries()
 
     core_extracted_dir = extract_binary(core_binary_path, core_info)
     agent_extracted_dir = extract_binary(agent_binary_path, agent_info)
 
-    return core_extracted_dir, agent_extracted_dir
+    return core_extracted_dir, agent_extracted_dir, sandbox_upgrade_requirements
 
 
-def download_sandbox_image(image_dir, package_name, artefact_type, image_version):
+def download_sandbox_image(bintray_auth, image_dir, package_name, artefact_type, image_version):
     try:
-        bintray_auth = bintray_resolver.load_bintray_credentials(raise_error=False)
-
         if sandbox_version.is_conductr_on_private_bintray(image_version):
             bintray_repo = BINTRAY_CONDUCTR_COMMERCIAL_REPO
         else:
@@ -520,6 +554,50 @@ def download_sandbox_image(image_dir, package_name, artefact_type, image_version
 
     except URLError as e:
         raise SandboxImageFetchError(artefact_type, image_version, e)
+
+
+def check_upgrade_requirements(bintray_auth, image_dir, image_version):
+    def get_major_minor_patch(version_info):
+        return version_info.major, version_info.minor, version_info.patch
+
+    try:
+        if sandbox_version.is_conductr_on_private_bintray(image_version):
+            bintray_repo = BINTRAY_CONDUCTR_COMMERCIAL_REPO
+        else:
+            bintray_repo = BINTRAY_CONDUCTR_COMMERCIAL_REPO if bintray_auth[0] else BINTRAY_CONDUCTR_GENERIC_REPO
+
+        latest_version_url = '{}/packages/{}/{}/{}'.format(BINTRAY_API_BASE_URL,
+                                                           BINTRAY_LIGHTBEND_ORG,
+                                                           bintray_repo,
+                                                           BINTRAY_CONDUCTR_CORE_PACKAGE_NAME)
+        if bintray_auth[0]:
+            _, bintray_username, bintray_password = bintray_auth
+            response = requests.get(latest_version_url, auth=(bintray_username, bintray_password))
+        else:
+            response = requests.get(latest_version_url)
+
+        response.raise_for_status()
+        json_response = json.loads(response.text)
+        all_versions = [semver.parse_version_info(version) for version in json_response['versions']]
+
+        current_version = semver.parse_version_info(image_version)
+        applicable_versions = sorted(
+            [v for v in all_versions if v.major == current_version.major and v.minor == current_version.minor],
+            key=get_major_minor_patch)
+
+        if len(applicable_versions) > 0:
+            latest_version = applicable_versions[-1]
+            latest_version_str = semver.format_version(latest_version.major, latest_version.minor, latest_version.patch)
+            is_upgrade_required = current_version < latest_version and \
+                resolve_binary_from_cache(image_dir, 'conductr', latest_version_str) is None
+            return SandboxUpgradeRequirement(is_upgrade_required=is_upgrade_required,
+                                             current_version=current_version,
+                                             latest_version=latest_version)
+
+        return None
+    except (ConnectionError, HTTPError, URLError):
+        # Ignore problem checking upgrade requirement as it's not mandatory when starting sandbox.
+        return None
 
 
 def start_core_instances(core_extracted_dir, tmp_dir,
@@ -728,3 +806,17 @@ def remove_path_from_env(env, key, path_to_remove):
             del result[key]
 
     return result
+
+
+def resolve_binary_from_cache(image_dir, file_prefix, image_version):
+    """
+    Checks for the presence of the ConductR binary in the cache directory.
+
+    :param image_dir: the directory where image will be stored.
+    :param file_prefix: either `conductr` or `conductr-agent`.
+    :param image_version: the version of the ConductR to be checked.
+    :return: If present, return the path to the binary file, else return None.
+    """
+
+    binaries = glob.glob('{}/{}-{}-{}-*64.tgz'.format(image_dir, file_prefix, image_version, artefact_os_name()))
+    return binaries[0] if binaries and len(binaries) > 0 else None

@@ -1,3 +1,5 @@
+import semver
+
 
 def is_sandbox_docker_based(version):
     return major_version(version) == 1
@@ -17,7 +19,8 @@ def is_cinnamon_grafana_docker_based(version):
 
 
 def version_parts(version):
-    return tuple(map(int, version.split('-')[0].split('.')))
+    version_info = semver.parse_version_info(version)
+    return version_info.major, version_info.minor, version_info.patch
 
 
 def major_version(version):
