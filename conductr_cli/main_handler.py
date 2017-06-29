@@ -11,6 +11,7 @@ SUPPORTED_PYTHON_VERSION = (3, 4)
 def run(callback):
     try:
         enforce_python_version()
+        enforce_cwd_exists()
         result = callback()
         return result
     except KeyboardInterrupt:
@@ -44,6 +45,14 @@ def run(callback):
         exception_log.error('Failure running the following command: {}'.format(sys.argv), exc_info=True)
 
         sys.exit(1)
+
+
+def enforce_cwd_exists():
+    try:
+        os.getcwd()
+    except FileNotFoundError:
+        sys.exit('Unable to start CLI due to missing current/working directory.\n'
+                 'Change into a new directory and try again.\n')
 
 
 def enforce_python_version():
