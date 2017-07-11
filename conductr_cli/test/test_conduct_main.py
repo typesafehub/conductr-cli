@@ -342,3 +342,45 @@ class TestConduct(TestCase):
 
         mock_resolve_default_host.assert_called_with()
         mock_resolve_default_ip.assert_called_with()
+
+    def test_backup_parser_with_bundle(self):
+        args = self.parser.parse_args('backup abcdef'.split())
+
+        self.assertEqual(args.func.__name__, 'backup')
+        self.assertEqual(args.host, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.output_path, None)
+        self.assertEqual(args.bundle, 'abcdef')
+
+    def test_backup_parser_with_bundle_and_output_path(self):
+        args = self.parser.parse_args('backup abcdef -o /my/fav/path'.split())
+
+        self.assertEqual(args.func.__name__, 'backup')
+        self.assertEqual(args.host, None)
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.output_path, '/my/fav/path')
+        self.assertEqual(args.bundle, 'abcdef')
+
+    def test_backup_parser_with_output_path(self):
+        args = self.parser.parse_args('backup -o /my/fav/path --host myfavhost.inyour.domain'.split())
+
+        self.assertEqual(args.func.__name__, 'backup')
+        self.assertEqual(args.host, 'myfavhost.inyour.domain')
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.output_path, '/my/fav/path')
+        self.assertEqual(args.bundle, None)

@@ -1,0 +1,58 @@
+[
+  {
+    "bundleDigest": "6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28",
+    "bundleId": "6273d7a5b059d0e978c6d69ee1a5d7b4-d54620c7bc91897bbb2f25faaac25f46",
+    "hasError": false,
+    "bundleConfig": {
+      "endpoints": {
+        "akka-remote": {
+          "bindProtocol": "tcp"
+        }
+      }
+    },
+    "bundleInstallations": [
+      {
+        "configurationFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792.zip",
+        "bundleFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28.zip",
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@192.168.10.1:9004",
+          "uid": 2030687294
+        }
+      }
+    ],
+    "bundleScale": {
+      "nrOfReschedules": 0,
+      "scale": 1
+    },
+    "configurationDigest": "d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792",
+    "bundleExecutions": [
+      {
+        "startTime": "2017-06-29T18:41:05.657Z",
+        "isActive": true,
+        "pid": 84497,
+        "host": "192.168.10.1",
+        "endpoints": {
+          "akka-remote": {
+            "hostPort": 10609,
+            "bindPort": 10609
+          }
+        },
+        "isStarted": true
+      }
+    ],
+    "attributes": {
+      "compatibilityVersion": "1",
+      "systemVersion": "1",
+      "diskSpace": 200000000,
+      "tags": [],
+      "memory": 402653184,
+      "nrOfCpus": 0.1,
+      "bundleName": "reactive-maps-backend-region",
+      "annotations": {},
+      "roles": [
+        "intranet"
+      ],
+      "system": "reactive-maps"
+    }
+  }
+]

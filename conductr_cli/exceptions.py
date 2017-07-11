@@ -266,3 +266,12 @@ class DockerImageMalformedError(Exception):
 
     def __str__(self):
         return repr(self.message)
+
+
+class ConductBackupError(Exception):
+    def __init__(self, message, cause=None):
+        self.message = message
+        self.cause = cause
+
+    def __str__(self):
+        return repr('{} {}'.format(self.message, self.cause))

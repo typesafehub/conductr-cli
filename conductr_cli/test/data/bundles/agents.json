@@ -1,0 +1,43 @@
+[ {
+  "address" : "akka.tcp://conductr-agent@192.168.10.1:2552/user/reaper/cluster-client#-432939988",
+  "roles" : [ "web" ],
+  "observedBy" : [ {
+    "node" : {
+      "uid" : "2030687294",
+      "address" : "akka.tcp://conductr@192.168.10.1:9004"
+    }
+  } ],
+  "resourceAvailable" : {
+    "nrOfCpus" : 4,
+    "memory" : 2387599360,
+    "diskSpace" : 200282238976
+  }
+}, {
+  "address" : "akka.tcp://conductr-agent@192.168.10.3:2552/user/reaper/cluster-client#-975512635",
+  "roles" : [ "web" ],
+  "observedBy" : [ {
+    "node" : {
+      "uid" : "2030687294",
+      "address" : "akka.tcp://conductr@192.168.10.1:9004"
+    }
+  } ],
+  "resourceAvailable" : {
+    "nrOfCpus" : 4,
+    "memory" : 2336210944,
+    "diskSpace" : 200282234880
+  }
+}, {
+  "address" : "akka.tcp://conductr-agent@192.168.10.2:2552/user/reaper/cluster-client#-1940538255",
+  "roles" : [ "web" ],
+  "observedBy" : [ {
+    "node" : {
+      "uid" : "2030687294",
+      "address" : "akka.tcp://conductr@192.168.10.1:9004"
+    }
+  } ],
+  "resourceAvailable" : {
+    "nrOfCpus" : 4,
+    "memory" : 2370048000,
+    "diskSpace" : 200282238976
+  }
+} ]

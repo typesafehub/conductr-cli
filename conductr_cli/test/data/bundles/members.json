@@ -1,0 +1,15 @@
+{
+  "selfNode" : {
+    "address" : "akka.tcp://conductr@192.168.10.1:9004",
+    "uid" : 2030687294
+  },
+  "members" : [ {
+    "node" : {
+      "address" : "akka.tcp://conductr@192.168.10.1:9004",
+      "uid" : 2030687294
+    },
+    "status" : "Up",
+    "roles" : [ "replicator" ]
+  } ],
+  "unreachable" : [ ]
+}
