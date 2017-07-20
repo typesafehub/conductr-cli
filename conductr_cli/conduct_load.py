@@ -36,7 +36,7 @@ BNDL_ARGS = {
     'name': None,
     'nr_of_cpus': None,
     'start_command_dicts': [],
-    'roles': None,
+    'roles': [],
     'system': None,
     'system_version': None,
     'tags': [],
@@ -191,11 +191,6 @@ def is_bundle(input):
 
 
 def bndl_arguments_present(args):
-    # This is a bit of a hack. The tests use MagicMock extensively which causes getattr() to always
-    # evaluate to True. We check for an attribute that normally isn't present to detect this.
-    if hasattr(args, '_no_bndl_') and getattr(args, '_no_bndl_'):
-        return False
-
     for arg in BNDL_ARGS:
         if hasattr(args, arg) and getattr(args, arg) != BNDL_ARGS[arg]:
             return True
