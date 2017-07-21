@@ -21,19 +21,19 @@ echo ------------------------------------------------
 echo Creating single executable for 'conduct' command
 echo ------------------------------------------------
 echo.
-pyinstaller --onefile conductr_cli/conduct.py
+pyinstaller conduct.spec
 
 echo ------------------------------------------------
 echo Creating single executable for 'shazar' command
 echo ------------------------------------------------
 echo.
-pyinstaller --onefile conductr_cli/shazar.py
+pyinstaller shazar.spec
 
 echo ------------------------------------------------
 echo Creating single executable for 'bndl' command
 echo ------------------------------------------------
 echo.
-pyinstaller --onefile conductr_cli/bndl.py
+pyinstaller bndl.spec
 
 echo ------------------------------------------------
 echo Validating version for 'conduct' command
