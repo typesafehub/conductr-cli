@@ -1,12 +1,11 @@
 from pyhocon import ConfigFactory, ConfigTree
 from pyhocon.exceptions import ConfigMissingException
-from conductr_cli import bndl_main, bundle_utils, conduct_request, conduct_url, constants, screen_utils, validation
+from conductr_cli import bndl_main, bundle_utils, constants, screen_utils, validation
 from conductr_cli.exceptions import MalformedBundleError, InsecureFilePermissions
 from conductr_cli import resolver, bundle_installation
 from conductr_cli.constants import DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
     DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR
 from conductr_cli.bndl_utils import BndlFormat
-from conductr_cli.conduct_url import conductr_host
 from functools import partial
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
@@ -23,6 +22,8 @@ import zipfile
 
 
 # A mapping of respected `bndl` arguments to their defaults
+from conductr_cli.control_protocol import load_bundle
+
 BNDL_ARGS = {
     'endpoint_dicts': [],
     'envs': [],
@@ -102,7 +103,6 @@ def load_v1(args):
 
     with_bundle_configurations = partial(apply_to_configurations, bundle_conf, overlay_bundle_conf)
 
-    url = conduct_url.url('bundles', args)
     files = get_payload(bundle_file_name, bundle_open_file, with_bundle_configurations)
     if configuration_file is not None:
         open_configuration_file, config_digest = bundle_utils.digest_extract_and_open(configuration_file)
@@ -117,17 +117,9 @@ def load_v1(args):
 
     log.info('Loading bundle to ConductR..')
     multipart = create_multipart(log, files)
-    response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
-                                    data=multipart,
-                                    auth=args.conductr_auth,
-                                    verify=args.server_verification_file,
-                                    headers={'Content-Type': multipart.content_type})
-    validation.raise_for_status_inc_3xx(response)
+    response = load_bundle(args, multipart)
 
-    if log.is_verbose_enabled():
-        log.verbose(validation.pretty_json(response.text))
-
-    response_json = json.loads(response.text)
+    response_json = json.loads(response)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     if not args.no_wait:
@@ -291,22 +283,12 @@ def load_v2(args):
     # if configuration_file and os.path.exists(configuration_file):
     #     os.remove(configuration_file)
 
-    url = conduct_url.url('bundles', args)
-
     log.info('Loading bundle to ConductR..')
     multipart = create_multipart(log, files)
 
-    response = conduct_request.post(args.dcos_mode, conductr_host(args), url,
-                                    data=multipart,
-                                    auth=args.conductr_auth,
-                                    verify=args.server_verification_file,
-                                    headers={'Content-Type': multipart.content_type})
-    validation.raise_for_status_inc_3xx(response)
+    response = load_bundle(args, multipart)
 
-    if log.is_verbose_enabled():
-        log.verbose(validation.pretty_json(response.text))
-
-    response_json = json.loads(response.text)
+    response_json = json.loads(response)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     if not args.no_wait:
