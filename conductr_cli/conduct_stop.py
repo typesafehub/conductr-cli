@@ -1,8 +1,7 @@
-from conductr_cli import bundle_utils, conduct_request, conduct_url, validation, bundle_scale
-from conductr_cli.conduct_url import conductr_host
-import json
+from conductr_cli import bundle_utils, validation, bundle_scale
 import logging
-from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
+
+from conductr_cli.control_protocol import stop_bundle
 
 
 @validation.handle_connection_error
@@ -12,16 +11,8 @@ def stop(args):
     """`conduct stop` command"""
 
     log = logging.getLogger(__name__)
-    path = 'bundles/{}?scale=0'.format(args.bundle)
-    url = conduct_url.url(path, args)
-    response = conduct_request.put(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth,
-                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
-    validation.raise_for_status_inc_3xx(response)
+    response_json = stop_bundle(args)
 
-    if log.is_verbose_enabled():
-        log.verbose(validation.pretty_json(response.text))
-
-    response_json = json.loads(response.text)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     log.info('Bundle stop request sent.')
