@@ -47,7 +47,7 @@ class TestControlProtocol(CliTestCase):
                                           auth=self.conductr_auth, data=file_mock,
                                           verify=self.server_verification_file,
                                           headers={'Content-Type': file_mock.content_type})
-        self.assertEqual('{}', result)
+        self.assertEqual({}, result)
 
     def test_load_bundle_failure(self):
         stdout = MagicMock()
@@ -83,7 +83,7 @@ class TestControlProtocol(CliTestCase):
                                           auth=self.conductr_auth, timeout=5,
                                           verify=self.server_verification_file
                                           )
-        self.assertEqual('{}', result)
+        self.assertEqual({}, result)
 
     def test_stop_bundle_failure(self):
         stdout = MagicMock()

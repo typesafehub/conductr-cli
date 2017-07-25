@@ -15,7 +15,6 @@ import os
 import stat
 import sys
 import time
-import json
 import logging
 import tempfile
 import zipfile
@@ -117,9 +116,8 @@ def load_v1(args):
 
     log.info('Loading bundle to ConductR..')
     multipart = create_multipart(log, files)
-    response = load_bundle(args, multipart)
+    response_json = load_bundle(args, multipart)
 
-    response_json = json.loads(response)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     if not args.no_wait:
@@ -286,9 +284,8 @@ def load_v2(args):
     log.info('Loading bundle to ConductR..')
     multipart = create_multipart(log, files)
 
-    response = load_bundle(args, multipart)
+    response_json = load_bundle(args, multipart)
 
-    response_json = json.loads(response)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     if not args.no_wait:

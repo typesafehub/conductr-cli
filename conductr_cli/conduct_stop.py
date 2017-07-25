@@ -1,5 +1,4 @@
 from conductr_cli import bundle_utils, validation, bundle_scale
-import json
 import logging
 
 from conductr_cli.control_protocol import stop_bundle
@@ -12,9 +11,8 @@ def stop(args):
     """`conduct stop` command"""
 
     log = logging.getLogger(__name__)
-    response = stop_bundle(args)
+    response_json = stop_bundle(args)
 
-    response_json = json.loads(response)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     log.info('Bundle stop request sent.')

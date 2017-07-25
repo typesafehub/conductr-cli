@@ -1,3 +1,4 @@
+import json
 import logging
 
 from conductr_cli import conduct_url, conduct_request, validation
@@ -19,7 +20,7 @@ def load_bundle(args, multipart_files):
     if log.is_verbose_enabled():
         log.verbose(validation.pretty_json(response.text))
 
-    return response.text
+    return json.loads(response.text)
 
 
 def stop_bundle(args):
@@ -33,4 +34,4 @@ def stop_bundle(args):
     if log.is_verbose_enabled():
         log.verbose(validation.pretty_json(response.text))
 
-    return response.text
+    return json.loads(response.text)
