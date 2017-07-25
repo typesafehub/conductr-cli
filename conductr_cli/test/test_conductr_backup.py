@@ -6,7 +6,7 @@ from requests import HTTPError
 from requests_toolbelt import MultipartEncoder
 
 from conductr_cli.bundle_core_info import BundleCoreInfo
-from conductr_cli.conductr_backup import agents, members, bundles, bundle_files, validate_artifact, backup_members, \
+from conductr_cli.conductr_backup import bundles, bundle_files, validate_artifact, backup_members, \
     backup_agents, backup_bundle_json, backup_bundle_conf, backup_bundle_file, backup, process_added_bundles, \
     process_removed_bundles, backup_bundle, remove_bundle
 from conductr_cli.exceptions import ConductBackupError
@@ -184,10 +184,10 @@ class TestBackup(CliTestCase):
     backup_path = 'some/path'
     bundle_zip = 'data/bundles/reactive-maps-backend-region-6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28.zip'
 
-    @patch('conductr_cli.conductr_backup.members')
+    @patch('conductr_cli.control_protocol.get_members')
     def test_backup_members(self, members_mock):
         mock_args = MagicMock(**self.args)
-        members_mock.return_value = 'world'
+        members_mock.return_value = '{}'
         backup_path = 'some/path'
 
         open_mock = mock.mock_open()
@@ -198,9 +198,9 @@ class TestBackup(CliTestCase):
 
         members_mock.assert_called_once_with(mock_args)
         open_mock.assert_called_once_with(members_json_path, 'w', encoding='utf-8')
-        open_mock.return_value.__enter__.return_value.writelines.assert_called_once_with('world')
+        open_mock.return_value.__enter__.return_value.writelines.assert_called_once_with('"{}"')
 
-    @patch('conductr_cli.conductr_backup.agents')
+    @patch('conductr_cli.control_protocol.get_agents')
     def test_backup_agents(self, agents_mock):
         mock_args = MagicMock(**self.args)
         backup_path = 'some/path'
@@ -214,7 +214,7 @@ class TestBackup(CliTestCase):
 
         agents_mock.assert_called_once_with(mock_args)
         open_mock.assert_called_once_with(agents_json_path, 'w', encoding='utf-8')
-        open_mock.return_value.__enter__.return_value.writelines.assert_called_once_with('dummy')
+        open_mock.return_value.__enter__.return_value.writelines.assert_called_once_with('"dummy"')
 
     def test_backup_bundle_json(self):
         backup_path = 'some/path'
@@ -545,7 +545,8 @@ class TestBackup(CliTestCase):
             bundle_digest='abcd',
             configuration_digest='efgh')
 
-        initial = [reactive_maps_backend_region, continuous_delivery, eslite, reactive_maps_backend_summary, reactive_maps_frontend,
+        initial = [reactive_maps_backend_region, continuous_delivery, eslite, reactive_maps_backend_summary,
+                   reactive_maps_frontend,
                    visualiser]
         final = [added, continuous_delivery, eslite, reactive_maps_backend_summary, reactive_maps_frontend, visualiser]
 
@@ -556,133 +557,3 @@ class TestBackup(CliTestCase):
         agents_mock.assert_called_once_with(mock_args, temp_file)
         remove_backup_directory_mock.assert_called_once_with(temp_file)
         compress_backup_mock.assert_called_once_with('/my/fav/path', temp_file)
-
-
-class TestAgent(CliTestCase):
-    conductr_auth = ('username', 'password')
-    server_verification_file = MagicMock(name='server_verification_file')
-
-    args = {
-        'dcos_mode': False,
-        'command': 'conduct',
-        'scheme': 'http',
-        'host': '127.0.0.1',
-        'port': 9005,
-        'base_path': '/',
-        'api_version': '1',
-        'disable_instructions': False,
-        'verbose': False,
-        'no_wait': False,
-        'quiet': False,
-        'cli_parameters': '',
-        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
-        'output_path': '/my/fav/path',
-        'conductr_auth': conductr_auth,
-        'server_verification_file': server_verification_file
-    }
-
-    agent_url = 'http://127.0.0.1:9005/agents'
-
-    def test_agent_success(self):
-        mock_members_json = self.respond_with_file_contents('data/bundles/agents.json')
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_members_json):
-            result = agents(input_args)
-            mock_members_json.assert_called_once_with(False, '127.0.0.1', self.agent_url, auth=self.conductr_auth,
-                                                      verify=self.server_verification_file,
-                                                      timeout=DEFAULT_HTTP_TIMEOUT)
-            expected = file_contents('data/bundles/agents.json')
-            self.assertEqual(expected, result)
-
-    def test_agent_failure(self):
-        mock_bundle = self.respond_with(status_code=404)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, agents, input_args)
-        mock_bundle.assert_called_once_with(False, '127.0.0.1', self.agent_url, auth=self.conductr_auth,
-                                            verify=self.server_verification_file,
-                                            timeout=DEFAULT_HTTP_TIMEOUT)
-
-        mock_bundle = self.respond_with(status_code=500)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, agents, input_args)
-        mock_bundle.assert_called_once_with(False, '127.0.0.1', self.agent_url, auth=self.conductr_auth,
-                                            verify=self.server_verification_file,
-                                            timeout=DEFAULT_HTTP_TIMEOUT)
-
-        mock_bundle = self.respond_with(status_code=301)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, agents, input_args)
-        mock_bundle.assert_called_once_with(False, '127.0.0.1', self.agent_url, auth=self.conductr_auth,
-                                            verify=self.server_verification_file,
-                                            timeout=DEFAULT_HTTP_TIMEOUT)
-
-
-class TestMember(CliTestCase):
-    conductr_auth = ('username', 'password')
-    server_verification_file = MagicMock(name='server_verification_file')
-
-    args = {
-        'dcos_mode': False,
-        'command': 'conduct',
-        'scheme': 'http',
-        'host': '127.0.0.1',
-        'port': 9005,
-        'base_path': '/',
-        'api_version': '1',
-        'disable_instructions': False,
-        'verbose': False,
-        'no_wait': False,
-        'quiet': False,
-        'cli_parameters': '',
-        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
-        'output_path': '/my/fav/path',
-        'conductr_auth': conductr_auth,
-        'server_verification_file': server_verification_file
-    }
-
-    member_url = 'http://127.0.0.1:9005/members'
-
-    def test_members_with_success(self):
-        mock_members_json = self.respond_with_file_contents('data/bundles/members.json')
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_members_json):
-            result = members(input_args)
-            mock_members_json.assert_called_once_with(False, '127.0.0.1', self.member_url, auth=self.conductr_auth,
-                                                      verify=self.server_verification_file,
-                                                      timeout=DEFAULT_HTTP_TIMEOUT)
-            expected = file_contents('data/bundles/members.json')
-            self.assertEqual(expected, result)
-
-    def test_members_with_failure(self):
-        mock_bundle = self.respond_with(status_code=404)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, members, input_args)
-            mock_bundle.assert_called_once_with(False, '127.0.0.1', self.member_url, auth=self.conductr_auth,
-                                                verify=self.server_verification_file,
-                                                timeout=DEFAULT_HTTP_TIMEOUT)
-
-        mock_bundle = self.respond_with(status_code=500)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, members, input_args)
-            mock_bundle.assert_called_once_with(False, '127.0.0.1', self.member_url, auth=self.conductr_auth,
-                                                verify=self.server_verification_file,
-                                                timeout=DEFAULT_HTTP_TIMEOUT)
-
-        mock_bundle = self.respond_with(status_code=301)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, members, input_args)
-            mock_bundle.assert_called_once_with(False, '127.0.0.1', self.member_url, auth=self.conductr_auth,
-                                                verify=self.server_verification_file,
-                                                timeout=DEFAULT_HTTP_TIMEOUT)
