@@ -18,9 +18,10 @@ class CliTestCase(TestCase):
                                |"""))
 
     @staticmethod
-    def respond_with(status_code=200, text='', content_type=None):
+    def respond_with(status_code=200, text='', content_type_header='Content-Type', content_type=None, content=None):
         reasons = {
             200: 'OK',
+            301: 'Moved Permanently',
             401: 'Unauthorized',
             403: 'Forbidden',
             404: 'Not Found',
@@ -36,9 +37,13 @@ class CliTestCase(TestCase):
         if content_type:
             args.update({
                 'headers': {
-                    'Content-Type': content_type
+                    content_type_header: content_type
                 }
             })
+
+        if content:
+            args.update({'content': content})
+
         response_mock = MagicMock(**args)
 
         if status_code == 200:
@@ -53,6 +58,9 @@ class CliTestCase(TestCase):
     def respond_with_file_contents(self, filepath):
         with open(os.path.join(os.path.dirname(__file__), filepath), 'r') as content_file:
             return self.respond_with(text=content_file.read())
+
+    def respond_with_multi_part_contents(self, multipart_data, content_type):
+        return self.respond_with(status_code=200, content_type_header='content-type', content_type=content_type, content=multipart_data)
 
     @staticmethod
     def raise_connection_error(reason, url):
@@ -135,3 +143,8 @@ def create_mock_logger():
     get_logger_mock = MagicMock(return_value=log_mock)
 
     return get_logger_mock, log_mock
+
+
+def file_contents(file_path):
+    with open(os.path.join(os.path.dirname(__file__), file_path), 'r') as content_file:
+        return content_file.read()

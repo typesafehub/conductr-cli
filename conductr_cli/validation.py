@@ -18,7 +18,8 @@ from conductr_cli.exceptions import BindAddressNotFound, BundleScaleError, Condu
     BintrayUnreachableError, BundleResolutionError, WaitTimeoutError, InsecureFilePermissions, \
     SandboxImageFetchError, SandboxImageNotFoundError, JavaCallError, HostnameLookupError, JavaUnsupportedVendorError, \
     JavaUnsupportedVersionError, JavaVersionParseError, DockerValidationError, SandboxImageNotAvailableOfflineError, \
-    SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, LicenseLoadError, LicenseDownloadError, NOT_FOUND_ERROR
+    SandboxUnsupportedOsError, SandboxUnsupportedOsArchError, LicenseLoadError, LicenseDownloadError, NOT_FOUND_ERROR, \
+    ConductBackupError
 from conductr_cli.resolvers import bintray_resolver, docker_offline_resolver, docker_resolver, offline_resolver, \
     stdin_resolver, uri_resolver
 
@@ -656,3 +657,21 @@ def argparse_version(value):
         return value
 
     raise argparse.ArgumentTypeError("'%s' is not a valid version number" % value)
+
+
+def handle_conductr_backup_error(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ConductBackupError as err:
+            log = get_logger_for_func(func)
+            log.error('ConductR backup could not be completed : {}'.format(err.message))
+            if err.cause:
+                log.error('Cause : '.format(err.cause))
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler

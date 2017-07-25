@@ -287,17 +287,15 @@ def filter_bundles_by_id_or_name(bundles, bundle_id_or_name):
     return [
         bundle
         for bundle in bundles
-        if has_bundle_name(bundle, bundle_id_or_name) or has_bundle_id(bundle, bundle_id_or_name)
+        if has_bundle_name(bundle['attributes']['bundleName'], bundle_id_or_name) or has_bundle_id(bundle['bundleId'], bundle_id_or_name)
     ]
 
 
-def has_bundle_name(bundle, bundle_name):
-    actual_name = bundle['attributes']['bundleName']
+def has_bundle_name(actual_name, bundle_name):
     return actual_name == bundle_name or actual_name.startswith(bundle_name)
 
 
-def has_bundle_id(bundle, bundle_id):
-    actual_bundle_id = bundle['bundleId']
+def has_bundle_id(actual_bundle_id, bundle_id):
     if actual_bundle_id == bundle_id:
         return True
     else:

@@ -1,0 +1,413 @@
+[
+  {
+    "bundleId": "6273d7a5b059d0e978c6d69ee1a5d7b4-d54620c7bc91897bbb2f25faaac25f46",
+    "bundleDigest": "6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28",
+    "configurationDigest": "d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792",
+    "attributes": {
+      "system": "reactive-maps",
+      "nrOfCpus": 0.1,
+      "memory": 402653184,
+      "diskSpace": 200000000,
+      "roles": [
+        "intranet"
+      ],
+      "bundleName": "reactive-maps-backend-region",
+      "systemVersion": "1",
+      "compatibilityVersion": "1",
+      "tags": [],
+      "annotations": {}
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "akka-remote": {
+          "bindProtocol": "tcp"
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1,
+      "nrOfReschedules": 0
+    },
+    "bundleExecutions": [
+      {
+        "host": "192.168.10.1",
+        "pid": 84497,
+        "startTime": "2017-06-29T18:41:05.657Z",
+        "endpoints": {
+          "akka-remote": {
+            "bindPort": 10609,
+            "hostPort": 10609
+          }
+        },
+        "isStarted": true,
+        "isActive": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@192.168.10.1:9004",
+          "uid": 2030687294
+        },
+        "bundleFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28.zip",
+        "configurationFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792.zip"
+      }
+    ],
+    "hasError": false
+  },
+  {
+    "bundleId": "870ee7d6a4f5853229275cca14b604b8-d54620c7bc91897bbb2f25faaac25f46",
+    "bundleDigest": "870ee7d6a4f5853229275cca14b604b8aca62a5e74819c0a092858cc75b6c186",
+    "configurationDigest": "d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792",
+    "attributes": {
+      "system": "continuous-delivery",
+      "nrOfCpus": 0.1,
+      "memory": 402653184,
+      "diskSpace": 200000000,
+      "roles": [
+        "continuous-delivery"
+      ],
+      "bundleName": "continuous-delivery",
+      "systemVersion": "3",
+      "compatibilityVersion": "3",
+      "tags": [
+        "2.1.0"
+      ],
+      "annotations": {}
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "akka-remote": {
+          "bindProtocol": "tcp"
+        },
+        "deployments": {
+          "bindProtocol": "http",
+          "serviceName": "deployments",
+          "acls": [
+            {
+              "http": {
+                "requests": [
+                  {
+                    "pathBeg": "/deployments/events"
+                  },
+                  {
+                    "pathBeg": "/deployments"
+                  },
+                  {
+                    "pathBeg": "/deployments/batches"
+                  },
+                  {
+                    "pathBeg": "/deployments/artefacts"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1,
+      "nrOfReschedules": 0
+    },
+    "bundleExecutions": [
+      {
+        "host": "192.168.10.1",
+        "pid": 84250,
+        "startTime": "2017-06-29T18:38:41.487Z",
+        "endpoints": {
+          "akka-remote": {
+            "bindPort": 10007,
+            "hostPort": 10007
+          },
+          "deployments": {
+            "bindPort": 10822,
+            "hostPort": 10822
+          }
+        },
+        "isStarted": true,
+        "isActive": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@192.168.10.1:9004",
+          "uid": 2030687294
+        },
+        "bundleFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/870ee7d6a4f5853229275cca14b604b8aca62a5e74819c0a092858cc75b6c186.zip",
+        "configurationFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792.zip"
+      }
+    ],
+    "hasError": false
+  },
+  {
+    "bundleId": "57e432d0c647be2bbc83fa8e59ee469b-d54620c7bc91897bbb2f25faaac25f46",
+    "bundleDigest": "57e432d0c647be2bbc83fa8e59ee469bb59d1f72df31f3d82cab0ad396130fe7",
+    "configurationDigest": "d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792",
+    "attributes": {
+      "system": "eslite",
+      "nrOfCpus": 0.1,
+      "memory": 402653184,
+      "diskSpace": 200000000,
+      "roles": [
+        "elasticsearch"
+      ],
+      "bundleName": "eslite",
+      "systemVersion": "1",
+      "compatibilityVersion": "1",
+      "tags": [
+        "2.1.0"
+      ],
+      "annotations": {}
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "akka-remote": {
+          "bindProtocol": "tcp"
+        },
+        "es": {
+          "bindProtocol": "http",
+          "serviceName": "elastic-search"
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1,
+      "nrOfReschedules": 0
+    },
+    "bundleExecutions": [
+      {
+        "host": "192.168.10.3",
+        "pid": 84292,
+        "startTime": "2017-06-29T18:38:51.719Z",
+        "endpoints": {
+          "akka-remote": {
+            "bindPort": 10822,
+            "hostPort": 10822
+          },
+          "es": {
+            "bindPort": 10007,
+            "hostPort": 10007
+          }
+        },
+        "isStarted": true,
+        "isActive": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@192.168.10.1:9004",
+          "uid": 2030687294
+        },
+        "bundleFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/57e432d0c647be2bbc83fa8e59ee469bb59d1f72df31f3d82cab0ad396130fe7.zip",
+        "configurationFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792.zip"
+      }
+    ],
+    "hasError": false
+  },
+  {
+    "bundleId": "abf60451c6af18adcc851d67b369b7f5-d54620c7bc91897bbb2f25faaac25f46",
+    "bundleDigest": "abf60451c6af18adcc851d67b369b7f54810d12f3a0ef80a89bdc2d9dff49a10",
+    "configurationDigest": "d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792",
+    "attributes": {
+      "system": "reactive-maps",
+      "nrOfCpus": 0.1,
+      "memory": 402653184,
+      "diskSpace": 200000000,
+      "roles": [
+        "intranet"
+      ],
+      "bundleName": "reactive-maps-backend-summary",
+      "systemVersion": "1",
+      "compatibilityVersion": "1",
+      "tags": [],
+      "annotations": {}
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "akka-remote": {
+          "bindProtocol": "tcp"
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1,
+      "nrOfReschedules": 0
+    },
+    "bundleExecutions": [
+      {
+        "host": "192.168.10.1",
+        "pid": 84551,
+        "startTime": "2017-06-29T18:41:13.178Z",
+        "endpoints": {
+          "akka-remote": {
+            "bindPort": 10647,
+            "hostPort": 10647
+          }
+        },
+        "isStarted": true,
+        "isActive": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@192.168.10.1:9004",
+          "uid": 2030687294
+        },
+        "bundleFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/abf60451c6af18adcc851d67b369b7f54810d12f3a0ef80a89bdc2d9dff49a10.zip",
+        "configurationFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792.zip"
+      }
+    ],
+    "hasError": false
+  },
+  {
+    "bundleId": "69aa58f00909e36a3cb4229414698b64-d54620c7bc91897bbb2f25faaac25f46",
+    "bundleDigest": "69aa58f00909e36a3cb4229414698b6436295de8368898b5620b24f52c40c5c3",
+    "configurationDigest": "d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792",
+    "attributes": {
+      "system": "reactive-maps",
+      "nrOfCpus": 0.1,
+      "memory": 402653184,
+      "diskSpace": 200000000,
+      "roles": [
+        "dmz"
+      ],
+      "bundleName": "reactive-maps-frontend",
+      "systemVersion": "1",
+      "compatibilityVersion": "1",
+      "tags": [
+        "1.0-SNAPSHOT"
+      ],
+      "annotations": {}
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "akka-remote": {
+          "bindProtocol": "tcp"
+        },
+        "web": {
+          "bindProtocol": "http",
+          "serviceName": "reactive-maps-frontend",
+          "acls": [
+            {
+              "http": {
+                "requests": [
+                  {
+                    "pathBeg": "/"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1,
+      "nrOfReschedules": 0
+    },
+    "bundleExecutions": [
+      {
+        "host": "192.168.10.1",
+        "pid": 84605,
+        "startTime": "2017-06-29T18:41:27.594Z",
+        "endpoints": {
+          "akka-remote": {
+            "bindPort": 10166,
+            "hostPort": 10166
+          },
+          "web": {
+            "bindPort": 10410,
+            "hostPort": 10410
+          }
+        },
+        "isStarted": true,
+        "isActive": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@192.168.10.1:9004",
+          "uid": 2030687294
+        },
+        "bundleFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/69aa58f00909e36a3cb4229414698b6436295de8368898b5620b24f52c40c5c3.zip",
+        "configurationFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792.zip"
+      }
+    ],
+    "hasError": false
+  },
+  {
+    "bundleId": "cabaae7cf37b1cf99b3861515cd5e77a-d54620c7bc91897bbb2f25faaac25f46",
+    "bundleDigest": "cabaae7cf37b1cf99b3861515cd5e77a16fa9638e225fa234929cc1d46dde937",
+    "configurationDigest": "d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792",
+    "attributes": {
+      "system": "visualizer",
+      "nrOfCpus": 0.1,
+      "memory": 402653184,
+      "diskSpace": 200000000,
+      "roles": [
+        "web"
+      ],
+      "bundleName": "visualizer",
+      "systemVersion": "2",
+      "compatibilityVersion": "2",
+      "tags": [
+        "2.1.0"
+      ],
+      "annotations": {}
+    },
+    "bundleConfig": {
+      "endpoints": {
+        "visualizer": {
+          "bindProtocol": "http",
+          "serviceName": "visualizer",
+          "acls": [
+            {
+              "http": {
+                "requests": [
+                  {
+                    "pathBeg": "/"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "bundleScale": {
+      "scale": 1,
+      "nrOfReschedules": 0
+    },
+    "bundleExecutions": [
+      {
+        "host": "192.168.10.1",
+        "pid": 84368,
+        "startTime": "2017-06-29T18:39:56.614Z",
+        "endpoints": {
+          "visualizer": {
+            "bindPort": 10917,
+            "hostPort": 10917
+          }
+        },
+        "isStarted": true,
+        "isActive": true
+      }
+    ],
+    "bundleInstallations": [
+      {
+        "uniqueAddress": {
+          "address": "akka.tcp://conductr@192.168.10.1:9004",
+          "uid": 2030687294
+        },
+        "bundleFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/cabaae7cf37b1cf99b3861515cd5e77a16fa9638e225fa234929cc1d46dde937.zip",
+        "configurationFile": "file:///Users/ashutosh/.conductr/images/tmp/conductr/192.168.10.1/bundles/d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792.zip"
+      }
+    ],
+    "hasError": false
+  }
+]

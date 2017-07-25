@@ -400,6 +400,11 @@ def file_write_bytes(path, bs):
         file.write(bs)
 
 
+def file_write_string(file_path, data):
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.writelines(data)
+
+
 def find_bundle_conf_dir(dir):
     for dir_path, dir_names, file_names in os.walk(dir):
         for file_name in file_names:

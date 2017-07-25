@@ -3,7 +3,7 @@ import argparse
 from conductr_cli import \
     bndl_main, conduct_agents, conduct_deploy, conduct_info, conduct_load, conduct_members, conduct_run, \
     conduct_service_names, conduct_stop, conduct_unload, version, conduct_logs, conduct_events, conduct_acls, \
-    conduct_dcos, conduct_load_license, host, logging_setup, conduct_url, custom_settings
+    conduct_dcos, conduct_load_license, host, logging_setup, conduct_url, custom_settings, conductr_backup
 from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
@@ -473,6 +473,27 @@ def build_parser(dcos_mode):
 
     load_license_parser.set_defaults(func=conduct_load_license.load_license)
 
+    backup_parser = subparsers.add_parser('backup',
+                                          help='Backup up the ConductR cluster',
+                                          formatter_class=argparse.RawTextHelpFormatter)
+
+    backup_parser.add_argument('bundle',
+                               nargs='?',
+                               default=None,
+                               action='store',
+                               help='The optional id or name to the bundle.\n'
+                                    'When specified backs up the bundle configuration')
+
+    backup_parser.add_argument('-o', '-output',
+                               nargs='?',
+                               action='store',
+                               dest='output_path',
+                               help='The optional path to store the backup.\n'
+                                    'When specified backs up the bundle configuration to the specified file, '
+                                    'defaults to std. out')
+
+    add_default_arguments(backup_parser, dcos_mode)
+    backup_parser.set_defaults(func=conductr_backup.backup)
     return parser
 
 
