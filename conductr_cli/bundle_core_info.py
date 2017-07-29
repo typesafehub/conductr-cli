@@ -7,8 +7,8 @@ class BundleCoreInfo(object):
         self.bundle_name = bundle_name
         self.bundle_digest = bundle_digest
         self.configuration_digest = configuration_digest
-        self.bundle_name_with_digest = str.format(
-            '{0}-{1}', bundle_name, bundle_digest)
+        self.bundle_name_with_digest = '{0}-{1}'.format(bundle_name, bundle_digest)
+        self.bundle_name_with_configuration_digest = '{0}-{1}'.format(bundle_name, configuration_digest)
 
     @classmethod
     def from_bundles(cls, bundles_json):

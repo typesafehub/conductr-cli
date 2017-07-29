@@ -100,8 +100,7 @@ def backup_bundle(args, backup_path, bundle_core_info: BundleCoreInfo):
 
     # the config is also present
     if len(bundle_files_response) == 2:
-        bundle_conf_validated = backup_bundle_conf(backup_path, bundle_files_response[1],
-                                                   bundle_core_info.configuration_digest)
+        bundle_conf_validated = backup_bundle_conf(backup_path, bundle_files_response[1], bundle_core_info)
 
     validation_failed = bundle_validated is False or bundle_conf_validated is False
     if validation_failed:
@@ -142,10 +141,10 @@ def backup_bundle_file(backup_path, bundle_file, bundle_info):
     return validate_artifact(bundle_file_path, bundle_info.bundle_digest)
 
 
-def backup_bundle_conf(backup_path, bundle_conf, configuration_digest):
-    bundle_conf_path = '{}.zip'.format(os.path.join(backup_path, configuration_digest))
+def backup_bundle_conf(backup_path, bundle_conf, bundle_info):
+    bundle_conf_path = '{}.zip'.format(os.path.join(backup_path, bundle_info.bundle_name_with_configuration_digest))
     file_write_bytes(bundle_conf_path, bundle_conf)
-    bundle_conf_validated = validate_artifact(bundle_conf_path, configuration_digest)
+    bundle_conf_validated = validate_artifact(bundle_conf_path, bundle_info.configuration_digest)
     return bundle_conf_validated
 
 
