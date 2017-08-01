@@ -234,16 +234,16 @@ class TestBackup(CliTestCase):
         mock_bundle_conf = MagicMock()
 
         backup_path = 'bkp_path'
-        digest = 'digest'
+        mock_bundle_info = BundleCoreInfo('b_id', 'b_name', '12345', '789')
 
         open_mock = mock.mock_open()
         with patch('builtins.open', open_mock):
-            validated = backup_bundle_conf(backup_path, mock_bundle_conf, digest)
+            validated = backup_bundle_conf(backup_path, mock_bundle_conf, mock_bundle_info)
 
-        bundle_conf_path = '{}.zip'.format(os.path.join(backup_path, digest))
+        bundle_conf_path = '{}.zip'.format(os.path.join(backup_path, 'b_name-789'))
         self.assertTrue(validated)
 
-        validate_mock.assert_called_once_with(bundle_conf_path, digest)
+        validate_mock.assert_called_once_with(bundle_conf_path, '789')
 
     @patch('tempfile.mkdtemp')
     @patch('conductr_cli.conductr_backup.remove_backup_directory')
@@ -323,7 +323,7 @@ class TestBackup(CliTestCase):
 
         bundle_files_mock.assert_called_once_with(mock_args, bundle_info.bundle_id)
         backup_bundle_mock.assert_called_once_with(backup_path, 1, bundle_info)
-        backup_bundle_conf_mock.assert_called_once_with(backup_path, 2, bundle_info.configuration_digest)
+        backup_bundle_conf_mock.assert_called_once_with(backup_path, 2, bundle_info)
 
     @patch('conductr_cli.conductr_backup.bundle_files')
     @patch('conductr_cli.conductr_backup.backup_bundle_file')
@@ -343,7 +343,7 @@ class TestBackup(CliTestCase):
 
         bundle_files_mock.assert_called_once_with(mock_args, bundle_info.bundle_id)
         backup_bundle_file_mock.assert_called_once_with(backup_path, 1, bundle_info)
-        backup_bundle_conf_mock.assert_called_once_with(backup_path, 2, bundle_info.configuration_digest)
+        backup_bundle_conf_mock.assert_called_once_with(backup_path, 2, bundle_info)
 
     @patch('conductr_cli.conductr_backup.bundle_files')
     @patch('conductr_cli.conductr_backup.backup_bundle_file')
@@ -365,7 +365,7 @@ class TestBackup(CliTestCase):
 
         bundle_files_mock.assert_called_once_with(mock_args, bundle_info.bundle_id)
         backup_bundle_file_mock.assert_called_once_with(backup_path, 1, bundle_info)
-        backup_bundle_conf_mock.assert_called_once_with(backup_path, 2, bundle_info.configuration_digest)
+        backup_bundle_conf_mock.assert_called_once_with(backup_path, 2, bundle_info)
 
     @patch('conductr_cli.conductr_backup.bundle_files')
     @patch('conductr_cli.conductr_backup.backup_bundle_file')
