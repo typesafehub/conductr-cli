@@ -10,7 +10,7 @@ import requests
 import sys
 from requests_toolbelt import MultipartDecoder
 
-from conductr_cli import conduct_url, conduct_request, validation
+from conductr_cli import conduct_url, conduct_request, validation, control_protocol
 from conductr_cli.bndl_utils import file_write_bytes, file_write_string
 from conductr_cli.bundle_core_info import BundleCoreInfo
 from conductr_cli.conduct_info_inspect import filter_bundles_by_id_or_name
@@ -108,13 +108,13 @@ def backup_bundle(args, backup_path, bundle_core_info: BundleCoreInfo):
 
 
 def backup_members(args, backup_path):
-    members_info = members(args)
+    members_info = json.dumps(control_protocol.get_members(args))
     members_json_path = os.path.join(backup_path, 'members.json')
     file_write_string(members_json_path, members_info)
 
 
 def backup_agents(args, backup_path):
-    agents_info = agents(args)
+    agents_info = json.dumps(control_protocol.get_agents(args))
     agents_info_path = os.path.join(backup_path, 'agents.json')
     file_write_string(agents_info_path, agents_info)
 
@@ -176,26 +176,6 @@ def bundle_files(args, bundle_id):
         raise ConductBackupError('Bundle was not found.')
 
     return result
-
-
-def members(args):
-    log = logging.getLogger(__name__)
-    url = conduct_url.url('members', args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth,
-                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
-    validation.raise_for_status_inc_3xx(response)
-    log.debug(validation.pretty_json(response.text))
-    return response.text
-
-
-def agents(args):
-    log = logging.getLogger(__name__)
-    url = conduct_url.url('agents', args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth,
-                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
-    validation.raise_for_status_inc_3xx(response)
-    log.debug(validation.pretty_json(response.text))
-    return response.text
 
 
 def remove_backup_directory(backup_path):

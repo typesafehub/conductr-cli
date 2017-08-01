@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 from requests import HTTPError
 
 from conductr_cli import logging_setup
-from conductr_cli.control_protocol import load_bundle, stop_bundle
+from conductr_cli.control_protocol import load_bundle, stop_bundle, get_members, get_agents
 from conductr_cli.test.cli_test_case import CliTestCase
 
 
@@ -95,9 +95,79 @@ class TestControlProtocol(CliTestCase):
         post_mock = self.respond_with(status_code=401)
 
         with patch('conductr_cli.conduct_request.put', post_mock):
-            self.assertRaises(HTTPError, lambda: stop_bundle(args_mock))
+            self.assertRaises(HTTPError, stop_bundle, args_mock)
 
         post_mock.assert_called_once_with(False, '127.0.0.1', stop_bundle_url,
                                           auth=self.conductr_auth, timeout=5,
                                           verify=self.server_verification_file
                                           )
+
+    def test_agents_success(self):
+        stdout = MagicMock()
+        stderr = MagicMock()
+        logging_setup.configure_logging(MagicMock(), stdout, stderr)
+
+        args_mock = MagicMock(**self.args)
+        agent_url = 'http://127.0.0.1:9005/agents'
+        agents_mock = self.respond_with(status_code=200, text='{}')
+
+        with patch('conductr_cli.conduct_request.get', agents_mock):
+            result = get_agents(args_mock)
+
+        agents_mock.assert_called_once_with(False, '127.0.0.1', agent_url,
+                                            auth=self.conductr_auth, timeout=5,
+                                            verify=self.server_verification_file
+                                            )
+        self.assertEqual({}, result)
+
+    def test_agents_failure(self):
+        stdout = MagicMock()
+        stderr = MagicMock()
+        logging_setup.configure_logging(MagicMock(), stdout, stderr)
+
+        args_mock = MagicMock(**self.args)
+        agent_url = 'http://127.0.0.1:9005/agents'
+        agents_mock = self.respond_with(status_code=500, text='{}')
+
+        with patch('conductr_cli.conduct_request.get', agents_mock):
+            self.assertRaises(HTTPError, get_agents, args_mock)
+
+        agents_mock.assert_called_once_with(False, '127.0.0.1', agent_url,
+                                            auth=self.conductr_auth, timeout=5,
+                                            verify=self.server_verification_file
+                                            )
+
+    def test_members_success(self):
+        stdout = MagicMock()
+        stderr = MagicMock()
+        logging_setup.configure_logging(MagicMock(), stdout, stderr)
+
+        args_mock = MagicMock(**self.args)
+        agent_url = 'http://127.0.0.1:9005/members'
+        members_mock = self.respond_with(status_code=200, text='{}')
+
+        with patch('conductr_cli.conduct_request.get', members_mock):
+            result = get_members(args_mock)
+
+        members_mock.assert_called_once_with(False, '127.0.0.1', agent_url,
+                                             auth=self.conductr_auth, timeout=5,
+                                             verify=self.server_verification_file
+                                             )
+        self.assertEqual({}, result)
+
+    def test_members_failure(self):
+        stdout = MagicMock()
+        stderr = MagicMock()
+        logging_setup.configure_logging(MagicMock(), stdout, stderr)
+
+        args_mock = MagicMock(**self.args)
+        agent_url = 'http://127.0.0.1:9005/members'
+        members_mock = self.respond_with(status_code=500, text='{}')
+
+        with patch('conductr_cli.conduct_request.get', members_mock):
+            self.assertRaises(HTTPError, get_members, args_mock)
+
+        members_mock.assert_called_once_with(False, '127.0.0.1', agent_url,
+                                             auth=self.conductr_auth, timeout=5,
+                                             verify=self.server_verification_file
+                                             )
