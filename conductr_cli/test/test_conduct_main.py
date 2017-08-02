@@ -384,3 +384,29 @@ class TestConduct(TestCase):
         self.assertEqual(args.local_connection, True)
         self.assertEqual(args.output_path, '/my/fav/path')
         self.assertEqual(args.bundle, None)
+
+    def test_restore_parser_with_backup(self):
+        args = self.parser.parse_args('restore something.zip --host someotherhost'.split())
+
+        self.assertEqual(args.func.__name__, 'restore')
+        self.assertEqual(args.host, 'someotherhost')
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.backup, 'something.zip')
+
+    def test_restore_parser_with_backup_from_stdin(self):
+        args = self.parser.parse_args('restore - --host someotherhost'.split())
+
+        self.assertEqual(args.func.__name__, 'restore')
+        self.assertEqual(args.host, 'someotherhost')
+        self.assertEqual(args.port, 9005)
+        self.assertEqual(args.api_version, '2')
+        self.assertEqual(args.cli_settings_dir, '{}/.conductr'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_settings_file, '{}/.conductr/settings.conf'.format(os.path.expanduser('~')))
+        self.assertEqual(args.custom_plugins_dir, '{}/.conductr/plugins'.format(os.path.expanduser('~')))
+        self.assertEqual(args.local_connection, True)
+        self.assertEqual(args.backup, '-')

@@ -384,11 +384,7 @@ class TestBackup(CliTestCase):
         with patch('builtins.open', open_mock):
             backup(mock_args)
 
-        bundle_info = BundleCoreInfo(bundle_id=bundle_id,
-                                     bundle_name='reactive-maps-backend-region',
-                                     bundle_digest='6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28',
-                                     configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-
+        bundle_info = BundleCoreInfo.from_bundles(self.bundle_json)[0]
         backup_bundle_json_mock.assert_called_once_with(temp_file, ANY)
         backup_bundle_mock.assert_called_once_with(mock_args, temp_file, bundle_info)
         members_mock.assert_called_once_with(mock_args, temp_file)
