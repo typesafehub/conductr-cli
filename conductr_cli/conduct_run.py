@@ -1,6 +1,4 @@
-from conductr_cli import bundle_utils, bundle_scale, conduct_request, conduct_url, validation
-from conductr_cli.conduct_url import conductr_host
-import json
+from conductr_cli import bundle_utils, bundle_scale, validation, control_protocol
 import logging
 
 
@@ -16,20 +14,9 @@ def run(args):
     if args.affinity is not None and args.api_version == '1':
         log.error('Affinity feature is only available for v1.1 onwards of ConductR')
         return
-    elif args.affinity is not None:
-        path = 'bundles/{}?scale={}&affinity={}'.format(args.bundle, args.scale, args.affinity)
-    else:
-        path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
 
-    url = conduct_url.url(path, args)
-    response = conduct_request.put(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth,
-                                   verify=args.server_verification_file)
-    validation.raise_for_status_inc_3xx(response)
+    response_json = control_protocol.run_bundle(args)
 
-    if log.is_verbose_enabled():
-        log.verbose(validation.pretty_json(response.text))
-
-    response_json = json.loads(response.text)
     bundle_id = response_json['bundleId'] if args.long_ids else bundle_utils.short_id(response_json['bundleId'])
 
     log.info('Bundle run request sent.')

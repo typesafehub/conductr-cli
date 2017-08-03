@@ -66,3 +66,29 @@ def get_members(args):
         log.verbose(validation.pretty_json(response.text))
 
     return json.loads(response.text)
+
+
+def run_bundle(args):
+    log = logging.getLogger(__name__)
+    if args.affinity is not None:
+        path = 'bundles/{}?scale={}&affinity={}'.format(args.bundle, args.scale, args.affinity)
+    else:
+        path = 'bundles/{}?scale={}'.format(args.bundle, args.scale)
+
+    url = conduct_url.url(path, args)
+    response = conduct_request.put(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth,
+                                   verify=args.server_verification_file)
+    validation.raise_for_status_inc_3xx(response)
+
+    if log.is_verbose_enabled():
+        log.verbose(validation.pretty_json(response.text))
+
+    return json.loads(response.text)
+
+
+def get_scale(args):
+    bundles_url = conduct_url.url('bundles', args)
+    response = conduct_request.get(args.dcos_mode, conduct_url.conductr_host(args), bundles_url,
+                                   auth=args.conductr_auth, verify=args.server_verification_file)
+    response.raise_for_status()
+    return json.loads(response.text)
