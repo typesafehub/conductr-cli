@@ -14,7 +14,6 @@ import tempfile
 
 class TestDownloadLicense(CliTestCase):
     cached_token = 'test-token'
-    cached_token_b64 = 'dGVzdC10b2tlbg=='
     license_text = 'test-license-text'
     license_download_url = 'http://test.com/download'
     server_verification_file = 'test-server_verification_file'
@@ -48,7 +47,7 @@ class TestDownloadLicense(CliTestCase):
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_not_called()
         mock_get.assert_called_once_with(self.license_download_url,
-                                         headers={'Authorization': 'Bearer {}'.format(self.cached_token_b64)},
+                                         headers={'Authorization': 'Bearer {}'.format(self.cached_token)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_called_once_with(self.cached_token)
         mock_save_license_data.assert_called_once_with(self.license_text, self.license_file)
@@ -58,7 +57,6 @@ class TestDownloadLicense(CliTestCase):
         mock_get_cached_auth_token = MagicMock(return_value=None)
 
         prompted_token = 'prompted-token'
-        prompted_token_b64 = 'cHJvbXB0ZWQtdG9rZW4='
         mock_prompt_for_auth_token = MagicMock(return_value=prompted_token)
 
         mock_get = self.respond_with(200, self.license_text)
@@ -78,7 +76,7 @@ class TestDownloadLicense(CliTestCase):
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_called_once_with()
         mock_get.assert_called_once_with(self.license_download_url,
-                                         headers={'Authorization': 'Bearer {}'.format(prompted_token_b64)},
+                                         headers={'Authorization': 'Bearer {}'.format(prompted_token)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_called_once_with(prompted_token)
         mock_save_license_data.assert_called_once_with(self.license_text, self.license_file)
@@ -104,7 +102,7 @@ class TestDownloadLicense(CliTestCase):
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_not_called()
         mock_get.assert_called_once_with(self.license_download_url,
-                                         headers={'Authorization': 'Bearer {}'.format(self.cached_token_b64)},
+                                         headers={'Authorization': 'Bearer {}'.format(self.cached_token)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_not_called()
         mock_save_license_data.assert_not_called()
@@ -130,7 +128,7 @@ class TestDownloadLicense(CliTestCase):
         mock_get_cached_auth_token.assert_called_once_with()
         mock_prompt_for_auth_token.assert_not_called()
         mock_get.assert_called_once_with(self.license_download_url,
-                                         headers={'Authorization': 'Bearer {}'.format(self.cached_token_b64)},
+                                         headers={'Authorization': 'Bearer {}'.format(self.cached_token)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_not_called()
         mock_save_license_data.assert_not_called()
@@ -140,7 +138,6 @@ class TestDownloadLicense(CliTestCase):
         mock_get_cached_auth_token = MagicMock(return_value=None)
 
         prompted_token = 'prompted-token'
-        prompted_token_b64 = 'cHJvbXB0ZWQtdG9rZW4='
         mock_prompt_for_auth_token = MagicMock(return_value=prompted_token)
 
         mock_get = self.respond_with(200, self.license_text)
@@ -160,7 +157,7 @@ class TestDownloadLicense(CliTestCase):
         mock_get_cached_auth_token.assert_not_called()
         mock_prompt_for_auth_token.assert_called_once_with()
         mock_get.assert_called_once_with(self.license_download_url,
-                                         headers={'Authorization': 'Bearer {}'.format(prompted_token_b64)},
+                                         headers={'Authorization': 'Bearer {}'.format(prompted_token)},
                                          verify=self.server_verification_file)
         mock_save_auth_token.assert_called_once_with(prompted_token)
         mock_save_license_data.assert_called_once_with(self.license_text, self.license_file)
