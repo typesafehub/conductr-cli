@@ -1,83 +1,17 @@
+import json
 import os
 from unittest import mock
 from unittest.mock import patch, MagicMock, ANY
 
-from requests import HTTPError
 from requests_toolbelt import MultipartEncoder
 
 from conductr_cli.bundle_core_info import BundleCoreInfo
-from conductr_cli.conductr_backup import bundles, bundle_files, validate_artifact, backup_members, \
+from conductr_cli.conductr_backup import bundle_files, validate_artifact, backup_members, \
     backup_agents, backup_bundle_json, backup_bundle_conf, backup_bundle_file, backup, process_added_bundles, \
     process_removed_bundles, backup_bundle, remove_bundle
 from conductr_cli.exceptions import ConductBackupError
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.test.cli_test_case import CliTestCase, file_contents
-
-
-class TestBundleJson(CliTestCase):
-    conductr_auth = ('username', 'password')
-    server_verification_file = MagicMock(name='server_verification_file')
-
-    args = {
-        'dcos_mode': False,
-        'command': 'conduct',
-        'scheme': 'http',
-        'host': '127.0.0.1',
-        'port': 9005,
-        'base_path': '/',
-        'api_version': '1',
-        'disable_instructions': False,
-        'verbose': False,
-        'no_wait': False,
-        'quiet': False,
-        'cli_parameters': '',
-        'bundle': '45e0c477d3e5ea92aa8d85c0d8f3e25c',
-        'output_path': '/my/fav/path',
-        'conductr_auth': conductr_auth,
-        'server_verification_file': server_verification_file
-    }
-
-    bundle_url = 'http://127.0.0.1:9005/bundles'
-
-    def test_backup_should_fetch_bundles_success(self):
-        mock_bundle_json = self.respond_with_file_contents('data/bundles/bundle_json.json')
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle_json):
-            result = bundles(input_args)
-            mock_bundle_json.assert_called_once_with(False, '127.0.0.1', self.bundle_url, auth=self.conductr_auth,
-                                                     verify=self.server_verification_file,
-                                                     timeout=DEFAULT_HTTP_TIMEOUT)
-            expected = file_contents('data/bundles/bundle_json.json')
-            self.assertEqual(expected, result)
-
-    def test_backup_bundles_when_bundles_failure(self):
-        mock_bundle = self.respond_with(status_code=404)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, bundles, input_args)
-            mock_bundle.assert_called_once_with(False, '127.0.0.1', self.bundle_url, auth=self.conductr_auth,
-                                                verify=self.server_verification_file,
-                                                timeout=DEFAULT_HTTP_TIMEOUT)
-
-        mock_bundle = self.respond_with(status_code=500)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, bundles, input_args)
-            mock_bundle.assert_called_once_with(False, '127.0.0.1', self.bundle_url, auth=self.conductr_auth,
-                                                verify=self.server_verification_file,
-                                                timeout=DEFAULT_HTTP_TIMEOUT)
-
-        mock_bundle = self.respond_with(status_code=301)
-
-        input_args = MagicMock(**self.args)
-        with patch('conductr_cli.conduct_request.get', mock_bundle):
-            self.assertRaises(HTTPError, bundles, input_args)
-            mock_bundle.assert_called_once_with(False, '127.0.0.1', self.bundle_url, auth=self.conductr_auth,
-                                                verify=self.server_verification_file,
-                                                timeout=DEFAULT_HTTP_TIMEOUT)
 
 
 class TestBundle(CliTestCase):
@@ -179,7 +113,7 @@ class TestBackup(CliTestCase):
         'server_verification_file': server_verification_file
     }
 
-    bundle_json = file_contents('data/bundles/bundle_json.json')
+    bundle_json = json.loads(file_contents('data/bundles/bundle_json.json'))
 
     backup_path = 'some/path'
     bundle_zip = 'data/bundles/reactive-maps-backend-region-6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28.zip'
@@ -247,7 +181,7 @@ class TestBackup(CliTestCase):
 
     @patch('tempfile.mkdtemp')
     @patch('conductr_cli.conductr_backup.remove_backup_directory')
-    @patch('conductr_cli.conductr_backup.bundles')
+    @patch('conductr_cli.control_protocol.get_bundles')
     def test_backup_conductr_should_raise_error_when_invalid_bundle_id_is_specified(self, bundles_mock,
                                                                                     remove_directory_mock,
                                                                                     tempfile_mock):
@@ -411,7 +345,7 @@ class TestBackup(CliTestCase):
     @patch('conductr_cli.conductr_backup.remove_backup_directory')
     @patch('conductr_cli.conductr_backup.backup_members')
     @patch('conductr_cli.conductr_backup.backup_agents')
-    @patch('conductr_cli.conductr_backup.bundles')
+    @patch('conductr_cli.control_protocol.get_bundles')
     @patch('conductr_cli.conductr_backup.backup_bundle')
     @patch('conductr_cli.conductr_backup.backup_bundle_json')
     def test_should_backup_bundle(self, backup_bundle_json_mock,
@@ -467,7 +401,7 @@ class TestBackup(CliTestCase):
     @patch('conductr_cli.conductr_backup.remove_backup_directory')
     @patch('conductr_cli.conductr_backup.backup_members')
     @patch('conductr_cli.conductr_backup.backup_agents')
-    @patch('conductr_cli.conductr_backup.bundles')
+    @patch('conductr_cli.control_protocol.get_bundles')
     @patch('conductr_cli.conductr_backup.backup_bundle')
     @patch('conductr_cli.conductr_backup.backup_bundle_json')
     @patch('conductr_cli.conductr_backup.process_removed_bundles')
@@ -499,7 +433,7 @@ class TestBackup(CliTestCase):
 
         mock_args = MagicMock(**args_no_bundle)
 
-        modified_bundles = file_contents('data/bundles/bundle_json_modified.json')
+        modified_bundles = json.loads(file_contents('data/bundles/bundle_json_modified.json'))
 
         bundles_mock.side_effect = [self.bundle_json, modified_bundles]
         temp_file = MagicMock()
@@ -509,48 +443,10 @@ class TestBackup(CliTestCase):
         with patch('builtins.open', open_mock):
             backup(mock_args)
 
-        reactive_maps_backend_region = BundleCoreInfo(
-            bundle_id='6273d7a5b059d0e978c6d69ee1a5d7b4-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='reactive-maps-backend-region',
-            bundle_digest='6273d7a5b059d0e978c6d69ee1a5d7b4f0185008d7e57614a4a20c253a18fe28',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        continuous_delivery = BundleCoreInfo(
-            bundle_id='870ee7d6a4f5853229275cca14b604b8-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='continuous-delivery',
-            bundle_digest='870ee7d6a4f5853229275cca14b604b8aca62a5e74819c0a092858cc75b6c186',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        eslite = BundleCoreInfo(
-            bundle_id='57e432d0c647be2bbc83fa8e59ee469b-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='eslite',
-            bundle_digest='57e432d0c647be2bbc83fa8e59ee469bb59d1f72df31f3d82cab0ad396130fe7',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        reactive_maps_backend_summary = BundleCoreInfo(
-            bundle_id='abf60451c6af18adcc851d67b369b7f5-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='reactive-maps-backend-summary',
-            bundle_digest='abf60451c6af18adcc851d67b369b7f54810d12f3a0ef80a89bdc2d9dff49a10',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        reactive_maps_frontend = BundleCoreInfo(
-            bundle_id='69aa58f00909e36a3cb4229414698b64-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='reactive-maps-frontend',
-            bundle_digest='69aa58f00909e36a3cb4229414698b6436295de8368898b5620b24f52c40c5c3',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        visualiser = BundleCoreInfo(
-            bundle_id='cabaae7cf37b1cf99b3861515cd5e77a-d54620c7bc91897bbb2f25faaac25f46',
-            bundle_name='visualizer',
-            bundle_digest='cabaae7cf37b1cf99b3861515cd5e77a16fa9638e225fa234929cc1d46dde937',
-            configuration_digest='d54620c7bc91897bbb2f25faaac25f46b11e029ed327f91c7a10931ec45bd792')
-        added = BundleCoreInfo(
-            bundle_id='abcd-efgh',
-            bundle_name='added_bundle',
-            bundle_digest='abcd',
-            configuration_digest='efgh')
+        initial = BundleCoreInfo.from_bundles(self.bundle_json)
+        final = BundleCoreInfo.from_bundles(modified_bundles)
 
-        initial = [reactive_maps_backend_region, continuous_delivery, eslite, reactive_maps_backend_summary,
-                   reactive_maps_frontend,
-                   visualiser]
-        final = [added, continuous_delivery, eslite, reactive_maps_backend_summary, reactive_maps_frontend, visualiser]
-
-        backup_bundle_json_mock.assert_called_once_with(temp_file, modified_bundles)
+        backup_bundle_json_mock.assert_called_once_with(temp_file, json.dumps(modified_bundles))
         process_removed_bundles_mock.assert_called_once_with(temp_file, initial, final)
         process_added_bundles_mock.assert_called_once_with(mock_args, temp_file, initial, final)
         members_mock.assert_called_once_with(mock_args, temp_file)
