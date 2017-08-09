@@ -3,7 +3,6 @@ from conductr_cli.conduct_url import conductr_host
 from conductr_cli.exceptions import LicenseDownloadError
 from dcos.errors import DCOSHTTPException
 import arrow
-import base64
 import datetime
 import json
 import logging
@@ -33,10 +32,7 @@ def download_license(args, save_to, use_cached_auth_token):
     if not auth_token:
         auth_token = license_auth.prompt_for_auth_token()
 
-    auth_token_b64_bytes = base64.b64encode(bytes(auth_token, 'UTF-8'))
-    auth_token_b64 = auth_token_b64_bytes.decode('UTF-8')
-
-    auth_header = {'Authorization': 'Bearer {}'.format(auth_token_b64)}
+    auth_header = {'Authorization': 'Bearer {}'.format(auth_token)}
     response = requests.get(args.license_download_url,
                             headers=auth_header,
                             verify=args.server_verification_file)
