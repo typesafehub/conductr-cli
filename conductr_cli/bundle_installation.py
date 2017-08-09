@@ -1,17 +1,14 @@
 from __future__ import unicode_literals
-from conductr_cli import conduct_request, conduct_url, sse_client
-from conductr_cli.exceptions import WaitTimeoutError
-from datetime import datetime
-import json
+
 import logging
+from datetime import datetime
+
+from conductr_cli import conduct_url, sse_client, control_protocol
+from conductr_cli.exceptions import WaitTimeoutError
 
 
 def count_installations(bundle_id, args):
-    bundles_url = conduct_url.url('bundles', args)
-    response = conduct_request.get(args.dcos_mode, conduct_url.conductr_host(args), bundles_url,
-                                   auth=args.conductr_auth, verify=args.server_verification_file)
-    response.raise_for_status()
-    bundles = json.loads(response.text)
+    bundles = control_protocol.get_bundles(args)
     matching_bundles = [bundle for bundle in bundles if bundle['bundleId'] == bundle_id]
     if matching_bundles:
         matching_bundle = matching_bundles[0]

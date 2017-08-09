@@ -1,6 +1,7 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_warn
+import json
+
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, as_warn, file_contents
 from conductr_cli import conduct_service_names, logging_setup
-from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from unittest.mock import patch, MagicMock
 
 
@@ -20,33 +21,34 @@ class TestConductServiceNamesCommand(CliTestCase):
     default_url = 'http://127.0.0.1:9005/bundles'
 
     def test_no_bundles(self):
-        http_method = self.respond_with(200, '[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS
                             |"""),
             self.output(stdout))
 
     def test_two_bundles_mult_components_endpoints(self):
-        self.maxDiff = None
-        http_method = self.respond_with_file_contents('data/bundle_with_services/two_bundles.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_services/two_bundles.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             as_warn(strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                   STATUS
                                     |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running
@@ -64,16 +66,17 @@ class TestConductServiceNamesCommand(CliTestCase):
             self.output(stdout))
 
     def test_two_bundles_mult_components_endpoints_no_path(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_services/two_bundles_no_path.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_services/two_bundles_no_path.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                   STATUS
                             |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0   Running
@@ -86,16 +89,18 @@ class TestConductServiceNamesCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_bundle_starting(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_services/one_bundle_starting.json'))
+
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME                  STATUS
                             |comp1-endp1   f804d64    multi-comp-multi-endp-1.0.0  Starting
@@ -106,18 +111,20 @@ class TestConductServiceNamesCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_bundle_starting_long_ids(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_services/one_bundle_starting.json'))
+
         stdout = MagicMock()
 
         args = self.default_args.copy()
         args.update({'long_ids': True})
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|SERVICE NAME  BUNDLE ID                         BUNDLE NAME                  STATUS
@@ -129,18 +136,20 @@ class TestConductServiceNamesCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_bundle_no_services(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_tcp.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/one_bundle_tcp.json'))
+
         stdout = MagicMock()
 
         args = self.default_args.copy()
         args.update({'long_ids': True})
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS
@@ -148,16 +157,17 @@ class TestConductServiceNamesCommand(CliTestCase):
             self.output(stdout))
 
     def test_one_bundle_multiple_executions(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_multiple_executions.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_services/one_bundle_multiple_executions.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|SERVICE NAME  BUNDLE ID  BUNDLE NAME                  STATUS
@@ -166,16 +176,17 @@ class TestConductServiceNamesCommand(CliTestCase):
             self.output(stdout))
 
     def test_mix_acls_and_service_uris(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls_and_services/http_acl_and_service.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls_and_services/http_acl_and_service.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|SERVICE NAME  BUNDLE ID  BUNDLE NAME                 STATUS
@@ -191,17 +202,16 @@ class TestConductServiceNamesCommand(CliTestCase):
         args.pop('host')
         args.update({'ip': '10.0.0.1'})
 
-        http_method = self.respond_with(200, '[]')
         stdout = MagicMock()
+        bundles_mock = MagicMock()
 
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_service_names.service_names(input_args)
             self.assertTrue(result)
 
-        default_url = 'http://10.0.0.1:9005/bundles'
-        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin("""|SERVICE NAME  BUNDLE ID  BUNDLE NAME  STATUS
                             |"""),
