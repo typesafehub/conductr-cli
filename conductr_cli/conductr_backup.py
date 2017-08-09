@@ -56,8 +56,8 @@ def backup(args):
 
         backup_members(args, backup_directory)
         backup_agents(args, backup_directory)
-
         compress_backup(args.output_path, backup_directory)
+
     finally:
         remove_backup_directory(backup_directory)
     return True
