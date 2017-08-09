@@ -10,7 +10,7 @@ IGNORE_ERROR_FIRST_SECONDS = 10  # The number of seconds where bundle error will
 
 
 def get_scale(bundle_id, wait_for_is_active, args):
-    bundles = control_protocol.get_scale(args)
+    bundles = control_protocol.get_bundles(args)
     matching_bundles = [bundle for bundle in bundles if bundle['bundleId'] == bundle_id]
     if matching_bundles:
         matching_bundle = matching_bundles[0]
