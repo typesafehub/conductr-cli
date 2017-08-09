@@ -1,10 +1,7 @@
-from conductr_cli import bundle_utils, conduct_request, conduct_url, validation, screen_utils
-from conductr_cli.conduct_url import conductr_host
-import json
 import logging
 import re
-from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 
+from conductr_cli import bundle_utils, validation, screen_utils, control_protocol
 
 SUPPORTED_PROTOCOL_FAMILIES = ['http', 'tcp']
 ALL_HTTP_METHOD = '*'
@@ -19,14 +16,8 @@ def acls(args):
     """`conduct acls` command"""
 
     log = logging.getLogger(__name__)
-    url = conduct_url.url('bundles', args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), url, timeout=DEFAULT_HTTP_TIMEOUT)
-    validation.raise_for_status_inc_3xx(response)
 
-    if log.is_verbose_enabled():
-        log.verbose(validation.pretty_json(response.text))
-
-    bundles = json.loads(response.text)
+    bundles = control_protocol.get_bundles(args)
     all_acls, http_acls, tcp_acls = get_acls_from_bundles(args, bundles)
 
     if args.protocol_family == 'http':
