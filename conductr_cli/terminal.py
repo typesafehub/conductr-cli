@@ -28,7 +28,9 @@ def docker_inspect(container_id, inspect_format=None):
 
 def docker_run(optional_args, image, positional_args):
     cmd = ['docker', 'run'] + optional_args + [image] + positional_args
-    return subprocess.call(cmd)
+    status = subprocess.call(cmd)
+    assert status == 0, 'docker exited with {}'.format(status)
+    return 0
 
 
 def docker_rm(containers):

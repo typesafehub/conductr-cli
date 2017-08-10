@@ -72,10 +72,25 @@ class TestTerminal(CliTestCase):
         image = 'image:version'
         positional_args = ['--discover-host-ip']
         stdout = MagicMock()
-        subprocess_call_mock = MagicMock()
+        subprocess_call_mock = MagicMock(return_value=0)
 
         with patch('subprocess.call', subprocess_call_mock), \
                 patch('sys.stdout', stdout):
+            terminal.docker_run(optional_args, image, positional_args)
+
+        self.assertEqual('', self.output(stdout))
+        subprocess_call_mock.assert_called_with(['docker', 'run'] + optional_args + [image] + positional_args)
+
+    def test_docker_run_fail(self):
+        optional_args = ['-p', '9001:9001', '-e', 'AKKA_LOGLEVEL=info']
+        image = 'image:version'
+        positional_args = ['--discover-host-ip']
+        stdout = MagicMock()
+        subprocess_call_mock = MagicMock(return_value=1)
+
+        with patch('subprocess.call', subprocess_call_mock), \
+                patch('sys.stdout', stdout), \
+                self.assertRaises(AssertionError):
             terminal.docker_run(optional_args, image, positional_args)
 
         self.assertEqual('', self.output(stdout))
