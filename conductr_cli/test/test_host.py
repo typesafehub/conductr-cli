@@ -254,6 +254,51 @@ class TestAddrAliasCommands(TestCase):
         mock_is_linux.assert_called_once_with()
         mock_is_macos.assert_not_called()
 
+    def test_linux_ipv4_large(self):
+        mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
+        mock_is_linux = MagicMock(return_value=True)
+        mock_is_macos = MagicMock(return_value=False)
+
+        with patch('conductr_cli.host.loopback_device_name', mock_loopback_device_name), \
+                patch('conductr_cli.host.is_linux', mock_is_linux), \
+                patch('conductr_cli.host.is_macos', mock_is_macos):
+            result = host.addr_alias_commands([
+                ipaddress.ip_address('192.168.1.1'),
+                ipaddress.ip_address('192.168.1.2'),
+                ipaddress.ip_address('192.168.1.3'),
+                ipaddress.ip_address('192.168.1.4'),
+                ipaddress.ip_address('192.168.1.5'),
+                ipaddress.ip_address('192.168.1.6'),
+                ipaddress.ip_address('192.168.1.7'),
+                ipaddress.ip_address('192.168.1.8'),
+                ipaddress.ip_address('192.168.1.9'),
+                ipaddress.ip_address('192.168.1.10'),
+                ipaddress.ip_address('192.168.1.11'),
+                ipaddress.ip_address('192.168.1.12'),
+                ipaddress.ip_address('192.168.1.13')
+            ], 4)
+
+            expected_result = [
+                ['sudo', 'ifconfig', 'ix0:0', '192.168.1.1', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:1', '192.168.1.2', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:2', '192.168.1.3', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:3', '192.168.1.4', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:4', '192.168.1.5', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:5', '192.168.1.6', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:6', '192.168.1.7', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:7', '192.168.1.8', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:8', '192.168.1.9', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:9', '192.168.1.10', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:10', '192.168.1.11', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:11', '192.168.1.12', 'netmask', '255.255.255.255', 'up'],
+                ['sudo', 'ifconfig', 'ix0:12', '192.168.1.13', 'netmask', '255.255.255.255', 'up']
+            ]
+            self.assertEqual(expected_result, result)
+
+        mock_loopback_device_name.assert_called_once_with()
+        mock_is_linux.assert_called_once_with()
+        mock_is_macos.assert_not_called()
+
     def test_linux_ipv6(self):
         mock_loopback_device_name = MagicMock(return_value=self.loopback_device_name)
         mock_is_linux = MagicMock(return_value=True)
@@ -265,8 +310,8 @@ class TestAddrAliasCommands(TestCase):
             result = host.addr_alias_commands(self.addrs_ipv6, 6)
 
             expected_result = [
-                ['sudo', 'ifconfig', 'ix0:0', '0000:0000:0000:0000:0000:ffff:c0a8:0101', 'netmask', 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', 'up'],
-                ['sudo', 'ifconfig', 'ix0:1', '0000:0000:0000:0000:0000:ffff:c0a8:0102', 'netmask', 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', 'up']
+                ['sudo', 'ifconfig', 'ix0:256', '0000:0000:0000:0000:0000:ffff:c0a8:0101', 'netmask', 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', 'up'],
+                ['sudo', 'ifconfig', 'ix0:257', '0000:0000:0000:0000:0000:ffff:c0a8:0102', 'netmask', 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', 'up']
             ]
             self.assertEqual(expected_result, result)
 
