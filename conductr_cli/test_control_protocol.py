@@ -4,7 +4,7 @@ from requests import HTTPError
 
 from conductr_cli import logging_setup
 from conductr_cli.control_protocol import load_bundle, stop_bundle, get_members, get_agents, \
-    run_bundle, get_bundles, unload_bundle
+    run_bundle, get_bundles, unload_bundle, get_bundle_events
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from conductr_cli.test.cli_test_case import CliTestCase
 
@@ -352,3 +352,29 @@ class TestControlProtocol(CliTestCase):
                                                    auth=self.conductr_auth,
                                                    verify=self.server_verification_file
                                                    )
+
+    def test_get_bundle_events_success(self):
+        args_mock = MagicMock(**self.args)
+        mock_events_response = self.respond_with(200, '[]')
+
+        count = 3
+        request_url = 'http://127.0.0.1:9005/bundles/{}/events?count={}'.format(self.bundle_id, count)
+
+        with patch('conductr_cli.conduct_request.get', mock_events_response):
+            get_bundle_events(args_mock, count)
+
+        mock_events_response.assert_called_once_with(False, '127.0.0.1', request_url, auth=self.conductr_auth,
+                                                     timeout=5, verify=self.server_verification_file)
+
+    def test_get_bundle_events_failure(self):
+        args_mock = MagicMock(**self.args)
+        mock_events_response = self.respond_with(500, '[]')
+
+        count = 3
+        request_url = 'http://127.0.0.1:9005/bundles/{}/events?count={}'.format(self.bundle_id, count)
+
+        with patch('conductr_cli.conduct_request.get', mock_events_response):
+            self.assertRaises(HTTPError, lambda: get_bundle_events(args_mock, count))
+
+            mock_events_response.assert_called_once_with(False, '127.0.0.1', request_url, auth=self.conductr_auth,
+                                                         timeout=5, verify=self.server_verification_file)

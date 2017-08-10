@@ -1,5 +1,6 @@
 import json
 import logging
+from urllib.parse import quote_plus
 
 from conductr_cli import conduct_url, conduct_request, validation
 from conductr_cli.conduct_url import conductr_host
@@ -111,4 +112,13 @@ def unload_bundle(args):
     if log.is_verbose_enabled():
         log.verbose(validation.pretty_json(response.text))
 
+    return json.loads(response.text)
+
+
+def get_bundle_events(args, count):
+    path = 'bundles/{}/events?count={}'.format(quote_plus(args.bundle), count)
+    request_url = conduct_url.url(path, args)
+    response = conduct_request.get(args.dcos_mode, conductr_host(args), request_url, auth=args.conductr_auth,
+                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
+    validation.raise_for_status_inc_3xx(response)
     return json.loads(response.text)
