@@ -83,6 +83,15 @@ def is_listening(ip_addr, port):
     return result
 
 
+def alias_number(addr):
+    if addr.version == 4:
+        return int(addr.exploded.split('.')[-1], 10) - 1
+    elif addr.version == 6:
+        return int(addr.exploded.split(':')[-1], 16) - 1
+    else:
+        raise ValueError('version must be 4 or 6, given {}'.format(addr.version))
+
+
 def addr_alias_commands(addrs, ip_version):
     if_name = loopback_device_name()
 
@@ -90,7 +99,7 @@ def addr_alias_commands(addrs, ip_version):
 
     commands = []
     if is_linux():
-        commands = [['sudo', 'ifconfig', '{}:{}'.format(if_name, int(addr.exploded[-1:]) - 1),
+        commands = [['sudo', 'ifconfig', '{}:{}'.format(if_name, alias_number(addr)),
                      addr.exploded, 'netmask', subnet_mask, 'up'] for addr in addrs]
     elif is_macos():
         commands = [['sudo', 'ifconfig', if_name, 'alias', addr.exploded, subnet_mask] for addr in addrs]
