@@ -70,7 +70,7 @@ def compress_backup(output_path, backup_directory):
     log = logging.getLogger(__name__)
 
     if sys.stdout.isatty() and output_path is None:
-        log.error('Backup: Refusing to write to terminal. Provide -o or redirect elsewhere')
+        log.error('conduct backup: Refusing to write to terminal. Provide -o or redirect elsewhere')
         sys.exit(2)
 
     output_file = open(output_path, 'wb') if output_path else sys.stdout.buffer
