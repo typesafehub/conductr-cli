@@ -61,12 +61,18 @@ def backup(args):
             backup_agents(args, backup_directory)
 
             compress_backup(args.output_path, backup_directory)
-
     finally:
         remove_backup_directory(backup_directory)
+    return True
 
 
 def compress_backup(output_path, backup_directory):
+    log = logging.getLogger(__name__)
+
+    if sys.stdout.isatty() and output_path is None:
+        log.error('conduct backup: Refusing to write to terminal. Provide -o or redirect elsewhere')
+        sys.exit(2)
+
     output_file = open(output_path, 'wb') if output_path else sys.stdout.buffer
     with tempfile.NamedTemporaryFile() as zip_file_data:
         with zipfile.ZipFile(zip_file_data, 'w') as zip_file:
