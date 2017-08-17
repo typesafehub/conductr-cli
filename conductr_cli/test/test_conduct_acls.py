@@ -1,6 +1,7 @@
-from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
+import json
+
+from conductr_cli.test.cli_test_case import CliTestCase, strip_margin, file_contents
 from conductr_cli import conduct_acls, logging_setup
-from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from unittest.mock import patch, MagicMock
 
 
@@ -20,16 +21,17 @@ class TestConductAclsCommandForHttp(CliTestCase):
     default_url = 'http://127.0.0.1:9005/bundles'
 
     def test_display(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_http.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/one_bundle_http.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME                  STATUS
@@ -38,19 +40,20 @@ class TestConductAclsCommandForHttp(CliTestCase):
             self.output(stdout))
 
     def test_display_with_long_id(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_http.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/one_bundle_http.json'))
         stdout = MagicMock()
 
         args = self.default_args.copy()
         args.update({'long_ids': True})
 
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|METHOD  PATH  REWRITE  BUNDLE ID                         BUNDLE NAME                  STATUS
@@ -59,17 +62,18 @@ class TestConductAclsCommandForHttp(CliTestCase):
             self.output(stdout))
 
     def test_display_multiple_executions(self):
-        self.maxDiff = None
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/display_multiple_executions_http.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(
+            file_contents('data/bundle_with_acls/display_multiple_executions_http.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME                  STATUS
@@ -78,16 +82,17 @@ class TestConductAclsCommandForHttp(CliTestCase):
             self.output(stdout))
 
     def test_multiple_acls_sorted(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/multiple_bundles_http.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/multiple_bundles_http.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|METHOD  PATH                  REWRITE          BUNDLE ID  BUNDLE NAME                  STATUS
@@ -99,16 +104,17 @@ class TestConductAclsCommandForHttp(CliTestCase):
             self.output(stdout))
 
     def test_no_bundles(self):
-        http_method = self.respond_with(200, '[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME  STATUS
@@ -116,16 +122,17 @@ class TestConductAclsCommandForHttp(CliTestCase):
             self.output(stdout))
 
     def test_no_acls(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_services/one_bundle_starting.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME  STATUS
@@ -137,18 +144,18 @@ class TestConductAclsCommandForHttp(CliTestCase):
         args.update(self.default_args)
         args.pop('host')
         args.update({'ip': '10.0.0.1'})
-        default_url = 'http://10.0.0.1:9005/bundles'
 
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_http.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/one_bundle_http.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|METHOD  PATH  REWRITE  BUNDLE ID  BUNDLE NAME                  STATUS
@@ -173,16 +180,17 @@ class TestConductAclsCommandForTcp(CliTestCase):
     default_url = 'http://127.0.0.1:9005/bundles'
 
     def test_display(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_tcp.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/one_bundle_tcp.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  BUNDLE ID  BUNDLE NAME                  STATUS
@@ -191,7 +199,8 @@ class TestConductAclsCommandForTcp(CliTestCase):
             self.output(stdout))
 
     def test_display_with_long_id(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_tcp.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/one_bundle_tcp.json'))
         stdout = MagicMock()
 
         args = self.default_args.copy()
@@ -199,12 +208,12 @@ class TestConductAclsCommandForTcp(CliTestCase):
 
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  BUNDLE ID                         BUNDLE NAME                  STATUS
@@ -213,16 +222,18 @@ class TestConductAclsCommandForTcp(CliTestCase):
             self.output(stdout))
 
     def test_display_multiple_executions(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/display_multiple_executions_tcp.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(
+            file_contents('data/bundle_with_acls/display_multiple_executions_tcp.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  BUNDLE ID  BUNDLE NAME                  STATUS
@@ -231,17 +242,18 @@ class TestConductAclsCommandForTcp(CliTestCase):
             self.output(stdout))
 
     def test_multiple_acls_sorted(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/multiple_bundles_tcp.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/multiple_bundles_tcp.json'))
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
 
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  BUNDLE ID  BUNDLE NAME         STATUS
@@ -252,16 +264,17 @@ class TestConductAclsCommandForTcp(CliTestCase):
             self.output(stdout))
 
     def test_no_bundles(self):
-        http_method = self.respond_with(200, '[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  BUNDLE ID  BUNDLE NAME  STATUS
@@ -269,16 +282,18 @@ class TestConductAclsCommandForTcp(CliTestCase):
             self.output(stdout))
 
     def test_no_acls(self):
-        http_method = self.respond_with_file_contents('data/bundle_with_services/one_bundle_starting.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_services/one_bundle_starting.json'))
+
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  BUNDLE ID  BUNDLE NAME  STATUS
@@ -291,18 +306,18 @@ class TestConductAclsCommandForTcp(CliTestCase):
         args.pop('host')
         args.update({'ip': '10.0.0.1'})
 
-        default_url = 'http://10.0.0.1:9005/bundles'
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/bundle_with_acls/one_bundle_tcp.json'))
 
-        http_method = self.respond_with_file_contents('data/bundle_with_acls/one_bundle_tcp.json')
         stdout = MagicMock()
 
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_acls.acls(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(default_url, timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin(
                 """|TCP/PORT  BUNDLE ID  BUNDLE NAME                  STATUS

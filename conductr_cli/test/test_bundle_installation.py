@@ -1,3 +1,5 @@
+import json
+
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import bundle_installation, logging_setup
 from conductr_cli.exceptions import WaitTimeoutError
@@ -15,7 +17,6 @@ def create_heartbeat_event():
 
 
 class TestCountInstallationIp(CliTestCase):
-
     conductr_auth = ('username', 'password')
     server_verification_file = MagicMock(name='server_verification_file')
 
@@ -32,7 +33,8 @@ class TestCountInstallationIp(CliTestCase):
                 }]
             }]
         """
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -46,12 +48,11 @@ class TestCountInstallationIp(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
     def test_return_installation_count_v2(self):
         bundles_endpoint_reply = """
@@ -66,7 +67,8 @@ class TestCountInstallationIp(CliTestCase):
                 }]
             }]
         """
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -80,16 +82,16 @@ class TestCountInstallationIp(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
     def test_return_zero_installation_count_v1(self):
         bundles_endpoint_reply = '[]'
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -103,16 +105,16 @@ class TestCountInstallationIp(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
     def test_return_zero_installation_count_v2(self):
         bundles_endpoint_reply = '[]'
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -126,16 +128,14 @@ class TestCountInstallationIp(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
 
 class TestCountInstallationHost(CliTestCase):
-
     conductr_auth = ('username', 'password')
     server_verification_file = MagicMock(name='server_verification_file')
 
@@ -152,7 +152,8 @@ class TestCountInstallationHost(CliTestCase):
                 }]
             }]
         """
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -166,12 +167,11 @@ class TestCountInstallationHost(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
     def test_return_installation_count_v2(self):
         bundles_endpoint_reply = """
@@ -186,7 +186,8 @@ class TestCountInstallationHost(CliTestCase):
                 }]
             }]
         """
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -200,16 +201,16 @@ class TestCountInstallationHost(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(1, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
     def test_return_zero_installation_count_v1(self):
         bundles_endpoint_reply = '[]'
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -223,16 +224,16 @@ class TestCountInstallationHost(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
     def test_return_zero_installation_count_v2(self):
         bundles_endpoint_reply = '[]'
-        http_method = self.respond_with(text=bundles_endpoint_reply)
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(bundles_endpoint_reply)
 
         bundle_id = 'a101449418187d92c789d1adc240b6d6'
         args = {
@@ -246,16 +247,14 @@ class TestCountInstallationHost(CliTestCase):
             'server_verification_file': self.server_verification_file
         }
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             result = bundle_installation.count_installations(bundle_id, input_args)
             self.assertEqual(0, result)
 
-        http_method.assert_called_with('http://127.0.0.1:9005/v2/bundles', auth=self.conductr_auth,
-                                       verify=self.server_verification_file, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
 
 class TestWaitForInstallation(CliTestCase):
-
     conductr_auth = ('username', 'password')
     server_verification_file = MagicMock(name='server_verification_file')
 
@@ -570,7 +569,6 @@ class TestWaitForInstallation(CliTestCase):
 
 
 class TestWaitForUninstallation(CliTestCase):
-
     conductr_auth = ('username', 'password')
     server_verification_file = MagicMock(name='server_verification_file')
 

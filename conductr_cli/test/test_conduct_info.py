@@ -1,12 +1,12 @@
-from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin
+import json
+
+from conductr_cli.test.cli_test_case import CliTestCase, as_error, strip_margin, file_contents
 from conductr_cli import conduct_info, logging_setup
-from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from unittest.mock import patch, MagicMock
 import arrow
 
 
 class TestConductInfoShowAllBundlesCommand(CliTestCase):
-
     conductr_auth = ('username', 'password')
     server_verification_file = MagicMock(name='server_verification_file')
 
@@ -45,19 +45,20 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_no_bundles(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text='[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -70,19 +71,20 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_no_bundles_unlicensed(self):
         mock_get_license = MagicMock(return_value=(True, self.default_license))
-        http_method = self.respond_with(text='[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|UNLICENSED - please use "conduct load-license" to use more agents. Additional agents are freely available for registered users.
                             |Licensed To: unknown
@@ -96,19 +98,20 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_no_bundles_no_license_enpoints(self):
         mock_get_license = MagicMock(return_value=(False, None))
-        http_method = self.respond_with(text='[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|ID  NAME  TAG  #REP  #STR  #RUN  ROLES
                             |"""),
@@ -116,26 +119,27 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_no_bundles_quiet(self):
         mock_get_license = MagicMock(return_value=self.license)
-        http_method = self.respond_with(text='[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         args = self.default_args.copy()
         args.update({'quiet': True})
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_not_called()
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual('', self.output(stdout))
 
     def test_stopped_bundle(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                   "bundleName": "test-bundle",
@@ -147,19 +151,21 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -173,7 +179,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_one_running_one_starting_one_stopped(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                     "bundleName": "test-bundle-1",
@@ -207,19 +213,21 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.maxDiff = None
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
@@ -236,7 +244,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_one_running_one_starting_one_stopped_quiet(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                     "bundleName": "test-bundle-1",
@@ -270,20 +278,22 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         args = self.default_args.copy()
         args.update({'quiet': True})
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|45e0c47
                             |45e0c47-c52e3f8
@@ -330,8 +340,6 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
 
         self.maxDiff = None
         self.assertEqual(
@@ -397,7 +405,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_long_ids(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                   "bundleName": "test-bundle",
@@ -409,21 +417,23 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         args = self.default_args.copy()
         args.update({'long_ids': True})
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.maxDiff = None
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
@@ -438,14 +448,16 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_long_ids_quiet(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": { "bundleName": "test-bundle" },
                 "bundleId": "45e0c477d3e5ea92aa8d85c0d8f3e25c",
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         args = self.default_args.copy()
@@ -454,14 +466,14 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
             'quiet': True
         })
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|45e0c477d3e5ea92aa8d85c0d8f3e25c
                             |"""),
@@ -469,7 +481,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_double_digits(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                     "bundleName": "test-bundle",
@@ -481,19 +493,21 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
+
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -507,7 +521,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_multiple_tags(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                   "bundleName": "test-bundle",
@@ -519,19 +533,21 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -545,7 +561,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_empty_tags(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                   "bundleName": "test-bundle",
@@ -557,19 +573,21 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -583,7 +601,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_no_tags(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                   "bundleName": "test-bundle",
@@ -594,19 +612,21 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleExecutions": [],
                 "bundleInstallations": [1]
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -620,7 +640,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_has_error(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                     "bundleName": "test-bundle",
@@ -633,19 +653,21 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                 "hasError": true
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -660,7 +682,7 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_has_error_quiet(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.respond_with(text="""[
+        installation = """[
             {
                 "attributes": {
                     "bundleName": "test-bundle",
@@ -672,21 +694,23 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
                 "bundleInstallations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                 "hasError": true
             }
-        ]""")
+        ]"""
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(installation)
         stdout = MagicMock()
 
         args = self.default_args.copy()
         args.pop('quiet', True)
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             strip_margin("""|! 45e0c47
                             |"""),
@@ -694,18 +718,18 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
 
     def test_failure_invalid_address(self):
         mock_get_license = MagicMock(return_value=(True, self.license))
-        http_method = self.raise_connection_error('test reason', self.default_url)
+        bundles_mock = self.raise_connection_error('test reason', self.default_url)
         stderr = MagicMock()
 
         input_args = MagicMock(**self.default_args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, err_output=stderr)
             result = conduct_info.info(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
+
         self.assertEqual(
             self.default_connection_error.format(self.default_url),
             self.output(stderr))
@@ -718,21 +742,19 @@ class TestConductInfoShowAllBundlesCommand(CliTestCase):
         args.pop('host')
         args.update({'ip': '10.0.0.1'})
 
-        default_url = 'http://10.0.0.1:9005/bundles'
-
-        http_method = self.respond_with(text='[]')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads('[]')
         stdout = MagicMock()
 
         input_args = MagicMock(**args)
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('conductr_cli.license.get_license', mock_get_license):
             logging_setup.configure_logging(input_args, stdout)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
         mock_get_license.assert_called_once_with(input_args)
-        http_method.assert_called_with(default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '10.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
         self.assertEqual(
             strip_margin("""|Licensed To: cc64df31-ec6b-4e08-bb6b-3216721a56b@lightbend
                             |Max ConductR agents: 3
@@ -768,7 +790,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
     }
 
     def test_running_bundle_with_http_and_tcp_acls(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
         mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-05T12:15:54.000'))
@@ -777,14 +800,13 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'path-tester'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         expected_result = strip_margin(
             """|BUNDLE ATTRIBUTES
@@ -853,7 +875,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_running_bundle_with_service_uris_v1(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_service_uris_v1.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_service_uris_v1.json'))
         stdout = MagicMock()
         stderr = MagicMock()
 
@@ -861,13 +884,12 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'eslite'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.maxDiff = None
         expected_result = strip_margin(
@@ -909,7 +931,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_running_bundle_with_service_uris_v2(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_service_uris_v2.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_service_uris_v2.json'))
         stdout = MagicMock()
         stderr = MagicMock()
         mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
@@ -918,14 +941,13 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'eslite'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.maxDiff = None
         expected_result = strip_margin(
@@ -970,7 +992,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_find_by_bundle_id(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
         mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
@@ -979,14 +1002,12 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'cb96704'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
-
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.maxDiff = None
         expected_result = strip_margin(
@@ -1056,7 +1077,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_find_by_bundle_id_long(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
         mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T10:15:54.000'))
@@ -1068,14 +1090,13 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         })
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.maxDiff = None
         expected_result = strip_margin(
@@ -1145,7 +1166,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_find_by_bundle_id_config_digest(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
         mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
@@ -1154,14 +1176,13 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'bdfa43d-e5f3504'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.maxDiff = None
         expected_result = strip_margin(
@@ -1211,7 +1232,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_find_by_bundle_id_config_digest_long(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
         mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
@@ -1223,14 +1245,13 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         })
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.maxDiff = None
         expected_result = strip_margin(
@@ -1280,7 +1301,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_bundle_no_endpoint(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_without_endpoint.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_without_endpoint.json'))
         stdout = MagicMock()
         stderr = MagicMock()
         mock_arrow_now = MagicMock(return_value=arrow.get('2017-04-03T12:15:54.000'))
@@ -1291,14 +1313,13 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         })
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method), \
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock), \
                 patch('arrow.now', mock_arrow_now):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.maxDiff = None
         expected_result = strip_margin(
@@ -1338,7 +1359,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_stopped_bundle_multiple_tags(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
 
@@ -1346,13 +1368,12 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'conductr-elasticsearch'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertTrue(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         expected_result = strip_margin(
             """|BUNDLE ATTRIBUTES
@@ -1387,7 +1408,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual('', self.output(stderr))
 
     def test_multiple_bundles_found(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
 
@@ -1395,13 +1417,12 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'cond'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.assertEqual('', self.output(stdout))
 
@@ -1410,7 +1431,8 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         self.assertEqual(expected_error, self.output(stderr))
 
     def test_no_bundles_found(self):
-        http_method = self.respond_with_file_contents('data/conduct_info_inspect/bundle_with_acls.json')
+        bundles_mock = MagicMock()
+        bundles_mock.return_value = json.loads(file_contents('data/conduct_info_inspect/bundle_with_acls.json'))
         stdout = MagicMock()
         stderr = MagicMock()
 
@@ -1418,13 +1440,12 @@ class TestConductInfoInspectBundleCommand(CliTestCase):
         args.update({'bundle': 'something-invalid'})
         input_args = MagicMock(**args)
 
-        with patch('requests.get', http_method):
+        with patch('conductr_cli.control_protocol.get_bundles', bundles_mock):
             logging_setup.configure_logging(input_args, stdout, stderr)
             result = conduct_info.info(input_args)
             self.assertFalse(result)
 
-        http_method.assert_called_with(self.default_url, auth=self.conductr_auth, verify=self.server_verification_file,
-                                       timeout=DEFAULT_HTTP_TIMEOUT, headers={'Host': '127.0.0.1'})
+        bundles_mock.assert_called_once_with(input_args)
 
         self.assertEqual('', self.output(stdout))
 

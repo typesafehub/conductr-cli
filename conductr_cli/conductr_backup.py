@@ -2,12 +2,12 @@ import hashlib
 import json
 import logging
 import os
+import sys
 import tempfile
 import zipfile
 from shutil import rmtree
 
 import requests
-import sys
 from requests_toolbelt import MultipartDecoder
 
 from conductr_cli import conduct_url, conduct_request, validation, control_protocol
@@ -29,38 +29,38 @@ def backup(args):
     backup_directory = tempfile.mkdtemp()
 
     try:
-        initial_bundles_raw = bundles(args)
-        if initial_bundles_raw:
-            initial_bundles_json = json.loads(initial_bundles_raw)
-            initial_bundle_core_info = BundleCoreInfo.from_bundles(initial_bundles_json)
+        initial_bundles_json = control_protocol.get_bundles(args)
+        initial_bundle_core_info = BundleCoreInfo.from_bundles(initial_bundles_json)
 
-            if not bundle_id_or_name:
+        if not bundle_id_or_name:
 
-                for info in initial_bundle_core_info:
-                    backup_bundle(args, backup_directory, info)
+            for info in initial_bundle_core_info:
+                backup_bundle(args, backup_directory, info)
 
-                final_bundles_raw = bundles(args)
-                final_bundles_json = json.loads(final_bundles_raw)
-                final_bundle_core_info = BundleCoreInfo.from_bundles(final_bundles_json)
+            final_bundles_json = control_protocol.get_bundles(args)
+            final_bundle_core_info = BundleCoreInfo.from_bundles(final_bundles_json)
 
-                process_removed_bundles(backup_directory, initial_bundle_core_info, final_bundle_core_info)
-                process_added_bundles(args, backup_directory, initial_bundle_core_info, final_bundle_core_info)
-                backup_bundle_json(backup_directory, final_bundles_raw)
+            process_removed_bundles(backup_directory, initial_bundle_core_info, final_bundle_core_info)
+            process_added_bundles(args, backup_directory, initial_bundle_core_info, final_bundle_core_info)
+            backup_bundle_json(backup_directory, json.dumps(final_bundles_json))
 
-            else:
-                bundle_info = BundleCoreInfo.filter_by_bundle_id(initial_bundle_core_info, bundle_id_or_name)
+        else:
+            bundle_info = BundleCoreInfo.filter_by_bundle_id(initial_bundle_core_info, bundle_id_or_name)
 
-                if not bundle_info:
-                    raise ConductBackupError('Bundle {} was not found.'.format(bundle_id_or_name))
+            if not bundle_info:
+                raise ConductBackupError('Bundle {} was not found.'.format(bundle_id_or_name))
 
-                filtered_bundle = filter_bundles_by_id_or_name(initial_bundles_json, bundle_id_or_name)
-                backup_bundle_json(backup_directory, json.dumps(filtered_bundle))
-                backup_bundle(args, backup_directory, bundle_info)
+            filtered_bundle = filter_bundles_by_id_or_name(initial_bundles_json, bundle_id_or_name)
+            backup_bundle_json(backup_directory, json.dumps(filtered_bundle))
+            backup_bundle(args, backup_directory, bundle_info)
 
-            backup_members(args, backup_directory)
-            backup_agents(args, backup_directory)
 
-            compress_backup(args.output_path, backup_directory)
+        backup_members(args, backup_directory)
+        backup_agents(args, backup_directory)
+        compress_backup(args.output_path, backup_directory)
+
+        compress_backup(args.output_path, backup_directory)
+
     finally:
         remove_backup_directory(backup_directory)
     return True
@@ -152,17 +152,6 @@ def backup_bundle_conf(backup_path, bundle_conf, bundle_info):
     file_write_bytes(bundle_conf_path, bundle_conf)
     bundle_conf_validated = validate_artifact(bundle_conf_path, bundle_info.configuration_digest)
     return bundle_conf_validated
-
-
-def bundles(args):
-    log = logging.getLogger(__name__)
-    url = conduct_url.url('bundles', args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), url, auth=args.conductr_auth,
-                                   verify=args.server_verification_file, timeout=DEFAULT_HTTP_TIMEOUT)
-    validation.raise_for_status_inc_3xx(response)
-
-    log.debug(validation.pretty_json(response.text))
-    return response.text
 
 
 def bundle_files(args, bundle_id):
