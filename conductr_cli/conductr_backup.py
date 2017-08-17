@@ -54,8 +54,11 @@ def backup(args):
             backup_bundle_json(backup_directory, json.dumps(filtered_bundle))
             backup_bundle(args, backup_directory, bundle_info)
 
+
         backup_members(args, backup_directory)
         backup_agents(args, backup_directory)
+        compress_backup(args.output_path, backup_directory)
+
         compress_backup(args.output_path, backup_directory)
 
     finally:
