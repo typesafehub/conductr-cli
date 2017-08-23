@@ -360,7 +360,10 @@ def find_bind_addrs(nr_of_addrs, addr_range):
 
     addrs_to_bind = []
     addrs_unavailable = []
-    for ip_addr in addr_range.hosts():
+
+    # If we're given the max subnet (i.e. 255.255.255.255 on IPV4), use the subnet address as the ip address
+    # This allows usage such as sandbox run --addr-range 0.0.0.0 which can be useful when running in a VM
+    for ip_addr in addr_range if addr_range.netmask._ALL_ONES == int(addr_range.netmask) else addr_range.hosts(): # noqa
         if host.can_bind(ip_addr, BIND_TEST_PORT):
             addrs_to_bind.append(ip_addr)
         else:

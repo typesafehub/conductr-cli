@@ -52,6 +52,7 @@ class ProxyingFeature:
     ports = []
     dependencies = []
     provides = [FEATURE_PROVIDE_PROXYING]
+    bind_addrs = []
 
     def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
@@ -66,7 +67,7 @@ class ProxyingFeature:
         return is_conductr_supportive_of_features(self.image_version)
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
-        pass
+        self.bind_addrs = bind_addrs
 
     def conductr_core_envs(self):
         return []
@@ -108,6 +109,16 @@ class ProxyingFeature:
                                                 bundle_http_port=self.bundle_http_port,
                                                 proxy_ports=self.proxy_ports,
                                                 all_feature_ports=all_feature_ports())
+            if started:
+                load_and_run_bundle(
+                    logging.getLogger(__name__),
+                    'conductr-haproxy',
+                    'conductr-haproxy',
+                    self.bind_addrs,
+                    self.offline_mode,
+                    'conductr-haproxy-dev-mode'
+                )
+
             return FeatureStartResult(started, [])
 
     @staticmethod
@@ -223,6 +234,7 @@ class VisualizationFeature:
     ports = [9999]
     dependencies = []
     provides = []
+    bind_addrs = []
 
     def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
@@ -230,7 +242,7 @@ class VisualizationFeature:
         self.offline_mode = offline_mode
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
-        pass
+        self.bind_addrs = bind_addrs
 
     def conductr_core_envs(self):
         return []
@@ -263,12 +275,7 @@ class VisualizationFeature:
             log = logging.getLogger(__name__)
             log.info(h1('Starting visualization feature'))
             visualizer = select_bintray_uri('visualizer', self.version_args)
-            log.info('Deploying bundle %s..' % visualizer['bundle'])
-            load_command = ['load', visualizer['bundle'], '--disable-instructions'] + \
-                parse_offline_mode_arg(self.offline_mode)
-            conductr_cli.conduct_main.run(load_command, configure_logging=False)
-            conductr_cli.conduct_main.run(['run', visualizer['name'], '--disable-instructions'],
-                                          configure_logging=False)
+            load_and_run_bundle(log, visualizer['bundle'], visualizer['name'], self.bind_addrs, self.offline_mode)
             return FeatureStartResult(True, [BundleStartResult('visualizer', self.ports[0])])
         else:
             return FeatureStartResult(False, [])
@@ -292,6 +299,7 @@ class LoggingFeature:
     ports = [5601, 9200]
     dependencies = []
     provides = [FEATURE_PROVIDE_LOGGING]
+    bind_addrs = []
 
     def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
@@ -299,7 +307,7 @@ class LoggingFeature:
         self.offline_mode = offline_mode
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
-        pass
+        self.bind_addrs = bind_addrs
 
     def conductr_core_envs(self):
         return []
@@ -339,19 +347,17 @@ class LoggingFeature:
             docker.validate_docker_vm(docker.vm_type())
             log.info('Docker is installed and configured correctly.')
             elasticsearch = select_bintray_uri('conductr-elasticsearch', self.version_args)
-            log.info('Deploying bundle %s..' % elasticsearch['bundle'])
-            elasticsearch_load_command = ['load', elasticsearch['bundle'], '--disable-instructions'] + \
-                parse_offline_mode_arg(self.offline_mode)
-            conductr_cli.conduct_main.run(elasticsearch_load_command, configure_logging=False)
-            conductr_cli.conduct_main.run(['run', elasticsearch['name'], '--disable-instructions'],
-                                          configure_logging=False)
+            load_and_run_bundle(log, elasticsearch['bundle'], elasticsearch['name'], self.bind_addrs, self.offline_mode)
             kibana = select_bintray_uri('conductr-kibana', self.version_args)
-            log.info('Deploying bundle %s..' % kibana['bundle'])
-            kibana_load_command = ['load', kibana['bundle'], '--disable-instructions'] + \
-                parse_offline_mode_arg(self.offline_mode)
-            conductr_cli.conduct_main.run(kibana_load_command, configure_logging=False)
-            conductr_cli.conduct_main.run(['run', kibana['name'], '--disable-instructions', '--wait-timeout', '600'],
-                                          configure_logging=False)
+            load_and_run_bundle(
+                log,
+                kibana['bundle'],
+                kibana['name'],
+                self.bind_addrs,
+                self.offline_mode,
+                run_add=['--wait-timeout', '600']
+            )
+
             return FeatureStartResult(True, [
                 BundleStartResult('conductr-kibana', self.ports[0]),
                 BundleStartResult('conductr-elasticsearch', self.ports[1])
@@ -374,6 +380,7 @@ class LiteLoggingFeature:
     ports = []
     dependencies = []
     provides = [FEATURE_PROVIDE_LOGGING]
+    bind_addrs = []
 
     def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
@@ -381,7 +388,7 @@ class LiteLoggingFeature:
         self.offline_mode = offline_mode
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
-        pass
+        self.bind_addrs = bind_addrs
 
     def conductr_core_envs(self):
         return []
@@ -416,11 +423,7 @@ class LiteLoggingFeature:
             log = logging.getLogger(__name__)
             log.info(h1('Starting logging feature based on eslite'))
             eslite = select_bintray_uri('eslite', self.version_args)
-            log.info('Deploying bundle %s..' % eslite['bundle'])
-            load_command = ['load', eslite['bundle'], '--disable-instructions'] + \
-                parse_offline_mode_arg(self.offline_mode)
-            conductr_cli.conduct_main.run(load_command, configure_logging=False)
-            conductr_cli.conduct_main.run(['run', eslite['name'], '--disable-instructions'], configure_logging=False)
+            load_and_run_bundle(log, eslite['bundle'], eslite['name'], self.bind_addrs, self.offline_mode)
             return FeatureStartResult(True, [])
         else:
             return FeatureStartResult(False, [])
@@ -450,6 +453,7 @@ class MonitoringFeature:
     conductr_roles = []
     dependencies = [LoggingFeature.name]
     provides = []
+    bind_addrs = []
 
     def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
@@ -457,7 +461,7 @@ class MonitoringFeature:
         self.offline_mode = offline_mode
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
-        pass
+        self.bind_addrs = bind_addrs
 
     def conductr_core_envs(self):
         return []
@@ -493,12 +497,7 @@ class MonitoringFeature:
         else:
             bundle_name = 'cinnamon-grafana'
         grafana = select_bintray_uri(bundle_name, self.version_args, bundle_repo)
-        log.info('Deploying bundle %s..' % grafana['bundle'])
-        load_command = ['load', grafana['bundle'], '--disable-instructions'] + \
-            parse_offline_mode_arg(self.offline_mode)
-        conductr_cli.conduct_main.run(load_command, configure_logging=False)
-        conductr_cli.conduct_main.run(['run', grafana['name'], '--disable-instructions', '--wait-timeout', '600'],
-                                      configure_logging=False)
+        load_and_run_bundle(log, grafana['bundle'], grafana['name'], self.bind_addrs, self.offline_mode, run_add=['--wait-timeout', '600'])
         return FeatureStartResult(True, [BundleStartResult(grafana['name'], self.ports[0])])
 
     @staticmethod
@@ -520,6 +519,7 @@ class ContinuousDeliveryFeature:
     ports = []
     dependencies = []
     provides = []
+    bind_addrs = []
 
     def __init__(self, version_args, image_version, offline_mode):
         self.version_args = version_args
@@ -527,7 +527,7 @@ class ContinuousDeliveryFeature:
         self.offline_mode = offline_mode
 
     def conductr_pre_core_start(self, envs, envs_core, args, args_core, dir, bind_addrs, conductr_roles):
-        pass
+        self.bind_addrs = bind_addrs
 
     def conductr_core_envs(self):
         return []
@@ -557,11 +557,7 @@ class ContinuousDeliveryFeature:
             log = logging.getLogger(__name__)
             log.info(h1('Starting continuous delivery feature'))
             cd = select_bintray_uri('continuous-delivery', self.version_args)
-            log.info('Deploying bundle %s..' % cd['bundle'])
-            load_command = ['load', cd['bundle'], '--disable-instructions'] + parse_offline_mode_arg(self.offline_mode)
-            conductr_cli.conduct_main.run(load_command, configure_logging=False)
-            conductr_cli.conduct_main.run(['run', cd['name'], '--disable-instructions'],
-                                          configure_logging=False)
+            load_and_run_bundle(log, cd['bundle'], cd['name'], self.bind_addrs, self.offline_mode)
             return FeatureStartResult(True, [])
         else:
             return FeatureStartResult(False, [])
@@ -720,6 +716,26 @@ def stop_features():
     return feature_success
 
 
+def load_and_run_bundle(log, bundle, name, bind_addrs, offline_mode, config=None, load_add=None, run_add=None):
+    log.info('Deploying bundle %s..' % bundle)
+
+    bundle_part = [bundle] if config is None else [bundle, config]
+
+    load_command = \
+        ['load'] + \
+        bundle_part + \
+        ['--disable-instructions'] + \
+        parse_bind_addrs(bind_addrs) + \
+        parse_offline_mode_arg(offline_mode) + \
+        ([] if load_add is None else load_add)
+
+    run_command = \
+        ['run', name, '--disable-instructions'] + parse_bind_addrs(bind_addrs) + ([] if run_add is None else run_add)
+
+    conductr_cli.conduct_main.run(load_command, configure_logging=False)
+    conductr_cli.conduct_main.run(run_command, configure_logging=False)
+
+
 def select_bintray_uri(name, version_args=[], bundle_repo=''):
     bundle_version = ''  # latest
     # parse args: [VERSION]
@@ -737,6 +753,13 @@ def select_bintray_uri(name, version_args=[], bundle_repo=''):
         bundle_version = ':' + bundle_version
     bundle_expression = bundle_repo + name + bundle_version
     return {'name': name, 'bundle': bundle_expression}
+
+
+def parse_bind_addrs(bind_addrs):
+    if bind_addrs:
+        return ['--ip', str(bind_addrs[0])]
+    else:
+        return []
 
 
 def parse_offline_mode_arg(offline_mode):

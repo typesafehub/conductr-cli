@@ -637,6 +637,17 @@ class TestFindBindAddresses(CliTestCase):
             4)
         mock_subprocess_check_call.assert_not_called()
 
+    def test_cidr_max_mask(self):
+        with patch('conductr_cli.host.can_bind', MagicMock(return_value=True)):
+            self.assertEqual(
+                sandbox_run_jvm.find_bind_addrs(1, ipaddress.ip_network('192.168.1.15/32', strict=True)),
+                [ipaddress.IPv4Address('192.168.1.15')]
+            )
+            self.assertEquals(
+                sandbox_run_jvm.find_bind_addrs(1, ipaddress.ip_network('0.0.0.0/32', strict=True)),
+                [ipaddress.IPv4Address('0.0.0.0')]
+            )
+
 
 class TestObtainSandboxImage(CliTestCase):
     def test_obtain_macos_artefact_from_bintray(self):

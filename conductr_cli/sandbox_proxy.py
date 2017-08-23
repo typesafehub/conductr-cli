@@ -1,4 +1,4 @@
-from conductr_cli import conduct_main, docker, terminal
+from conductr_cli import docker, terminal
 from conductr_cli.constants import DEFAULT_SANDBOX_PROXY_DIR, DEFAULT_SANDBOX_PROXY_CONTAINER_NAME
 from conductr_cli.exceptions import NOT_FOUND_ERROR
 from conductr_cli.screen_utils import h1
@@ -36,7 +36,6 @@ def start_proxy(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_port
         setup_haproxy_dirs()
         stop_proxy()
         start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports, all_feature_ports)
-        start_conductr_haproxy()
         return True
     else:
         return False
@@ -99,12 +98,3 @@ def start_docker_instance(proxy_bind_addr, bundle_http_port, proxy_ports, all_fe
 
     log.info('Exposing the following ports {}'.format(all_proxy_ports))
     terminal.docker_run(docker_args, HAPROXY_DOCKER_IMAGE, positional_args=[])
-
-
-def start_conductr_haproxy():
-    log = logging.getLogger(__name__)
-    bundle_name = 'conductr-haproxy'
-    configuration_name = 'conductr-haproxy-dev-mode'
-    log.info('Deploying bundle {} with configuration {}'.format(bundle_name, configuration_name))
-    conduct_main.run(['load', bundle_name, configuration_name, '--disable-instructions'], configure_logging=False)
-    conduct_main.run(['run', bundle_name, '--disable-instructions'], configure_logging=False)

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import call, patch, MagicMock
+from unittest.mock import ANY, call, patch, MagicMock
 from conductr_cli import logging_setup
 from conductr_cli.sandbox_features import ContinuousDeliveryFeature, VisualizationFeature, LiteLoggingFeature, \
     OciInDockerFeature, LoggingFeature, MonitoringFeature, ProxyingFeature, \
@@ -188,9 +188,11 @@ class TestProxyingFeature(CliTestCase):
         proxy_start = MagicMock(return_value=True)
         docker_present = MagicMock(return_value=True)
         stdout_mock = MagicMock()
+        load_and_run_bundle = MagicMock()
 
         with \
                 patch('conductr_cli.sandbox_proxy.start_proxy', proxy_start), \
+                patch('conductr_cli.sandbox_features.load_and_run_bundle', load_and_run_bundle), \
                 patch('conductr_cli.docker.is_docker_present', docker_present):
             logging_setup.configure_logging(self.logging_setup_args, stdout_mock)
             feature = ProxyingFeature([], '2.0.0', False)
@@ -216,6 +218,11 @@ class TestProxyingFeature(CliTestCase):
             self.assertTrue(feature.start().started)
 
         proxy_start.assert_called_once_with(proxy_bind_addr='192.168.100.1', bundle_http_port=9000, proxy_ports=[], all_feature_ports=[3000, 5601, 9200, 9999])
+
+        self.assertTrue(
+            load_and_run_bundle.mock_calls,
+            [[ANY, 'conductr-haproxy', 'conductr-haproxy', [], False, 'conductr-haproxy-dev-mode']]
+        )
 
     def test_stop(self):
         proxy_stop = MagicMock(return_value=True)
