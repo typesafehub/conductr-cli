@@ -1,9 +1,7 @@
-from conductr_cli import bundle_utils, conduct_request, conduct_url, validation, screen_utils
-from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
-from conductr_cli.conduct_url import conductr_host
-import json
 import logging
 from urllib.parse import urlparse
+
+from conductr_cli import bundle_utils, validation, screen_utils, control_protocol
 
 
 @validation.handle_connection_error
@@ -12,14 +10,7 @@ def service_names(args):
     """`conduct service-names` command"""
 
     log = logging.getLogger(__name__)
-    url = conduct_url.url('bundles', args)
-    response = conduct_request.get(args.dcos_mode, conductr_host(args), url, timeout=DEFAULT_HTTP_TIMEOUT)
-    validation.raise_for_status_inc_3xx(response)
-
-    if log.is_verbose_enabled():
-        log.verbose(validation.pretty_json(response.text))
-
-    bundles = json.loads(response.text)
+    bundles = control_protocol.get_bundles(args)
     data, duplicate_endpoints = get_service_names_from_bundles(args, bundles)
     display_service_names(log, data, duplicate_endpoints)
     return True

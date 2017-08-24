@@ -894,7 +894,7 @@ class TestIsConsolidatedLoggingEnabled(CliTestCase):
 
     def test_return_true(self):
         mock_get_bundle_events = MagicMock()
-        with patch('conductr_cli.conduct_events.get_bundle_events', mock_get_bundle_events):
+        with patch('conductr_cli.control_protocol.get_bundle_events', mock_get_bundle_events):
             self.assertTrue(bundle_scale.is_consolidated_logging_enabled(self.args))
 
         mock_get_bundle_events.assert_called_once_with(self.args, count=1)
@@ -902,7 +902,7 @@ class TestIsConsolidatedLoggingEnabled(CliTestCase):
     def test_return_false(self):
         http_error = HTTPError(response=MagicMock(status_code=503))
         mock_get_bundle_events = MagicMock(side_effect=http_error)
-        with patch('conductr_cli.conduct_events.get_bundle_events', mock_get_bundle_events):
+        with patch('conductr_cli.control_protocol.get_bundle_events', mock_get_bundle_events):
             self.assertFalse(bundle_scale.is_consolidated_logging_enabled(self.args))
 
         mock_get_bundle_events.assert_called_once_with(self.args, count=1)
@@ -910,7 +910,7 @@ class TestIsConsolidatedLoggingEnabled(CliTestCase):
     def test_propagate_http_exception(self):
         http_error = HTTPError(response=MagicMock(status_code=500))
         mock_get_bundle_events = MagicMock(side_effect=http_error)
-        with patch('conductr_cli.conduct_events.get_bundle_events', mock_get_bundle_events), \
+        with patch('conductr_cli.control_protocol.get_bundle_events', mock_get_bundle_events), \
                 self.assertRaises(HTTPError) as e:
             self.assertFalse(bundle_scale.is_consolidated_logging_enabled(self.args))
 

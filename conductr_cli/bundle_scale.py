@@ -10,7 +10,7 @@ IGNORE_ERROR_FIRST_SECONDS = 10  # The number of seconds where bundle error will
 
 
 def get_scale(bundle_id, wait_for_is_active, args):
-    bundles = control_protocol.get_scale(args)
+    bundles = control_protocol.get_bundles(args)
     matching_bundles = [bundle for bundle in bundles if bundle['bundleId'] == bundle_id]
     if matching_bundles:
         matching_bundle = matching_bundles[0]
@@ -128,7 +128,7 @@ def display_bundle_scale_error_message(bundle_id, args):
 
 def is_consolidated_logging_enabled(args):
     try:
-        conduct_events.get_bundle_events(args, count=1)
+        control_protocol.get_bundle_events(args, count=1)
         return True
     except HTTPError as e:
         if e.response.status_code == 503:
