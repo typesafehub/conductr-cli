@@ -1,6 +1,6 @@
 from conductr_cli.test.cli_test_case import CliTestCase, strip_margin
 from conductr_cli import logging_setup, sandbox_proxy
-from unittest.mock import call, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from subprocess import CalledProcessError
 import ipaddress
 
@@ -14,15 +14,13 @@ class TestStartProxy(CliTestCase):
         mock_setup_haproxy_dirs = MagicMock()
         mock_stop_proxy = MagicMock()
         mock_start_docker_instance = MagicMock()
-        mock_start_conductr_haproxy = MagicMock()
 
         args = MagicMock(**{})
 
         with patch('conductr_cli.docker.is_docker_present', mock_is_docker_present), \
                 patch('conductr_cli.sandbox_proxy.setup_haproxy_dirs', mock_setup_haproxy_dirs), \
                 patch('conductr_cli.sandbox_proxy.stop_proxy', mock_stop_proxy), \
-                patch('conductr_cli.sandbox_proxy.start_docker_instance', mock_start_docker_instance), \
-                patch('conductr_cli.sandbox_proxy.start_conductr_haproxy', mock_start_conductr_haproxy):
+                patch('conductr_cli.sandbox_proxy.start_docker_instance', mock_start_docker_instance):
             logging_setup.configure_logging(args, stdout)
             sandbox_proxy.start_proxy(ipaddress.ip_address('192.168.1.1'), 9000, [3003], [9999, 9200])
 
@@ -30,7 +28,6 @@ class TestStartProxy(CliTestCase):
         mock_setup_haproxy_dirs.assert_called_once_with()
         mock_stop_proxy.assert_called_once_with()
         mock_start_docker_instance.assert_called_once_with(ipaddress.ip_address('192.168.1.1'), 9000, [3003], [9999, 9200])
-        mock_start_conductr_haproxy.assert_called_once_with()
 
         self.assertEqual('', self.output(stdout))
 
@@ -41,15 +38,13 @@ class TestStartProxy(CliTestCase):
         mock_setup_haproxy_dirs = MagicMock()
         mock_stop_proxy = MagicMock()
         mock_start_docker_instance = MagicMock()
-        mock_start_conductr_haproxy = MagicMock()
 
         args = MagicMock(**{})
 
         with patch('conductr_cli.docker.is_docker_present', mock_is_docker_present), \
                 patch('conductr_cli.sandbox_proxy.setup_haproxy_dirs', mock_setup_haproxy_dirs), \
                 patch('conductr_cli.sandbox_proxy.stop_proxy', mock_stop_proxy), \
-                patch('conductr_cli.sandbox_proxy.start_docker_instance', mock_start_docker_instance), \
-                patch('conductr_cli.sandbox_proxy.start_conductr_haproxy', mock_start_conductr_haproxy):
+                patch('conductr_cli.sandbox_proxy.start_docker_instance', mock_start_docker_instance):
             logging_setup.configure_logging(args, stdout)
             sandbox_proxy.start_proxy(ipaddress.ip_address('192.168.1.1'), 9000, [3003], [9999, 9200])
 
@@ -57,7 +52,6 @@ class TestStartProxy(CliTestCase):
         mock_setup_haproxy_dirs.assert_not_called()
         mock_stop_proxy.assert_not_called()
         mock_start_docker_instance.assert_not_called()
-        mock_start_conductr_haproxy.assert_not_called()
 
         self.assertEqual('', self.output(stdout))
 
@@ -329,19 +323,3 @@ class TestStartDockerInstance(CliTestCase):
                                           |Exposing the following ports [80, 443, 3003, 8999, 9000, 19001]
                                           |""")
         self.assertEqual(expected_output, self.output(stdout))
-
-
-class TestStartConductrHAProxy(CliTestCase):
-    def test_success(self):
-        stdout = MagicMock()
-        mock_run = MagicMock()
-        args = MagicMock(**{})
-
-        with patch('conductr_cli.conduct_main.run', mock_run):
-            logging_setup.configure_logging(args, stdout)
-            sandbox_proxy.start_conductr_haproxy()
-
-        self.assertEqual([
-            call(['load', 'conductr-haproxy', 'conductr-haproxy-dev-mode', '--disable-instructions'], configure_logging=False),
-            call(['run', 'conductr-haproxy', '--disable-instructions'], configure_logging=False)
-        ], mock_run.call_args_list)
