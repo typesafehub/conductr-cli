@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 import os
 
 
-class TestConductDcosCommand(CliTestCase):
+class TestConductDcos(CliTestCase):
 
     def test_success_which(self):
         args = MagicMock()
@@ -90,3 +90,22 @@ class TestConductDcosCommand(CliTestCase):
                             |Prefix \'conduct\' with \'dcos\' when you want to contact ConductR on DC/OS e.g. \'dcos conduct info\'
                             |"""),
             self.output(stdout))
+
+    def test_service_name_with_specified(self):
+        args = MagicMock()
+
+        with \
+                patch('conductr_cli.conduct_request.get', MagicMock()) as request_get, \
+                patch('conductr_cli.conduct_dcos.default_service_name', MagicMock(return_value='myconductr')):
+            self.assertEqual(
+                conduct_dcos.service_name(args),
+                'myconductr'
+            )
+            request_get.assert_not_called()
+
+    def test_service_name_defaults(self):
+        args = MagicMock()
+        text = '''{ "apps": [{ "id": "/conductr-2.1.5" }, { "id": "/conductr-2.1.6" }] }'''
+
+        with patch('conductr_cli.conduct_request.get', self.respond_with(200, text)):
+            self.assertEqual(conduct_dcos.service_name(args), 'conductr-2.1.5')

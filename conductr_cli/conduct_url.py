@@ -9,6 +9,15 @@ def url(path, args):
     return '{}{}'.format(base_url, path)
 
 
+# given a path, add the protocol and host
+def raw_url(path, args):
+    if hasattr(args, 'dcos_mode') and args.dcos_mode:
+        base_url = '{}://{}'.format(args.scheme, conductr_host(args))
+    else:
+        base_url = '{}://{}:{}'.format(args.scheme, conductr_host(args), args.port)
+    return '{}{}'.format(base_url, path)
+
+
 def conductr_host(args):
     return vars(args).get('host') or vars(args).get('ip')
 

@@ -1,8 +1,44 @@
+from conductr_cli.constants import CONDUCTR_DCOS_SERVICE, DEFAULT_DCOS_SERVICE
+from conductr_cli import conduct_request, conduct_url
 from dcos import constants
 import logging
+import json
 import os
 import shutil
 import sys
+
+
+def default_service_name():
+    return DEFAULT_DCOS_SERVICE
+
+
+def service_name(args):
+    # If Marathon is running more than one ConductR, and the user hasn't specified
+    # a DCOS service, pick the first one that is returned
+
+    default = default_service_name()
+
+    if CONDUCTR_DCOS_SERVICE == default:
+        marathon_groups = conduct_request.get(
+            dcos_mode=True,
+            host=conduct_url.conductr_host(args),
+            url=conduct_url.raw_url('/service/marathon/v2/groups', args)
+        )
+
+        if marathon_groups.status_code == 200:
+            groups = json.loads(marathon_groups.text)
+
+            if 'apps' in groups:
+                conductr_services = [
+                    a['id'].strip('/') for a in groups['apps']
+
+                    if a['id'].strip('/').startswith(CONDUCTR_DCOS_SERVICE)
+                ]
+
+                if len(conductr_services) > 0:
+                    return conductr_services[0]
+
+    return default
 
 
 def setup(args):
