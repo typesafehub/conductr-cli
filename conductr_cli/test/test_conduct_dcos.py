@@ -105,7 +105,15 @@ class TestConductDcos(CliTestCase):
 
     def test_service_name_defaults(self):
         args = MagicMock()
-        text = '''{ "apps": [{ "id": "/conductr-2.1.5" }, { "id": "/conductr-2.1.6" }] }'''
+        text = '''
+          {
+            "apps": [
+              { "id": "/conductr-2.1.5", "labels": { "DCOS_SERVICE_NAME": "conductr-2.1.5" } },
+              { "id": "/conductr-2.1.6", "labels": { "DCOS_SERVICE_NAME": "conductr-2.1.6" } },
+              { "id": "/elastic" }
+            ]
+          }
+        '''
 
         with patch('conductr_cli.conduct_request.get', self.respond_with(200, text)):
             self.assertEqual(conduct_dcos.service_name(args), 'conductr-2.1.5')
