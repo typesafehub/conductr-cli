@@ -27,12 +27,13 @@ def service_name(args):
 
         if marathon_groups.status_code == 200:
             groups = json.loads(marathon_groups.text)
-
             if 'apps' in groups:
                 conductr_services = [
-                    a['id'].strip('/') for a in groups['apps']
+                    a['labels']['DCOS_SERVICE_NAME'] for a in groups['apps']
 
-                    if a['id'].strip('/').startswith(CONDUCTR_DCOS_SERVICE)
+                    if 'labels' in a and
+                       'DCOS_SERVICE_NAME' in a['labels'] and
+                       a['labels']['DCOS_SERVICE_NAME'].startswith(CONDUCTR_DCOS_SERVICE)
                 ]
 
                 if len(conductr_services) > 0:
