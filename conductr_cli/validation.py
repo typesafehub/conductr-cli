@@ -63,6 +63,7 @@ def handle_http_error(func):
             log.error('{} {}'.format(err.response.status_code, err.response.reason))
             if err.response.text != '':
                 log.error(err.response.text)
+            return False
         except dcos.errors.DCOSHTTPException as err:
             log = get_logger_for_func(func)
             log.error(err)
