@@ -1,22 +1,42 @@
+import datetime
+
 from conductr_cli.conduct_info_inspect import has_bundle_id, has_bundle_name
 
 
 class BundleCoreInfo(object):
-    def __init__(self, bundle_id, bundle_name, bundle_digest, configuration_digest):
+    def __init__(self, bundle_id, bundle_name, bundle_digest, configuration_digest,
+                 scale=0, start_time=datetime.datetime.max, compatibility_version=None):
         self.bundle_id = bundle_id
         self.bundle_name = bundle_name
         self.bundle_digest = bundle_digest
         self.configuration_digest = configuration_digest
         self.bundle_name_with_digest = '{0}-{1}'.format(bundle_name, bundle_digest)
         self.bundle_name_with_configuration_digest = '{0}-{1}'.format(bundle_name, configuration_digest)
+        self.scale = scale
+        self.start_time = start_time
+        self.compatibility_Version = compatibility_version
 
     @classmethod
     def from_bundles(cls, bundles_json):
+        def get_start_time(bundle):
+            default_start_time = datetime.datetime.max
+            if bundle.get('bundleExecutions') is None:
+                default_start_time = default_start_time
+            if len(bundle['bundleExecutions']) > 0:
+                start = (bundle['bundleExecutions'])[0].get('startTime', None)
+                if start is not None:
+                    default_start_time = datetime.datetime.strptime(start.split('.')[0], '%Y-%m-%dT%H:%M:%S')
+            return default_start_time
+
         return list(map(
             lambda b: cls(bundle_id=b['bundleId'],
                           bundle_digest=b['bundleDigest'],
                           configuration_digest=b.get('configurationDigest', ''),
-                          bundle_name=b['attributes']['bundleName']),
+                          bundle_name=b['attributes']['bundleName'],
+                          scale=b['bundleScale']['scale'] if b.get('bundleScale', None) is not None else 0,
+                          compatibility_version=b['attributes']['compatibilityVersion'],
+                          start_time=get_start_time(b)
+                          ),
             bundles_json))
 
     @classmethod

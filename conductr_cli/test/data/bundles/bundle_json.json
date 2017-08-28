@@ -232,10 +232,6 @@
         }
       }
     },
-    "bundleScale": {
-      "scale": 1,
-      "nrOfReschedules": 0
-    },
     "bundleExecutions": [
       {
         "host": "192.168.10.1",

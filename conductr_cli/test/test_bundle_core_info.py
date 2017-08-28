@@ -1,5 +1,7 @@
 import json
 
+import datetime
+
 from conductr_cli.bundle_core_info import BundleCoreInfo
 from conductr_cli.test.cli_test_case import CliTestCase, file_contents
 
@@ -9,6 +11,7 @@ class TestBundleCore(CliTestCase):
         bundles_json = file_contents('data/bundles/bundle_json.json')
         result = BundleCoreInfo.from_bundles(json.loads(bundles_json))
         self.assertEqual(6, len(result))
+        self.assertEqual('1', result[0].compatibility_Version)
 
     def test_bundle_core_filter(self):
         bundles_json = file_contents('data/bundles/bundle_json.json')
@@ -18,11 +21,15 @@ class TestBundleCore(CliTestCase):
         bundle_info = BundleCoreInfo.filter_by_bundle_id(bundle_infos, bundle_id)
         self.assertIsNotNone(bundle_info)
         self.assertEqual(bundle_id, bundle_info.bundle_id)
+        self.assertEqual(1, bundle_info.scale)
+        self.assertEqual('2', bundle_info.compatibility_Version)
 
         bundle_name = 'visualizer'
         bundle_info = BundleCoreInfo.filter_by_bundle_id(bundle_infos, bundle_name)
         self.assertIsNotNone(bundle_info)
         self.assertEqual(bundle_id, bundle_info.bundle_id)
+        self.assertEqual('2', bundle_info.compatibility_Version)
+        self.assertEqual(datetime.datetime(2017, 6, 29, 18, 39, 56), bundle_info.start_time)
 
         bad_bundle_id = 'ahoy'
         bad_bundle_info = BundleCoreInfo.filter_by_bundle_id(bundle_infos, bad_bundle_id)

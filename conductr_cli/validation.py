@@ -675,3 +675,21 @@ def handle_conductr_backup_error(func):
     handler.__name__ = func.__name__
 
     return handler
+
+
+def handle_conductr_restore_error(func):
+    def handler(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ConductBackupError as err:
+            log = get_logger_for_func(func)
+            log.error('ConductR Restore could not be completed : {}'.format(err.message))
+            if err.cause:
+                log.error('Cause : '.format(err.cause))
+            return False
+
+    # Do not change the wrapped function name,
+    # so argparse configuration can be tested.
+    handler.__name__ = func.__name__
+
+    return handler
