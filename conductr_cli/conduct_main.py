@@ -601,7 +601,8 @@ def run(_args=[], configure_logging=True):
                 default_http_port = 80 if dcos_url.scheme == 'http' else 443
                 args.port = dcos_url.port if dcos_url.port else default_http_port
                 dcos_url_path = dcos_url.path if dcos_url.path else '/'
-                args.base_path = dcos_url_path + 'service/{}/'.format(DEFAULT_DCOS_SERVICE)
+                dcos_service_name = conduct_dcos.service_name(args)
+                args.base_path = dcos_url_path + 'service/{}/'.format(dcos_service_name)
             else:
                 args.command = 'conduct'
 
