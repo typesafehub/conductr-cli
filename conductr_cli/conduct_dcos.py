@@ -63,6 +63,22 @@ def setup(args):
                        'bin',
                        constants.DCOS_COMMAND_PREFIX + 'conduct')
 
+    package = os.path.join(os.path.expanduser('~'),
+                           constants.DCOS_DIR,
+                           constants.DCOS_SUBCOMMAND_SUBDIR,
+                           'conductr',
+                           'package.json')
+
+    os.makedirs(os.path.dirname(package), exist_ok=True)
+
+    with open(package, 'w') as file:
+        file.write(json.dumps({
+            'name': 'conductr',
+            'description': 'To uninstall, use `dcos marathon app remove <service-name>`',
+            'framework': True,
+            'website': 'https://conductr.lightbend.com/docs'
+        }))
+
     if os.path.exists(dst) or os.path.islink(dst):
         os.remove(dst)
 
