@@ -20,16 +20,7 @@ install_requires = [
     'certifi>=2017.4.17',
     'boto3>=1.4.4',
     'semver>=2.7.7',
-
-    # FIXME: Remove the following dependencies when dcos can be depended on
-    'jsonschema>=2.5, <3.0',
-    'pager>=3.3, <4.0',
-    'prettytable>=0.7, <1.0',
-    'PyJWT==1.4.2',
-    'pygments>=2.0, <3.0',
-    'six>=1.9, <2.0',
-    'toml>=0.9, <1.0',
-    'sseclient==0.0.14',
+    'dcos==0.5.5'
 ]
 if sys.version_info[:2] == (3, 2):
     install_requires.extend([

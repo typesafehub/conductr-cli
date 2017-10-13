@@ -12,6 +12,7 @@ class TestConductDcos(CliTestCase):
         stdout = MagicMock()
         makedirs = MagicMock()
         symlink = MagicMock()
+        open_mock = MagicMock()
 
         logging_setup.configure_logging(args, stdout)
 
@@ -20,13 +21,24 @@ class TestConductDcos(CliTestCase):
                 patch('os.path.exists', lambda x: True), \
                 patch('os.remove', lambda x: True), \
                 patch('os.makedirs', makedirs), \
-                patch('os.symlink', symlink):
+                patch('os.symlink', symlink), \
+                patch('builtins.open', open_mock):
             result = conduct_dcos.setup(args)
         self.assertTrue(result)
 
-        makedirs.assert_called_once_with(
+        makedirs.assert_any_call(
+            '{}/.dcos/subcommands/conductr'.format(os.path.expanduser('~')),
+            exist_ok=True
+        )
+
+        makedirs.assert_any_call(
             '{}/.dcos/subcommands/conductr/env/bin'.format(os.path.expanduser('~')),
             exist_ok=True
+        )
+
+        open_mock.assert_called_with(
+            '{}/.dcos/subcommands/conductr/package.json'.format(os.path.expanduser('~')),
+            'w'
         )
 
         symlink.assert_called_with('/somefile',
@@ -43,6 +55,7 @@ class TestConductDcos(CliTestCase):
         stdout = MagicMock()
         makedirs = MagicMock()
         symlink = MagicMock()
+        open_mock = MagicMock()
 
         logging_setup.configure_logging(args, stdout)
 
@@ -52,7 +65,8 @@ class TestConductDcos(CliTestCase):
                 patch('os.path.exists', lambda x: True), \
                 patch('os.remove', lambda x: True), \
                 patch('os.makedirs', makedirs), \
-                patch('os.symlink', symlink):
+                patch('os.symlink', symlink), \
+                patch('builtins.open', open_mock):
             result = conduct_dcos.setup(args)
         self.assertTrue(result)
 
@@ -65,6 +79,7 @@ class TestConductDcos(CliTestCase):
         remove = MagicMock()
         makedirs = MagicMock()
         symlink = MagicMock()
+        open_mock = MagicMock()
 
         logging_setup.configure_logging(args, stdout)
 
@@ -74,16 +89,28 @@ class TestConductDcos(CliTestCase):
                 patch('os.path.islink', lambda x: False), \
                 patch('os.remove', remove), \
                 patch('os.makedirs', makedirs), \
-                patch('os.symlink', symlink):
+                patch('os.symlink', symlink), \
+                patch('builtins.open', open_mock):
             result = conduct_dcos.setup(args)
         self.assertTrue(result)
 
         remove.assert_not_called()
 
-        makedirs.assert_called_with('{}/.dcos/subcommands/conductr/env/bin'.format(os.path.expanduser('~')),
-                                    exist_ok=True)
+        makedirs.assert_any_call(
+            '{}/.dcos/subcommands/conductr'.format(os.path.expanduser('~')),
+            exist_ok=True
+        )
+
+        makedirs.assert_any_call('{}/.dcos/subcommands/conductr/env/bin'.format(os.path.expanduser('~')),
+                                 exist_ok=True)
+
         symlink.assert_called_with('/somefile',
                                    '{}/.dcos/subcommands/conductr/env/bin/dcos-conduct'.format(os.path.expanduser('~')))
+
+        open_mock.assert_called_with(
+            '{}/.dcos/subcommands/conductr/package.json'.format(os.path.expanduser('~')),
+            'w'
+        )
 
         self.assertEqual(
             strip_margin("""|The DC/OS CLI is now configured.
