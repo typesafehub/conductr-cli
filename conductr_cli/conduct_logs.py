@@ -16,6 +16,9 @@ def logs(args):
 
     log = logging.getLogger(__name__)
 
+    if args.lines == 0:
+        args.lines = 50 if args.follow else 10
+
     if args.follow:
         old_data = []
 

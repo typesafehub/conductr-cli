@@ -179,10 +179,10 @@ def add_date_args(sub_parser, show_help=True):
                             help='Convert the date/time of the events to UTC' if show_help else argparse.SUPPRESS)
 
 
-def add_lines_args(subparser, show_help=True):
+def add_lines_args(subparser, show_help=True, default=10):
     subparser.add_argument('-n', '--lines',
                            type=int,
-                           default=10,
+                           default=default,
                            help='The number of logs to fetch\n'
                                 'Defaults to 10' if show_help else argparse.SUPPRESS)
 
@@ -362,7 +362,7 @@ def build_parser(dcos_mode):
                                         help='Show bundle logs',
                                         formatter_class=argparse.RawTextHelpFormatter)
     add_default_arguments(logs_parser, dcos_mode)
-    add_lines_args(logs_parser)
+    add_lines_args(logs_parser, default=0)
     add_follow_args(logs_parser)
     add_date_args(logs_parser)
     logs_parser.add_argument('bundle',
