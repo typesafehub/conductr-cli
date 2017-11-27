@@ -9,7 +9,9 @@ from conductr_cli.constants import \
     DEFAULT_SCHEME, DEFAULT_PORT, DEFAULT_BASE_PATH, \
     DEFAULT_API_VERSION, DEFAULT_DCOS_SERVICE, DEFAULT_CLI_SETTINGS_DIR, \
     DEFAULT_CUSTOM_SETTINGS_FILE, DEFAULT_CUSTOM_PLUGINS_DIR, DEFAULT_BUNDLE_RESOLVE_CACHE_DIR, \
-    DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT, DEFAULT_OFFLINE_MODE, DEFAULT_LICENSE_DOWNLOAD_URL
+    DEFAULT_CONFIGURATION_RESOLVE_CACHE_DIR, DEFAULT_WAIT_TIMEOUT, DEFAULT_OFFLINE_MODE, DEFAULT_LICENSE_DOWNLOAD_URL, \
+    LOGS_POLL_PERIOD_SECONDS
+
 from dcos import config, constants
 
 from pathlib import Path
@@ -364,6 +366,12 @@ def build_parser(dcos_mode):
     add_default_arguments(logs_parser, dcos_mode)
     add_lines_args(logs_parser, default=0)
     add_follow_args(logs_parser)
+    logs_parser.add_argument('--follow-poll-period',
+                             type=float,
+                             default=LOGS_POLL_PERIOD_SECONDS,
+                             action='store',
+                             help='The frequency of log polling when --follow is specified\n'
+                                  'Defaults to {}'.format(LOGS_POLL_PERIOD_SECONDS))
     add_date_args(logs_parser)
     logs_parser.add_argument('bundle',
                              help='The ID or name of the bundle')

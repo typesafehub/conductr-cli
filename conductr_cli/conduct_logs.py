@@ -1,6 +1,6 @@
 from conductr_cli import validation, conduct_request, conduct_url, screen_utils
 from conductr_cli.conduct_url import conductr_host
-from conductr_cli.constants import LOGS_FOLLOW_ERROR_SLEEP_SECONDS, LOGS_FOLLOW_SLEEP_SECONDS
+from conductr_cli.constants import LOGS_FOLLOW_ERROR_SLEEP_SECONDS, LOGS_POLL_PERIOD_SECONDS
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from urllib.parse import quote_plus
 import itertools
@@ -21,6 +21,7 @@ def logs(args):
 
     if args.follow:
         old_data = []
+        poll_period = args.follow_poll_period if 'follow_poll_period' in vars(args) else LOGS_POLL_PERIOD_SECONDS
 
         # we infinite-loop which will run the program until we receive a signal (e.g. CTRL-C)
         # by using itertools.count(), we can control the number of executions for testing via mocks
@@ -41,7 +42,7 @@ def logs(args):
                 if len(new_data) > 0:
                     old_data = data
 
-                time.sleep(LOGS_FOLLOW_SLEEP_SECONDS)
+                time.sleep(poll_period)
     else:
         data = fetch_log_data(args)
         data.insert(0, {'time': 'TIME', 'host': 'HOST', 'log': 'LOG'})
