@@ -1,6 +1,6 @@
 from conductr_cli.test.cli_test_case import as_warn, CliTestCase, strip_margin
 from conductr_cli import conduct_logs, logging_setup
-from conductr_cli.constants import LOGS_FOLLOW_SLEEP_SECONDS
+from conductr_cli.constants import LOGS_POLL_PERIOD_SECONDS
 from conductr_cli.http import DEFAULT_HTTP_TIMEOUT
 from unittest.mock import call, patch, MagicMock
 
@@ -167,7 +167,52 @@ class TestConductLogsCommand(CliTestCase):
 
         self.assertEqual(
             time_sleep_mock.call_args_list,
-            [call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS)]
+            [call(LOGS_POLL_PERIOD_SECONDS), call(LOGS_POLL_PERIOD_SECONDS), call(LOGS_POLL_PERIOD_SECONDS)]
+        )
+
+        self.assertEqual(
+            strip_margin("""|1 one test one
+                            |2 two test two
+                            |3 three test three
+                            |4 four test four
+                            |"""),
+            self.output(stdout))
+
+    def test_follow_with_poll_period(self):
+        args = {}
+        args.update(self.default_args)
+        args.update({'follow': True})
+        poll_period = 0.73
+        args.update({'follow_poll_period': poll_period})
+        input_args = MagicMock(**args)
+        fetch_log_data_mock = MagicMock(side_effect=[
+            [
+                {'time': 1, 'host': 'one', 'log': 'test one'}
+            ],
+            [
+                {'time': 1, 'host': 'one', 'log': 'test one'},
+                {'time': 2, 'host': 'two', 'log': 'test two'}
+            ],
+            [
+                {'time': 2, 'host': 'two', 'log': 'test two'},
+                {'time': 3, 'host': 'three', 'log': 'test three'},
+                {'time': 4, 'host': 'four', 'log': 'test four'}
+            ],
+            []
+        ])
+        time_sleep_mock = MagicMock()
+        stdout = MagicMock()
+
+        with \
+                patch('conductr_cli.conduct_logs.fetch_log_data', fetch_log_data_mock), \
+                patch('itertools.count', lambda: [0, 1, 2]), \
+                patch('time.sleep', time_sleep_mock):
+            logging_setup.configure_logging(input_args, stdout)
+            self.assertTrue(conduct_logs.logs(input_args))
+
+        self.assertEqual(
+            time_sleep_mock.call_args_list,
+            [call(poll_period), call(poll_period), call(poll_period)]
         )
 
         self.assertEqual(
@@ -209,7 +254,7 @@ class TestConductLogsCommand(CliTestCase):
 
         self.assertEqual(
             time_sleep_mock.call_args_list,
-            [call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS), call(LOGS_FOLLOW_SLEEP_SECONDS)]
+            [call(LOGS_POLL_PERIOD_SECONDS), call(LOGS_POLL_PERIOD_SECONDS), call(LOGS_POLL_PERIOD_SECONDS)]
         )
 
         self.assertEqual(
