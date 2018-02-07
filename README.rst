@@ -3,6 +3,8 @@
 Command Line Interface (CLI) for Lightbend ConductR
 ---------------------------------------------------
 
+*Note that this project is EOL as of 2018-01-31.*
+
 Installation
 ~~~~~~~~~~~~
 
