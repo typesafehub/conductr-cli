@@ -137,7 +137,26 @@ def bndl_create(args):
                     zip_extract_with_dates(temp, temp_dir)
             elif not args.source and data_is_tar(peek):
                 with tarfile.open(fileobj=buff_in, mode='r|') as tar:
-                    tar.extractall(temp_dir)
+                    def is_within_directory(directory, target):
+                        
+                        abs_directory = os.path.abspath(directory)
+                        abs_target = os.path.abspath(target)
+                    
+                        prefix = os.path.commonprefix([abs_directory, abs_target])
+                        
+                        return prefix == abs_directory
+                    
+                    def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+                    
+                        for member in tar.getmembers():
+                            member_path = os.path.join(path, member.name)
+                            if not is_within_directory(path, member_path):
+                                raise Exception("Attempted Path Traversal in Tar File")
+                    
+                        tar.extractall(path, members, numeric_owner=numeric_owner) 
+                        
+                    
+                    safe_extract(tar, temp_dir)
             elif os.path.isdir(args.source):
                 os.rmdir(temp_dir)
                 shutil.copytree(args.source, temp_dir)
@@ -145,7 +164,26 @@ def bndl_create(args):
                 zip_extract_with_dates(args.source, temp_dir)
             elif os.path.isfile(args.source) and tarfile.is_tarfile(args.source):
                 with tarfile.open(args.source) as tar:
-                    tar.extractall(temp_dir)
+                    def is_within_directory(directory, target):
+                        
+                        abs_directory = os.path.abspath(directory)
+                        abs_target = os.path.abspath(target)
+                    
+                        prefix = os.path.commonprefix([abs_directory, abs_target])
+                        
+                        return prefix == abs_directory
+                    
+                    def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+                    
+                        for member in tar.getmembers():
+                            member_path = os.path.join(path, member.name)
+                            if not is_within_directory(path, member_path):
+                                raise Exception("Attempted Path Traversal in Tar File")
+                    
+                        tar.extractall(path, members, numeric_owner=numeric_owner) 
+                        
+                    
+                    safe_extract(tar, temp_dir)
             elif os.path.isfile(args.source) and data_is_bundle_conf(peek_file):
                 shutil.copyfile(args.source, os.path.join(temp_dir, 'bundle.conf'))
                 mtime = os.path.getmtime(args.source)
